@@ -44,6 +44,13 @@ export function Header() {
           >
             À propos
           </a>
+          <a 
+            href="#qui-sommes-nous" 
+            onClick={(e) => handleClick(e, "#qui-sommes-nous")}
+            className="text-sm font-medium transition-colors hover:text-primary cursor-pointer"
+          >
+            Qui sommes nous
+          </a>
           <Link 
             href="/galerie"
             className="text-sm font-medium transition-colors hover:text-primary"
@@ -101,6 +108,14 @@ export function Header() {
                 >
                   <span className="text-xl">ℹ️</span>
                   <span>À propos</span>
+                </a>
+                <a 
+                  href="#qui-sommes-nous" 
+                  onClick={(e) => handleClick(e, "#qui-sommes-nous")}
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-all hover:bg-primary/10 hover:text-primary group cursor-pointer"
+                >
+                  <span className="text-xl">👥</span>
+                  <span>Qui sommes nous</span>
                 </a>
                 <Link 
                   href="/galerie"

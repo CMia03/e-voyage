@@ -52,6 +52,50 @@ export default function Home() {
           </div>
         </section>
 
+        <section id="qui-sommes-nous" className="py-12 sm:py-20 bg-muted/50">
+          <div className="container mx-auto px-4">
+            <div className="mx-auto max-w-4xl">
+              <div className="mb-8 sm:mb-12 text-center">
+                <h2 className="mb-4 text-2xl sm:text-3xl md:text-4xl font-bold">Qui sommes nous ?</h2>
+              </div>
+              
+              <div className="rounded-lg border bg-background p-6 sm:p-8 md:p-10">
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <p className="text-base sm:text-lg md:text-xl text-foreground leading-relaxed">
+                    Chez Cool Voyage, tout est soigneusement préparé pour vous accueillir dans les meilleures conditions. Une équipe compétente et une organisation rigoureuse vous attendent, avec tout le nécessaire pour votre confort, y compris une restauration adaptée à tous.
+                    </p>
+                  </div>
+                  
+                  <div className="mt-8 pt-8 border-t">
+                    <h3 className="mb-4 text-xl sm:text-2xl font-semibold text-center">Nos Services</h3>
+                    <p className="text-base sm:text-lg text-muted-foreground text-center leading-relaxed">
+                      <strong>Cool Voyage</strong> peut organiser des <strong>voyages privés</strong>, 
+                      <strong> entre amis</strong>, selon <strong>votre budget</strong>. 
+                      Que vous soyez en groupe ou en solo, nous adaptons nos offres à vos besoins !
+                    </p>
+                  </div>
+                  
+                  <div className="grid gap-4 sm:gap-6 sm:grid-cols-3 mt-8">
+                    <div className="text-center p-4 rounded-lg bg-primary/5">
+                      <div className="text-3xl mb-2">👥</div>
+                      <p className="text-sm font-medium">Voyages privés</p>
+                    </div>
+                    <div className="text-center p-4 rounded-lg bg-primary/5">
+                      <div className="text-3xl mb-2">👫</div>
+                      <p className="text-sm font-medium">Entre amis</p>
+                    </div>
+                    <div className="text-center p-4 rounded-lg bg-primary/5">
+                      <div className="text-3xl mb-2">💰</div>
+                      <p className="text-sm font-medium">Selon votre budget</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section id="destinations" className="py-12 sm:py-20 bg-muted/50">
           <div className="container mx-auto px-4">
             <div className="mx-auto max-w-4xl mb-8 sm:mb-12 text-center">
