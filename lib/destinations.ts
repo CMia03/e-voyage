@@ -83,9 +83,9 @@ export const destinationsData: DestinationDetails[] = [
     ],
     reservation: {
       deposit: "25%",
-      phone: "0346688542",
-      orangeMoney: "0325559616",
-      infoPhone: "0346688542"
+      phone: "034 66 885 42",
+      orangeMoney: "032 55 596 16",
+      infoPhone: "034 66 885 42"
     }
   },
   {
@@ -141,8 +141,8 @@ export const destinationsData: DestinationDetails[] = [
     ],
     reservation: {
       deposit: "25%",
-      phone: "0346688542",
-      orangeMoney: "0325559616",
+      phone: "034 66 885 42",
+      orangeMoney: "032 55 596 16",
       infoPhone: "034 66 885 42"
     }
   },
@@ -201,8 +201,8 @@ export const destinationsData: DestinationDetails[] = [
     ],
     reservation: {
       deposit: "25%",
-      phone: "0346688542",
-      orangeMoney: "0325559616",
+      phone: "034 66 885 42",
+      orangeMoney: "032 55 596 16",
       infoPhone: "034 66 885 42"
     }
   },
@@ -265,8 +265,8 @@ export const destinationsData: DestinationDetails[] = [
     ],
     reservation: {
       deposit: "25%",
-      phone: "0346688542",
-      orangeMoney: "0325559616",
+      phone: "034 66 885 42",
+      orangeMoney: "032 55 596 16",
       infoPhone: "034 66 885 42"
     }
   }

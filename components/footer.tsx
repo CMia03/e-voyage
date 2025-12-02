@@ -28,15 +28,15 @@ export function Footer() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-center gap-2">
                   <span>📱</span>
-                  <a href="tel:0346688542" className="hover:text-primary">Mvola : 0346688542</a>
+                  <a href="tel:0346688542" className="hover:text-primary">Yas : +261 34 66 885 42</a>
                 </li>
                 <li className="flex items-center gap-2">
                   <span>📱</span>
-                  <a href="tel:0325559616" className="hover:text-primary">Orange Money : 0325559616</a>
+                  <a href="tel:0325559616" className="hover:text-primary">Orange : +261 32 55 596 16</a>
                 </li>
                 <li className="flex items-center gap-2">
                   <span>☎️</span>
-                  <a href="tel:0346688542" className="hover:text-primary">Plus d'infos : 0346688542</a>
+                  <a href="tel:0346688542" className="hover:text-primary">Plus d'infos : +261 34 66 885 42</a>
                 </li>
                 <li className="flex items-center gap-2">
                   <span>📍</span>
