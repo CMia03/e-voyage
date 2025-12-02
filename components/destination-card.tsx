@@ -28,7 +28,7 @@ export function DestinationCard({ destination }: DestinationCardProps) {
   }, [images.length]);
 
   return (
-    <Card className="group flex h-full flex-col overflow-hidden transition-all duration-300 hover:shadow-xl">
+    <Card className="group flex h-full flex-col overflow-hidden transition-all duration-500 hover:shadow-2xl hover:shadow-emerald-500/20 hover:-translate-y-2 border-border/50 bg-card/50 backdrop-blur-sm">
       <div className="relative h-48 sm:h-56 md:h-64 w-full flex-shrink-0 overflow-hidden">
         {images.map((img, index) => (
           <div

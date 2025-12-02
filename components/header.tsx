@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import {
   Sheet,
   SheetContent,
@@ -15,10 +16,18 @@ import { handleSmoothScrollClick } from "@/lib/smooth-scroll";
 
 export function Header() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const isHomePage = pathname === "/";
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-    handleSmoothScrollClick(e, href, 80);
-    setOpen(false);
+    // Si on est sur la page d'accueil, faire un smooth scroll
+    if (isHomePage) {
+      handleSmoothScrollClick(e, href, 80);
+      setOpen(false);
+    } else {
+      // Sinon, laisser le lien normal fonctionner (redirection vers la page d'accueil)
+      setOpen(false);
+    }
   };
 
   return (
@@ -30,42 +39,42 @@ export function Header() {
         
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-6">
-          <a 
-            href="#destinations" 
+          <Link 
+            href="/#destinations" 
             onClick={(e) => handleClick(e, "#destinations")}
             className="text-sm font-medium transition-colors hover:text-primary cursor-pointer"
           >
             Destinations
-          </a>
-          <a 
-            href="#about" 
+          </Link>
+          <Link 
+            href="/#about" 
             onClick={(e) => handleClick(e, "#about")}
             className="text-sm font-medium transition-colors hover:text-primary cursor-pointer"
           >
             À propos
-          </a>
-          <a 
-            href="#qui-sommes-nous" 
+          </Link>
+          <Link 
+            href="/#qui-sommes-nous" 
             onClick={(e) => handleClick(e, "#qui-sommes-nous")}
             className="text-sm font-medium transition-colors hover:text-primary cursor-pointer"
           >
             Qui sommes nous
-          </a>
+          </Link>
           <Link 
             href="/galerie"
             className="text-sm font-medium transition-colors hover:text-primary"
           >
             Galerie
           </Link>
-          <a 
-            href="#contact" 
+          <Link 
+            href="/#contact" 
             onClick={(e) => handleClick(e, "#contact")}
             className="text-sm font-medium transition-colors hover:text-primary cursor-pointer"
           >
             Contact
-          </a>
+          </Link>
           <Button asChild size="sm">
-            <a href="#contact" onClick={(e) => handleClick(e, "#contact")}>Réserver</a>
+            <Link href="/#contact" onClick={(e) => handleClick(e, "#contact")}>Réserver</Link>
           </Button>
         </nav>
 
@@ -93,30 +102,30 @@ export function Header() {
               
               {/* Navigation */}
               <nav className="flex-1 px-6 py-6 space-y-2">
-                <a 
-                  href="#destinations" 
+                <Link 
+                  href="/#destinations" 
                   onClick={(e) => handleClick(e, "#destinations")}
                   className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-all hover:bg-primary/10 hover:text-primary group cursor-pointer"
                 >
                   <span className="text-xl">🗺️</span>
                   <span>Destinations</span>
-                </a>
-                <a 
-                  href="#about" 
+                </Link>
+                <Link 
+                  href="/#about" 
                   onClick={(e) => handleClick(e, "#about")}
                   className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-all hover:bg-primary/10 hover:text-primary group cursor-pointer"
                 >
                   <span className="text-xl">ℹ️</span>
                   <span>À propos</span>
-                </a>
-                <a 
-                  href="#qui-sommes-nous" 
+                </Link>
+                <Link 
+                  href="/#qui-sommes-nous" 
                   onClick={(e) => handleClick(e, "#qui-sommes-nous")}
                   className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-all hover:bg-primary/10 hover:text-primary group cursor-pointer"
                 >
                   <span className="text-xl">👥</span>
                   <span>Qui sommes nous</span>
-                </a>
+                </Link>
                 <Link 
                   href="/galerie"
                   onClick={() => setOpen(false)}
@@ -125,22 +134,22 @@ export function Header() {
                   <span className="text-xl">📸</span>
                   <span>Galerie</span>
                 </Link>
-                <a 
-                  href="#contact" 
+                <Link 
+                  href="/#contact" 
                   onClick={(e) => handleClick(e, "#contact")}
                   className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-all hover:bg-primary/10 hover:text-primary group cursor-pointer"
                 >
                   <span className="text-xl">📞</span>
                   <span>Contact</span>
-                </a>
+                </Link>
               </nav>
               
               {/* Footer avec bouton */}
               <div className="border-t px-6 py-6 bg-muted/30">
                 <Button asChild className="w-full" size="lg">
-                  <a href="#contact" onClick={(e) => handleClick(e, "#contact")}>
+                  <Link href="/#contact" onClick={(e) => handleClick(e, "#contact")}>
                     Réserver maintenant
-                  </a>
+                  </Link>
                 </Button>
                 <p className="text-xs text-center text-muted-foreground mt-4">
                   📱 034 66 885 42
