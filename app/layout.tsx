@@ -15,6 +15,14 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Cool Voyage - Agence de voyage à Madagascar",
   description: "Découvrez Madagascar avec Cool Voyage. Voyages organisés à prix abordables vers Ambila Lemaintso, Manambato, Sainte-Marie et le Grand Sud.",
+  keywords: ["Madagascar", "voyage", "Cool Voyage", "Ambila Lemaintso", "Manambato", "Sainte-Marie", "Grand Sud", "agence de voyage"],
+  authors: [{ name: "Cool Voyage" }],
+  openGraph: {
+    title: "Cool Voyage - Agence de voyage à Madagascar",
+    description: "Découvrez Madagascar avec Cool Voyage. Voyages organisés à prix abordables.",
+    type: "website",
+    locale: "fr_FR",
+  },
 };
 
 export default function RootLayout({
