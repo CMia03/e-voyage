@@ -72,7 +72,14 @@ export const destinationsData: DestinationDetails[] = [
       "/images/mnabt5.jpg",
       "/images/mnbt4.jpg",
       "/images/mnbt3.jpg",
-      "/images/mnbt2.jpg"
+      "/images/mnbt2.jpg",
+      "/images/mbtn8583248129305562_n.jpg",
+      "/images/mbt6115_2679876124195294935_n.jpg",
+      "/images/mbnt22724023115_8841898401482197429_n.jpg",
+      "/images/mbtbd23115_1301409835550456715_n.jpg",
+      "/images/mbtn623115_392039440286237016_n.jpg",
+      "/images/mbntb8188311489601893394_n.jpg",
+      "/images/mnbt65_8800045053463615418_n.jpg"
     ],
     reservation: {
       deposit: "25%",
@@ -123,11 +130,14 @@ export const destinationsData: DestinationDetails[] = [
       "Pension complète"
     ],
     gallery: [
+      "/images/mbntb8188311489601893394_n.jpg",
       "/images/65878577347693840355_n.jpg",
       "/images/Manbt1.jpg",
       "/images/mnabt5.jpg",
       "/images/mnbt4.jpg",
       "/images/mnbt2.jpg",
+      "/images/mbtn8583248129305562_n.jpg",
+      "/images/mbt6115_2679876124195294935_n.jpg"
     ],
     reservation: {
       deposit: "25%",
@@ -182,7 +192,12 @@ export const destinationsData: DestinationDetails[] = [
       "/images/stMarie3.jpg",
       "/images/stMarie4.jpg",
       "/images/stmarie251097444023115_6618703185983009317_n.jpg",
-      "/images/stmarie40274023115_5224698941739936907_n.jpg"
+      "/images/stmarie3115_1803176917972587522_n.jpg",
+      "/images/stmarie40274023115_5224698941739936907_n.jpg",
+      "/images/stmarie23115_5069914029661834779_n.jpg",
+      "/images/stmarie440184023115_276613091908012322_n.jpg",
+      "/images/stmarie40052023115_176503165565945194_n.jpg",
+      "/images/stmarie023115_8042324081101484102_n.jpg"
     ],
     reservation: {
       deposit: "25%",
@@ -242,7 +257,11 @@ export const destinationsData: DestinationDetails[] = [
       "/images/sud2.jpg",
       "/images/sud6.jpg",
       "/images/sud.jpg",
-    
+      "/images/mntb880266369999819_n.jpg",
+      "/images/mntb54023115_4462289587466383563_n.jpg",
+      "/images/mntb9023115_648788661914576683_n.jpg",
+      "/images/mntb6115_8057201640828761901_n.jpg",
+      "/images/mntb6_7390240073787781336_n.jpg"
     ],
     reservation: {
       deposit: "25%",

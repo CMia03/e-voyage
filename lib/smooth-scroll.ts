@@ -16,3 +16,4 @@ export function handleSmoothScrollClick(e: React.MouseEvent<HTMLAnchorElement>, 
   smoothScrollTo(href, offset);
 }
 
+
