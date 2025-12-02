@@ -1,6 +1,8 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import { AnimatedBackground } from "@/components/animated-background";
+import { handleSmoothScrollClick } from "@/lib/smooth-scroll";
 
 export function Hero() {
   return (
@@ -16,10 +18,14 @@ export function Hero() {
         </p>
         <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:justify-center px-4">
           <Button asChild size="lg" className="text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 bg-primary text-primary-foreground shadow-lg hover:bg-primary/90">
-            <Link href="#destinations">Découvrir nos destinations</Link>
+            <a href="#destinations" onClick={(e) => handleSmoothScrollClick(e, "#destinations", 80)}>
+              Découvrir nos destinations
+            </a>
           </Button>
           <Button asChild size="lg" variant="outline" className="text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20">
-            <Link href="#contact">Nous contacter</Link>
+            <a href="#contact" onClick={(e) => handleSmoothScrollClick(e, "#contact", 80)}>
+              Nous contacter
+            </a>
           </Button>
         </div>
       </div>

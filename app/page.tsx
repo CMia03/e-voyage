@@ -4,6 +4,8 @@ import { DestinationCard } from "@/components/destination-card";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { destinationsData } from "@/lib/destinations";
+import { SmoothScrollButtons } from "@/components/smooth-scroll-buttons";
+import { HomeGallery } from "@/components/home-gallery";
 
 // Utiliser directement destinationsData
 
@@ -68,21 +70,28 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="py-12 sm:py-20 bg-background">
+        <section id="gallery" className="py-12 sm:py-20 bg-background">
+          <div className="container mx-auto px-4">
+            <div className="mx-auto max-w-6xl">
+              <div className="mb-8 sm:mb-12 text-center">
+                <h2 className="mb-4 text-2xl sm:text-3xl md:text-4xl font-bold">Galerie Photos</h2>
+                <p className="text-base sm:text-lg text-muted-foreground px-4">
+                  Découvrez un aperçu de nos destinations à Madagascar
+                </p>
+              </div>
+              <HomeGallery />
+            </div>
+          </div>
+        </section>
+
+        <section className="py-12 sm:py-20 bg-muted/50">
           <div className="container mx-auto px-4">
             <div className="mx-auto max-w-4xl rounded-lg border bg-gradient-to-br from-primary/10 to-primary/5 p-6 sm:p-12 text-center">
               <h2 className="mb-4 text-2xl sm:text-3xl font-bold">Prêt à partir à l'aventure ?</h2>
               <p className="mb-6 sm:mb-8 text-base sm:text-lg text-muted-foreground px-4">
                 Contactez-nous dès aujourd'hui pour organiser votre voyage de rêve à Madagascar
               </p>
-              <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:justify-center">
-                <Button asChild size="lg" className="text-base sm:text-lg px-6 sm:px-8">
-                  <a href="#contact">Nous contacter</a>
-                </Button>
-                <Button asChild size="lg" variant="outline" className="text-base sm:text-lg px-6 sm:px-8">
-                  <a href="#destinations">Voir les destinations</a>
-                </Button>
-              </div>
+              <SmoothScrollButtons />
             </div>
           </div>
         </section>

@@ -11,9 +11,15 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { handleSmoothScrollClick } from "@/lib/smooth-scroll";
 
 export function Header() {
   const [open, setOpen] = useState(false);
+
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    handleSmoothScrollClick(e, href, 80);
+    setOpen(false);
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -24,17 +30,35 @@ export function Header() {
         
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-6">
-          <Link href="#destinations" className="text-sm font-medium transition-colors hover:text-primary">
+          <a 
+            href="#destinations" 
+            onClick={(e) => handleClick(e, "#destinations")}
+            className="text-sm font-medium transition-colors hover:text-primary cursor-pointer"
+          >
             Destinations
-          </Link>
-          <Link href="#about" className="text-sm font-medium transition-colors hover:text-primary">
+          </a>
+          <a 
+            href="#about" 
+            onClick={(e) => handleClick(e, "#about")}
+            className="text-sm font-medium transition-colors hover:text-primary cursor-pointer"
+          >
             À propos
+          </a>
+          <Link 
+            href="/galerie"
+            className="text-sm font-medium transition-colors hover:text-primary"
+          >
+            Galerie
           </Link>
-          <Link href="#contact" className="text-sm font-medium transition-colors hover:text-primary">
+          <a 
+            href="#contact" 
+            onClick={(e) => handleClick(e, "#contact")}
+            className="text-sm font-medium transition-colors hover:text-primary cursor-pointer"
+          >
             Contact
-          </Link>
+          </a>
           <Button asChild size="sm">
-            <Link href="#contact">Réserver</Link>
+            <a href="#contact" onClick={(e) => handleClick(e, "#contact")}>Réserver</a>
           </Button>
         </nav>
 
@@ -62,38 +86,46 @@ export function Header() {
               
               {/* Navigation */}
               <nav className="flex-1 px-6 py-6 space-y-2">
-                <Link 
+                <a 
                   href="#destinations" 
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-all hover:bg-primary/10 hover:text-primary group"
-                  onClick={() => setOpen(false)}
+                  onClick={(e) => handleClick(e, "#destinations")}
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-all hover:bg-primary/10 hover:text-primary group cursor-pointer"
                 >
                   <span className="text-xl">🗺️</span>
                   <span>Destinations</span>
-                </Link>
-                <Link 
+                </a>
+                <a 
                   href="#about" 
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-all hover:bg-primary/10 hover:text-primary group"
-                  onClick={() => setOpen(false)}
+                  onClick={(e) => handleClick(e, "#about")}
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-all hover:bg-primary/10 hover:text-primary group cursor-pointer"
                 >
                   <span className="text-xl">ℹ️</span>
                   <span>À propos</span>
-                </Link>
+                </a>
                 <Link 
-                  href="#contact" 
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-all hover:bg-primary/10 hover:text-primary group"
+                  href="/galerie"
                   onClick={() => setOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-all hover:bg-primary/10 hover:text-primary group"
+                >
+                  <span className="text-xl">📸</span>
+                  <span>Galerie</span>
+                </Link>
+                <a 
+                  href="#contact" 
+                  onClick={(e) => handleClick(e, "#contact")}
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-all hover:bg-primary/10 hover:text-primary group cursor-pointer"
                 >
                   <span className="text-xl">📞</span>
                   <span>Contact</span>
-                </Link>
+                </a>
               </nav>
               
               {/* Footer avec bouton */}
               <div className="border-t px-6 py-6 bg-muted/30">
                 <Button asChild className="w-full" size="lg">
-                  <Link href="#contact" onClick={() => setOpen(false)}>
+                  <a href="#contact" onClick={(e) => handleClick(e, "#contact")}>
                     Réserver maintenant
-                  </Link>
+                  </a>
                 </Button>
                 <p className="text-xs text-center text-muted-foreground mt-4">
                   📱 034 66 885 42
