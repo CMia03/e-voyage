@@ -73,9 +73,16 @@ export function Header() {
           >
             Contact
           </Link>
+
           <Button asChild size="sm">
             <Link href="/#contact" onClick={(e) => handleClick(e, "#contact")}>Réserver</Link>
           </Button>
+
+          <Button asChild variant="outline" size="sm">
+            <Link href="/login">Se connecter</Link>
+          </Button>
+
+
         </nav>
 
         {/* Mobile Navigation */}
@@ -144,6 +151,7 @@ export function Header() {
                 </Link>
               </nav>
               
+
               {/* Footer avec bouton */}
               <div className="border-t px-6 py-6 bg-muted/30">
                 <Button asChild className="w-full" size="lg">
@@ -154,7 +162,23 @@ export function Header() {
                 <p className="text-xs text-center text-muted-foreground mt-4">
                   📱 034 66 885 42
                 </p>
+                
+                <Link
+                  href="/login"
+                  className="flex items-center justify-center gap-2 w-full mt-3 px-4 py-3 rounded-lg text-sm font-medium transition-all bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 dark:text-emerald-400 dark:hover:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/50"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                  </svg>
+                  <span>Se connecter</span>
+                </Link>
+                
+                <p className="text-xs text-center text-muted-foreground mt-4">
+                  Accédez à votre espace personnel pour gérer vos réservations
+                </p>
+                
               </div>
+
             </div>
           </SheetContent>
         </Sheet>
@@ -162,3 +186,6 @@ export function Header() {
     </header>
   );
 }
+
+
+
