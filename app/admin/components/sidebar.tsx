@@ -39,14 +39,6 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
           Dashboard
         </button>
 
-
-
-
-
-
-
-
-
         {/* Section Destinations avec sous-sections */}
         <div className="space-y-1">
           <button
