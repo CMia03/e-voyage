@@ -36,13 +36,13 @@ export default function LoginPage() {
           : response;
 
       saveAuth({
-        accessToken: (payload as any)?.accessToken,
-        refreshToken: (payload as any)?.refreshToken,
-        role: (payload as any)?.role,
-        userId: (payload as any)?.userId,
-        login: (payload as any)?.login,
-        nom: (payload as any)?.nom,
-        prenom: (payload as any)?.prenom,
+        accessToken: (payload as { accessToken: string })?.accessToken,
+        refreshToken: (payload as { refreshToken: string })?.refreshToken,
+        role: (payload as { role: string })?.role,
+        userId: (payload as { userId: string })?.userId,
+        login: (payload as { login?: string })?.login,
+        nom: (payload as { nom?: string })?.nom,
+        prenom: (payload as { prenom?: string })?.prenom,
       });
 
       router.push("/admin");
@@ -156,7 +156,7 @@ export default function LoginPage() {
               <div className="text-center text-sm text-white/80 drop-shadow-md">
                 <span>Pas de compte ? </span>
                 <Link href="/register" className="text-emerald-300 hover:text-emerald-200 font-semibold hover:underline transition-colors">
-                  S'inscrire
+                  S inscrire
                 </Link>
               </div>
             </form>

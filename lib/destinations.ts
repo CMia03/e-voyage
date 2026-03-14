@@ -206,6 +206,8 @@ export const destinationsData: DestinationDetails[] = [
       infoPhone: "034 66 885 42"
     }
   },
+
+  
   {
     id: "le-grand-sud",
     title: "Le Grand Sud",

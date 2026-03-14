@@ -13,6 +13,7 @@ export function AdminDestinations() {
             Manage destinations, prices, and availability.
           </p>
         </div>
+
         <Button variant="default">Add destination</Button>
       </div>
 

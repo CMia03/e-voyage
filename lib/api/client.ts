@@ -1,4 +1,6 @@
 import { API_BASE_URL } from "@/lib/api";
+import axios, { AxiosRequestConfig, AxiosResponse, Method } from 'axios';
+
 
 export type ApiEnvelope<T = unknown> = {
   success?: boolean;
@@ -43,45 +45,51 @@ function shouldJsonStringify(body: unknown) {
   return true;
 }
 
+
 export async function apiRequest<T = ApiEnvelope>(
   path: string,
   options: RequestOptions = {}
 ): Promise<T> {
   const headers = buildHeaders(options);
-  let body = options.body;
+  const data = options.body;
 
-  if (shouldJsonStringify(body)) {
+  if (shouldJsonStringify(data)) {
     headers["Content-Type"] = headers["Content-Type"] ?? "application/json";
-    body = JSON.stringify(body);
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method: options.method ?? "GET",
+  const config: AxiosRequestConfig = {
+    method: (options.method as Method) ?? "GET",
+    url: `${API_BASE_URL}${path}`,
     headers,
-    body: body as BodyInit | null | undefined,
-  });
+    data: data,
+  };
 
-  let payload: unknown = null;
   try {
-    payload = await response.json();
-  } catch {
-    payload = null;
-  }
+    const response: AxiosResponse = await axios(config);
+    const payload = response.data;
 
-  if (!response.ok) {
-    const message =
-      (payload as ApiEnvelope | null)?.message ||
-      `Request failed with status ${response.status}`;
-    throw new ApiError(message, response.status, payload);
-  }
+    if (payload && (payload as ApiEnvelope)?.success === false) {
+      const message = payload.message || "Request failed";
+      throw new ApiError(message, response.status, payload);
+    }
 
-  if ((payload as ApiEnvelope | null)?.success === false) {
-    const message =
-      (payload as ApiEnvelope | null)?.message || "Request failed";
-    throw new ApiError(message, response.status, payload);
+    return payload as T;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      const payload = error.response.data;
+      const message = 
+        (payload as ApiEnvelope | null)?.message || 
+        `Request failed with status ${error.response.status}`;
+      throw new ApiError(message, error.response.status, payload);
+    }
+    
+    // Gérer les erreurs réseau ou autres
+    throw new ApiError(
+      error instanceof Error ? error.message : "Request failed",
+      500,
+      null
+    );
   }
-
-  return payload as T;
 }
 
 export function getErrorMessage(error: unknown, fallback: string) {
