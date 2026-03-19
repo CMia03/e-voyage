@@ -2,14 +2,23 @@ import { Header } from "@/components/header";
 import { Hero } from "@/components/hero";
 import { DestinationCard } from "@/components/destination-card";
 import { Footer } from "@/components/footer";
-import { Button } from "@/components/ui/button";
-import { destinationsData } from "@/lib/destinations";
 import { SmoothScrollButtons } from "@/components/smooth-scroll-buttons";
 import { HomeGallery } from "@/components/home-gallery";
+import { listDestinations } from "@/lib/api/destinations";
+import { destinationsData as fallbackDestinations } from "@/lib/destinations";
 
-// Utiliser directement destinationsData
+export default async function Home() {
+  let destinationsData = fallbackDestinations;
 
-export default function Home() {
+  try {
+    const apiDestinations = await listDestinations();
+    if (apiDestinations.length > 0) {
+      destinationsData = apiDestinations;
+    }
+  } catch {
+    destinationsData = fallbackDestinations;
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
       <Header />

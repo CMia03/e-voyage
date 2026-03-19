@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "leaflet/dist/leaflet.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -168,4 +169,9 @@
 
 .fade-in {
   animation: fade-in 0.3s ease-out;
+}
+
+.leaflet-container {
+  z-index: 0;
+  font: inherit;
 }

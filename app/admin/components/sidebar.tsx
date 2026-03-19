@@ -3,7 +3,19 @@
 import Link from "next/link";
 import { useState } from "react";
 
-type AdminSection = "dashboard" | "destinations" | "hebergements" | "activites" | "utilisateurs" | "reservations" | "avis" | "notifications" | "statistiques";
+type AdminSection =
+  | "dashboard"
+  | "destinations"
+  | "hebergements"
+  | "hebergements-create"
+  | "hebergements-types"
+  | "hebergements-equipements"
+  | "activites"
+  | "utilisateurs"
+  | "reservations"
+  | "avis"
+  | "notifications"
+  | "statistiques";
 
 interface AdminSidebarProps {
   active: AdminSection;
@@ -144,35 +156,29 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               <button
                 type="button"
                 onClick={() => onSelect("hebergements")}
-                className="flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
+                className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm ${
+                  active === "hebergements"
+                    ? "bg-emerald-500/10 font-medium text-emerald-600"
+                    : "text-muted-foreground hover:bg-primary/10"
+                }`}
               >
                 <span className="mr-2">•</span>
                 Tous les hébergements
               </button>
+              
               <button
                 type="button"
-                onClick={() => console.log("Ajouter un hébergement")}
-                className="flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
+                onClick={() => onSelect("hebergements-create")}
+                className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm ${
+                  active === "hebergements-create"
+                    ? "bg-emerald-500/10 font-medium text-emerald-600"
+                    : "text-muted-foreground hover:bg-primary/10"
+                }`}
               >
                 <span className="mr-2">•</span>
                 Ajouter un hébergement
               </button>
-              <button
-                type="button"
-                onClick={() => console.log("Types")}
-                className="flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
-              >
-                <span className="mr-2">•</span>
-                Types (Hôtel, Villa, etc.)
-              </button>
-              <button
-                type="button"
-                onClick={() => console.log("Équipements")}
-                className="flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
-              >
-                <span className="mr-2">•</span>
-                Équipements
-              </button>
+
             </div>
           )}
         </div>
@@ -248,7 +254,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
           Utilisateurs
         </button>
 
-        <button
+        {/* <button
           type="button"
           onClick={() => onSelect("reservations")}
           className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm ${active === "reservations"
@@ -260,9 +266,9 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
           Réservations
-        </button>
+        </button> */}
 
-        <button
+        {/* <button
           type="button"
           onClick={() => onSelect("avis")}
           className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm ${active === "avis"
@@ -274,9 +280,9 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
           </svg>
           Avis et notes
-        </button>
+        </button> */}
 
-        <button
+        {/* <button
           type="button"
           onClick={() => onSelect("notifications")}
           className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm ${active === "notifications"
@@ -288,9 +294,9 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
           </svg>
           Notifications
-        </button>
+        </button> */}
 
-        <button
+        {/* <button
           type="button"
           onClick={() => onSelect("statistiques")}
           className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm ${active === "statistiques"
@@ -302,7 +308,9 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
           Statistiques
-        </button>
+        </button> */}
+
+        
       </nav>
     </aside>
   );

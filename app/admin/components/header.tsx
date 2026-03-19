@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { loadAuth, clearAuth, AuthSession } from "@/lib/auth";
-import { getErrorMessage } from "@/lib/api/client";
+import { ApiError, getErrorMessage } from "@/lib/api/client";
 import { getProfile } from "@/lib/api/auth";
 import { useEffect, useState } from "react";
 import Image from "next/image";
@@ -49,10 +49,18 @@ export function AdminHeader() {
           setProfile(result.data as UserProfile);
         }
       } catch (error) {
-        console.error(
-          "Erreur lors du chargement du profil:",
-          getErrorMessage(error, "Erreur rÃ©seau.")
-        );
+        const message = getErrorMessage(error, "Erreur reseau.");
+        const normalizedMessage = message
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "");
+        const userNotFound =
+          error instanceof ApiError &&
+          (error.status === 404 || error.status === 400) &&
+          normalizedMessage.toLowerCase().includes("utilisateur non trouve");
+
+        if (!userNotFound) {
+          console.error("Erreur lors du chargement du profil:", message);
+        }
       } finally {
         setIsLoading(false);
       }
