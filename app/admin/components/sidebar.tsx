@@ -11,6 +11,9 @@ type AdminSection =
   | "hebergements-types"
   | "hebergements-equipements"
   | "activites"
+  | "activites-create"
+  | "activites-edit"
+  | "activites-categories"
   | "utilisateurs"
   | "reservations"
   | "avis"
@@ -92,7 +95,11 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               <button
                 type="button"
                 onClick={() => console.log("Ajouter une destination")}
-                className="flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
+                className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm ${
+                  active === "activites"
+                    ? "bg-emerald-500/10 font-medium text-emerald-600"
+                    : "text-muted-foreground hover:bg-primary/10"
+                }`}
               >
                 <span className="mr-2">•</span>
 
@@ -102,7 +109,11 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               <button
                 type="button"
                 onClick={() => console.log("Catégories")}
-                className="flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
+                className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm ${
+                  active === "activites"
+                    ? "bg-emerald-500/10 font-medium text-emerald-600"
+                    : "text-muted-foreground hover:bg-primary/10"
+                }`}
               >
                 <span className="mr-2">•</span>
                 Catégories
@@ -214,7 +225,11 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               <button
                 type="button"
                 onClick={() => onSelect("activites")}
-                className="flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
+                className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm ${
+                  active === "activites"
+                    ? "bg-emerald-500/10 font-medium text-emerald-600"
+                    : "text-muted-foreground hover:bg-primary/10"
+                }`}
               >
                 <span className="mr-2">•</span>
                 Toutes les activités

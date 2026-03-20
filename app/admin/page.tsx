@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { AdminHeader } from "@/app/admin/components/header";
-import { AdminSidebar } from "@/app/admin/components/sidebar";
+import { AdminSidebar } from "@/app/admin/components/sidebar-nav";
 import { AdminFooter } from "@/app/admin/components/footer";
 import { AdminDashboard } from "@/app/admin/dashboard";
 import { AdminDestinations } from "@/app/admin/destinations";
+import { AdminActivites } from "@/app/admin/activites/page";
 import { AdminHebergements } from "@/app/admin/hebergements/page";
 import { AuthSession, loadAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,10 @@ import Link from "next/link";
 type AdminSection =
   | "dashboard"
   | "destinations"
+  | "activites"
+  | "activites-create"
+  | "activites-edit"
+  | "activites-categories"
   | "hebergements"
   | "hebergements-create"
   | "hebergements-edit"
@@ -22,6 +27,7 @@ type AdminSection =
 
 export default function AdminPage() {
   const [active, setActive] = useState<AdminSection>("dashboard");
+  const [selectedActiviteId, setSelectedActiviteId] = useState<string | null>(null);
   const [selectedHebergementId, setSelectedHebergementId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [session, setSession] = useState<AuthSession | null>(null);
@@ -86,6 +92,26 @@ export default function AdminPage() {
         <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8">
           {active === "dashboard" ? (
             <AdminDashboard accessToken={accessToken ?? ""} role={role} />
+          ) : active === "activites" ? (
+            <AdminActivites
+              accessToken={accessToken ?? ""}
+              initialView="liste"
+              onRequestCreate={() => setActive("activites-create")}
+              onRequestEdit={(id) => {
+                setSelectedActiviteId(id);
+                setActive("activites-edit");
+              }}
+            />
+          ) : active === "activites-create" ? (
+            <AdminActivites accessToken={accessToken ?? ""} initialView="creation" />
+          ) : active === "activites-edit" ? (
+            <AdminActivites
+              accessToken={accessToken ?? ""}
+              initialView="modif"
+              editId={selectedActiviteId}
+            />
+          ) : active === "activites-categories" ? (
+            <AdminActivites accessToken={accessToken ?? ""} initialView="categories" />
           ) : active === "hebergements" ? (
             <AdminHebergements
               accessToken={accessToken ?? ""}
