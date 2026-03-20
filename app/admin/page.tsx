@@ -6,7 +6,7 @@ import { AdminSidebar } from "@/app/admin/components/sidebar";
 import { AdminFooter } from "@/app/admin/components/footer";
 import { AdminDashboard } from "@/app/admin/dashboard";
 import { AdminDestinations } from "@/app/admin/destinations";
-import { AdminHebergements } from "@/app/admin/hebergements/index";
+import { AdminHebergements } from "@/app/admin/hebergements/page";
 import { AuthSession, loadAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";

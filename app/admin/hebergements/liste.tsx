@@ -285,13 +285,13 @@ export function AdminHebergementsListe({
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             Hébergements
           </h1>
-          <p className="text-sm text-muted-foreground">
+          {/* <p className="text-sm text-muted-foreground">
             Gérez et visualisez vos hébergements
-          </p>
+          </p> */}
         </div>
 
         <div className="flex flex-wrap gap-3">
-          <ToggleGroup 
+          <ToggleGroup
             type="single" 
             value={viewMode} 
             onValueChange={(value) => value && setViewMode(value as ViewMode)}
