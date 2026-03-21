@@ -12,6 +12,8 @@ type MapHebergement = {
   latitude: number;
   longitude: number;
   adresse?: string;
+  description?: string;
+  urlImagePrincipale?: string;
 };
 
 type HebergementsOverviewMapProps = {
@@ -72,9 +74,21 @@ export function HebergementsOverviewMap({
             position={[item.latitude, item.longitude]}
           >
             <Popup>
-              <div className="space-y-1">
+              <div className="w-[180px] space-y-2 sm:w-[200px]">
+                {item.urlImagePrincipale ? (
+                  <div className="flex aspect-[4/3] w-full items-center justify-center rounded-md bg-slate-100 p-1">
+                    <img
+                      src={item.urlImagePrincipale}
+                      alt={item.nom}
+                      className="h-full w-full rounded object-contain"
+                    />
+                  </div>
+                ) : null}
                 <p className="font-semibold">{item.nom}</p>
                 {item.adresse ? <p className="text-sm">{item.adresse}</p> : null}
+                {item.description ? (
+                  <p className="line-clamp-3 text-sm text-slate-600">{item.description}</p>
+                ) : null}
                 <p className="text-xs text-slate-500">
                   {item.latitude}, {item.longitude}
                 </p>

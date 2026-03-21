@@ -7,12 +7,12 @@ import {
   LayoutGrid,
   List,
   Map,
+  MapPin,
   Pencil,
   Plus,
   RefreshCcw,
-  Timer,
+  Star,
   Trash2,
-  Users,
   X,
 } from "lucide-react";
 
@@ -26,7 +26,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Activite } from "@/lib/type/activite";
+import { AdminDestination } from "@/lib/type/destination";
 
 const HebergementsOverviewMap = dynamic(
   () =>
@@ -43,8 +43,8 @@ const HebergementsOverviewMap = dynamic(
   }
 );
 
-type AdminActivitesListeProps = {
-  activites: Activite[];
+type AdminDestinationListeProps = {
+  destinations: AdminDestination[];
   isLoading: boolean;
   isDeletingId: string | null;
   error: string;
@@ -57,8 +57,8 @@ type AdminActivitesListeProps = {
 
 type ViewMode = "cards" | "list" | "map";
 
-export function AdminActivitesListe({
-  activites,
+export function AdminDestinationListe({
+  destinations,
   isLoading,
   isDeletingId,
   error,
@@ -67,14 +67,13 @@ export function AdminActivitesListe({
   onCreate,
   onEdit,
   onDelete,
-}: AdminActivitesListeProps) {
+}: AdminDestinationListeProps) {
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [showErrorAlert, setShowErrorAlert] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
 
   useEffect(() => {
     if (!successMessage) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowSuccessAlert(false);
       return;
     }
@@ -89,7 +88,6 @@ export function AdminActivitesListe({
 
   useEffect(() => {
     if (!error) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowErrorAlert(false);
       return;
     }
@@ -102,150 +100,122 @@ export function AdminActivitesListe({
     return () => window.clearTimeout(timeout);
   }, [error]);
 
-  const renderActiviteCard = (activite: Activite) => (
+  const renderCard = (destination: AdminDestination) => (
     <div
-      key={activite.id}
+      key={destination.id}
       className="overflow-hidden rounded-2xl border border-border/50 bg-card/50 shadow-sm"
     >
       <div className="relative">
-        {activite.imagePrincipale ? (
-          <img
-            src={activite.imagePrincipale}
-            alt={activite.nom}
-            className="aspect-[16/9] w-full object-cover"
-          />
+        {destination.urlImagePrincipale ? (
+          <div className="w-full bg-muted/20 p-2">
+            <img
+              src={destination.urlImagePrincipale}
+              alt={destination.nom}
+              className="max-w-full max-h-80 h-auto rounded-md object-contain"
+            />
+          </div>
         ) : (
-          <div className="flex aspect-[16/9] w-full items-center justify-center bg-muted/40 text-sm text-muted-foreground">
+          <div className="flex h-32 w-full items-center justify-center bg-muted/40 text-sm text-muted-foreground">
             Aucune image
           </div>
         )}
         <span
           className={`absolute right-3 top-3 rounded-full px-2.5 py-1 text-xs font-medium shadow-sm ${
-            activite.estActif
+            destination.estActif
               ? "bg-emerald-100 text-emerald-700"
               : "bg-slate-200 text-slate-700"
           }`}
         >
-          {activite.estActif ? "Actif" : "Inactif"}
+          {destination.estActif ? "Actif" : "Inactif"}
         </span>
       </div>
 
       <div className="p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
-          <h3 className="text-lg font-semibold">{activite.nom}</h3>
+          <h3 className="text-lg font-semibold">{destination.nom}</h3>
           <p className="text-sm text-muted-foreground">
-            {activite.nomCategorie || "Categorie non renseignee"}
+            {destination.region || destination.district || "Localisation non renseignee"}
           </p>
         </div>
       </div>
 
       <p className="mt-3 line-clamp-3 text-sm text-muted-foreground">
-        {activite.description || "Aucune description"}
+        {destination.description || "Aucune description"}
       </p>
 
       <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
-        <span className="rounded-full bg-muted px-2.5 py-1">{activite.slug}</span>
+        <span className="rounded-full bg-muted px-2.5 py-1">{destination.slug}</span>
         <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1">
-          <Timer className="size-3.5" />
-          {activite.dureeHeures} h
+          <MapPin className="size-3.5" />
+          {destination.commune || destination.adresse || "Sans adresse"}
         </span>
         <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1">
-          <Users className="size-3.5" />
-          {activite.participantMin} - {activite.participantsMax}
+          <Star className="size-3.5" />
+          {destination.nombreEtoiles ?? 0} etoile(s)
         </span>
       </div>
 
-      {activite.equipementsFournis.length > 0 ? (
-        <div className="mt-4 flex flex-wrap gap-2">
-          {activite.equipementsFournis.map((equipement) => (
-            <span
-              key={`${activite.id}-${equipement}`}
-              className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs text-emerald-700"
-            >
-              {equipement}
-            </span>
-          ))}
-        </div>
-      ) : null}
-
       <div className="mt-5 flex flex-wrap gap-2">
-        <Button size="sm" variant="outline" onClick={() => onEdit(activite.id)}>
+        <Button size="sm" variant="outline" onClick={() => onEdit(destination.id)}>
           <Pencil className="size-4" />
           Modifier
         </Button>
         <Button
           size="sm"
           variant="destructive"
-          onClick={() => onDelete(activite.id)}
-          disabled={isDeletingId === activite.id}
+          onClick={() => onDelete(destination.id)}
+          disabled={isDeletingId === destination.id}
         >
           <Trash2 className="size-4" />
-          {isDeletingId === activite.id ? "Suppression..." : "Supprimer"}
+          {isDeletingId === destination.id ? "Suppression..." : "Supprimer"}
         </Button>
       </div>
       </div>
     </div>
   );
 
-  const renderActiviteListItem = (activite: Activite) => (
+  const renderListItem = (destination: AdminDestination) => (
     <div
-      key={activite.id}
+      key={destination.id}
       className="flex items-center justify-between border-b border-border/50 p-4 last:border-0 hover:bg-muted/20"
     >
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-3">
-          <h3 className="truncate font-semibold">{activite.nom}</h3>
+          <h3 className="truncate font-semibold">{destination.nom}</h3>
           <span
             className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
-              activite.estActif
+              destination.estActif
                 ? "bg-emerald-100 text-emerald-700"
                 : "bg-slate-200 text-slate-700"
             }`}
           >
-            {activite.estActif ? "Actif" : "Inactif"}
+            {destination.estActif ? "Actif" : "Inactif"}
           </span>
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
-          <span>{activite.nomCategorie || "Categorie non renseignee"}</span>
+          <span>{destination.region || destination.district || "Region non renseignee"}</span>
           <span className="flex items-center gap-1">
-            <Timer className="size-3.5" />
-            {activite.dureeHeures} h
+            <MapPin className="size-3.5" />
+            {destination.commune || destination.adresse || "Sans adresse"}
           </span>
           <span className="flex items-center gap-1">
-            <Users className="size-3.5" />
-            {activite.participantMin} - {activite.participantsMax}
+            <Star className="size-3.5" />
+            {destination.nombreEtoiles ?? 0}
           </span>
-          <span className="max-w-[200px] truncate">{activite.slug}</span>
+          <span className="max-w-[200px] truncate">{destination.slug}</span>
         </div>
-        {activite.equipementsFournis.length > 0 ? (
-          <div className="mt-2 flex flex-wrap gap-1">
-            {activite.equipementsFournis.slice(0, 3).map((equipement) => (
-              <span
-                key={`${activite.id}-${equipement}`}
-                className="rounded-full bg-muted px-2 py-0.5 text-xs"
-              >
-                {equipement}
-              </span>
-            ))}
-            {activite.equipementsFournis.length > 3 ? (
-              <span className="text-xs text-muted-foreground">
-                +{activite.equipementsFournis.length - 3}
-              </span>
-            ) : null}
-          </div>
-        ) : null}
       </div>
 
       <div className="ml-4 flex shrink-0 gap-2">
-        <Button size="sm" variant="outline" onClick={() => onEdit(activite.id)}>
+        <Button size="sm" variant="outline" onClick={() => onEdit(destination.id)}>
           <Pencil className="size-4" />
         </Button>
         <Button
           size="sm"
           variant="destructive"
-          onClick={() => onDelete(activite.id)}
-          disabled={isDeletingId === activite.id}
+          onClick={() => onDelete(destination.id)}
+          disabled={isDeletingId === destination.id}
         >
           <Trash2 className="size-4" />
         </Button>
@@ -258,35 +228,35 @@ export function AdminActivitesListe({
       return <p className="text-sm text-muted-foreground">Chargement...</p>;
     }
 
-    if (activites.length === 0) {
+    if (destinations.length === 0) {
       return (
         <p className="text-sm text-muted-foreground">
-          Aucune activite disponible.
+          Aucune destination disponible.
         </p>
       );
     }
 
     if (viewMode === "cards") {
-      return <div className="grid gap-4 md:grid-cols-2">{activites.map(renderActiviteCard)}</div>;
+      return <div className="grid gap-4 md:grid-cols-2">{destinations.map(renderCard)}</div>;
     }
 
     if (viewMode === "list") {
-      return <div className="divide-y divide-border/50">{activites.map(renderActiviteListItem)}</div>;
+      return <div className="divide-y divide-border/50">{destinations.map(renderListItem)}</div>;
     }
 
-    return <HebergementsOverviewMap items={activites} />;
+    return <HebergementsOverviewMap items={destinations} />;
   }
 
   function getCardDescription() {
     if (viewMode === "cards") {
-      return `${activites.length} activite(s) en mode cartes`;
+      return `${destinations.length} destination(s) en mode cartes`;
     }
 
     if (viewMode === "list") {
-      return `${activites.length} activite(s) en mode liste`;
+      return `${destinations.length} destination(s) en mode liste`;
     }
 
-    return `Visualisation des ${activites.length} activites sur la carte`;
+    return `Visualisation des ${destinations.length} destinations sur la carte`;
   }
 
   return (
@@ -294,7 +264,7 @@ export function AdminActivitesListe({
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Activites
+            Destinations
           </h1>
         </div>
 

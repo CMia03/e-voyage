@@ -52,11 +52,39 @@ export function getActivite(id: string, token?: string) {
   );
 }
 
+function buildActiviteFormData(payload: SaveActivitePayload) {
+  const formData = new FormData();
+  formData.append("nom", payload.nom);
+  formData.append("slug", payload.slug);
+  formData.append("description", payload.description);
+  formData.append("imagePrincipale", payload.imagePrincipale);
+  formData.append("dureeHeures", String(payload.dureeHeures));
+  formData.append("participantMin", String(payload.participantMin));
+  formData.append("participantsMax", payload.participantsMax);
+  formData.append("niveauxDeDifficulte", payload.niveauxDeDifficulte);
+  formData.append("latitude", String(payload.latitude));
+  formData.append("longitude", String(payload.longitude));
+  formData.append("estActif", String(payload.estActif));
+  formData.append("idCategorie", payload.idCategorie);
+
+  payload.equipementsFournis.forEach((equipement) => {
+    formData.append("equipementsFournis", equipement);
+  });
+
+  if (payload.imageFile) {
+    formData.append("imageFile", payload.imageFile);
+  }
+
+  return formData;
+}
+
 export function createActivite(payload: SaveActivitePayload, token?: string) {
+  const body = payload.imageFile ? buildActiviteFormData(payload) : payload;
+
   return apiRequest<ApiDataEnvelope<Activite>>("/api/activites", {
     method: "POST",
     token,
-    body: payload,
+    body,
   });
 }
 
@@ -65,12 +93,14 @@ export function updateActivite(
   payload: SaveActivitePayload,
   token?: string
 ) {
+  const body = payload.imageFile ? buildActiviteFormData(payload) : payload;
+
   return apiRequestWithFallback<ApiDataEnvelope<Activite>>(
     [`/api/activiters/${id}`, `/api/activites/${id}`],
     {
       method: "PUT",
       token,
-      body: payload,
+      body,
     }
   );
 }

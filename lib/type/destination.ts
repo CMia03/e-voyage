@@ -26,3 +26,47 @@ export interface DestinationDetails {
     infoPhone?: string;
   };
 }
+
+export type PhotoDestination = {
+  id: string;
+  titre: string;
+  description: string;
+  ordreAffichage: number;
+  url: string;
+  estPrincipale: boolean;
+};
+
+export type AdminDestination = {
+  id: string;
+  nom: string;
+  slug: string;
+  description: string;
+  adresse: string;
+  urlImagePrincipale: string;
+  latitude: number;
+  longitude: number;
+  nombreEtoiles: number;
+  estActif: boolean;
+  dateCreation?: string;
+  dateModification?: string;
+  region: string;
+  district: string;
+  commune: string;
+  photos: PhotoDestination[];
+};
+
+export type SaveDestinationPayload = {
+  nom: string;
+  slug: string;
+  description: string;
+  adresse: string;
+  urlImagePrincipale: string;
+  imageFile?: File | null;
+  latitude: number;
+  longitude: number;
+  nombreEtoiles: number;
+  estActif: boolean;
+  region: string;
+  district: string;
+  commune: string;
+};

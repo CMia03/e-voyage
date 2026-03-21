@@ -104,17 +104,24 @@ export function AdminHebergementsListe({
   const renderHebergementCard = (hebergement: Hebergement) => (
     <div
       key={hebergement.id}
-      className="rounded-2xl border border-border/50 bg-card/50 p-4 shadow-sm"
+      className="overflow-hidden rounded-2xl border border-border/50 bg-card/50 shadow-sm"
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="space-y-1">
-          <h3 className="text-lg font-semibold">{hebergement.nom}</h3>
-          <p className="text-sm text-muted-foreground">
-            {hebergement.nomTypeHebergement || "Type non renseigne"}
-          </p>
-        </div>
+      <div className="relative">
+        {hebergement.urlImagePrincipale ? (
+          <div className="w-full bg-muted/20 p-2">
+            <img
+              src={hebergement.urlImagePrincipale}
+              alt={hebergement.nom}
+              className="max-w-full max-h-80 h-auto rounded-md object-contain"
+            />
+          </div>
+        ) : (
+          <div className="flex h-32 w-full items-center justify-center bg-muted/40 text-sm text-muted-foreground">
+            Aucune image
+          </div>
+        )}
         <span
-          className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+          className={`absolute right-3 top-3 rounded-full px-2.5 py-1 text-xs font-medium shadow-sm ${
             hebergement.estActif
               ? "bg-emerald-100 text-emerald-700"
               : "bg-slate-200 text-slate-700"
@@ -122,6 +129,16 @@ export function AdminHebergementsListe({
         >
           {hebergement.estActif ? "Actif" : "Inactif"}
         </span>
+      </div>
+
+      <div className="p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="space-y-1">
+          <h3 className="text-lg font-semibold">{hebergement.nom}</h3>
+          <p className="text-sm text-muted-foreground">
+            {hebergement.nomTypeHebergement || "Type non renseigne"}
+          </p>
+        </div>
       </div>
 
       <p className="mt-3 line-clamp-3 text-sm text-muted-foreground">
@@ -168,6 +185,7 @@ export function AdminHebergementsListe({
           <Trash2 className="size-4" />
           {isDeletingId === hebergement.id ? "Suppression..." : "Supprimer"}
         </Button>
+      </div>
       </div>
     </div>
   );

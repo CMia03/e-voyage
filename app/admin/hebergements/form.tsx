@@ -37,6 +37,7 @@ export type HebergementFormState = {
   description: string;
   adresse: string;
   urlImagePrincipale: string;
+  imageFile: File | null;
   latitude: string;
   longitude: string;
   nombreEtoiles: string;
@@ -151,11 +152,20 @@ export function HebergementForm({
         <div className="space-y-2 md:col-span-2">
           <label className="text-sm font-medium">Image principale</label>
           <Input
+            type="file"
+            accept="image/*"
+            onChange={(event) =>
+              onUpdate("imageFile", event.target.files?.[0] ?? null)
+            }
+          />
+          <Input
             value={form.urlImagePrincipale}
             onChange={(event) => onUpdate("urlImagePrincipale", event.target.value)}
-            placeholder="https://..."
-            required
+            placeholder="https://... (optionnel si fichier choisi)"
           />
+          <p className="text-xs text-muted-foreground">
+            Choisis un fichier pour l&apos;upload Cloudinary, ou colle une URL existante.
+          </p>
         </div>
 
         <div className="space-y-2">

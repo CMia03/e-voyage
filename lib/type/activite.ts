@@ -22,6 +22,7 @@ export type SaveActivitePayload = {
   slug: string;
   description: string;
   imagePrincipale: string;
+  imageFile?: File | null;
   dureeHeures: number;
   participantMin: number;
   participantsMax: string;

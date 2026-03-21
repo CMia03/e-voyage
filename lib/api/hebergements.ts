@@ -22,14 +22,43 @@ export function getHebergement(id: string, token?: string) {
   });
 }
 
+function buildHebergementFormData(payload: SaveHebergementPayload) {
+  const formData = new FormData();
+  formData.append("nom", payload.nom);
+  formData.append("slug", payload.slug);
+  formData.append("description", payload.description);
+  formData.append("adresse", payload.adresse);
+  formData.append("urlImagePrincipale", payload.urlImagePrincipale);
+  formData.append("latitude", String(payload.latitude));
+  formData.append("longitude", String(payload.longitude));
+  formData.append("nombreEtoiles", String(payload.nombreEtoiles));
+  formData.append("telephone", payload.telephone);
+  formData.append("email", payload.email);
+  formData.append("siteWeb", payload.siteWeb);
+  formData.append("estActif", String(payload.estActif));
+  formData.append("idTypeHebergement", payload.idTypeHebergement);
+
+  payload.idsPlus.forEach((idPlus) => {
+    formData.append("idsPlus", idPlus);
+  });
+
+  if (payload.imageFile) {
+    formData.append("imageFile", payload.imageFile);
+  }
+
+  return formData;
+}
+
 export function createHebergement(
   payload: SaveHebergementPayload,
   token?: string
 ) {
+  const body = payload.imageFile ? buildHebergementFormData(payload) : payload;
+
   return apiRequest<ApiDataEnvelope<Hebergement>>("/api/hebergements", {
     method: "POST",
     token,
-    body: payload,
+    body,
   });
 }
 
@@ -38,10 +67,12 @@ export function updateHebergement(
   payload: SaveHebergementPayload,
   token?: string
 ) {
+  const body = payload.imageFile ? buildHebergementFormData(payload) : payload;
+
   return apiRequest<ApiDataEnvelope<Hebergement>>(`/api/hebergements/${id}`, {
     method: "PUT",
     token,
-    body: payload,
+    body,
   });
 }
 

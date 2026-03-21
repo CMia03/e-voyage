@@ -15,6 +15,8 @@ import Link from "next/link";
 type AdminSection =
   | "dashboard"
   | "destinations"
+  | "destinations-create"
+  | "destinations-edit"
   | "activites"
   | "activites-create"
   | "activites-edit"
@@ -23,10 +25,16 @@ type AdminSection =
   | "hebergements-create"
   | "hebergements-edit"
   | "hebergements-types"
-  | "hebergements-equipements";
+  | "hebergements-equipements"
+  | "utilisateurs"
+  | "reservations"
+  | "avis"
+  | "notifications"
+  | "statistiques";
 
 export default function AdminPage() {
   const [active, setActive] = useState<AdminSection>("dashboard");
+  const [selectedDestinationId, setSelectedDestinationId] = useState<string | null>(null);
   const [selectedActiviteId, setSelectedActiviteId] = useState<string | null>(null);
   const [selectedHebergementId, setSelectedHebergementId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -92,6 +100,24 @@ export default function AdminPage() {
         <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8">
           {active === "dashboard" ? (
             <AdminDashboard accessToken={accessToken ?? ""} role={role} />
+          ) : active === "destinations" ? (
+            <AdminDestinations
+              accessToken={accessToken ?? ""}
+              initialView="liste"
+              onRequestCreate={() => setActive("destinations-create")}
+              onRequestEdit={(id) => {
+                setSelectedDestinationId(id);
+                setActive("destinations-edit");
+              }}
+            />
+          ) : active === "destinations-create" ? (
+            <AdminDestinations accessToken={accessToken ?? ""} initialView="creation" />
+          ) : active === "destinations-edit" ? (
+            <AdminDestinations
+              accessToken={accessToken ?? ""}
+              initialView="modif"
+              editId={selectedDestinationId}
+            />
           ) : active === "activites" ? (
             <AdminActivites
               accessToken={accessToken ?? ""}
@@ -138,7 +164,7 @@ export default function AdminPage() {
               initialView="equipements"
             />
           ) : (
-            <AdminDestinations />
+            <AdminDestinations accessToken={accessToken ?? ""} initialView="liste" />
           )}
         </main>
       </div>

@@ -1,13 +1,15 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 
 type AdminSection =
   | "dashboard"
   | "destinations"
+  | "destinations-create"
+  | "destinations-edit"
   | "hebergements"
   | "hebergements-create"
+  | "hebergements-edit"
   | "hebergements-types"
   | "hebergements-equipements"
   | "activites"
@@ -78,10 +80,15 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               </button>
               <button
                 type="button"
-                className="flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
+                onClick={() => onSelect("destinations-create")}
+                className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm ${
+                  active === "destinations-create"
+                    ? "bg-emerald-500/10 font-medium text-emerald-600"
+                    : "text-muted-foreground hover:bg-primary/10"
+                }`}
               >
                 <span className="mr-2">•</span>
-                <Link href="/admin/addDestination">Ajouter une destination</Link>
+                Ajouter destination
               </button>
             </div>
           ) : null}
@@ -181,7 +188,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
           ) : null}
         </div>
 
-        <button
+        {/* <button
           type="button"
           onClick={() => onSelect("utilisateurs")}
           className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm ${
@@ -191,7 +198,9 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
           }`}
         >
           Utilisateurs
-        </button>
+        </button> */}
+
+        
       </nav>
     </aside>
   );

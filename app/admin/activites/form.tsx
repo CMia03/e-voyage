@@ -33,6 +33,7 @@ export type ActiviteFormState = {
   slug: string;
   description: string;
   imagePrincipale: string;
+  imageFile: File | null;
   dureeHeures: string;
   participantMin: string;
   participantsMax: string;
@@ -127,11 +128,20 @@ export function ActiviteForm({
         <div className="space-y-2 md:col-span-2">
           <label className="text-sm font-medium">Image principale</label>
           <Input
+            type="file"
+            accept="image/*"
+            onChange={(event) =>
+              onUpdate("imageFile", event.target.files?.[0] ?? null)
+            }
+          />
+          <Input
             value={form.imagePrincipale}
             onChange={(event) => onUpdate("imagePrincipale", event.target.value)}
-            placeholder="https://..."
-            required
+            placeholder="https://... (optionnel si fichier choisi)"
           />
+          <p className="text-xs text-muted-foreground">
+            Choisis un fichier pour l&apos;upload Cloudinary, ou colle une URL existante.
+          </p>
         </div>
 
         <div className="space-y-2">

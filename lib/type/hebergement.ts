@@ -26,6 +26,7 @@ export type SaveHebergementPayload = {
   description: string;
   adresse: string;
   urlImagePrincipale: string;
+  imageFile?: File | null;
   latitude: number;
   longitude: number;
   nombreEtoiles: number;
