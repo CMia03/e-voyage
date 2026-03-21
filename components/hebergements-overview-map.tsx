@@ -14,6 +14,7 @@ type MapHebergement = {
   adresse?: string;
   description?: string;
   urlImagePrincipale?: string;
+  imagePrincipale?: string;
 };
 
 type HebergementsOverviewMapProps = {
@@ -75,10 +76,10 @@ export function HebergementsOverviewMap({
           >
             <Popup>
               <div className="w-[180px] space-y-2 sm:w-[200px]">
-                {item.urlImagePrincipale ? (
+                {item.urlImagePrincipale || item.imagePrincipale ? (
                   <div className="flex aspect-[4/3] w-full items-center justify-center rounded-md bg-slate-100 p-1">
                     <img
-                      src={item.urlImagePrincipale}
+                      src={item.urlImagePrincipale ?? item.imagePrincipale}
                       alt={item.nom}
                       className="h-full w-full rounded object-contain"
                     />
