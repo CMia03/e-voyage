@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   CheckCircle2,
@@ -157,6 +158,9 @@ export function AdminDestinationListe({
       </div>
 
       <div className="mt-5 flex flex-wrap gap-2">
+        <Button asChild size="sm" variant="secondary">
+          <Link href={`/admin/destination/${destination.id}`}>Voir details</Link>
+        </Button>
         <Button size="sm" variant="outline" onClick={() => onEdit(destination.id)}>
           <Pencil className="size-4" />
           Modifier
@@ -208,6 +212,9 @@ export function AdminDestinationListe({
       </div>
 
       <div className="ml-4 flex shrink-0 gap-2">
+        <Button asChild size="sm" variant="secondary">
+          <Link href={`/admin/destination/${destination.id}`}>Details</Link>
+        </Button>
         <Button size="sm" variant="outline" onClick={() => onEdit(destination.id)}>
           <Pencil className="size-4" />
         </Button>

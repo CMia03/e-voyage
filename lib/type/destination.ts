@@ -34,6 +34,16 @@ export type PhotoDestination = {
   ordreAffichage: number;
   url: string;
   estPrincipale: boolean;
+  dateObtenir?: string;
+};
+
+export type PhotoDestinationGroup = {
+  titre: string;
+  description: string;
+  ordreAffichage: number;
+  estPrincipale: boolean;
+  dateObtenir?: string;
+  images: PhotoDestination[];
 };
 
 export type AdminDestination = {
@@ -52,7 +62,7 @@ export type AdminDestination = {
   region: string;
   district: string;
   commune: string;
-  photos: PhotoDestination[];
+  photos: PhotoDestinationGroup[];
 };
 
 export type SaveDestinationPayload = {
@@ -69,4 +79,13 @@ export type SaveDestinationPayload = {
   region: string;
   district: string;
   commune: string;
+};
+
+export type SavePhotoDestinationBulkPayload = {
+  titre: string;
+  description: string;
+  ordreAffichage: number;
+  estPrincipale: boolean;
+  dateObtenir: string;
+  imageFiles: File[];
 };

@@ -2,6 +2,7 @@ import { apiRequest, ApiEnvelope } from "@/lib/api/client";
 import {
   AdminDestination,
   DestinationDetails,
+  SavePhotoDestinationBulkPayload,
   SaveDestinationPayload,
 } from "@/lib/type/destination";
 
@@ -110,5 +111,28 @@ export function deleteAdminDestination(id: string, token?: string) {
   return apiRequest<ApiEnvelope>(`/api/destinations/${id}`, {
     method: "DELETE",
     token,
+  });
+}
+
+function buildPhotoDestinationBulkFormData(payload: SavePhotoDestinationBulkPayload) {
+  const formData = new FormData();
+  formData.append("titre", payload.titre);
+  formData.append("description", payload.description);
+  formData.append("ordreAffichage", String(payload.ordreAffichage));
+  formData.append("estPrincipale", String(payload.estPrincipale));
+  formData.append("dateObtenir", payload.dateObtenir);
+  payload.imageFiles.forEach((file) => formData.append("imageFiles", file));
+  return formData;
+}
+
+export function createDestinationPhotosBulk(
+  destinationId: string,
+  payload: SavePhotoDestinationBulkPayload,
+  token?: string
+) {
+  return apiRequest<ApiEnvelope>(`/api/destinations/${destinationId}/photos/multiple`, {
+    method: "POST",
+    token,
+    body: buildPhotoDestinationBulkFormData(payload),
   });
 }
