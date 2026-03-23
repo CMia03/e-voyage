@@ -21,6 +21,44 @@ export class ApiError extends Error {
   }
 }
 
+function extractErrorMessage(payload: unknown): string | undefined {
+  if (!payload) return undefined;
+
+  if (typeof payload === "string") {
+    return payload.trim() || undefined;
+  }
+
+  if (typeof payload !== "object") {
+    return undefined;
+  }
+
+  const candidate = payload as {
+    message?: unknown;
+    error?: unknown;
+    errors?: unknown;
+  };
+
+  if (typeof candidate.message === "string" && candidate.message.trim()) {
+    return candidate.message;
+  }
+
+  if (typeof candidate.error === "string" && candidate.error.trim()) {
+    return candidate.error;
+  }
+
+  if (candidate.errors && typeof candidate.errors === "object") {
+    const firstError = Object.values(candidate.errors as Record<string, unknown>).find(
+      (value) => typeof value === "string" && value.trim()
+    );
+
+    if (typeof firstError === "string") {
+      return firstError;
+    }
+  }
+
+  return undefined;
+}
+
 type RequestOptions = {
   method?: string;
   headers?: Record<string, string>;
@@ -69,7 +107,7 @@ export async function apiRequest<T = ApiEnvelope>(
     const payload = response.data;
 
     if (payload && (payload as ApiEnvelope)?.success === false) {
-      const message = payload.message || "Request failed";
+      const message = extractErrorMessage(payload) || "Request failed";
       throw new ApiError(message, response.status, payload);
     }
 
@@ -77,8 +115,9 @@ export async function apiRequest<T = ApiEnvelope>(
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       const payload = error.response.data;
-      const message = 
-        (payload as ApiEnvelope | null)?.message || 
+      const message =
+        extractErrorMessage(payload) ||
+        error.message ||
         `Request failed with status ${error.response.status}`;
       throw new ApiError(message, error.response.status, payload);
     }
@@ -93,10 +132,12 @@ export async function apiRequest<T = ApiEnvelope>(
 }
 
 export function getErrorMessage(error: unknown, fallback: string) {
-  if (error instanceof ApiError) return error.message || fallback;
-  if (error && typeof error === "object" && "message" in error) {
-    const message = (error as { message?: string }).message;
-    return message || fallback;
+  if (error instanceof ApiError) {
+    return error.message || extractErrorMessage(error.data) || fallback;
+  }
+  if (error && typeof error === "object") {
+    const directMessage = extractErrorMessage(error);
+    if (directMessage) return directMessage;
   }
   return fallback;
 }

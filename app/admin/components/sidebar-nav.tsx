@@ -10,6 +10,7 @@ type AdminSection =
   | "hebergements"
   | "hebergements-create"
   | "hebergements-edit"
+  | "hebergements-tarifs"
   | "hebergements-types"
   | "hebergements-equipements"
   | "activites"
@@ -131,6 +132,18 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
                 <span className="mr-2">•</span>
                 Ajouter un hebergement
               </button>
+              <button
+                type="button"
+                onClick={() => onSelect("hebergements-tarifs")}
+                className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm ${
+                  active === "hebergements-tarifs"
+                    ? "bg-emerald-500/10 font-medium text-emerald-600"
+                    : "text-muted-foreground hover:bg-primary/10"
+                }`}
+              >
+                <span className="mr-2">•</span>
+                Tarifs chambres
+              </button>
             </div>
           ) : null}
         </div>
@@ -187,18 +200,6 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
             </div>
           ) : null}
         </div>
-
-        {/* <button
-          type="button"
-          onClick={() => onSelect("utilisateurs")}
-          className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm ${
-            active === "utilisateurs"
-              ? "bg-emerald-500/10 font-medium text-emerald-600"
-              : "text-muted-foreground hover:bg-primary/10"
-          }`}
-        >
-          Utilisateurs
-        </button> */}
 
         
       </nav>

@@ -24,6 +24,7 @@ type AdminSection =
   | "hebergements"
   | "hebergements-create"
   | "hebergements-edit"
+  | "hebergements-tarifs"
   | "hebergements-types"
   | "hebergements-equipements"
   | "utilisateurs"
@@ -150,6 +151,8 @@ export default function AdminPage() {
             />
           ) : active === "hebergements-create" ? (
             <AdminHebergements accessToken={accessToken ?? ""} initialView="creation" />
+          ) : active === "hebergements-tarifs" ? (
+            <AdminHebergements accessToken={accessToken ?? ""} initialView="tarifs" />
           ) : active === "hebergements-edit" ? (
             <AdminHebergements
               accessToken={accessToken ?? ""}

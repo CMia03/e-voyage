@@ -6,8 +6,10 @@ import {
   createHebergement,
   createHebergementEquipement,
   createHebergementType,
+  deleteTarifHebergement,
   deleteHebergement,
   getHebergement,
+  listTarifsHebergements,
   listHebergementEquipements,
   listHebergementTypes,
   listHebergements,
@@ -18,6 +20,7 @@ import {
   EquipementHebergement,
   Hebergement,
   SaveHebergementPayload,
+  TarifHebergement,
   TypeHebergement,
 } from "@/lib/type/hebergement";
 
@@ -25,11 +28,12 @@ import { AdminHebergementsCreation } from "./creation";
 import { HebergementFormState } from "./form";
 import { AdminHebergementsListe } from "./liste";
 import { AdminHebergementsModif } from "./modif";
+import { AdminHebergementsTarifs } from "./tarifs";
 import { AdminHebergementsTaxonomies } from "./taxonomies";
 
 type AdminHebergementsProps = {
   accessToken: string;
-  initialView?: "liste" | "creation" | "modif" | "types" | "equipements";
+  initialView?: "liste" | "creation" | "modif" | "types" | "equipements" | "tarifs";
   onRequestCreate?: () => void;
   onRequestEdit?: (id: string) => void;
   editId?: string | null;
@@ -111,6 +115,7 @@ export function AdminHebergements({
   editId = null,
 }: AdminHebergementsProps) {
   const [hebergements, setHebergements] = useState<Hebergement[]>([]);
+  const [tarifs, setTarifs] = useState<TarifHebergement[]>([]);
   const [types, setTypes] = useState<TypeHebergement[]>([]);
   const [equipements, setEquipements] = useState<EquipementHebergement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -119,7 +124,7 @@ export function AdminHebergements({
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [mode, setMode] = useState<
-    "liste" | "creation" | "modif" | "types" | "equipements"
+    "liste" | "creation" | "modif" | "types" | "equipements" | "tarifs"
   >(initialView);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<HebergementFormState>(initialFormState);
@@ -149,6 +154,20 @@ export function AdminHebergements({
     }
   }, [accessToken]);
 
+  const loadTarifs = useCallback(async () => {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const tarifsResponse = await listTarifsHebergements(accessToken);
+      setTarifs(tarifsResponse.data ?? []);
+    } catch (loadError) {
+      setError(getErrorMessage(loadError, "Impossible de charger les tarifs"));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [accessToken]);
+
   const loadTaxonomies = useCallback(async () => {
     try {
       const [typesResponse, equipementsResponse] = await Promise.all([
@@ -167,8 +186,12 @@ export function AdminHebergements({
 
   useEffect(() => {
     if (!accessToken) return;
+    if (mode === "tarifs") {
+      loadTarifs();
+      return;
+    }
     loadHebergements();
-  }, [accessToken, loadHebergements]);
+  }, [accessToken, loadHebergements, loadTarifs, mode]);
 
   useEffect(() => {
     if (initialView === "creation") {
@@ -182,7 +205,11 @@ export function AdminHebergements({
       return;
     }
 
-    if (initialView === "types" || initialView === "equipements") {
+    if (
+      initialView === "types" ||
+      initialView === "equipements" ||
+      initialView === "tarifs"
+    ) {
       setMode(initialView);
       return;
     }
@@ -323,6 +350,31 @@ export function AdminHebergements({
     }
   }
 
+  async function handleDeleteTarif(id: string) {
+    const confirmed = window.confirm("Supprimer ce tarif ?");
+    if (!confirmed) return;
+
+    setIsDeletingId(id);
+    setError("");
+    setSuccessMessage("");
+
+    try {
+      await deleteTarifHebergement(id, accessToken);
+      setTarifs((current) => current.filter((item) => item.id !== id));
+      setHebergements((current) =>
+        current.map((item) => ({
+          ...item,
+          tarifs: item.tarifs.filter((tarif) => tarif.id !== id),
+        }))
+      );
+      setSuccessMessage("Tarif supprime avec succes.");
+    } catch (deleteError) {
+      setError(getErrorMessage(deleteError, "Impossible de supprimer le tarif"));
+    } finally {
+      setIsDeletingId(null);
+    }
+  }
+
   async function handleCreateType() {
     if (!newTypeName.trim()) return;
     setTaxonomyMessage("");
@@ -415,6 +467,16 @@ export function AdminHebergements({
           onEquipementNameChange={setNewEquipementName}
           onCreateType={handleCreateType}
           onCreateEquipement={handleCreateEquipement}
+        />
+      ) : null}
+
+      {mode === "tarifs" ? (
+        <AdminHebergementsTarifs
+          tarifs={tarifs}
+          isLoading={isLoading}
+          isDeletingId={isDeletingId}
+          onRefresh={loadTarifs}
+          onDelete={handleDeleteTarif}
         />
       ) : null}
 

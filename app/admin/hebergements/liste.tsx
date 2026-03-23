@@ -1,9 +1,11 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { 
   CheckCircle2, 
+  Eye,
   Pencil, 
   Plus, 
   RefreshCcw, 
@@ -172,6 +174,12 @@ export function AdminHebergementsListe({
       ) : null}
 
       <div className="mt-5 flex flex-wrap gap-2">
+        <Button asChild size="sm" variant="outline">
+          <Link href={`/admin/hebergements/${hebergement.id}`}>
+            <Eye className="size-4" />
+            Voir details
+          </Link>
+        </Button>
         <Button size="sm" variant="outline" onClick={() => onEdit(hebergement.id)}>
           <Pencil className="size-4" />
           Modifier
@@ -235,6 +243,11 @@ export function AdminHebergementsListe({
         )}
       </div>
       <div className="flex gap-2 ml-4 shrink-0">
+        <Button asChild size="sm" variant="outline">
+          <Link href={`/admin/hebergements/${hebergement.id}`}>
+            <Eye className="size-4" />
+          </Link>
+        </Button>
         <Button size="sm" variant="outline" onClick={() => onEdit(hebergement.id)}>
           <Pencil className="size-4" />
         </Button>
