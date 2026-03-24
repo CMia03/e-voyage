@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   CheckCircle2,
@@ -237,6 +238,9 @@ export function AdminActivitesListe({
                   ) : null}
 
                   <div className="mt-5 flex flex-wrap gap-2">
+                    <Button size="sm" asChild>
+                      <Link href={`/admin/activites/${activite.id}`}>Voir details</Link>
+                    </Button>
                     <Button size="sm" variant="outline" onClick={() => onEdit(activite.id)}>
                       <Pencil className="size-4" />
                       Modifier

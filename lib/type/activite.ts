@@ -15,6 +15,8 @@ export type Activite = {
   idCategorie: string;
   nomCategorie: string;
   equipementsFournis: string[];
+  tarifs: TarifActivite[];
+  photos: PhotoActivite[];
 };
 
 export type SaveActivitePayload = {
@@ -39,4 +41,40 @@ export type CategorieActivite = {
   nom: string;
   dateCreation: string;
   dateModification: string;
+};
+
+export type TarifActivite = {
+  id: string;
+  categorieAge: string | null;
+  prixParPersonne: number | null;
+  prixParHeur: number | null;
+  devise: string;
+  estActif: boolean;
+  dateValiditeDebut: string | null;
+  dateValiditeFin: string | null;
+  dateCreation: string;
+  dateModification: string | null;
+  idActivite: string;
+  nomActivite: string;
+};
+
+export type PhotoActivite = {
+  id: string;
+  urlImage: string;
+  idActivite: string;
+};
+
+export type SaveTarifActivitePayload = {
+  categorieAge: string;
+  prixParPersonne?: number | null;
+  prixParHeur?: number | null;
+  devise: string;
+  estActif: boolean;
+  dateValiditeDebut?: string;
+  dateValiditeFin?: string;
+  idActivite: string;
+};
+
+export type SavePhotoActivitePayload = {
+  imageFiles: File[];
 };

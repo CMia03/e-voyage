@@ -1,55 +1,28 @@
-import { ApiError, apiRequest } from "@/lib/api/client";
+import { apiRequest } from "@/lib/api/client";
 import {
   Activite,
   CategorieActivite,
+  PhotoActivite,
   SaveActivitePayload,
+  SavePhotoActivitePayload,
+  SaveTarifActivitePayload,
+  TarifActivite,
 } from "@/lib/type/activite";
 
 type ApiDataEnvelope<T> = {
   data?: T;
 };
 
-async function apiRequestWithFallback<T>(
-  paths: string[],
-  options?: {
-    method?: string;
-    token?: string;
-    body?: unknown;
-  }
-) {
-  let lastError: unknown;
-
-  for (const path of paths) {
-    try {
-      return await apiRequest<T>(path, options);
-    } catch (error) {
-      lastError = error;
-
-      if (!(error instanceof ApiError)) {
-        throw error;
-      }
-
-      if (error.status === 403) {
-        throw error;
-      }
-    }
-  }
-
-  throw lastError;
-}
-
 export function listActivites(token?: string) {
-  return apiRequestWithFallback<ApiDataEnvelope<Activite[]>>(
-    ["/api/activiters", "/api/activites"],
-    { token }
-  );
+  return apiRequest<ApiDataEnvelope<Activite[]>>("/api/activites", {
+    token,
+  });
 }
 
 export function getActivite(id: string, token?: string) {
-  return apiRequestWithFallback<ApiDataEnvelope<Activite>>(
-    [`/api/activiters/${id}`, `/api/activites/${id}`],
-    { token }
-  );
+  return apiRequest<ApiDataEnvelope<Activite>>(`/api/activites/${id}`, {
+    token,
+  });
 }
 
 function buildActiviteFormData(payload: SaveActivitePayload) {
@@ -95,24 +68,18 @@ export function updateActivite(
 ) {
   const body = payload.imageFile ? buildActiviteFormData(payload) : payload;
 
-  return apiRequestWithFallback<ApiDataEnvelope<Activite>>(
-    [`/api/activiters/${id}`, `/api/activites/${id}`],
-    {
-      method: "PUT",
-      token,
-      body,
-    }
-  );
+  return apiRequest<ApiDataEnvelope<Activite>>(`/api/activites/${id}`, {
+    method: "PUT",
+    token,
+    body,
+  });
 }
 
 export function deleteActivite(id: string, token?: string) {
-  return apiRequestWithFallback<ApiDataEnvelope<string>>(
-    [`/api/activiters/${id}`, `/api/activites/${id}`],
-    {
-      method: "DELETE",
-      token,
-    }
-  );
+  return apiRequest<ApiDataEnvelope<string>>(`/api/activites/${id}`, {
+    method: "DELETE",
+    token,
+  });
 }
 
 export function listActiviteCategories(token?: string) {
@@ -133,4 +100,65 @@ export function createActiviteCategorie(nom: string, token?: string) {
       body: { nom },
     }
   );
+}
+
+export function listTarifsActivites(token?: string) {
+  return apiRequest<ApiDataEnvelope<TarifActivite[]>>("/api/activites/tarifs", {
+    token,
+  });
+}
+
+export function createTarifActivite(
+  payload: SaveTarifActivitePayload,
+  token?: string
+) {
+  return apiRequest<ApiDataEnvelope<TarifActivite>>("/api/activites/tarifs", {
+    method: "POST",
+    token,
+    body: payload,
+  });
+}
+
+export function updateTarifActivite(
+  id: string,
+  payload: SaveTarifActivitePayload,
+  token?: string
+) {
+  return apiRequest<ApiDataEnvelope<TarifActivite>>(`/api/activites/tarifs/${id}`, {
+    method: "PUT",
+    token,
+    body: payload,
+  });
+}
+
+export function deleteTarifActivite(id: string, token?: string) {
+  return apiRequest<ApiDataEnvelope<string>>(`/api/activites/tarifs/${id}`, {
+    method: "DELETE",
+    token,
+  });
+}
+
+function buildPhotoActiviteFormData(payload: SavePhotoActivitePayload) {
+  const formData = new FormData();
+  payload.imageFiles.forEach((file) => formData.append("imageFiles", file));
+  return formData;
+}
+
+export function createActivitePhotos(
+  activiteId: string,
+  payload: SavePhotoActivitePayload,
+  token?: string
+) {
+  return apiRequest<ApiDataEnvelope<PhotoActivite[]>>(`/api/activites/${activiteId}/photos`, {
+    method: "POST",
+    token,
+    body: buildPhotoActiviteFormData(payload),
+  });
+}
+
+export function deleteActivitePhoto(photoId: string, token?: string) {
+  return apiRequest<ApiDataEnvelope<string>>(`/api/activites/photos/${photoId}`, {
+    method: "DELETE",
+    token,
+  });
 }
