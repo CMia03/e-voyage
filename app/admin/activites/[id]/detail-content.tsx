@@ -30,7 +30,6 @@ type Props = { activiteId: string };
 
 type TarifFormState = {
   categorieAge: string;
-  prixParPersonne: string;
   prixParHeur: string;
   devise: string;
   estActif: boolean;
@@ -40,7 +39,6 @@ type TarifFormState = {
 
 const initialTarifForm: TarifFormState = {
   categorieAge: "",
-  prixParPersonne: "",
   prixParHeur: "",
   devise: "MGA",
   estActif: true,
@@ -141,8 +139,6 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
   function formFromTarif(tarif: TarifActivite): TarifFormState {
     return {
       categorieAge: tarif.categorieAge ?? "",
-      prixParPersonne:
-        tarif.prixParPersonne !== null && tarif.prixParPersonne !== undefined ? String(tarif.prixParPersonne) : "",
       prixParHeur: tarif.prixParHeur !== null && tarif.prixParHeur !== undefined ? String(tarif.prixParHeur) : "",
       devise: tarif.devise ?? "MGA",
       estActif: Boolean(tarif.estActif),
@@ -166,7 +162,7 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
   function buildTarifPayload(): SaveTarifActivitePayload {
     return {
       categorieAge: tarifForm.categorieAge,
-      prixParPersonne: tarifForm.prixParPersonne ? Number(tarifForm.prixParPersonne) : null,
+      prixParPersonne: null,
       prixParHeur: tarifForm.prixParHeur ? Number(tarifForm.prixParHeur) : null,
       devise: tarifForm.devise.trim() || "MGA",
       estActif: tarifForm.estActif,
@@ -397,14 +393,9 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                         <div className="space-y-2">
                           <h3 className="text-lg font-semibold">
-                            {tarif.prixParPersonne ? `${Number(tarif.prixParPersonne).toLocaleString("fr-FR")} ${tarif.devise} / pers` : "-"}
+                            {tarif.prixParHeur ? `${Number(tarif.prixParHeur).toLocaleString("fr-FR")} ${tarif.devise} / heure` : "-"}
                           </h3>
                           <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                            {tarif.prixParHeur ? (
-                              <span className="rounded-full bg-muted px-2.5 py-1">
-                                {Number(tarif.prixParHeur).toLocaleString("fr-FR")} {tarif.devise} / heure
-                              </span>
-                            ) : null}
                             <span className="rounded-full bg-muted px-2.5 py-1">
                               Categorie: {tarif.categorieAge || "-"}
                             </span>
@@ -501,16 +492,6 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Prix par personne</label>
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={tarifForm.prixParPersonne}
-                  onChange={(event) => updateTarifForm("prixParPersonne", event.target.value)}
-                />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Prix par heure</label>

@@ -199,6 +199,8 @@ export function AdminDestinationDetailContent({
         galleryElement.scrollIntoView({ behavior: "smooth", block: "start" });
       }
       setAction("");
+    } else if (value === "planning") {
+      router.push(`/admin/destination/${destinationId}/planning`);
     }
   }
 
@@ -235,9 +237,7 @@ export function AdminDestinationDetailContent({
                 <SelectContent>
                   <SelectItem value="add-image">📷 Ajouter des images</SelectItem>
                   <SelectItem value="gallery">🖼️ Voir la galerie</SelectItem>
-                  <SelectItem value="planning" disabled>
-                    📅 Créer planning (bientôt)
-                  </SelectItem>
+                  <SelectItem value="planning">📅 Planning voyage</SelectItem>
                 </SelectContent>
               </Select>
             </div>

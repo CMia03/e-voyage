@@ -88,7 +88,7 @@ export function ActiviteForm({
   return (
     <form className="space-y-8" onSubmit={onSubmit}>
       <section className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2">
+        <div className="space-y-2 md:col-span-2">
           <label className="text-sm font-medium">Nom</label>
           <Input
             value={form.nom}
@@ -100,16 +100,6 @@ export function ActiviteForm({
               }
             }}
             placeholder="Nom de l'activite"
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Slug</label>
-          <Input
-            value={form.slug}
-            onChange={(event) => onUpdate("slug", makeSlug(event.target.value))}
-            placeholder="activite-aventure"
             required
           />
         </div>

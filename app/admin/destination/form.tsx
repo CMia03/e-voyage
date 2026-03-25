@@ -61,7 +61,7 @@ export function DestinationForm({
   return (
     <form className="space-y-8" onSubmit={onSubmit}>
       <section className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2">
+        <div className="space-y-2 md:col-span-2">
           <label className="text-sm font-medium">Nom</label>
           <Input
             value={form.nom}
@@ -73,16 +73,6 @@ export function DestinationForm({
               }
             }}
             placeholder="Nom de la destination"
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Slug</label>
-          <Input
-            value={form.slug}
-            onChange={(event) => onUpdate("slug", makeSlug(event.target.value))}
-            placeholder="destination-exemple"
             required
           />
         </div>
@@ -216,9 +206,6 @@ export function DestinationForm({
           <div className="mt-3 space-y-2 text-sm text-muted-foreground">
             <p>
               <span className="font-medium text-foreground">Nom :</span> {form.nom || "-"}
-            </p>
-            <p>
-              <span className="font-medium text-foreground">Slug :</span> {form.slug || "-"}
             </p>
             <p>
               <span className="font-medium text-foreground">Region :</span> {form.region || "-"}

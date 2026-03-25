@@ -2,8 +2,14 @@ import { apiRequest, ApiEnvelope } from "@/lib/api/client";
 import {
   AdminDestination,
   DestinationDetails,
+  PlanificationVoyage,
   SavePhotoDestinationBulkPayload,
+  SavePlanificationVoyagePayload,
+  SaveTransportPayload,
+  SaveTypeTransportPayload,
   SaveDestinationPayload,
+  Transport,
+  TypeTransport,
 } from "@/lib/type/destination";
 
 type DestinationApiResponse =
@@ -134,5 +140,84 @@ export function createDestinationPhotosBulk(
     method: "POST",
     token,
     body: buildPhotoDestinationBulkFormData(payload),
+  });
+}
+
+export function listTypeTransports(token?: string) {
+  return apiRequest<ApiEnvelope<TypeTransport[]>>("/api/destinations/types-transport", {
+    token,
+  });
+}
+
+export function createTypeTransport(payload: SaveTypeTransportPayload, token?: string) {
+  return apiRequest<ApiEnvelope<TypeTransport>>("/api/destinations/types-transport", {
+    method: "POST",
+    token,
+    body: payload,
+  });
+}
+
+export function listPlanificationsByDestination(destinationId: string, token?: string) {
+  return apiRequest<ApiEnvelope<PlanificationVoyage[]>>(`/api/destinations/${destinationId}/planifications`, {
+    token,
+  });
+}
+
+export function getPlanificationVoyage(id: string, token?: string) {
+  return apiRequest<ApiEnvelope<PlanificationVoyage>>(`/api/destinations/planifications/${id}`, {
+    token,
+  });
+}
+
+export function createPlanificationVoyage(payload: SavePlanificationVoyagePayload, token?: string) {
+  return apiRequest<ApiEnvelope<PlanificationVoyage>>("/api/destinations/planifications", {
+    method: "POST",
+    token,
+    body: payload,
+  });
+}
+
+export function updatePlanificationVoyage(id: string, payload: SavePlanificationVoyagePayload, token?: string) {
+  return apiRequest<ApiEnvelope<PlanificationVoyage>>(`/api/destinations/planifications/${id}`, {
+    method: "PUT",
+    token,
+    body: payload,
+  });
+}
+
+export function deletePlanificationVoyage(id: string, token?: string) {
+  return apiRequest<ApiEnvelope>(`/api/destinations/planifications/${id}`, {
+    method: "DELETE",
+    token,
+  });
+}
+
+export function createTransport(payload: SaveTransportPayload, token?: string) {
+  return apiRequest<ApiEnvelope<Transport>>("/api/destinations/transports", {
+    method: "POST",
+    token,
+    body: payload,
+  });
+}
+
+export function updateTransport(id: string, payload: SaveTransportPayload, token?: string) {
+  return apiRequest<ApiEnvelope<Transport>>(`/api/destinations/transports/${id}`, {
+    method: "PUT",
+    token,
+    body: payload,
+  });
+}
+
+export function deleteTransport(id: string, token?: string) {
+  return apiRequest<ApiEnvelope>(`/api/destinations/transports/${id}`, {
+    method: "DELETE",
+    token,
+  });
+}
+
+export function calculateTransportRoute(id: string, token?: string) {
+  return apiRequest<ApiEnvelope<Transport>>(`/api/destinations/transports/${id}/calcul-trajet`, {
+    method: "POST",
+    token,
   });
 }

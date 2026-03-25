@@ -65,6 +65,48 @@ export type AdminDestination = {
   photos: PhotoDestinationGroup[];
 };
 
+export type TypeTransport = {
+  id: string;
+  nom: string;
+  dateCreation?: string;
+  dateModification?: string;
+};
+
+export type Transport = {
+  id: string;
+  ordreEtape: number | null;
+  depart: string;
+  arrivee: string;
+  longitudeDepart: number | null;
+  latitudeDepart: number | null;
+  longitudeArrivee: number | null;
+  latitudeArrivee: number | null;
+  duree: string;
+  distanceKm: number | null;
+  geojsonTrajet: string;
+  dateCreation?: string;
+  dateModification?: string;
+  idTypeTransport: string;
+  nomTypeTransport: string;
+  idPlanificationVoyage: string;
+};
+
+export type PlanificationVoyage = {
+  id: string;
+  nomPlanification: string;
+  budgetTotal: number | null;
+  deviseBudget: string;
+  dateHeureDebut: string | null;
+  depart: string;
+  dateHeureFin: string | null;
+  arriver: string;
+  dateCreation?: string;
+  dateModification?: string;
+  idDestination: string;
+  nomDestination: string;
+  transports: Transport[];
+};
+
 export type SaveDestinationPayload = {
   nom: string;
   slug: string;
@@ -88,4 +130,34 @@ export type SavePhotoDestinationBulkPayload = {
   estPrincipale: boolean;
   dateObtenir: string;
   imageFiles: File[];
+};
+
+export type SaveTypeTransportPayload = {
+  nom: string;
+};
+
+export type SavePlanificationVoyagePayload = {
+  nomPlanification: string;
+  budgetTotal?: number | null;
+  deviseBudget: string;
+  dateHeureDebut?: string;
+  depart: string;
+  dateHeureFin?: string;
+  arriver: string;
+  idDestination: string;
+};
+
+export type SaveTransportPayload = {
+  ordreEtape?: number | null;
+  depart: string;
+  arrivee: string;
+  longitudeDepart?: number | null;
+  latitudeDepart?: number | null;
+  longitudeArrivee?: number | null;
+  latitudeArrivee?: number | null;
+  duree: string;
+  distanceKm?: number | null;
+  geojsonTrajet?: string;
+  idTypeTransport: string;
+  idPlanificationVoyage: string;
 };
