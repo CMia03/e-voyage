@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PlanningVoyageCalendar } from "@/components/planning-voyage-calendar";
 import {
   calculateTransportRoute,
   createPlanificationVoyage,
@@ -685,6 +686,47 @@ export function AdminDestinationPlanningContent({ destinationId }: Props) {
                         </div>
                       ))}
                     </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="border-border/50">
+                <CardHeader>
+                  <CardTitle>Calendrier du voyage</CardTitle>
+                  <CardDescription>
+                    {selectedPlanification
+                      ? `Vue calendrier de ${selectedPlanification.nomPlanification}`
+                      : "Visualise les dates de tes planifications avec une vraie vue calendrier."}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <PlanningVoyageCalendar
+                    planifications={planifications}
+                    selectedPlanificationId={selectedPlanificationId}
+                    onSelectPlanification={setSelectedPlanificationId}
+                    initialDate={
+                      selectedPlanification?.dateHeureDebut
+                        ? new Date(selectedPlanification.dateHeureDebut)
+                        : undefined
+                    }
+                  />
+                  {selectedPlanification ? (
+                    <div className="rounded-xl border border-border/50 bg-card/50 px-4 py-3 text-sm">
+                      <p className="font-medium">{selectedPlanification.nomPlanification}</p>
+                      <p className="mt-1 text-muted-foreground">
+                        {selectedPlanification.dateHeureDebut
+                          ? new Date(selectedPlanification.dateHeureDebut).toLocaleString("fr-FR")
+                          : "Debut non renseigne"}
+                        {" -> "}
+                        {selectedPlanification.dateHeureFin
+                          ? new Date(selectedPlanification.dateHeureFin).toLocaleString("fr-FR")
+                          : "Fin non renseignee"}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Selectionne une planification pour voir sa periode directement dans le calendrier.
+                    </p>
                   )}
                 </CardContent>
               </Card>

@@ -175,3 +175,70 @@
   z-index: 0;
   font: inherit;
 }
+
+.planning-calendar .fc {
+  font-family: inherit;
+}
+
+.planning-calendar .fc-toolbar {
+  gap: 0.75rem;
+  margin-bottom: 1rem !important;
+}
+
+.planning-calendar .fc-toolbar-title {
+  font-size: 1rem !important;
+  font-weight: 600;
+}
+
+.planning-calendar .fc-button {
+  border-radius: 0.75rem !important;
+  border: 1px solid var(--border) !important;
+  background: var(--card) !important;
+  color: var(--foreground) !important;
+  box-shadow: none !important;
+  padding: 0.45rem 0.75rem !important;
+}
+
+.planning-calendar .fc-button:hover,
+.planning-calendar .fc-button:focus {
+  background: var(--accent) !important;
+  color: var(--accent-foreground) !important;
+}
+
+.planning-calendar .fc-button-primary:not(:disabled).fc-button-active {
+  background: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+  border-color: var(--primary) !important;
+}
+
+.planning-calendar .fc-theme-standard td,
+.planning-calendar .fc-theme-standard th,
+.planning-calendar .fc-theme-standard .fc-scrollgrid {
+  border-color: color-mix(in oklab, var(--border) 85%, transparent) !important;
+}
+
+.planning-calendar .fc-col-header-cell {
+  background: color-mix(in oklab, var(--muted) 70%, transparent);
+}
+
+.planning-calendar .fc-daygrid-day-frame,
+.planning-calendar .fc-timegrid-slot {
+  background: color-mix(in oklab, var(--card) 92%, transparent);
+}
+
+.planning-calendar .fc-event {
+  border: none !important;
+  border-radius: 0.75rem !important;
+  padding: 0.2rem 0.4rem !important;
+}
+
+.planning-calendar .planning-event {
+  background: color-mix(in oklab, var(--chart-2) 72%, white) !important;
+  color: white !important;
+}
+
+.planning-calendar .planning-event-selected {
+  background: color-mix(in oklab, var(--primary) 88%, black) !important;
+  color: var(--primary-foreground) !important;
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--primary) 35%, transparent);
+}

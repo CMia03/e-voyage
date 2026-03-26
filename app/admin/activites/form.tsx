@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -84,6 +84,17 @@ export function ActiviteForm({
   isEditing = false,
 }: ActiviteFormProps) {
   const [showCategoryCreator, setShowCategoryCreator] = useState(false);
+  const [imagePreview, setImagePreview] = useState("");
+
+  useEffect(() => {
+    if (form.imageFile) {
+      const objectUrl = URL.createObjectURL(form.imageFile);
+      setImagePreview(objectUrl);
+      return () => URL.revokeObjectURL(objectUrl);
+    }
+
+    setImagePreview(form.imagePrincipale || "");
+  }, [form.imageFile, form.imagePrincipale]);
 
   return (
     <form className="space-y-8" onSubmit={onSubmit}>
@@ -117,21 +128,38 @@ export function ActiviteForm({
 
         <div className="space-y-2 md:col-span-2">
           <label className="text-sm font-medium">Image principale</label>
-          <Input
-            type="file"
-            accept="image/*"
-            onChange={(event) =>
-              onUpdate("imageFile", event.target.files?.[0] ?? null)
-            }
-          />
-          <Input
-            value={form.imagePrincipale}
-            onChange={(event) => onUpdate("imagePrincipale", event.target.value)}
-            placeholder="https://... (optionnel si fichier choisi)"
-          />
-          <p className="text-xs text-muted-foreground">
-            Choisis un fichier pour l&apos;upload Cloudinary, ou colle une URL existante.
-          </p>
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px]">
+            <div className="space-y-2">
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(event) =>
+                  onUpdate("imageFile", event.target.files?.[0] ?? null)
+                }
+              />
+              <Input
+                value={form.imagePrincipale}
+                onChange={(event) => onUpdate("imagePrincipale", event.target.value)}
+                placeholder="https://... (optionnel si fichier choisi)"
+              />
+              <p className="text-xs text-muted-foreground">
+                Choisis un fichier pour l&apos;upload Cloudinary, ou colle une URL existante.
+              </p>
+            </div>
+            <div className="overflow-hidden rounded-xl border border-border/50 bg-muted/20">
+              {imagePreview ? (
+                <img
+                  src={imagePreview}
+                  alt={form.nom || "Apercu activite"}
+                  className="h-40 w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-40 items-center justify-center px-4 text-center text-sm text-muted-foreground">
+                  Apercu image
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="space-y-2">

@@ -114,7 +114,7 @@ export function AdminHeader() {
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex h-16 w-full max-w-[1400px] items-center justify-between px-4 sm:px-6">
-        <Link href="/" className="flex items-center gap-3">
+        <Link href="/" className="flex cursor-pointer items-center gap-3">
           <span className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent sm:text-2xl">
             🌴 Cool Voyage
           </span>
@@ -133,7 +133,7 @@ export function AdminHeader() {
             <div className="relative">
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="flex items-center gap-3 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 p-0.5 pr-2 transition-all hover:shadow-lg hover:shadow-emerald-500/25 focus:outline-none"
+                className="flex cursor-pointer items-center gap-3 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 p-0.5 pr-2 transition-all hover:shadow-lg hover:shadow-emerald-500/25 focus:outline-none"
               >
                 {profile?.photoProfilUrl ? (
                   <div className="relative h-8 w-8 overflow-hidden rounded-full">
@@ -248,58 +248,11 @@ export function AdminHeader() {
                     )}
 
                     <div className="p-2">
-                      {/* <Link
-                        href="/admin/profile"
-                        className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        <svg
-                          className="h-4 w-4 text-emerald-600"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                          />
-                        </svg>
-                        Mon profil
-                      </Link> */}
-
-                      {/* <Link
-                        href="/admin/settings"
-                        className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        <svg
-                          className="h-4 w-4 text-emerald-600"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                          />
-                        </svg>
-                        Paramètres
-                      </Link> */}
 
                       {profile?.role === "ADMIN" && (
                         <Link
                           href="/admin/users"
-                          className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
+                          className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
                           onClick={() => setIsMenuOpen(false)}
                         >
                           <svg
@@ -323,7 +276,7 @@ export function AdminHeader() {
 
                       <button
                         onClick={handleLogout}
-                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/50"
+                        className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/50"
                       >
                         <svg
                           className="h-4 w-4"

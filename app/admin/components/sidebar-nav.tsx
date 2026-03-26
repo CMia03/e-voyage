@@ -45,7 +45,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
         <button
           type="button"
           onClick={() => onSelect("dashboard")}
-          className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm ${
+          className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
             active === "dashboard"
               ? "bg-emerald-500/10 font-medium text-emerald-600"
               : "text-muted-foreground hover:bg-primary/10"
@@ -58,7 +58,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
           <button
             type="button"
             onClick={() => toggleSection("destinations")}
-            className="flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
+            className="flex w-full cursor-pointer items-center justify-between rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
           >
             <span>Destinations</span>
             <span className={expandedSections.includes("destinations") ? "rotate-180" : ""}>
@@ -70,7 +70,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               <button
                 type="button"
                 onClick={() => onSelect("destinations")}
-                className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm ${
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
                   active === "destinations"
                     ? "bg-emerald-500/10 font-medium text-emerald-600"
                     : "text-muted-foreground hover:bg-primary/10"
@@ -82,7 +82,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               <button
                 type="button"
                 onClick={() => onSelect("destinations-create")}
-                className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm ${
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
                   active === "destinations-create"
                     ? "bg-emerald-500/10 font-medium text-emerald-600"
                     : "text-muted-foreground hover:bg-primary/10"
@@ -99,7 +99,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
           <button
             type="button"
             onClick={() => toggleSection("hebergements")}
-            className="flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
+            className="flex w-full cursor-pointer items-center justify-between rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
           >
             <span>Hebergements</span>
             <span className={expandedSections.includes("hebergements") ? "rotate-180" : ""}>
@@ -111,7 +111,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               <button
                 type="button"
                 onClick={() => onSelect("hebergements")}
-                className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm ${
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
                   active === "hebergements"
                     ? "bg-emerald-500/10 font-medium text-emerald-600"
                     : "text-muted-foreground hover:bg-primary/10"
@@ -123,7 +123,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               <button
                 type="button"
                 onClick={() => onSelect("hebergements-create")}
-                className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm ${
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
                   active === "hebergements-create"
                     ? "bg-emerald-500/10 font-medium text-emerald-600"
                     : "text-muted-foreground hover:bg-primary/10"
@@ -135,7 +135,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               <button
                 type="button"
                 onClick={() => onSelect("hebergements-tarifs")}
-                className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm ${
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
                   active === "hebergements-tarifs"
                     ? "bg-emerald-500/10 font-medium text-emerald-600"
                     : "text-muted-foreground hover:bg-primary/10"
@@ -152,7 +152,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
           <button
             type="button"
             onClick={() => toggleSection("activites")}
-            className="flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
+            className="flex w-full cursor-pointer items-center justify-between rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
           >
             <span>Activites</span>
             <span className={expandedSections.includes("activites") ? "rotate-180" : ""}>
@@ -164,7 +164,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               <button
                 type="button"
                 onClick={() => onSelect("activites")}
-                className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm ${
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
                   active === "activites"
                     ? "bg-emerald-500/10 font-medium text-emerald-600"
                     : "text-muted-foreground hover:bg-primary/10"
@@ -176,7 +176,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               <button
                 type="button"
                 onClick={() => onSelect("activites-create")}
-                className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm ${
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
                   active === "activites-create"
                     ? "bg-emerald-500/10 font-medium text-emerald-600"
                     : "text-muted-foreground hover:bg-primary/10"
@@ -188,7 +188,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               <button
                 type="button"
                 onClick={() => onSelect("activites-categories")}
-                className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm ${
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
                   active === "activites-categories"
                     ? "bg-emerald-500/10 font-medium text-emerald-600"
                     : "text-muted-foreground hover:bg-primary/10"

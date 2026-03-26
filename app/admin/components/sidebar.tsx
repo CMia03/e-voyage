@@ -46,7 +46,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
         <button
           type="button"
           onClick={() => onSelect("dashboard")}
-          className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm ${active === "dashboard"
+          className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${active === "dashboard"
               ? "bg-emerald-500/10 font-medium text-emerald-600"
               : "text-muted-foreground hover:bg-primary/10"
             }`}
@@ -62,7 +62,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
           <button
             type="button"
             onClick={() => toggleSection("destinations")}
-            className="flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
+            className="flex w-full cursor-pointer items-center justify-between rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
           >
             <div className="flex items-center">
               <svg className="mr-3 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -87,7 +87,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               <button
                 type="button"
                 onClick={() => onSelect("destinations")}
-                className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm ${active === "destinations"
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${active === "destinations"
                     ? "bg-emerald-500/10 font-medium text-emerald-600"
                     : "text-muted-foreground hover:bg-primary/10"
                   }`}
@@ -98,7 +98,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               <button
                 type="button"
                 onClick={() => onSelect("destinations-create")}
-                className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm ${
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
                   active === "destinations-create"
                     ? "bg-emerald-500/10 font-medium text-emerald-600"
                     : "text-muted-foreground hover:bg-primary/10"
@@ -110,7 +110,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               <button
                 type="button"
                 onClick={() => console.log("Catégories")}
-                className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm ${
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
                   active === "activites"
                     ? "bg-emerald-500/10 font-medium text-emerald-600"
                     : "text-muted-foreground hover:bg-primary/10"
@@ -122,7 +122,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               <button
                 type="button"
                 onClick={() => console.log("Régions")}
-                className="flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
+                className="flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
               >
                 <span className="mr-2">•</span>
                 Régions
@@ -130,7 +130,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               <button
                 type="button"
                 onClick={() => console.log("Saisons")}
-                className="flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
+                className="flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
               >
                 <span className="mr-2">•</span>
                 Saisons recommandées
@@ -144,7 +144,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
           <button
             type="button"
             onClick={() => toggleSection("hebergements")}
-            className="flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
+            className="flex w-full cursor-pointer items-center justify-between rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
           >
             <div className="flex items-center">
               <svg className="mr-3 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -168,7 +168,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               <button
                 type="button"
                 onClick={() => onSelect("hebergements")}
-                className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm ${
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
                   active === "hebergements"
                     ? "bg-emerald-500/10 font-medium text-emerald-600"
                     : "text-muted-foreground hover:bg-primary/10"
@@ -181,7 +181,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               <button
                 type="button"
                 onClick={() => onSelect("hebergements-create")}
-                className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm ${
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
                   active === "hebergements-create"
                     ? "bg-emerald-500/10 font-medium text-emerald-600"
                     : "text-muted-foreground hover:bg-primary/10"
@@ -201,7 +201,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
           <button
             type="button"
             onClick={() => toggleSection("activites")}
-            className="flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
+            className="flex w-full cursor-pointer items-center justify-between rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
           >
             <div className="flex items-center">
               <svg className="mr-3 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -226,7 +226,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               <button
                 type="button"
                 onClick={() => onSelect("activites")}
-                className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm ${
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
                   active === "activites"
                     ? "bg-emerald-500/10 font-medium text-emerald-600"
                     : "text-muted-foreground hover:bg-primary/10"
@@ -238,7 +238,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               <button
                 type="button"
                 onClick={() => console.log("Ajouter une activité")}
-                className="flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
+                className="flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
               >
                 <span className="mr-2">•</span>
                 Ajouter une activité
@@ -246,7 +246,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               <button
                 type="button"
                 onClick={() => console.log("Catégories d'activités")}
-                className="flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
+                className="flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
               >
                 <span className="mr-2">•</span>
                 Catégories

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo } from "react";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -26,7 +26,20 @@ export function PhotoDestinationForm({
   form,
   onUpdate,
 }: PhotoDestinationFormProps) {
-  const [fileNames, setFileNames] = useState<string[]>([]);
+  const previews = useMemo(
+    () =>
+      form.imageFiles.map((file) => ({
+        name: file.name,
+        url: URL.createObjectURL(file),
+      })),
+    [form.imageFiles]
+  );
+
+  useEffect(() => {
+    return () => {
+      previews.forEach((preview) => URL.revokeObjectURL(preview.url));
+    };
+  }, [previews]);
 
   return (
     <div className="space-y-6">
@@ -90,19 +103,30 @@ export function PhotoDestinationForm({
             onChange={(event) => {
               const files = Array.from(event.target.files ?? []);
               onUpdate("imageFiles", files);
-              setFileNames(files.map((file) => file.name));
             }}
             required
           />
-          {fileNames.length > 0 ? (
+          {previews.length > 0 ? (
             <p className="text-xs text-muted-foreground">
-              {fileNames.length} image(s) selectionnee(s) : {fileNames.join(", ")}
+              {previews.length} image(s) selectionnee(s).
             </p>
           ) : (
             <p className="text-xs text-muted-foreground">
               Toutes les images reprendront le meme titre, la meme description et la meme date.
             </p>
           )}
+          {previews.length > 0 ? (
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {previews.map((preview) => (
+                <div key={`${preview.name}-${preview.url}`} className="overflow-hidden rounded-xl border border-border/50 bg-muted/20">
+                  <img src={preview.url} alt={preview.name} className="h-28 w-full object-cover" />
+                  <div className="px-3 py-2 text-xs text-muted-foreground">
+                    <span className="block truncate">{preview.name}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

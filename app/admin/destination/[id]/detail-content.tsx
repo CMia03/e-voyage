@@ -17,13 +17,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { loadAuth } from "@/lib/auth";
 import {
   createDestinationPhotosBulk,
@@ -55,12 +48,12 @@ export function AdminDestinationDetailContent({
 }: AdminDestinationDetailContentProps) {
   const router = useRouter();
   const imageSectionRef = useRef<HTMLDivElement | null>(null);
+  const photoScrollerRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [accessToken, setAccessToken] = useState("");
   const [role, setRole] = useState("");
   const [destination, setDestination] = useState<AdminDestination | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSavingImages, setIsSavingImages] = useState(false);
-  const [action, setAction] = useState("");
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [photoForm, setPhotoForm] = useState<PhotoDestinationFormState>(initialPhotoForm);
@@ -188,20 +181,22 @@ export function AdminDestinationDetailContent({
     }
   }
 
-  function handleActionChange(value: string) {
-    setAction(value);
-
-    if (value === "add-image") {
-      openImageDialog();
-    } else if (value === "gallery") {
-      const galleryElement = document.getElementById("gallery-section");
-      if (galleryElement) {
-        galleryElement.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-      setAction("");
-    } else if (value === "planning") {
-      router.push(`/admin/destination/${destinationId}/planning`);
+  function handleOpenGallery() {
+    const galleryElement = document.getElementById("gallery-section");
+    if (galleryElement) {
+      galleryElement.scrollIntoView({ behavior: "smooth", block: "start" });
     }
+  }
+
+  function scrollPhotoGroup(groupKey: string, direction: "left" | "right") {
+    const container = photoScrollerRefs.current[groupKey];
+    if (!container) return;
+
+    const amount = 220;
+    container.scrollBy({
+      left: direction === "left" ? -amount : amount,
+      behavior: "smooth",
+    });
   }
 
   if (!accessToken || role !== "ADMIN") {
@@ -219,27 +214,30 @@ export function AdminDestinationDetailContent({
               <Button asChild variant="outline" size="sm">
                 <Link href="/admin">← Retour aux destinations</Link>
               </Button>
-              <div>
+
+              {/* <div>
                 <h1 className="text-3xl font-semibold tracking-tight">
                   {destination?.nom ?? "Détail destination"}
                 </h1>
-                {/* <p className="text-sm text-muted-foreground">
-                  Gérez les données détaillées de la destination et ajoutez du contenu multimédia.
-                </p> */}
-              </div>
+              </div> */}
+
             </div>
 
-            <div className="w-full max-w-xs">
-              <Select value={action} onValueChange={handleActionChange}>
-                <SelectTrigger className="bg-background">
-                  <SelectValue placeholder="Actions rapides" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="add-image">📷 Ajouter des images</SelectItem>
-                  <SelectItem value="gallery">🖼️ Voir la galerie</SelectItem>
-                  <SelectItem value="planning">📅 Planning voyage</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" size="sm" onClick={openImageDialog}>
+                Ajouter des images
+              </Button>
+              <Button type="button" variant="outline" size="sm" onClick={handleOpenGallery}>
+                Voir la galerie
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => router.push(`/admin/destination/${destinationId}/planning`)}
+              >
+                Planning voyage
+              </Button>
             </div>
           </div>
 
@@ -270,40 +268,36 @@ export function AdminDestinationDetailContent({
                   <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                 </div>
               ) : destination ? (
-                <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-                  <div className="space-y-4">
+                <div className="flex flex-col gap-4 rounded-2xl border border-border/50 bg-card/40 p-4 xl:flex-row xl:items-start">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start xl:flex-1">
                     {destination.urlImagePrincipale ? (
-                      <div className="overflow-hidden rounded-2xl bg-muted/20 p-3">
+                      <div className="w-full overflow-hidden rounded-xl border border-border/40 bg-muted/20 sm:w-[170px] sm:min-w-[170px]">
                         <img
                           src={destination.urlImagePrincipale}
                           alt={destination.nom}
-                          className="max-h-[360px] w-full rounded-xl object-contain transition-transform hover:scale-105"
+                          className="h-32 w-full object-cover"
                         />
                       </div>
                     ) : null}
-                    <div className="space-y-2 text-sm text-muted-foreground">
-                      <p>{destination.description || "Aucune description"}</p>
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <h2 className="text-xl font-semibold tracking-tight">
+                        {destination.nom}
+                      </h2>
+                      <p className="text-sm leading-6 text-muted-foreground">
+                        {destination.description || "Aucune description"}
+                      </p>
                     </div>
                   </div>
 
-                  <div className="grid gap-3 text-sm">
-                    <div className="rounded-xl border border-border/50 bg-card/50 p-4">
-                      <p className="font-medium">Adresse</p>
-                      <p className="mt-1 text-muted-foreground">
-                        {destination.adresse || "Non renseignée"}
-                      </p>
+                  <div className="grid gap-2 text-sm xl:w-[260px] xl:min-w-[260px]">
+                    <div className="rounded-xl border border-border/50 bg-card/50 px-3 py-2.5">
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Adresse : {destination.adresse || "Non renseignée"}</p>
                     </div>
-                    <div className="rounded-xl border border-border/50 bg-card/50 p-4">
-                      <p className="font-medium">Région</p>
-                      <p className="mt-1 text-muted-foreground">
-                        {destination.region || "Non renseignée"}
-                      </p>
+                    <div className="rounded-xl border border-border/50 bg-card/50 px-3 py-2.5">
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Région :  {destination.region || "Non renseignée"}</p>
                     </div>
-                    <div className="rounded-xl border border-border/50 bg-card/50 p-4">
-                      <p className="font-medium">Coordonnées</p>
-                      <p className="mt-1 text-muted-foreground">
-                        {destination.latitude}, {destination.longitude}
-                      </p>
+                    <div className="rounded-xl border border-border/50 bg-card/50 px-3 py-2.5">
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Coordonnées : {destination.latitude}, {destination.longitude}</p>
                     </div>
                   </div>
                 </div>
@@ -349,14 +343,14 @@ export function AdminDestinationDetailContent({
                     </Button>
                   </div>
                 ) : (
-                  <div className="space-y-6">
+                  <div className="max-h-[60vh] space-y-6 overflow-y-auto pr-2">
                     {sortedPhotoGroups.map((photoGroup, index) => (
                       <div
                         key={`${photoGroup.titre}-${photoGroup.dateObtenir ?? index}-${photoGroup.ordreAffichage ?? 0}`}
-                        className="space-y-4 rounded-2xl border border-border/50 bg-card/50 p-5 transition-shadow hover:shadow-md"
+                        className="grid gap-4 rounded-2xl border border-border/50 bg-card/50 p-5 transition-shadow hover:shadow-md xl:grid-cols-[300px_minmax(0,1fr)]"
                       >
-                        <div className="space-y-3">
-                          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="relative">
+                          <div className="space-y-2">
                             <div className="space-y-1">
                               <h3 className="text-lg font-semibold">
                                 {photoGroup.titre || "Sans titre"}
@@ -391,19 +385,69 @@ export function AdminDestinationDetailContent({
                           </p>
                         </div>
 
-                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-2 right-2 z-40 flex items-center justify-between pointer-events-none">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="pointer-events-auto relative z-50 h-9 w-9 rounded-full bg-background/90 px-0 shadow-md backdrop-blur"
+                              onClick={() =>
+                                scrollPhotoGroup(
+                                  `${photoGroup.titre}-${photoGroup.dateObtenir ?? index}-${photoGroup.ordreAffichage ?? 0}`,
+                                  "left"
+                                )
+                              }
+                            >
+                              ←
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="pointer-events-auto relative z-50 h-9 w-9 rounded-full bg-background/90 px-0 shadow-md backdrop-blur"
+                              onClick={() =>
+                                scrollPhotoGroup(
+                                  `${photoGroup.titre}-${photoGroup.dateObtenir ?? index}-${photoGroup.ordreAffichage ?? 0}`,
+                                  "right"
+                                )
+                              }
+                            >
+                              →
+                            </Button>
+                          </div>
+                        <div
+                          ref={(node) => {
+                            photoScrollerRefs.current[
+                              `${photoGroup.titre}-${photoGroup.dateObtenir ?? index}-${photoGroup.ordreAffichage ?? 0}`
+                            ] = node;
+                          }}
+                          className="flex gap-3 overflow-x-hidden overflow-y-visible px-12 py-6"
+                        >
                           {photoGroup.images.map((image) => (
                             <div
                               key={image.id}
-                              className="group relative overflow-hidden rounded-xl border border-border/50 bg-muted/20 transition-all hover:shadow-lg"
+                              className="group relative z-0 w-[180px] min-w-[180px] overflow-visible rounded-xl transition-all hover:z-20"
                             >
+                              <div className="rounded-xl border border-border/50 bg-muted/20 transition-all hover:shadow-lg">
                               <img
                                 src={image.url}
                                 alt={photoGroup.titre || destination?.nom || "Photo destination"}
-                                className="aspect-[4/3] w-full rounded-lg object-cover transition-transform group-hover:scale-105"
+                                className="relative z-10 h-32 w-full rounded-lg object-cover transition-transform duration-700 ease-out group-hover:scale-[1.75] group-hover:shadow-2xl"
                               />
+                              
+                              {/* {image.description ? (
+                                <div className="border-t border-border/40 bg-background/95 px-3 py-2">
+                                  <p className="line-clamp-2 text-xs text-muted-foreground">
+                                    {image.description}
+                                  </p>
+                                </div>
+                              ) : null} */}
+
+                              </div>
                             </div>
                           ))}
+                        </div>
                         </div>
                       </div>
                     ))}
@@ -469,3 +513,4 @@ export function AdminDestinationDetailContent({
     </div>
   );
 }
+

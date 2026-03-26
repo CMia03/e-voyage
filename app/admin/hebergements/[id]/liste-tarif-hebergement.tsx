@@ -53,55 +53,56 @@ export function ListeTarifHebergement({
             Aucun tarif ajoute pour cet hebergement.
           </p>
         ) : (
-          <div className="space-y-6">
+          <div className="max-h-[60vh] space-y-6 overflow-y-auto pr-2">
             {tarifs.map((tarif) => (
               <div
                 key={tarif.id}
                 className="rounded-2xl border border-border/50 bg-card/50 p-5"
               >
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="space-y-2">
-                    <h3 className="text-lg font-semibold">{tarif.nomTypeChambre}</h3>
-                    <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                      <span className="rounded-full bg-muted px-2.5 py-1">
-                        {formatMoney(tarif.prixParNuit, tarif.devise)} / nuit
-                      </span>
-                      <span className="rounded-full bg-muted px-2.5 py-1">
-                        Reservation: {formatMoney(tarif.prixReservation, tarif.devise)}
-                      </span>
-                      <span className="rounded-full bg-muted px-2.5 py-1">
-                        Capacite: {tarif.capacite}
-                      </span>
-                      <span className="rounded-full bg-muted px-2.5 py-1">
-                        {tarif.petitDejeunerInclus
-                          ? "Petit dejeuner inclus"
-                          : "Sans petit dejeuner"}
-                      </span>
-                      <span className="rounded-full bg-muted px-2.5 py-1">
-                        {formatDate(tarif.dateValiditeDebut)} - {formatDate(tarif.dateValiditeFin)}
-                      </span>
+                <div className="grid gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <h3 className="text-lg font-semibold">{tarif.nomTypeChambre}</h3>
+                      <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                        <span className="rounded-full bg-muted px-2.5 py-1">
+                          {formatMoney(tarif.prixParNuit, tarif.devise)} / nuit
+                        </span>
+                        <span className="rounded-full bg-muted px-2.5 py-1">
+                          Reservation: {formatMoney(tarif.prixReservation, tarif.devise)}
+                        </span>
+                        <span className="rounded-full bg-muted px-2.5 py-1">
+                          Capacite: {tarif.capacite}
+                        </span>
+                        <span className="rounded-full bg-muted px-2.5 py-1">
+                          {tarif.petitDejeunerInclus
+                            ? "Petit dejeuner inclus"
+                            : "Sans petit dejeuner"}
+                        </span>
+                        <span className="rounded-full bg-muted px-2.5 py-1">
+                          {formatDate(tarif.dateValiditeDebut)} - {formatDate(tarif.dateValiditeFin)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      <Button size="sm" variant="secondary" onClick={() => onEditTarif(tarif)}>
+                        Modifier
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => onOpenPhotoModal(tarif.id)}>
+                        Ajouter image
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => onDeleteTarif(tarif.id)}
+                        disabled={isDeletingTarifId === tarif.id}
+                      >
+                        {isDeletingTarifId === tarif.id ? "Suppression..." : "Supprimer"}
+                      </Button>
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-2">
-                    <Button size="sm" variant="secondary" onClick={() => onEditTarif(tarif)}>
-                      Modifier
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => onOpenPhotoModal(tarif.id)}>
-                      Ajouter image
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => onDeleteTarif(tarif.id)}
-                      disabled={isDeletingTarifId === tarif.id}
-                    >
-                      {isDeletingTarifId === tarif.id ? "Suppression..." : "Supprimer"}
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="mt-6 space-y-4">
+                  <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h4 className="font-medium">Photos de chambre</h4>
                     <span className="text-sm text-muted-foreground">
@@ -114,16 +115,17 @@ export function ListeTarifHebergement({
                       Aucune photo pour ce tarif.
                     </p>
                   ) : (
-                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                       {tarif.photos.map((photo) => (
                         <div
                           key={photo.id}
-                          className="overflow-hidden rounded-xl border border-border/50 bg-muted/20"
+                          className="group relative z-0 overflow-visible rounded-xl transition-all hover:z-20"
                         >
+                          <div className="rounded-xl border border-border/50 bg-muted/20 transition-all hover:shadow-lg">
                           <img
                             src={photo.urlImage}
                             alt={photo.nomTypeSalle}
-                            className="h-36 w-full object-cover"
+                            className="relative z-10 h-36 w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.45] group-hover:shadow-2xl"
                           />
                           <div className="space-y-2 p-2.5">
                             <p className="line-clamp-1 text-sm font-medium">{photo.nomTypeSalle}</p>
@@ -137,10 +139,12 @@ export function ListeTarifHebergement({
                               {isDeletingPhotoId === photo.id ? "Suppression..." : "Supprimer"}
                             </Button>
                           </div>
+                          </div>
                         </div>
                       ))}
                     </div>
                   )}
+                </div>
                 </div>
               </div>
             ))}

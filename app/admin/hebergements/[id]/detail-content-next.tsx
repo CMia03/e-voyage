@@ -58,7 +58,6 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
   const [tarifForm, setTarifForm] = useState<TarifFormState>(initialTarifForm);
   const [photoForm, setPhotoForm] = useState<PhotoFormState>(initialPhotoForm);
   const [selectedTarifId, setSelectedTarifId] = useState<string | null>(null);
-  const [action, setAction] = useState("");
   const [newTypeChambreName, setNewTypeChambreName] = useState("");
   const [newTypeSalleName, setNewTypeSalleName] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -79,6 +78,14 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
   const tarifs = useMemo(
     () => [...(hebergement?.tarifs ?? [])].sort((a, b) => new Date(b.dateCreation ?? 0).getTime() - new Date(a.dateCreation ?? 0).getTime()),
     [hebergement]
+  );
+  const photoPreviews = useMemo(
+    () =>
+      photoForm.imageFiles.map((file) => ({
+        name: file.name,
+        url: URL.createObjectURL(file),
+      })),
+    [photoForm.imageFiles]
   );
 
   useEffect(() => {
@@ -121,6 +128,12 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
 
     return () => window.clearTimeout(timeout);
   }, [error]);
+
+  useEffect(() => {
+    return () => {
+      photoPreviews.forEach((preview) => URL.revokeObjectURL(preview.url));
+    };
+  }, [photoPreviews]);
 
   async function loadPage() {
     setIsLoading(true);
@@ -168,7 +181,6 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
     setTarifForm(initialTarifForm);
     setNewTypeChambreName("");
     setEditingTarifId(null);
-    setAction("");
     setIsTarifDialogOpen(true);
   }
 
@@ -405,11 +417,11 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
                 <p className="text-sm text-muted-foreground">Gestion des tarifs, types de chambre et photos de salles.</p>
               </div>
             </div>
-            <div className="w-full max-w-xs">
-              <Select value={action} onValueChange={(value) => { setAction(value); if (value === "add-tarif") openTarifDialog(); }}>
-                <SelectTrigger className="bg-background"><SelectValue placeholder="Actions rapides" /></SelectTrigger>
-                <SelectContent><SelectItem value="add-tarif">Ajouter tarif</SelectItem></SelectContent>
-              </Select>
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" onClick={openTarifDialog}>
+                <Plus className="size-4" />
+                Ajouter tarif
+              </Button>
             </div>
           </div>
 
@@ -420,15 +432,31 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
             </CardHeader>
             <CardContent>
               {isLoading ? <p className="text-sm text-muted-foreground">Chargement...</p> : hebergement ? (
-                <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-                  <div className="space-y-4">
-                    {hebergement.urlImagePrincipale ? <div className="overflow-hidden rounded-2xl bg-muted/20 p-3"><img src={hebergement.urlImagePrincipale} alt={hebergement.nom} className="max-h-[360px] w-full rounded-xl object-contain" /></div> : null}
-                    <p className="text-sm text-muted-foreground">{hebergement.description || "Aucune description"}</p>
-                  </div>
-                  <div className="grid gap-3 text-sm">
-                    <div className="rounded-xl border border-border/50 bg-card/50 p-4"><p className="font-medium">Type</p><p className="mt-1 text-muted-foreground">{hebergement.nomTypeHebergement || "Non renseigne"}</p></div>
-                    <div className="rounded-xl border border-border/50 bg-card/50 p-4"><p className="font-medium">Adresse</p><p className="mt-1 text-muted-foreground">{hebergement.adresse || "Non renseignee"}</p></div>
-                    <div className="rounded-xl border border-border/50 bg-card/50 p-4"><p className="font-medium">Coordonnees</p><p className="mt-1 text-muted-foreground">{hebergement.latitude}, {hebergement.longitude}</p></div>
+                <div className="rounded-2xl border border-border/50 bg-card/40 p-4">
+                  <div className="flex flex-col gap-4 xl:flex-row xl:items-start">
+                    {hebergement.urlImagePrincipale ? (
+                      <div className="w-full overflow-hidden rounded-xl border border-border/40 bg-muted/20 sm:w-[170px] sm:min-w-[170px]">
+                        <img src={hebergement.urlImagePrincipale} alt={hebergement.nom} className="h-32 w-full object-cover" />
+                      </div>
+                    ) : null}
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <h2 className="text-xl font-semibold tracking-tight">{hebergement.nom}</h2>
+                      <p className="text-sm leading-6 text-muted-foreground">{hebergement.description || "Aucune description"}</p>
+                    </div>
+                    <div className="grid gap-2 text-sm xl:w-[260px] xl:min-w-[260px]">
+                      <div className="rounded-xl border border-border/50 bg-card/50 px-3 py-2.5">
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Type</p>
+                        <p className="mt-1 text-sm text-muted-foreground">{hebergement.nomTypeHebergement || "Non renseigne"}</p>
+                      </div>
+                      <div className="rounded-xl border border-border/50 bg-card/50 px-3 py-2.5">
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Adresse</p>
+                        <p className="mt-1 text-sm text-muted-foreground">{hebergement.adresse || "Non renseignee"}</p>
+                      </div>
+                      <div className="rounded-xl border border-border/50 bg-card/50 px-3 py-2.5">
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Coordonnees</p>
+                        <p className="mt-1 text-sm text-muted-foreground">{hebergement.latitude}, {hebergement.longitude}</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ) : <p className="text-sm text-muted-foreground">Hebergement introuvable.</p>}
@@ -547,26 +575,26 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
                   <p className="mb-3 text-sm font-medium">
                     {photoForm.imageFiles.length} image{photoForm.imageFiles.length > 1 ? "s" : ""} selectionnee{photoForm.imageFiles.length > 1 ? "s" : ""}
                   </p>
-                  <div className="flex flex-wrap gap-2">
-                    {photoForm.imageFiles.map((file, index) => (
-                      <span
-                        key={`${file.name}-${index}`}
-                        className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs text-emerald-700"
-                      >
-                        <span className="max-w-[180px] truncate">{file.name}</span>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setPhotoForm((current) => ({
-                              ...current,
-                              imageFiles: current.imageFiles.filter((_, fileIndex) => fileIndex !== index),
-                            }))
-                          }
-                          aria-label={`Retirer ${file.name}`}
-                        >
-                          <X className="size-3.5" />
-                        </button>
-                      </span>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {photoPreviews.map((preview, index) => (
+                      <div key={`${preview.name}-${preview.url}`} className="overflow-hidden rounded-xl border border-border/50 bg-background">
+                        <img src={preview.url} alt={preview.name} className="h-28 w-full object-cover" />
+                        <div className="flex items-center justify-between gap-2 px-3 py-2">
+                          <span className="max-w-[180px] truncate text-xs text-muted-foreground">{preview.name}</span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPhotoForm((current) => ({
+                                ...current,
+                                imageFiles: current.imageFiles.filter((_, fileIndex) => fileIndex !== index),
+                              }))
+                            }
+                            aria-label={`Retirer ${preview.name}`}
+                          >
+                            <X className="size-3.5" />
+                          </button>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </div>

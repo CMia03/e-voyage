@@ -78,6 +78,14 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
     () => [...(activite?.tarifs ?? [])].sort((a, b) => new Date(b.dateCreation ?? 0).getTime() - new Date(a.dateCreation ?? 0).getTime()),
     [activite]
   );
+  const photoPreviews = useMemo(
+    () =>
+      photoFiles.map((file) => ({
+        name: file.name,
+        url: URL.createObjectURL(file),
+      })),
+    [photoFiles]
+  );
 
   useEffect(() => {
     const session = loadAuth();
@@ -113,6 +121,12 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
     const timeout = window.setTimeout(() => setShowErrorAlert(false), 5000);
     return () => window.clearTimeout(timeout);
   }, [error]);
+
+  useEffect(() => {
+    return () => {
+      photoPreviews.forEach((preview) => URL.revokeObjectURL(preview.url));
+    };
+  }, [photoPreviews]);
 
   async function loadPage() {
     setIsLoading(true);
@@ -342,33 +356,38 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
               {isLoading ? (
                 <p className="text-sm text-muted-foreground">Chargement...</p>
               ) : activite ? (
-                <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-                  <div className="space-y-4">
+                <div className="rounded-2xl border border-border/50 bg-card/40 p-4">
+                  <div className="flex flex-col gap-4 xl:flex-row xl:items-start">
                     {activite.imagePrincipale ? (
-                      <div className="overflow-hidden rounded-2xl bg-muted/20 p-3">
+                      <div className="w-full overflow-hidden rounded-xl border border-border/40 bg-muted/20 sm:w-[170px] sm:min-w-[170px]">
                         <img
                           src={activite.imagePrincipale}
                           alt={activite.nom}
-                          className="max-h-[360px] w-full rounded-xl object-contain"
+                          className="h-32 w-full object-cover"
                         />
                       </div>
                     ) : null}
-                    <p className="text-sm text-muted-foreground">{activite.description || "Aucune description"}</p>
-                  </div>
-                  <div className="grid gap-3 text-sm">
-                    <div className="rounded-xl border border-border/50 bg-card/50 p-4">
-                      <p className="font-medium">Categorie</p>
-                      <p className="mt-1 text-muted-foreground">{activite.nomCategorie || "Non renseignee"}</p>
-                    </div>
-                    <div className="rounded-xl border border-border/50 bg-card/50 p-4">
-                      <p className="font-medium">Duree</p>
-                      <p className="mt-1 text-muted-foreground">{activite.dureeHeures} h</p>
-                    </div>
-                    <div className="rounded-xl border border-border/50 bg-card/50 p-4">
-                      <p className="font-medium">Participants</p>
-                      <p className="mt-1 text-muted-foreground">
-                        {activite.participantMin} - {activite.participantsMax}
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <h2 className="text-xl font-semibold tracking-tight">{activite.nom}</h2>
+                      <p className="text-sm leading-6 text-muted-foreground">
+                        {activite.description || "Aucune description"}
                       </p>
+                    </div>
+                    <div className="grid gap-2 text-sm xl:w-[260px] xl:min-w-[260px]">
+                      <div className="rounded-xl border border-border/50 bg-card/50 px-3 py-2.5">
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Categorie</p>
+                        <p className="mt-1 text-sm text-muted-foreground">{activite.nomCategorie || "Non renseignee"}</p>
+                      </div>
+                      <div className="rounded-xl border border-border/50 bg-card/50 px-3 py-2.5">
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Duree</p>
+                        <p className="mt-1 text-sm text-muted-foreground">{activite.dureeHeures} h</p>
+                      </div>
+                      <div className="rounded-xl border border-border/50 bg-card/50 px-3 py-2.5">
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Participants</p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {activite.participantMin} - {activite.participantsMax}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -387,10 +406,10 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
               {tarifs.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Aucun tarif ajoute pour cette activite.</p>
               ) : (
-                <div className="space-y-4">
+                <div className="max-h-[60vh] space-y-4 overflow-y-auto pr-2">
                   {tarifs.map((tarif) => (
                     <div key={tarif.id} className="rounded-2xl border border-border/50 bg-card/50 p-5">
-                      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                         <div className="space-y-2">
                           <h3 className="text-lg font-semibold">
                             {tarif.prixParHeur ? `${Number(tarif.prixParHeur).toLocaleString("fr-FR")} ${tarif.devise} / heure` : "-"}
@@ -401,6 +420,9 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
                             </span>
                             <span className="rounded-full bg-muted px-2.5 py-1">
                               {tarif.dateValiditeDebut || "-"} - {tarif.dateValiditeFin || "-"}
+                            </span>
+                            <span className="rounded-full bg-muted px-2.5 py-1">
+                              {tarif.estActif ? "Actif" : "Inactif"}
                             </span>
                           </div>
                         </div>
@@ -434,23 +456,25 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
             </CardHeader>
             <CardContent>
               {activite?.photos?.length ? (
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {activite.photos.map((photo) => (
-                    <div key={photo.id} className="overflow-hidden rounded-xl border border-border/50 bg-muted/20">
-                      <img src={photo.urlImage} alt={activite.nom} className="h-36 w-full object-cover" />
-                      <div className="p-2.5">
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          className="h-8 px-3 text-xs"
-                          onClick={() => handleDeletePhoto(photo.id)}
-                          disabled={isDeletingPhotoId === photo.id}
-                        >
-                          {isDeletingPhotoId === photo.id ? "Suppression..." : "Supprimer"}
-                        </Button>
+                <div className="max-h-[60vh] overflow-y-auto pr-2">
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {activite.photos.map((photo) => (
+                      <div key={photo.id} className="overflow-hidden rounded-xl border border-border/50 bg-muted/20">
+                        <img src={photo.urlImage} alt={activite.nom} className="h-36 w-full object-cover" />
+                        <div className="p-2.5">
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="h-8 px-3 text-xs"
+                            onClick={() => handleDeletePhoto(photo.id)}
+                            disabled={isDeletingPhotoId === photo.id}
+                          >
+                            {isDeletingPhotoId === photo.id ? "Suppression..." : "Supprimer"}
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">Aucune photo ajoutee pour cette activite.</p>
@@ -576,21 +600,21 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
                 <p className="mb-3 text-sm font-medium">
                   {photoFiles.length} image{photoFiles.length > 1 ? "s" : ""} selectionnee{photoFiles.length > 1 ? "s" : ""}
                 </p>
-                <div className="flex flex-wrap gap-2">
-                  {photoFiles.map((file, index) => (
-                    <span
-                      key={`${file.name}-${index}`}
-                      className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs text-emerald-700"
-                    >
-                      <span className="max-w-[180px] truncate">{file.name}</span>
-                      <button
-                        type="button"
-                        onClick={() => setPhotoFiles((current) => current.filter((_, fileIndex) => fileIndex !== index))}
-                        aria-label={`Retirer ${file.name}`}
-                      >
-                        <X className="size-3.5" />
-                      </button>
-                    </span>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {photoPreviews.map((preview, index) => (
+                    <div key={`${preview.name}-${preview.url}`} className="overflow-hidden rounded-xl border border-border/50 bg-background">
+                      <img src={preview.url} alt={preview.name} className="h-28 w-full object-cover" />
+                      <div className="flex items-center justify-between gap-2 px-3 py-2">
+                        <span className="max-w-[180px] truncate text-xs text-muted-foreground">{preview.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => setPhotoFiles((current) => current.filter((_, fileIndex) => fileIndex !== index))}
+                          aria-label={`Retirer ${preview.name}`}
+                        >
+                          <X className="size-3.5" />
+                        </button>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
