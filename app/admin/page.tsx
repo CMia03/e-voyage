@@ -67,7 +67,6 @@ export default function AdminPage() {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-muted/30 to-background text-foreground">
       <AdminHeader />
