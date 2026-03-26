@@ -74,6 +74,10 @@ export function Header() {
             Contact
           </Link>
 
+          <Button asChild variant="outline" size="sm">
+            <Link href="/login">Se connecter</Link>
+          </Button>
+
 
 
         </nav>
