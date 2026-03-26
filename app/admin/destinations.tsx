@@ -1,5 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import Link from "next/link";
 
 export function AdminDestinations() {
   return (
@@ -13,7 +15,13 @@ export function AdminDestinations() {
             Manage destinations, prices, and availability.
           </p>
         </div>
-        <Button variant="default">Add destination</Button>
+        <Link href="/admin/add-destination">
+          <Button variant="default">Add destination</Button>
+        </Link>
+      </div>
+
+      <div className="space-y-4">
+        <Input placeholder="Search destinations..." />
       </div>
 
       <section className="grid gap-4 lg:grid-cols-2">
@@ -69,4 +77,3 @@ export function AdminDestinations() {
     </div>
   );
 }
-

@@ -10,7 +10,7 @@ import { loadAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-type AdminSection = "dashboard" | "destinations";
+type AdminSection = "dashboard" | "destinations" | "hebergements" | "activites" | "utilisateurs" | "reservations" | "avis" | "notifications" | "statistiques";
 
 export default function AdminPage() {
   const [active, setActive] = useState<AdminSection>("dashboard");
