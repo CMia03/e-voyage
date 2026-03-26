@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AdminHeader } from "@/app/admin/components/header";
 import { AdminSidebar } from "@/app/admin/components/sidebar";
 import { AdminFooter } from "@/app/admin/components/footer";
@@ -14,20 +14,9 @@ type AdminSection = "dashboard" | "destinations" | "hebergements" | "activites" 
 
 export default function AdminPage() {
   const [active, setActive] = useState<AdminSection>("dashboard");
-  const [ready, setReady] = useState(false);
-  const [role, setRole] = useState<string | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
-
-  useEffect(() => {
-    const session = loadAuth();
-    setRole(session?.role ?? null);
-    setAccessToken(session?.accessToken ?? null);
-    setReady(true);
-  }, []);
-
-  if (!ready) {
-    return null;
-  }
+  const session = loadAuth();
+  const role = session?.role ?? null;
+  const accessToken = session?.accessToken ?? null;
 
   if (!role) {
     return (
