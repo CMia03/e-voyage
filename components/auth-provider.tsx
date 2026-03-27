@@ -1,15 +1,15 @@
 "use client";
 
 import { ReactNode, useEffect } from 'react';
-import { loadAuth } from '@/lib/auth';
-import { useAuthSession } from '@/lib/hooks/useAuthSession';
+import { useRouter } from 'next/navigation';
+import { loadAuth, clearAuth } from '@/lib/auth';
 
 interface AuthProviderProps {
   children: ReactNode;
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const { logout } = useAuthSession();
+  const router = useRouter();
 
   useEffect(() => {
     const isProtectedRoute = () => {
@@ -20,10 +20,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (isProtectedRoute()) {
       const auth = loadAuth();
       if (!auth || !auth.accessToken) {
-        logout();
+        clearAuth();
+        router.push('/login');
       }
     }
-  }, [logout]);
+  }, [router]);
 
   return <>{children}</>;
 }

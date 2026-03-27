@@ -2,7 +2,7 @@ import { useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { loadAuth, clearAuth } from '@/lib/auth';
 
-export function useAuthSession() {
+export function useAuthSession(checkImmediately = false) {
   const router = useRouter();
 
   const logout = useCallback(() => {
@@ -26,7 +26,10 @@ export function useAuthSession() {
       }
     };
 
-    checkSession();
+    if (checkImmediately) {
+      checkSession();
+    }
+
     const interval = setInterval(checkSession, 30 * 1000);
 
     const handleVisibilityChange = () => {
@@ -53,7 +56,7 @@ export function useAuthSession() {
       window.removeEventListener('focus', handleFocus);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [logout]);
+  }, [logout, checkImmediately]);
 
   return { logout };
 }
