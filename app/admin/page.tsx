@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AdminHeader } from "@/app/admin/components/header";
 import { AdminSidebar } from "@/app/admin/components/sidebar-nav";
 import { AdminFooter } from "@/app/admin/components/footer";
@@ -12,7 +12,6 @@ import { AuthSession, loadAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-<<<<<<< HEAD
 type AdminSection =
   | "dashboard"
   | "destinations"
@@ -34,35 +33,36 @@ type AdminSection =
   | "notifications"
   | "statistiques";
 
+// export default function AdminPage() {
+//   const [active, setActive] = useState<AdminSection>("dashboard");
+//   const [selectedDestinationId, setSelectedDestinationId] = useState<string | null>(null);
+//   const [selectedActiviteId, setSelectedActiviteId] = useState<string | null>(null);
+//   const [selectedHebergementId, setSelectedHebergementId] = useState<string | null>(null);
+//   const [ready, setReady] = useState(false);
+//   const [session, setSession] = useState<AuthSession | null>(null);
+//   const role = session?.role ?? null;
+//   const accessToken = session?.accessToken ?? null;
+
+//   useEffect(() => {
+//     // Load localStorage auth only on the client to avoid hydration mismatch.
+//     // eslint-disable-next-line react-hooks/set-state-in-effect
+//     setSession(loadAuth());
+//     setReady(true);
+//   }, []);
+
+//   if (!ready) {
+//     return null;
+//   }
+// type AdminSection = "dashboard" | "destinations" | "hebergements" | "activites" | "utilisateurs" | "reservations" | "avis" | "notifications" | "statistiques";
+
 export default function AdminPage() {
-  const [active, setActive] = useState<AdminSection>("dashboard");
+   const [active, setActive] = useState<AdminSection>("dashboard");
   const [selectedDestinationId, setSelectedDestinationId] = useState<string | null>(null);
   const [selectedActiviteId, setSelectedActiviteId] = useState<string | null>(null);
   const [selectedHebergementId, setSelectedHebergementId] = useState<string | null>(null);
-  const [ready, setReady] = useState(false);
   const [session, setSession] = useState<AuthSession | null>(null);
-  const role = session?.role ?? null;
   const accessToken = session?.accessToken ?? null;
-
-  useEffect(() => {
-    // Load localStorage auth only on the client to avoid hydration mismatch.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSession(loadAuth());
-    setReady(true);
-  }, []);
-
-  if (!ready) {
-    return null;
-  }
-=======
-type AdminSection = "dashboard" | "destinations" | "hebergements" | "activites" | "utilisateurs" | "reservations" | "avis" | "notifications" | "statistiques";
-
-export default function AdminPage() {
-  const [active, setActive] = useState<AdminSection>("dashboard");
-  const session = loadAuth();
   const role = session?.role ?? null;
-  const accessToken = session?.accessToken ?? null;
->>>>>>> main
 
   if (!role) {
     return (
