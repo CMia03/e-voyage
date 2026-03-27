@@ -6,13 +6,20 @@ export type AuthSession = {
   login?: string;
   nom?: string;
   prenom?: string;
+  expiresAt?: number;
 };
 
 const STORAGE_KEY = "cool_voyage_auth";
 
 export function saveAuth(session: AuthSession) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+  
+  const sessionWithExpiry = {
+    ...session,
+    expiresAt: session.expiresAt || Date.now() + (60 * 60 * 1000)
+  };
+  
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(sessionWithExpiry));
 }
 
 export function loadAuth(): AuthSession | null {
@@ -20,7 +27,14 @@ export function loadAuth(): AuthSession | null {
   const raw = window.localStorage.getItem(STORAGE_KEY);
   if (!raw) return null;
   try {
-    return JSON.parse(raw) as AuthSession;
+    const session = JSON.parse(raw) as AuthSession;
+    
+    if (session.expiresAt && Date.now() > session.expiresAt) {
+      clearAuth();
+      return null;
+    }
+    
+    return session;
   } catch {
     return null;
   }

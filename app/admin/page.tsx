@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AdminHeader } from "@/app/admin/components/header";
 import { AdminSidebar } from "@/app/admin/components/sidebar-nav";
 import { AdminFooter } from "@/app/admin/components/footer";
@@ -12,6 +12,7 @@ import { AuthSession, loadAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
+<<<<<<< HEAD
 type AdminSection =
   | "dashboard"
   | "destinations"
@@ -53,6 +54,15 @@ export default function AdminPage() {
   if (!ready) {
     return null;
   }
+=======
+type AdminSection = "dashboard" | "destinations" | "hebergements" | "activites" | "utilisateurs" | "reservations" | "avis" | "notifications" | "statistiques";
+
+export default function AdminPage() {
+  const [active, setActive] = useState<AdminSection>("dashboard");
+  const session = loadAuth();
+  const role = session?.role ?? null;
+  const accessToken = session?.accessToken ?? null;
+>>>>>>> main
 
   if (!role) {
     return (
@@ -92,7 +102,6 @@ export default function AdminPage() {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-muted/30 to-background text-foreground">
       <AdminHeader />
