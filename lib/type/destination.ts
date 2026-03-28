@@ -65,6 +65,25 @@ export type AdminDestination = {
   photos: PhotoDestinationGroup[];
 };
 
+export type DestinationAssociationItem = {
+  id: string;
+  nom: string;
+  image: string | null;
+  place: string | null;
+  region: string | null;
+  latitude: number | string | null;
+  longitude: number | string | null;
+  estSelectionne: boolean;
+  estActif: boolean;
+};
+
+export type DestinationAssociations = {
+  idDestination: string;
+  nomDestination: string;
+  hebergements: DestinationAssociationItem[];
+  activites: DestinationAssociationItem[];
+};
+
 export type TypeTransport = {
   id: string;
   nom: string;

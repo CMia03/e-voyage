@@ -2,6 +2,7 @@ import { apiRequest, ApiEnvelope } from "@/lib/api/client";
 import {
   AdminDestination,
   DestinationDetails,
+  DestinationAssociations,
   PlanificationVoyage,
   SavePhotoDestinationBulkPayload,
   SavePlanificationVoyagePayload,
@@ -140,6 +141,58 @@ export function createDestinationPhotosBulk(
     method: "POST",
     token,
     body: buildPhotoDestinationBulkFormData(payload),
+  });
+}
+
+export function getDestinationAssociations(destinationId: string, token?: string) {
+  return apiRequest<ApiEnvelope<DestinationAssociations>>(`/api/destinations/${destinationId}/associations`, {
+    token,
+  });
+}
+
+export function linkDestinationActivite(
+  destinationId: string,
+  activiteId: string,
+  token?: string
+) {
+  return apiRequest<ApiEnvelope<DestinationAssociations>>(`/api/destinations/${destinationId}/activites/${activiteId}`, {
+    method: "POST",
+    token,
+    body: { estActif: true },
+  });
+}
+
+export function unlinkDestinationActivite(
+  destinationId: string,
+  activiteId: string,
+  token?: string
+) {
+  return apiRequest<ApiEnvelope>(`/api/destinations/${destinationId}/activites/${activiteId}`, {
+    method: "DELETE",
+    token,
+  });
+}
+
+export function linkDestinationHebergement(
+  destinationId: string,
+  hebergementId: string,
+  token?: string
+) {
+  return apiRequest<ApiEnvelope<DestinationAssociations>>(`/api/destinations/${destinationId}/hebergements/${hebergementId}`, {
+    method: "POST",
+    token,
+    body: { estActif: true },
+  });
+}
+
+export function unlinkDestinationHebergement(
+  destinationId: string,
+  hebergementId: string,
+  token?: string
+) {
+  return apiRequest<ApiEnvelope>(`/api/destinations/${destinationId}/hebergements/${hebergementId}`, {
+    method: "DELETE",
+    token,
   });
 }
 

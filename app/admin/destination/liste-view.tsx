@@ -161,6 +161,11 @@ export function AdminDestinationListe({
         <Button asChild size="sm" variant="secondary">
           <Link href={`/admin/destination/${destination.id}`}>Voir details</Link>
         </Button>
+        <Button asChild size="sm" variant="outline">
+          <Link href={`/admin/destination/${destination.id}/associations`}>
+            Ajout hebergement/Activite
+          </Link>
+        </Button>
         <Button size="sm" variant="outline" onClick={() => onEdit(destination.id)}>
           <Pencil className="size-4" />
           Modifier
@@ -214,6 +219,11 @@ export function AdminDestinationListe({
       <div className="ml-4 flex shrink-0 gap-2">
         <Button asChild size="sm" variant="secondary">
           <Link href={`/admin/destination/${destination.id}`}>Details</Link>
+        </Button>
+        <Button asChild size="sm" variant="outline">
+          <Link href={`/admin/destination/${destination.id}/associations`}>
+            Ajout hebergement/Activite
+          </Link>
         </Button>
         <Button size="sm" variant="outline" onClick={() => onEdit(destination.id)}>
           <Pencil className="size-4" />
