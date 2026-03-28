@@ -196,6 +196,46 @@ export function unlinkDestinationHebergement(
   });
 }
 
+export function linkDestinationPrestation(
+  destinationId: string,
+  prestationId: string,
+  statut: "INCLUS" | "EN_SUS",
+  token?: string
+) {
+  return apiRequest<ApiEnvelope<DestinationAssociations>>(`/api/destinations/${destinationId}/prestations/${prestationId}`, {
+    method: "POST",
+    token,
+    body: { estActif: true, statut },
+  });
+}
+
+export function unlinkDestinationPrestation(
+  destinationId: string,
+  prestationId: string,
+  token?: string
+) {
+  return apiRequest<ApiEnvelope>(`/api/destinations/${destinationId}/prestations/${prestationId}`, {
+    method: "DELETE",
+    token,
+  });
+}
+
+export function createPrestationReference(
+  payload: {
+    libelle: string;
+    description: string;
+    estActif: boolean;
+    ordreAffichage: number;
+  },
+  token?: string
+) {
+  return apiRequest<ApiEnvelope>(`/api/destinations/prestations-reference`, {
+    method: "POST",
+    token,
+    body: payload,
+  });
+}
+
 export function listTypeTransports(token?: string) {
   return apiRequest<ApiEnvelope<TypeTransport[]>>("/api/destinations/types-transport", {
     token,

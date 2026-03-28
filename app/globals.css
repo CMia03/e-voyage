@@ -242,3 +242,33 @@
   color: var(--primary-foreground) !important;
   box-shadow: 0 0 0 2px color-mix(in oklab, var(--primary) 35%, transparent);
 }
+
+.planning-calendar .transport-event {
+  color: white !important;
+  font-weight: 500;
+}
+
+.planning-calendar .transport-event-road {
+  background: #dc2626 !important;
+}
+
+.planning-calendar .transport-event-air {
+  background: #2563eb !important;
+}
+
+.planning-calendar .transport-event-sea {
+  background: #0891b2 !important;
+}
+
+.planning-calendar .transport-event-rail {
+  background: #7c3aed !important;
+}
+
+.planning-calendar .transport-event-walk {
+  background: #16a34a !important;
+}
+
+.planning-calendar .transport-event-selected {
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--primary) 35%, transparent);
+  filter: saturate(1.1) brightness(1.03);
+}

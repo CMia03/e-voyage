@@ -71,6 +71,7 @@ export type DestinationAssociationItem = {
   image: string | null;
   place: string | null;
   region: string | null;
+  meta?: string | null;
   latitude: number | string | null;
   longitude: number | string | null;
   estSelectionne: boolean;
@@ -82,6 +83,17 @@ export type DestinationAssociations = {
   nomDestination: string;
   hebergements: DestinationAssociationItem[];
   activites: DestinationAssociationItem[];
+  prestations: DestinationPrestationItem[];
+};
+
+export type DestinationPrestationItem = {
+  id: string;
+  libelle: string;
+  description: string | null;
+  ordreAffichage: number | null;
+  estSelectionne: boolean;
+  estActif: boolean;
+  statut: "INCLUS" | "EN_SUS";
 };
 
 export type TypeTransport = {

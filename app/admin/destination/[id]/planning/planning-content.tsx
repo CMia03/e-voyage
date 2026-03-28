@@ -4,7 +4,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Pencil, Plus, Trash2, X } from "lucide-react";
+import { CalendarDays, CheckCircle2, List, Map, Pencil, Plus, Trash2, X } from "lucide-react";
 
 import { AdminFooter } from "@/app/admin/components/footer";
 import { AdminHeader } from "@/app/admin/components/header";
@@ -49,6 +49,7 @@ const HebergementMap = dynamic(
 );
 
 type Props = { destinationId: string };
+type PlanningDisplayMode = "list" | "map" | "calendar";
 
 type PlanificationFormState = {
   nomPlanification: string;
@@ -106,6 +107,7 @@ export function AdminDestinationPlanningContent({ destinationId }: Props) {
   const [planifications, setPlanifications] = useState<PlanificationVoyage[]>([]);
   const [typeTransports, setTypeTransports] = useState<TypeTransport[]>([]);
   const [selectedPlanificationId, setSelectedPlanificationId] = useState<string>("");
+  const [selectedTransportId, setSelectedTransportId] = useState<string | null>(null);
   const [editingPlanificationId, setEditingPlanificationId] = useState<string | null>(null);
   const [editingTransportId, setEditingTransportId] = useState<string | null>(null);
   const [newTypeTransportName, setNewTypeTransportName] = useState("");
@@ -114,7 +116,7 @@ export function AdminDestinationPlanningContent({ destinationId }: Props) {
   const [isPlanificationDialogOpen, setIsPlanificationDialogOpen] = useState(false);
   const [isTransportDialogOpen, setIsTransportDialogOpen] = useState(false);
   const [isCoordinatePickerOpen, setIsCoordinatePickerOpen] = useState(false);
-  const [isMapDialogOpen, setIsMapDialogOpen] = useState(false);
+  const [displayMode, setDisplayMode] = useState<PlanningDisplayMode>("list");
   const [isLoading, setIsLoading] = useState(true);
   const [isPlanificationsLoading, setIsPlanificationsLoading] = useState(true);
   const [isSavingPlanification, setIsSavingPlanification] = useState(false);
@@ -199,6 +201,13 @@ export function AdminDestinationPlanningContent({ destinationId }: Props) {
         }
         return loadedPlanifications[0]?.id || "";
       });
+      setSelectedTransportId((current) => {
+        if (!current) return loadedPlanifications[0]?.transports[0]?.id ?? null;
+        const exists = loadedPlanifications.some((planification) =>
+          planification.transports.some((transport) => transport.id === current)
+        );
+        return exists ? current : loadedPlanifications[0]?.transports[0]?.id ?? null;
+      });
     } finally {
       setIsPlanificationsLoading(false);
     }
@@ -212,6 +221,7 @@ export function AdminDestinationPlanningContent({ destinationId }: Props) {
       return next;
     });
     setSelectedPlanificationId(planification.id);
+    setSelectedTransportId(planification.transports[0]?.id ?? null);
   }
 
   function removePlanificationFromState(id: string) {
@@ -242,6 +252,7 @@ export function AdminDestinationPlanningContent({ destinationId }: Props) {
         return { ...planification, transports: nextTransports };
       })
     );
+    setSelectedTransportId(transport.id);
   }
 
   function removeTransportFromState(id: string) {
@@ -251,6 +262,7 @@ export function AdminDestinationPlanningContent({ destinationId }: Props) {
         transports: planification.transports.filter((item) => item.id !== id),
       }))
     );
+    setSelectedTransportId((current) => (current === id ? null : current));
   }
 
   function updatePlanificationForm<K extends keyof PlanificationFormState>(key: K, value: PlanificationFormState[K]) {
@@ -310,6 +322,7 @@ export function AdminDestinationPlanningContent({ destinationId }: Props) {
   }
 
   function openEditTransportDialog(transport: Transport) {
+    setSelectedTransportId(transport.id);
     setEditingTransportId(transport.id);
     setTransportForm(mapTransportToForm(transport));
     setShowTypeTransportCreator(false);
@@ -474,6 +487,7 @@ export function AdminDestinationPlanningContent({ destinationId }: Props) {
   }
 
   async function handleCalculateTransportRoute(transport: Transport) {
+    setSelectedTransportId(transport.id);
     setIsCalculatingTransportId(transport.id);
     setError("");
     setSuccessMessage("");
@@ -591,7 +605,14 @@ export function AdminDestinationPlanningContent({ destinationId }: Props) {
                         key={planification.id}
                         className={`rounded-2xl border p-4 transition-colors ${selectedPlanificationId === planification.id ? "border-emerald-400 bg-emerald-50/40" : "border-border/50 bg-card/50"}`}
                       >
-                        <button type="button" className="w-full text-left" onClick={() => setSelectedPlanificationId(planification.id)}>
+                        <button
+                          type="button"
+                          className="w-full text-left"
+                          onClick={() => {
+                            setSelectedPlanificationId(planification.id)
+                            setSelectedTransportId(planification.transports[0]?.id ?? null)
+                          }}
+                        >
                           <h3 className="text-base font-semibold">{planification.nomPlanification}</h3>
                           <p className="mt-1 text-sm text-muted-foreground">
                             {planification.depart || "-"} {"->"} {planification.arriver || "-"}
@@ -620,19 +641,53 @@ export function AdminDestinationPlanningContent({ destinationId }: Props) {
             <div className="space-y-6">
               <Card className="border-border/50">
                 <CardHeader>
-                  <div className="flex items-center justify-between gap-3">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                     <div>
-                      <CardTitle>Segments de transport</CardTitle>
+                      <CardTitle>Affichage du planning</CardTitle>
                       <CardDescription>
-                        {selectedPlanification ? `${selectedPlanification.transports.length} etape(s)` : "Aucune planification selectionnee"}
+                        Choisis la vue la plus utile pour travailler : liste, carte ou calendrier.
                       </CardDescription>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {selectedPlanification ? (
-                        <Button size="sm" variant="outline" onClick={() => setIsMapDialogOpen(true)}>
-                          Visualiser la carte
-                        </Button>
-                      ) : null}
+                      <Button
+                        size="sm"
+                        variant={displayMode === "list" ? "default" : "outline"}
+                        onClick={() => setDisplayMode("list")}
+                      >
+                        <List className="size-4" />
+                        Liste
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={displayMode === "map" ? "default" : "outline"}
+                        onClick={() => setDisplayMode("map")}
+                      >
+                        <Map className="size-4" />
+                        Carte
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={displayMode === "calendar" ? "default" : "outline"}
+                        onClick={() => setDisplayMode("calendar")}
+                      >
+                        <CalendarDays className="size-4" />
+                        Calendrier
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+              </Card>
+
+              {displayMode === "list" ? (
+                <Card className="border-border/50">
+                  <CardHeader>
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <CardTitle>Segments de transport</CardTitle>
+                        <CardDescription>
+                          {selectedPlanification ? `${selectedPlanification.transports.length} etape(s)` : "Aucune planification selectionnee"}
+                        </CardDescription>
+                      </div>
                       {selectedPlanification ? (
                         <Button size="sm" onClick={openCreateTransportDialog}>
                           <Plus className="size-4" />
@@ -640,96 +695,168 @@ export function AdminDestinationPlanningContent({ destinationId }: Props) {
                         </Button>
                       ) : null}
                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {!selectedPlanification ? (
-                    <p className="text-sm text-muted-foreground">Selectionne une planification pour gerer ses transports.</p>
-                  ) : selectedPlanification.transports.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">Aucun transport ajoute pour cette planification.</p>
-                  ) : (
-                    <div className="space-y-4">
-                      {selectedPlanification.transports.map((transport) => (
-                        <div key={transport.id} className="rounded-2xl border border-border/50 bg-card/50 p-4">
-                          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                            <div className="space-y-2">
-                              <h3 className="text-base font-semibold">{transport.depart} {"->"} {transport.arrivee}</h3>
-                              <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                                <span className="rounded-full bg-muted px-2.5 py-1">Etape {transport.ordreEtape ?? "-"}</span>
-                                <span className="rounded-full bg-muted px-2.5 py-1">{transport.nomTypeTransport}</span>
-                                <span className="rounded-full bg-muted px-2.5 py-1">Duree: {transport.duree || "-"}</span>
-                                <span className="rounded-full bg-muted px-2.5 py-1">Distance: {transport.distanceKm ?? "-"} km</span>
-                                <span className="rounded-full bg-muted px-2.5 py-1">
-                                  {transport.geojsonTrajet ? "Trajet reel disponible" : "Trajet simplifie"}
-                                </span>
+                  </CardHeader>
+                  <CardContent>
+                    {!selectedPlanification ? (
+                      <p className="text-sm text-muted-foreground">Selectionne une planification pour gerer ses transports.</p>
+                    ) : selectedPlanification.transports.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">Aucun transport ajoute pour cette planification.</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {selectedPlanification.transports.map((transport) => (
+                          <div
+                            key={transport.id}
+                            className={`rounded-2xl border p-4 ${
+                              selectedTransportId === transport.id
+                                ? "border-emerald-400 bg-emerald-50/40"
+                                : "border-border/50 bg-card/50"
+                            }`}
+                          >
+                            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                              <div className="space-y-2">
+                                <button
+                                  type="button"
+                                  className="text-left"
+                                  onClick={() => setSelectedTransportId(transport.id)}
+                                >
+                                  <h3 className="text-base font-semibold">{transport.depart} {"->"} {transport.arrivee}</h3>
+                                </button>
+                                <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                                  <span className="rounded-full bg-muted px-2.5 py-1">Etape {transport.ordreEtape ?? "-"}</span>
+                                  <span className="rounded-full bg-muted px-2.5 py-1">{transport.nomTypeTransport}</span>
+                                  <span className="rounded-full bg-muted px-2.5 py-1">Duree: {transport.duree || "-"}</span>
+                                  <span className="rounded-full bg-muted px-2.5 py-1">Distance: {transport.distanceKm ?? "-"} km</span>
+                                  <span className="rounded-full bg-muted px-2.5 py-1">
+                                    {transport.geojsonTrajet ? "Trajet reel disponible" : "Trajet simplifie"}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleCalculateTransportRoute(transport)}
+                                  disabled={isCalculatingTransportId === transport.id}
+                                >
+                                  {isCalculatingTransportId === transport.id ? "Calcul..." : "Calculer trajet"}
+                                </Button>
+                                <Button size="sm" variant="secondary" onClick={() => openEditTransportDialog(transport)}>
+                                  <Pencil className="size-4" />
+                                  Modifier
+                                </Button>
+                                <Button size="sm" variant="destructive" onClick={() => handleDeleteTransport(transport.id)} disabled={isDeletingTransportId === transport.id}>
+                                  <Trash2 className="size-4" />
+                                  {isDeletingTransportId === transport.id ? "Suppression..." : "Supprimer"}
+                                </Button>
                               </div>
                             </div>
-                            <div className="flex flex-wrap gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleCalculateTransportRoute(transport)}
-                                disabled={isCalculatingTransportId === transport.id}
-                              >
-                                {isCalculatingTransportId === transport.id ? "Calcul..." : "Calculer trajet"}
-                              </Button>
-                              <Button size="sm" variant="secondary" onClick={() => openEditTransportDialog(transport)}>
-                                <Pencil className="size-4" />
-                                Modifier
-                              </Button>
-                              <Button size="sm" variant="destructive" onClick={() => handleDeleteTransport(transport.id)} disabled={isDeletingTransportId === transport.id}>
-                                <Trash2 className="size-4" />
-                                {isDeletingTransportId === transport.id ? "Suppression..." : "Supprimer"}
-                              </Button>
-                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ) : null}
 
-              <Card className="border-border/50">
-                <CardHeader>
-                  <CardTitle>Calendrier du voyage</CardTitle>
-                  <CardDescription>
-                    {selectedPlanification
-                      ? `Vue calendrier de ${selectedPlanification.nomPlanification}`
-                      : "Visualise les dates de tes planifications avec une vraie vue calendrier."}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <PlanningVoyageCalendar
-                    planifications={planifications}
-                    selectedPlanificationId={selectedPlanificationId}
-                    onSelectPlanification={setSelectedPlanificationId}
-                    initialDate={
-                      selectedPlanification?.dateHeureDebut
-                        ? new Date(selectedPlanification.dateHeureDebut)
-                        : undefined
-                    }
-                  />
-                  {selectedPlanification ? (
-                    <div className="rounded-xl border border-border/50 bg-card/50 px-4 py-3 text-sm">
-                      <p className="font-medium">{selectedPlanification.nomPlanification}</p>
-                      <p className="mt-1 text-muted-foreground">
-                        {selectedPlanification.dateHeureDebut
-                          ? new Date(selectedPlanification.dateHeureDebut).toLocaleString("fr-FR")
-                          : "Debut non renseigne"}
-                        {" -> "}
-                        {selectedPlanification.dateHeureFin
-                          ? new Date(selectedPlanification.dateHeureFin).toLocaleString("fr-FR")
-                          : "Fin non renseignee"}
-                      </p>
+              {displayMode === "map" ? (
+                <Card className="border-border/50">
+                  <CardHeader>
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <CardTitle>Carte du trajet</CardTitle>
+                        <CardDescription>
+                          {selectedPlanification
+                            ? `Visualisation des segments de ${selectedPlanification.nomPlanification}.`
+                            : "Choisis une planification pour voir les trajets."}
+                        </CardDescription>
+                      </div>
+                      {selectedPlanification ? (
+                        <Button size="sm" onClick={openCreateTransportDialog}>
+                          <Plus className="size-4" />
+                          Ajouter segment
+                        </Button>
+                      ) : null}
                     </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      Selectionne une planification pour voir sa periode directement dans le calendrier.
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {!selectedPlanification ? (
+                      <div className="flex h-[320px] items-center justify-center rounded-2xl border border-dashed border-border/60 bg-muted/20 px-6 text-center text-sm text-muted-foreground">
+                        Selectionne une planification pour afficher la carte.
+                      </div>
+                    ) : (
+                      <PlanningVoyageMap transports={selectedPlanification.transports} />
+                    )}
+                    {selectedPlanification ? (
+                      <div className="rounded-xl border border-border/50 bg-card/50 px-4 py-3 text-sm">
+                        <p className="font-medium">{selectedPlanification.nomPlanification}</p>
+                        <p className="mt-1 text-muted-foreground">
+                          {selectedPlanification.transports.length} segment(s) affiche(s) sur la carte.
+                        </p>
+                      </div>
+                    ) : null}
+                  </CardContent>
+                </Card>
+              ) : null}
+
+              {displayMode === "calendar" ? (
+                <Card className="border-border/50">
+                  <CardHeader>
+                    <CardTitle>Calendrier du voyage</CardTitle>
+                    <CardDescription>
+                      {selectedPlanification
+                        ? `Vue calendrier de ${selectedPlanification.nomPlanification}`
+                        : "Visualise les dates de tes planifications avec une vraie vue calendrier."}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <PlanningVoyageCalendar
+                      planifications={planifications}
+                      selectedPlanificationId={selectedPlanificationId}
+                      selectedTransportId={selectedTransportId ?? undefined}
+                      onSelectPlanification={(planificationId) => {
+                        setSelectedPlanificationId(planificationId)
+                        const planification = planifications.find((item) => item.id === planificationId)
+                        setSelectedTransportId(planification?.transports[0]?.id ?? null)
+                      }}
+                      onSelectTransport={(transportId, planificationId) => {
+                        setSelectedPlanificationId(planificationId)
+                        setSelectedTransportId(transportId)
+                      }}
+                      initialDate={
+                        selectedPlanification?.dateHeureDebut
+                          ? new Date(selectedPlanification.dateHeureDebut)
+                          : undefined
+                      }
+                    />
+                    {selectedPlanification ? (
+                      <div className="rounded-xl border border-border/50 bg-card/50 px-4 py-3 text-sm">
+                        <p className="font-medium">{selectedPlanification.nomPlanification}</p>
+                        <p className="mt-1 text-muted-foreground">
+                          {selectedPlanification.dateHeureDebut
+                            ? new Date(selectedPlanification.dateHeureDebut).toLocaleString("fr-FR")
+                            : "Debut non renseigne"}
+                          {" -> "}
+                          {selectedPlanification.dateHeureFin
+                            ? new Date(selectedPlanification.dateHeureFin).toLocaleString("fr-FR")
+                            : "Fin non renseignee"}
+                        </p>
+                        {selectedTransportId ? (
+                          <p className="mt-2 text-muted-foreground">
+                            Segment selectionne :{" "}
+                            {selectedPlanification.transports.find((transport) => transport.id === selectedTransportId)?.depart || "-"}
+                            {" -> "}
+                            {selectedPlanification.transports.find((transport) => transport.id === selectedTransportId)?.arrivee || "-"}
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        Selectionne une planification pour voir sa periode directement dans le calendrier.
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              ) : null}
             </div>
           </div>
         </div>
@@ -908,26 +1035,6 @@ export function AdminDestinationPlanningContent({ destinationId }: Props) {
               Valider la position
             </Button>
           </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isMapDialogOpen} onOpenChange={setIsMapDialogOpen}>
-        <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Carte du trajet</DialogTitle>
-            <DialogDescription>
-              {selectedPlanification
-                ? `Visualisation des segments de ${selectedPlanification.nomPlanification}.`
-                : "Choisis une planification pour voir les trajets."}
-            </DialogDescription>
-          </DialogHeader>
-          {!selectedPlanification ? (
-            <div className="flex h-[320px] items-center justify-center rounded-2xl border border-dashed border-border/60 bg-muted/20 px-6 text-center text-sm text-muted-foreground">
-              Selectionne une planification pour afficher la carte.
-            </div>
-          ) : (
-            <PlanningVoyageMap transports={selectedPlanification.transports} />
-          )}
         </DialogContent>
       </Dialog>
 
