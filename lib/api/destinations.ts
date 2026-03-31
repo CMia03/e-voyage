@@ -3,13 +3,19 @@ import {
   AdminDestination,
   DestinationDetails,
   DestinationAssociations,
+  ElementJourPlanification,
+  JourPlanificationVoyage,
   PlanificationVoyage,
   SavePhotoDestinationBulkPayload,
+  SaveElementJourPlanificationPayload,
+  SaveJourPlanificationVoyagePayload,
   SavePlanificationVoyagePayload,
   SaveTransportPayload,
+  SaveTypeElementJourPayload,
   SaveTypeTransportPayload,
   SaveDestinationPayload,
   Transport,
+  TypeElementJour,
   TypeTransport,
 } from "@/lib/type/destination";
 
@@ -242,8 +248,22 @@ export function listTypeTransports(token?: string) {
   });
 }
 
+export function listTypeElementJours(token?: string) {
+  return apiRequest<ApiEnvelope<TypeElementJour[]>>("/api/destinations/types-element-jour", {
+    token,
+  });
+}
+
 export function createTypeTransport(payload: SaveTypeTransportPayload, token?: string) {
   return apiRequest<ApiEnvelope<TypeTransport>>("/api/destinations/types-transport", {
+    method: "POST",
+    token,
+    body: payload,
+  });
+}
+
+export function createTypeElementJour(payload: SaveTypeElementJourPayload, token?: string) {
+  return apiRequest<ApiEnvelope<TypeElementJour>>("/api/destinations/types-element-jour", {
     method: "POST",
     token,
     body: payload,
@@ -280,6 +300,73 @@ export function updatePlanificationVoyage(id: string, payload: SavePlanification
 
 export function deletePlanificationVoyage(id: string, token?: string) {
   return apiRequest<ApiEnvelope>(`/api/destinations/planifications/${id}`, {
+    method: "DELETE",
+    token,
+  });
+}
+
+export function listJoursPlanificationVoyage(planificationId: string, token?: string) {
+  return apiRequest<ApiEnvelope<JourPlanificationVoyage[]>>(`/api/destinations/planifications/${planificationId}/jours`, {
+    token,
+  });
+}
+
+export function createJourPlanificationVoyage(
+  planificationId: string,
+  payload: SaveJourPlanificationVoyagePayload,
+  token?: string
+) {
+  return apiRequest<ApiEnvelope<JourPlanificationVoyage>>(`/api/destinations/planifications/${planificationId}/jours`, {
+    method: "POST",
+    token,
+    body: payload,
+  });
+}
+
+export function updateJourPlanificationVoyage(
+  id: string,
+  payload: SaveJourPlanificationVoyagePayload,
+  token?: string
+) {
+  return apiRequest<ApiEnvelope<JourPlanificationVoyage>>(`/api/destinations/jours-planification/${id}`, {
+    method: "PUT",
+    token,
+    body: payload,
+  });
+}
+
+export function deleteJourPlanificationVoyage(id: string, token?: string) {
+  return apiRequest<ApiEnvelope>(`/api/destinations/jours-planification/${id}`, {
+    method: "DELETE",
+    token,
+  });
+}
+
+export function createElementJourPlanification(
+  payload: SaveElementJourPlanificationPayload,
+  token?: string
+) {
+  return apiRequest<ApiEnvelope<ElementJourPlanification>>("/api/destinations/elements-jour", {
+    method: "POST",
+    token,
+    body: payload,
+  });
+}
+
+export function updateElementJourPlanification(
+  id: string,
+  payload: SaveElementJourPlanificationPayload,
+  token?: string
+) {
+  return apiRequest<ApiEnvelope<ElementJourPlanification>>(`/api/destinations/elements-jour/${id}`, {
+    method: "PUT",
+    token,
+    body: payload,
+  });
+}
+
+export function deleteElementJourPlanification(id: string, token?: string) {
+  return apiRequest<ApiEnvelope>(`/api/destinations/elements-jour/${id}`, {
     method: "DELETE",
     token,
   });

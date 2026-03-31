@@ -551,7 +551,7 @@ export function AdminDestinationAssociationsContent({ destinationId }: Props) {
               aria-label={`Associer ${item.libelle}`}
             />
             <span className="text-sm font-medium">
-              {item.estSelectionne ? "Associee" : "Non associee"}
+              {item.estSelectionne ? "Associee à cette destination" : "Non associee à cette destination"}
             </span>
           </div>
         </div>

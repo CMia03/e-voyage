@@ -18,6 +18,7 @@ export function Header() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const isHomePage = pathname === "/";
+  const mobileSheetId = "public-mobile-menu-sheet";
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     // Si on est sur la page d'accueil, faire un smooth scroll
@@ -93,7 +94,7 @@ export function Header() {
               <span className="sr-only">Menu</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="right" className="w-[85vw] sm:w-[400px] p-0">
+          <SheetContent id={mobileSheetId} side="right" className="w-[85vw] sm:w-[400px] p-0">
             <div className="flex flex-col h-full">
               {/* Header avec gradient */}
               <div className="bg-gradient-to-br from-emerald-50 to-teal-50 px-6 py-8 border-b">

@@ -103,6 +103,14 @@ export type TypeTransport = {
   dateModification?: string;
 };
 
+export type TypeElementJour = {
+  id: string;
+  nom: string;
+  code: string;
+  dateCreation?: string;
+  dateModification?: string;
+};
+
 export type Transport = {
   id: string;
   ordreEtape: number | null;
@@ -122,6 +130,42 @@ export type Transport = {
   idPlanificationVoyage: string;
 };
 
+export type ElementJourPlanification = {
+  id: string;
+  titre: string | null;
+  description: string | null;
+  heureDebut: string | null;
+  heureFin: string | null;
+  ordreAffichage: number | null;
+  budgetPrevu: number | null;
+  devise: string | null;
+  estActif: boolean;
+  dateCreation?: string;
+  dateModification?: string;
+  idJourPlanificationVoyage: string;
+  idTypeElementJour: string;
+  nomTypeElementJour: string | null;
+  codeTypeElementJour: string | null;
+  idTransport: string | null;
+  nomTransport: string | null;
+  idActivite: string | null;
+  nomActivite: string | null;
+  idHebergement: string | null;
+  nomHebergement: string | null;
+};
+
+export type JourPlanificationVoyage = {
+  id: string;
+  numeroJour: number | null;
+  dateJour: string | null;
+  titre: string | null;
+  description: string | null;
+  dateCreation?: string;
+  dateModification?: string;
+  idPlanificationVoyage: string;
+  elements: ElementJourPlanification[];
+};
+
 export type PlanificationVoyage = {
   id: string;
   nomPlanification: string;
@@ -136,6 +180,7 @@ export type PlanificationVoyage = {
   idDestination: string;
   nomDestination: string;
   transports: Transport[];
+  jours: JourPlanificationVoyage[];
 };
 
 export type SaveDestinationPayload = {
@@ -167,6 +212,11 @@ export type SaveTypeTransportPayload = {
   nom: string;
 };
 
+export type SaveTypeElementJourPayload = {
+  nom: string;
+  code: string;
+};
+
 export type SavePlanificationVoyagePayload = {
   nomPlanification: string;
   budgetTotal?: number | null;
@@ -191,4 +241,28 @@ export type SaveTransportPayload = {
   geojsonTrajet?: string;
   idTypeTransport: string;
   idPlanificationVoyage: string;
+};
+
+export type SaveJourPlanificationVoyagePayload = {
+  numeroJour?: number | null;
+  dateJour?: string | null;
+  titre: string;
+  description: string;
+  idPlanificationVoyage?: string;
+};
+
+export type SaveElementJourPlanificationPayload = {
+  titre: string;
+  description: string;
+  heureDebut?: string | null;
+  heureFin?: string | null;
+  ordreAffichage?: number | null;
+  budgetPrevu?: number | null;
+  devise?: string | null;
+  estActif?: boolean;
+  idJourPlanificationVoyage: string;
+  idTypeElementJour: string;
+  idTransport?: string | null;
+  idActivite?: string | null;
+  idHebergement?: string | null;
 };

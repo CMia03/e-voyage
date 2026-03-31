@@ -1,4 +1,4 @@
-import { AdminDestinationPlanningContent } from "./planning-content";
+import { AdminDestinationPlanningContentNext } from "./planning-content-admin";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -7,5 +7,5 @@ type PageProps = {
 export default async function AdminDestinationPlanningPage({ params }: PageProps) {
   const { id } = await params;
 
-  return <AdminDestinationPlanningContent destinationId={id} />;
+  return <AdminDestinationPlanningContentNext destinationId={id} />;
 }
