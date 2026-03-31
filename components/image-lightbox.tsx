@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 interface ImageLightboxProps {
   images: string[];
@@ -14,11 +14,15 @@ interface ImageLightboxProps {
 }
 
 export function ImageLightbox({ images, currentIndex: initialIndex, isOpen, onClose, title }: ImageLightboxProps) {
-  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const [currentIndex, setCurrentIndex] = useState(() => initialIndex);
 
-  useEffect(() => {
-    setCurrentIndex(initialIndex);
-  }, [initialIndex, isOpen]);
+  const handlePrevious = useCallback(() => {
+    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  }, [images.length]);
+
+  const handleNext = useCallback(() => {
+    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  }, [images.length]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -40,15 +44,7 @@ export function ImageLightbox({ images, currentIndex: initialIndex, isOpen, onCl
       window.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "unset";
     };
-  }, [isOpen, currentIndex]);
-
-  const handlePrevious = () => {
-    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
-  };
-
-  const handleNext = () => {
-    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
-  };
+  }, [isOpen, currentIndex, handleNext, handlePrevious, onClose]);
 
   if (!isOpen || images.length === 0) return null;
 
@@ -95,6 +91,7 @@ export function ImageLightbox({ images, currentIndex: initialIndex, isOpen, onCl
                 src={images[currentIndex]}
                 alt={title ? `${title} - Image ${currentIndex + 1}` : `Image ${currentIndex + 1}`}
                 fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
                 className="object-contain"
                 priority
                 quality={95}
@@ -142,6 +139,7 @@ export function ImageLightbox({ images, currentIndex: initialIndex, isOpen, onCl
                       src={img}
                       alt={`Thumbnail ${index + 1}`}
                       fill
+                      sizes="64px"
                       className="object-cover"
                     />
                   </button>

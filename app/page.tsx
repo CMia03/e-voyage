@@ -163,10 +163,10 @@ export default async function Home() {
                 <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-emerald-500/5 via-teal-500/5 to-cyan-500/5 pointer-events-none" />
                 <div className="relative">
                   <h2 className="mb-6 text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent">
-                    Prêt à partir à l'aventure ?
+                    Prêt à partir à l  aventure ?
                   </h2>
                   <p className="mb-8 sm:mb-10 text-lg sm:text-xl text-muted-foreground px-4 leading-relaxed">
-                    Contactez-nous dès aujourd'hui pour organiser votre voyage de rêve à Madagascar
+                    Contactez-nous dès aujourd hui pour organiser votre voyage de rêve à Madagascar
                   </p>
                   <SmoothScrollButtons />
                 </div>
