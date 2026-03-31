@@ -8,7 +8,6 @@ import { useState } from "react";
 import { destinationsData } from "@/lib/destinations";
 
 export function HomeGallery() {
-  // Récupérer toutes les images de toutes les destinations et prendre les 4 premières
   const allImages = destinationsData.flatMap(dest => 
     dest.gallery.map(img => ({
       src: img,

@@ -59,7 +59,7 @@ export function AdminHeader() {
           normalizedMessage.toLowerCase().includes("utilisateur non trouve");
 
         if (!userNotFound) {
-          console.error("Erreur lors du chargement du profil:", message);
+          // Erreur silencieuse pour les erreurs de profil
         }
       } finally {
         setIsLoading(false);
@@ -93,17 +93,6 @@ export function AdminHeader() {
       default:
         return role;
     }
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
   };
 
   // Ne pas afficher le menu si pas authentifié

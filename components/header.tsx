@@ -21,12 +21,10 @@ export function Header() {
   const mobileSheetId = "public-mobile-menu-sheet";
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-    // Si on est sur la page d'accueil, faire un smooth scroll
     if (isHomePage) {
       handleSmoothScrollClick(e, href, 80);
       setOpen(false);
     } else {
-      // Sinon, laisser le lien normal fonctionner (redirection vers la page d'accueil)
       setOpen(false);
     }
   };
@@ -74,10 +72,6 @@ export function Header() {
           >
             Contact
           </Link>
-
-          <Button asChild size="sm">
-            <Link href="/#contact" onClick={(e) => handleClick(e, "#contact")}>Réserver</Link>
-          </Button>
 
           <Button asChild variant="outline" size="sm">
             <Link href="/login">Se connecter</Link>
@@ -152,14 +146,8 @@ export function Header() {
                 </Link>
               </nav>
               
-
               {/* Footer avec bouton */}
               <div className="border-t px-6 py-6 bg-muted/30">
-                <Button asChild className="w-full" size="lg">
-                  <Link href="/#contact" onClick={(e) => handleClick(e, "#contact")}>
-                    Réserver maintenant
-                  </Link>
-                </Button>
                 <p className="text-xs text-center text-muted-foreground mt-4">
                   📱 034 66 885 42
                 </p>

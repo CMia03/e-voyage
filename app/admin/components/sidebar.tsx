@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 
 type AdminSection =
@@ -109,7 +108,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               </button>
               <button
                 type="button"
-                onClick={() => console.log("Catégories")}
+                onClick={() => {}}
                 className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
                   active === "activites"
                     ? "bg-emerald-500/10 font-medium text-emerald-600"
@@ -121,7 +120,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               </button>
               <button
                 type="button"
-                onClick={() => console.log("Régions")}
+                onClick={() => {}}
                 className="flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
               >
                 <span className="mr-2">•</span>
@@ -129,7 +128,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               </button>
               <button
                 type="button"
-                onClick={() => console.log("Saisons")}
+                onClick={() => {}}
                 className="flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
               >
                 <span className="mr-2">•</span>
@@ -237,7 +236,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               </button>
               <button
                 type="button"
-                onClick={() => console.log("Ajouter une activité")}
+                onClick={() => {}}
                 className="flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
               >
                 <span className="mr-2">•</span>
@@ -245,7 +244,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               </button>
               <button
                 type="button"
-                onClick={() => console.log("Catégories d'activités")}
+                onClick={() => {}}
                 className="flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
               >
                 <span className="mr-2">•</span>

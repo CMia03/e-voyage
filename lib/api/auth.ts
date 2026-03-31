@@ -26,9 +26,28 @@ export function completeRegistration(payload: ConfirmRegistrationPayload) {
   );
 }
 
+export function loginWithGoogle() {
+  // Rediriger vers l'endpoint Google OAuth
+  window.location.href = '/api/auth/google';
+}
+
+export function refreshToken(refreshToken: string) {
+  return apiRequest<{
+    accessToken: string;
+    refreshToken?: string;
+    role: string;
+    userId?: string;
+    login?: string;
+    nom?: string;
+    prenom?: string;
+  }>("/api/auth/refresh", {
+    method: "POST",
+    body: { refreshToken },
+  });
+}
+
 export function getProfile(token: string) {
   return apiRequest<{ data?: unknown }>("/api/auth/me", {
     token,
   });
 }
-
