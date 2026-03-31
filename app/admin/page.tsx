@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AdminHeader } from "@/app/admin/components/header";
 import { AdminSidebar } from "@/app/admin/components/sidebar-nav";
 import { AdminFooter } from "@/app/admin/components/footer";
@@ -11,6 +11,7 @@ import { AdminHebergements } from "@/app/admin/hebergements/page";
 import { AuthSession, loadAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useEffect } from "react";
 
 type AdminSection =
   | "dashboard"
@@ -92,7 +93,6 @@ export default function AdminPage() {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-muted/30 to-background text-foreground">
       <AdminHeader />

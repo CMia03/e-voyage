@@ -26,6 +26,11 @@ export function completeRegistration(payload: ConfirmRegistrationPayload) {
   );
 }
 
+export function loginWithGoogle() {
+  // Rediriger vers l'endpoint Google OAuth
+  window.location.href = '/api/auth/google';
+}
+
 export function getProfile(token: string) {
   return apiRequest<{ data?: unknown }>("/api/auth/me", {
     token,
