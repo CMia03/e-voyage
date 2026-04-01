@@ -6,6 +6,7 @@ import Link from "next/link";
 import { completeRegistration, initiateRegistration } from "@/lib/api/auth";
 import { getErrorMessage } from "@/lib/api/client";
 import { saveAuth } from "@/lib/auth";
+import { resolvePostLoginPath } from "@/lib/auth-redirect";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnimatedBackground } from "@/components/animated-background";
@@ -72,7 +73,7 @@ export default function RegisterPage() {
         response && typeof response === "object" && "data" in response
           ? (response as { data?: any }).data ?? {}
           : response ?? {};
-      saveAuth({
+      const authPayload = {
         accessToken: payload.accessToken,
         refreshToken: payload.refreshToken,
         role: payload.role,
@@ -80,8 +81,9 @@ export default function RegisterPage() {
         login: payload.login,
         nom: payload.nom,
         prenom: payload.prenom,
-      });
-      router.push("/admin");
+      };
+      saveAuth(authPayload);
+      router.push(resolvePostLoginPath(authPayload));
     } catch (error) {
       setRegisterError(
         getErrorMessage(error, "Erreur r??seau. Veuillez r??essayer.")

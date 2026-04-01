@@ -1,5 +1,5 @@
 import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
+import { FooterDynamic } from "@/components/footer-dynamic";
 import { ImageLightbox } from "@/components/image-lightbox";
 import { destinationsData } from "@/lib/destinations";
 import { Button } from "@/components/ui/button";
@@ -51,7 +51,7 @@ export default function GaleriePage() {
           </div>
         </section>
       </main>
-      <Footer />
+      <FooterDynamic />
     </div>
   );
 }

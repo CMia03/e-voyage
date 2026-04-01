@@ -8,6 +8,7 @@ import { AdminDashboard } from "@/app/admin/dashboard";
 import { AdminDestinations } from "@/app/admin/destinations";
 import { AdminActivites } from "@/app/admin/activites/page";
 import { AdminHebergements } from "@/app/admin/hebergements/page";
+import { AdminEntrepriseInfo } from "@/app/admin/entreprise-info-next";
 import { AuthSession, loadAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -32,7 +33,8 @@ type AdminSection =
   | "reservations"
   | "avis"
   | "notifications"
-  | "statistiques";
+  | "statistiques"
+  | "entreprise-info";
 
 export default function AdminPage() {
   const [active, setActive] = useState<AdminSection>("dashboard");
@@ -166,6 +168,8 @@ export default function AdminPage() {
               accessToken={accessToken ?? ""}
               initialView="equipements"
             />
+          ) : active === "entreprise-info" ? (
+            <AdminEntrepriseInfo accessToken={accessToken ?? ""} />
           ) : (
             <AdminDestinations accessToken={accessToken ?? ""} initialView="liste" />
           )}

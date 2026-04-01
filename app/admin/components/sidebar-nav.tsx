@@ -21,7 +21,8 @@ type AdminSection =
   | "reservations"
   | "avis"
   | "notifications"
-  | "statistiques";
+  | "statistiques"
+  | "entreprise-info";
 
 interface AdminSidebarProps {
   active: AdminSection;
@@ -201,7 +202,18 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
           ) : null}
         </div>
 
-        
+        <button
+          type="button"
+          onClick={() => onSelect("entreprise-info")}
+          className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
+            active === "entreprise-info"
+              ? "bg-emerald-500/10 font-medium text-emerald-600"
+              : "text-muted-foreground hover:bg-primary/10"
+          }`}
+        >
+          <span className="mr-2">🏢</span>
+          Info d'entreprise
+        </button>
       </nav>
     </aside>
   );
