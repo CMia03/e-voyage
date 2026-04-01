@@ -5,6 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { getErrorMessage } from "@/lib/api/client";
 import { listUsers, UserSummary } from "@/lib/api/users";
+import { getDashboardData } from "@/lib/api/dashboard";
+import { DashboardResponse } from "@/lib/type/dashboard";
 
 type AdminDashboardProps = {
   role: string;
@@ -14,6 +16,9 @@ type AdminDashboardProps = {
 export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
   const [users, setUsers] = useState<UserSummary[]>([]);
   const [usersError, setUsersError] = useState("");
+  const [dashboardData, setDashboardData] = useState<DashboardResponse | null>(null);
+  const [dashboardError, setDashboardError] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (role !== "ADMIN" || !accessToken) return;
@@ -37,6 +42,33 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
       active = false;
     };
   }, [role, accessToken]);
+
+  useEffect(() => {
+    let active = true;
+    const loadDashboardData = async () => {
+      try {
+        setLoading(true);
+        const data = await getDashboardData(accessToken);
+        if (active) {
+          setDashboardData(data);
+        }
+      } catch (error) {
+        if (active) {
+          setDashboardError(
+            getErrorMessage(error, "Network error while loading dashboard data")
+          );
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+    loadDashboardData();
+    return () => {
+      active = false;
+    };
+  }, [accessToken]);
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-2">
@@ -48,41 +80,55 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
         </p>
       </div>
 
+      {dashboardError ? (
+        <div className="bg-red-50 border border-red-200 rounded-md p-4">
+          <p className="text-sm text-red-600">{dashboardError}</p>
+        </div>
+      ) : null}
+
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="border-border/50">
           <CardHeader>
             <CardDescription>Destinations</CardDescription>
-            <CardTitle className="text-2xl">4</CardTitle>
+            <CardTitle className="text-2xl">
+              {loading ? "..." : dashboardData?.data.destinations.count || 0}
+            </CardTitle>
           </CardHeader>
           <CardContent className="text-xs text-muted-foreground">
-            Last update: 2 days ago
+            Last update: {loading ? "..." : dashboardData?.data.destinations.lastUpdate || "N/A"}
           </CardContent>
         </Card>
         <Card className="border-border/50">
           <CardHeader>
             <CardDescription>Hebergements</CardDescription>
-            <CardTitle className="text-2xl">18</CardTitle>
+            <CardTitle className="text-2xl">
+              {loading ? "..." : dashboardData?.data.hebergements.count || 0}
+            </CardTitle>
           </CardHeader>
           <CardContent className="text-xs text-muted-foreground">
-            3 pending reviews
+            {loading ? "..." : `${dashboardData?.data.hebergements.pendingReviews || 0} pending reviews`}
           </CardContent>
         </Card>
         <Card className="border-border/50">
           <CardHeader>
             <CardDescription>Activites</CardDescription>
-            <CardTitle className="text-2xl">27</CardTitle>
+            <CardTitle className="text-2xl">
+              {loading ? "..." : dashboardData?.data.activites.count || 0}
+            </CardTitle>
           </CardHeader>
           <CardContent className="text-xs text-muted-foreground">
-            6 new this month
+            {loading ? "..." : `${dashboardData?.data.activites.newThisMonth || 0} new this month`}
           </CardContent>
         </Card>
         <Card className="border-border/50">
           <CardHeader>
             <CardDescription>Avis en attente</CardDescription>
-            <CardTitle className="text-2xl">5</CardTitle>
+            <CardTitle className="text-2xl">
+              {loading ? "..." : dashboardData?.data.avisEnAttente.count || 0}
+            </CardTitle>
           </CardHeader>
           <CardContent className="text-xs text-muted-foreground">
-            Moderation required
+            {loading ? "..." : dashboardData?.data.avisEnAttente.status || "N/A"}
           </CardContent>
         </Card>
       </section>
