@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getErrorMessage } from "@/lib/api/client";
 import { listUsers, UserSummary } from "@/lib/api/users";
 import { getDashboardData } from "@/lib/api/dashboard";
 import { DashboardResponse } from "@/lib/type/dashboard";
+import { Loader2 } from "lucide-react";
 
 type AdminDashboardProps = {
   role: string;
@@ -14,6 +16,7 @@ type AdminDashboardProps = {
 };
 
 export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
+  const router = useRouter();
   const [users, setUsers] = useState<UserSummary[]>([]);
   const [usersError, setUsersError] = useState("");
   const [dashboardData, setDashboardData] = useState<DashboardResponse | null>(null);
@@ -80,58 +83,67 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
         </p>
       </div>
 
-      {dashboardError ? (
-        <div className="bg-red-50 border border-red-200 rounded-md p-4">
-          <p className="text-sm text-red-600">{dashboardError}</p>
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Chargement des données...</p>
+          </div>
         </div>
-      ) : null}
+      ) : (
+        <>
+          {dashboardError ? (
+            <div className="bg-red-50 border border-red-200 rounded-md p-4">
+              <p className="text-sm text-red-600">{dashboardError}</p>
+            </div>
+          ) : null}
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-border/50">
-          <CardHeader>
-            <CardDescription>Destinations</CardDescription>
-            <CardTitle className="text-2xl">
-              {loading ? "..." : dashboardData?.data.destinations.count || 0}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-xs text-muted-foreground">
-            Last update: {loading ? "..." : dashboardData?.data.destinations.lastUpdate || "N/A"}
-          </CardContent>
-        </Card>
-        <Card className="border-border/50">
-          <CardHeader>
-            <CardDescription>Hebergements</CardDescription>
-            <CardTitle className="text-2xl">
-              {loading ? "..." : dashboardData?.data.hebergements.count || 0}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-xs text-muted-foreground">
-            {loading ? "..." : `${dashboardData?.data.hebergements.pendingReviews || 0} pending reviews`}
-          </CardContent>
-        </Card>
-        <Card className="border-border/50">
-          <CardHeader>
-            <CardDescription>Activites</CardDescription>
-            <CardTitle className="text-2xl">
-              {loading ? "..." : dashboardData?.data.activites.count || 0}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-xs text-muted-foreground">
-            {loading ? "..." : `${dashboardData?.data.activites.newThisMonth || 0} new this month`}
-          </CardContent>
-        </Card>
-        <Card className="border-border/50">
-          <CardHeader>
-            <CardDescription>Avis en attente</CardDescription>
-            <CardTitle className="text-2xl">
-              {loading ? "..." : dashboardData?.data.avisEnAttente.count || 0}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-xs text-muted-foreground">
-            {loading ? "..." : dashboardData?.data.avisEnAttente.status || "N/A"}
-          </CardContent>
-        </Card>
-      </section>
+          <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Card className="border-border/50">
+              <CardHeader>
+                <CardDescription>Destinations</CardDescription>
+                <CardTitle className="text-2xl">
+                  {dashboardData?.data.destinations.count || 0}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-xs text-muted-foreground">
+                Last update: {dashboardData?.data.destinations.lastUpdate || "N/A"}
+              </CardContent>
+            </Card>
+            <Card className="border-border/50">
+              <CardHeader>
+                <CardDescription>Hebergements</CardDescription>
+                <CardTitle className="text-2xl">
+                  {dashboardData?.data.hebergements.count || 0}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-xs text-muted-foreground">
+                {dashboardData?.data.hebergements.pendingReviews || 0} pending reviews
+              </CardContent>
+            </Card>
+            <Card className="border-border/50">
+              <CardHeader>
+                <CardDescription>Activites</CardDescription>
+                <CardTitle className="text-2xl">
+                  {dashboardData?.data.activites.count || 0}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-xs text-muted-foreground">
+                {dashboardData?.data.activites.newThisMonth || 0} new this month
+              </CardContent>
+            </Card>
+            <Card className="border-border/50">
+              <CardHeader>
+                <CardDescription>Avis en attente</CardDescription>
+                <CardTitle className="text-2xl">
+                  {dashboardData?.data.avisEnAttente.count || 0}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-xs text-muted-foreground">
+                {dashboardData?.data.avisEnAttente.status || "N/A"}
+              </CardContent>
+            </Card>
+          </section>
 
       <section className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
@@ -163,18 +175,30 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
 
         <Card>
           <CardHeader>
-            <CardTitle>Quick actions</CardTitle>
+            <CardTitle>Raccourcie</CardTitle>
             <CardDescription>Common admin tasks</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
-            <Button className="w-full" variant="default">
-              Add destination
+            <Button 
+              className="w-full" 
+              variant="default"
+              onClick={() => router.push('/admin/destination/creation')}
+            >
+             + Destination
             </Button>
-            <Button className="w-full" variant="outline">
-              Add hebergement
+            <Button 
+              className="w-full" 
+              variant="outline"
+              onClick={() => router.push('/admin/hebergements/creation')}
+            >
+              + Hébergement
             </Button>
-            <Button className="w-full" variant="outline">
-              Add activite
+            <Button 
+              className="w-full" 
+              variant="outline"
+              onClick={() => router.push('/admin/activites/creation')}
+            >
+              + Activité
             </Button>
             <Button className="w-full" variant="ghost">
               Review pending avis
@@ -266,6 +290,8 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
           </Card>
         </section>
       ) : null}
+        </>
+      )}
     </div>
   );
 }
