@@ -83,7 +83,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
                   }`}
               >
                 <span className="mr-2">•</span>
-                Toutes les destinations
+                Liste des destinations
               </button>
               <button
                 type="button"
@@ -95,35 +95,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
                 }`}
               >
                 <span className="mr-2">•</span>
-
-              </button>
-              <button
-                type="button"
-                onClick={() => {}}
-                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
-                  active === "activites"
-                    ? "bg-emerald-500/10 font-medium text-emerald-600"
-                    : "text-muted-foreground hover:bg-primary/10"
-                }`}
-              >
-                <span className="mr-2">•</span>
-                Catégories
-              </button>
-              <button
-                type="button"
-                onClick={() => {}}
-                className="flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
-              >
-                <span className="mr-2">•</span>
-                Régions
-              </button>
-              <button
-                type="button"
-                onClick={() => {}}
-                className="flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
-              >
-                <span className="mr-2">•</span>
-                Saisons recommandées
+                Ajouter destination
               </button>
             </div>
           )}
