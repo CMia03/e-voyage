@@ -108,15 +108,15 @@ export function AdminDestinationListe({
     >
       <div className="relative">
         {destination.urlImagePrincipale ? (
-          <div className="w-full bg-muted/20 p-2">
+          <div className="w-full h-48 bg-muted/20 p-2">
             <img
               src={destination.urlImagePrincipale}
               alt={destination.nom}
-              className="max-w-full max-h-80 h-auto rounded-md object-contain"
+              className="w-full h-full rounded-md object-cover"
             />
           </div>
         ) : (
-          <div className="flex h-32 w-full items-center justify-center bg-muted/40 text-sm text-muted-foreground">
+          <div className="flex h-48 w-full items-center justify-center bg-muted/40 text-sm text-muted-foreground">
             Aucune image
           </div>
         )}

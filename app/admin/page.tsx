@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AdminHeader } from "@/app/admin/components/header";
-import { AdminSidebar } from "@/app/admin/components/sidebar-nav";
+import { AdminSidebar, type AdminSection } from "@/app/admin/components/sidebar";
 import { AdminFooter } from "@/app/admin/components/footer";
 import { AdminDashboard } from "@/app/admin/dashboard";
 import { AdminDestinations } from "@/app/admin/destinations";
@@ -11,27 +11,6 @@ import { AdminHebergements } from "@/app/admin/hebergements/page";
 import { AuthSession, loadAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-
-type AdminSection =
-  | "dashboard"
-  | "destinations"
-  | "destinations-create"
-  | "destinations-edit"
-  | "activites"
-  | "activites-create"
-  | "activites-edit"
-  | "activites-categories"
-  | "hebergements"
-  | "hebergements-create"
-  | "hebergements-edit"
-  | "hebergements-tarifs"
-  | "hebergements-types"
-  | "hebergements-equipements"
-  | "utilisateurs"
-  | "reservations"
-  | "avis"
-  | "notifications"
-  | "statistiques";
 
 export default function AdminPage() {
   const [active, setActive] = useState<AdminSection>("dashboard");
@@ -166,6 +145,26 @@ export default function AdminPage() {
               accessToken={accessToken ?? ""}
               initialView="equipements"
             />
+          ) : active === "planification" ? (
+            <div className="space-y-8">
+              <div className="flex flex-col gap-2">
+                <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+                  Planification
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  Gestion de la planification et des plannings.
+                </p>
+              </div>
+
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <h2 className="text-xl font-medium mb-4">test</h2>
+                  <p className="text-muted-foreground">
+                    Page de planification en cours de développement.
+                  </p>
+                </div>
+              </div>
+            </div>
           ) : (
             <AdminDestinations accessToken={accessToken ?? ""} initialView="liste" />
           )}

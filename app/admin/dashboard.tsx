@@ -8,6 +8,7 @@ import { getErrorMessage } from "@/lib/api/client";
 import { listUsers, UserSummary } from "@/lib/api/users";
 import { getDashboardData } from "@/lib/api/dashboard";
 import { DashboardResponse } from "@/lib/type/dashboard";
+import { DASHBOARD_TEXTS } from "@/lib/constants/texts";
 import { Loader2 } from "lucide-react";
 
 type AdminDashboardProps = {
@@ -76,10 +77,10 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
     <div className="space-y-8">
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          Tableau de bord
+          {DASHBOARD_TEXTS.TITLE}
         </h1>
         <p className="text-sm text-muted-foreground">
-          Vue d&apos;ensemble de l&apos;activité et de l&apos;état du contenu pour Cool Voyage.
+          {DASHBOARD_TEXTS.DESCRIPTION}
         </p>
       </div>
 
@@ -87,7 +88,7 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
         <div className="flex items-center justify-center py-12">
           <div className="flex flex-col items-center gap-4">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Chargement des données...</p>
+            <p className="text-sm text-muted-foreground">{DASHBOARD_TEXTS.LOADING}</p>
           </div>
         </div>
       ) : (
@@ -101,46 +102,46 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
           <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Card className="border-border/50">
               <CardHeader>
-                <CardDescription>Destinations</CardDescription>
+                <CardDescription>{DASHBOARD_TEXTS.DESTINATIONS}</CardDescription>
                 <CardTitle className="text-2xl">
                   {dashboardData?.data.destinations.count || 0}
                 </CardTitle>
               </CardHeader>
               <CardContent className="text-xs text-muted-foreground">
-                Dernière mise à jour: {dashboardData?.data.destinations.lastUpdate || "N/A"}
+                {DASHBOARD_TEXTS.LAST_UPDATE}: {dashboardData?.data.destinations.lastUpdate || DASHBOARD_TEXTS.NO_DATA}
               </CardContent>
             </Card>
             <Card className="border-border/50">
               <CardHeader>
-                <CardDescription>Hébergements</CardDescription>
+                <CardDescription>{DASHBOARD_TEXTS.HEBERGEMENTS}</CardDescription>
                 <CardTitle className="text-2xl">
                   {dashboardData?.data.hebergements.count || 0}
                 </CardTitle>
               </CardHeader>
               <CardContent className="text-xs text-muted-foreground">
-                {dashboardData?.data.hebergements.pendingReviews || 0} avis en attente
+                {dashboardData?.data.hebergements.pendingReviews || 0} {DASHBOARD_TEXTS.PENDING_REVIEWS}
               </CardContent>
             </Card>
             <Card className="border-border/50">
               <CardHeader>
-                <CardDescription>Activités</CardDescription>
+                <CardDescription>{DASHBOARD_TEXTS.ACTIVITES}</CardDescription>
                 <CardTitle className="text-2xl">
                   {dashboardData?.data.activites.count || 0}
                 </CardTitle>
               </CardHeader>
               <CardContent className="text-xs text-muted-foreground">
-                {dashboardData?.data.activites.newThisMonth || 0} nouvelles ce mois-ci
+                {dashboardData?.data.activites.newThisMonth || 0} {DASHBOARD_TEXTS.NEW_THIS_MONTH}
               </CardContent>
             </Card>
             <Card className="border-border/50">
               <CardHeader>
-                <CardDescription>Avis en attente</CardDescription>
+                <CardDescription>{DASHBOARD_TEXTS.AVIS_EN_ATTENTE}</CardDescription>
                 <CardTitle className="text-2xl">
                   {dashboardData?.data.avisEnAttente.count || 0}
                 </CardTitle>
               </CardHeader>
               <CardContent className="text-xs text-muted-foreground">
-                {dashboardData?.data.avisEnAttente.status || "N/A"}
+                {dashboardData?.data.avisEnAttente.status || DASHBOARD_TEXTS.NO_DATA}
               </CardContent>
             </Card>
           </section>
@@ -148,26 +149,26 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
       <section className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Activité récente</CardTitle>
-            <CardDescription>Derniers changements dans les modules</CardDescription>
+            <CardTitle>{DASHBOARD_TEXTS.RECENT_ACTIVITY}</CardTitle>
+            <CardDescription>{DASHBOARD_TEXTS.LATEST_CHANGES}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3 text-sm text-foreground">
               <div className="flex items-center justify-between rounded-md border bg-card/50 px-3 py-2">
-                <span>Mise à jour des tarifs de destination: Manambato</span>
-                <span className="text-xs text-muted-foreground">il y a 2h</span>
+                <span>{DASHBOARD_TEXTS.ACTIVITY_ITEMS.PRICING_UPDATE}</span>
+                <span className="text-xs text-muted-foreground">{DASHBOARD_TEXTS.TIME_AGO.TWO_HOURS}</span>
               </div>
               <div className="flex items-center justify-between rounded-md border bg-card/50 px-3 py-2">
-                <span>Nouvelle activité ajoutée: Tour en paddle</span>
-                <span className="text-xs text-muted-foreground">il y a 6h</span>
+                <span>{DASHBOARD_TEXTS.ACTIVITY_ITEMS.NEW_ACTIVITY}</span>
+                <span className="text-xs text-muted-foreground">{DASHBOARD_TEXTS.TIME_AGO.SIX_HOURS}</span>
               </div>
               <div className="flex items-center justify-between rounded-md border bg-card/50 px-3 py-2">
-                <span>3 réservations demandées</span>
-                <span className="text-xs text-muted-foreground">Hier</span>
+                <span>{DASHBOARD_TEXTS.ACTIVITY_ITEMS.RESERVATIONS}</span>
+                <span className="text-xs text-muted-foreground">{DASHBOARD_TEXTS.TIME_AGO.YESTERDAY}</span>
               </div>
               <div className="flex items-center justify-between rounded-md border bg-card/50 px-3 py-2">
-                <span>2 avis en attente d&apos;approbation</span>
-                <span className="text-xs text-muted-foreground">Hier</span>
+                <span>{DASHBOARD_TEXTS.ACTIVITY_ITEMS.REVIEWS_PENDING}</span>
+                <span className="text-xs text-muted-foreground">{DASHBOARD_TEXTS.TIME_AGO.YESTERDAY}</span>
               </div>
             </div>
           </CardContent>
@@ -175,8 +176,8 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
 
         <Card>
           <CardHeader>
-            <CardTitle>Raccourcis</CardTitle>
-            <CardDescription>Tâches administratives courantes</CardDescription>
+            <CardTitle>{DASHBOARD_TEXTS.SHORTCUTS}</CardTitle>
+            <CardDescription>{DASHBOARD_TEXTS.COMMON_TASKS}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
             <Button 
@@ -184,24 +185,24 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
               variant="default"
               onClick={() => router.push('/admin/destination/creation')}
             >
-             + Destination
+              {DASHBOARD_TEXTS.BUTTONS.ADD_DESTINATION}
             </Button>
             <Button 
               className="w-full" 
               variant="outline"
               onClick={() => router.push('/admin/hebergements/creation')}
             >
-              + Hébergement
+              {DASHBOARD_TEXTS.BUTTONS.ADD_HEBERGEMENT}
             </Button>
             <Button 
               className="w-full" 
               variant="outline"
               onClick={() => router.push('/admin/activites/creation')}
             >
-              + Activité
+              {DASHBOARD_TEXTS.BUTTONS.ADD_ACTIVITE}
             </Button>
             <Button className="w-full" variant="ghost">
-              Vérifier les avis en attente
+              {DASHBOARD_TEXTS.BUTTONS.REVIEW_PENDING}
             </Button>
           </CardContent>
         </Card>

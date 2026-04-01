@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Home, MapPin, Building, Play, ChevronDown, Users } from "lucide-react";
-type AdminSection =
+import { Home, MapPin, Building, Play, ChevronDown, Users, Calendar } from "lucide-react";
+export type AdminSection =
   | "dashboard"
   | "destinations"
   | "destinations-create"
@@ -10,6 +10,7 @@ type AdminSection =
   | "hebergements"
   | "hebergements-create"
   | "hebergements-edit"
+  | "hebergements-tarifs"
   | "hebergements-types"
   | "hebergements-equipements"
   | "activites"
@@ -20,7 +21,8 @@ type AdminSection =
   | "reservations"
   | "avis"
   | "notifications"
-  | "statistiques";
+  | "statistiques"
+  | "planification";
 
 interface AdminSidebarProps {
   active: AdminSection;
@@ -41,7 +43,6 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
   return (
     <aside className="hidden w-64 border-r border-border/50 bg-card/50 backdrop-blur-sm px-4 py-6 sm:block overflow-y-auto">
       <nav className="space-y-1">
-        {/* Dashboard - toujours visible */}
         <button
           type="button"
           onClick={() => onSelect("dashboard")}
@@ -54,7 +55,6 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
           Dashboard
         </button>
 
-        {/* Section Destinations avec sous-sections */}
         <div className="space-y-1">
           <button
             type="button"
@@ -129,7 +129,6 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
           )}
         </div>
 
-        {/* Section Hébergements avec sous-sections */}
         <div className="space-y-1">
           <button
             type="button"
@@ -180,7 +179,6 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
         </div>
         
 
-        {/* Section Activités avec sous-sections */}
         <div className="space-y-1">
           <button
             type="button"
@@ -232,18 +230,17 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
           )}
         </div>
         
-        {/* Utilisateurs */}
         <button
           type="button"
-          onClick={() => onSelect("utilisateurs")}
+          onClick={() => onSelect("planification")}
           className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
-            active === "utilisateurs"
+            active === "planification"
               ? "bg-emerald-500/10 font-medium text-emerald-600"
               : "text-muted-foreground hover:bg-primary/10"
           }`}
         >
-          <Users className="mr-3 h-4 w-4 text-emerald-600" />
-          Gestion des utilisateurs
+          <Calendar className="mr-3 h-4 w-4" />
+          Planification
         </button>
         
       </nav>
