@@ -1,6 +1,8 @@
 import { DestinationDetails } from "@/lib/type/destination";
 
-export const destinationsData: DestinationDetails[] = [
+export const destinationsData: DestinationDetails[] = [];
+
+/*
   {
     id: "manambato",
     title: "Manambato",
@@ -34,7 +36,7 @@ export const destinationsData: DestinationDetails[] = [
       "Dépenses personnelles",
       "Goûter"
     ],
-    features: [
+    marketing: [
       "Navigation sur le canal",
       "Observation de la faune",
       "Village authentique",
@@ -94,7 +96,7 @@ export const destinationsData: DestinationDetails[] = [
       "Dépenses personnelles",
       "Eau minérale"
     ],
-    features: [
+    marketing: [
       "Plages paradisiaques",
       "Aventure en train",
       "Balade en bateau",
@@ -152,7 +154,7 @@ export const destinationsData: DestinationDetails[] = [
       "Goûter",
       "Eau minérale"
     ],
-    features: [
+    marketing: [
       "Observation des baleines",
       "Plongée sous-marine",
       "Sites historiques",
@@ -218,7 +220,7 @@ export const destinationsData: DestinationDetails[] = [
       "Goûter",
       "Dépenses personnelles"
     ],
-    features: [
+    marketing: [
       "Allée des baobabs",
       "Parcs nationaux",
       "Plages paradisiaques",
@@ -246,6 +248,7 @@ export const destinationsData: DestinationDetails[] = [
     }
   }
 ];
+*/
 
 export function getDestinationById(id: string): DestinationDetails | undefined {
   return destinationsData.find(dest => dest.id === id);

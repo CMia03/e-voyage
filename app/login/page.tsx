@@ -23,19 +23,23 @@ function LoginContent() {
   useEffect(() => {
     const googleLogin = searchParams.get('google_login');
     const email = searchParams.get('email');
-    const name = searchParams.get('name');
     const accessToken = searchParams.get('access_token');
     const refreshToken = searchParams.get('refresh_token');
+    const role = searchParams.get('role');
+    const userId = searchParams.get('user_id');
+    const login = searchParams.get('login');
+    const nom = searchParams.get('nom');
+    const prenom = searchParams.get('prenom');
 
     if (googleLogin === 'true' && email && accessToken) {
       const authPayload = {
         accessToken,
         refreshToken: refreshToken || undefined,
-        role: 'USER',
-        userId: email,
-        login: email,
-        nom: name?.split(' ')[1] || '',
-        prenom: name?.split(' ')[0] || '',
+        role: role || 'USER',
+        userId: userId || email,
+        login: login || email,
+        nom: nom || '',
+        prenom: prenom || '',
       };
 
       saveAuth(authPayload);

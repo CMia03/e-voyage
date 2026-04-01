@@ -8,7 +8,9 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { clearAuth, loadAuth, type AuthSession } from "@/lib/auth";
 import { resolvePostLoginPath } from "@/lib/auth-redirect";
-import { destinationsData } from "@/lib/destinations";
+import { listDestinations } from "@/lib/api/destinations";
+import { destinationsData as fallbackDestinations } from "@/lib/destinations";
+import type { DestinationDetails } from "@/lib/type/destination";
 
 import { ClientHeader } from "./components/client-header";
 import { ClientFooter } from "./components/client-footer";
@@ -18,6 +20,7 @@ export function ClientHome({ username }: { username: string }) {
   const router = useRouter();
   const [activeSection, setActiveSection] = useState<ClientSection>("destinations");
   const [session, setSession] = useState<AuthSession | null>(null);
+  const [destinations, setDestinations] = useState<DestinationDetails[]>(fallbackDestinations);
   const displayName = useMemo(() => {
     if (!session) return username;
     const fullName = [session.prenom, session.nom].filter(Boolean).join(" ").trim();
@@ -50,6 +53,30 @@ export function ClientHome({ username }: { username: string }) {
     }
   }, [router, username]);
 
+  useEffect(() => {
+    let active = true;
+
+    const loadDestinations = async () => {
+      try {
+        const apiDestinations = await listDestinations();
+        if (!active) return;
+        if (apiDestinations.length > 0) {
+          setDestinations(apiDestinations);
+        } else {
+          setDestinations(fallbackDestinations);
+        }
+      } catch {
+        if (!active) return;
+        setDestinations(fallbackDestinations);
+      }
+    };
+
+    void loadDestinations();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   function handleLogout() {
     clearAuth();
     router.replace("/login");
@@ -67,7 +94,7 @@ export function ClientHome({ username }: { username: string }) {
               <h1 className="text-2xl font-semibold">Liste des destinations</h1>
               <p className="text-sm text-muted-foreground">Explore les destinations disponibles et prepare ton futur voyage.</p>
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {destinationsData.map((destination) => (
+                {destinations.map((destination) => (
                   <article key={destination.id} className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
                     <div className="relative h-40 w-full">
                       <Image src={destination.image} alt={destination.title} fill className="object-cover" />

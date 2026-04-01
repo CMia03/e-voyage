@@ -6,10 +6,12 @@ import { ImageLightbox } from "@/components/image-lightbox";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { destinationsData } from "@/lib/destinations";
+import type { DestinationDetails } from "@/lib/type/destination";
 
-export function HomeGallery() {
-  const allImages = destinationsData.flatMap(dest => 
-    dest.gallery.map(img => ({
+export function HomeGallery({ destinations }: { destinations?: DestinationDetails[] }) {
+  const source = destinations?.length ? destinations : destinationsData;
+  const allImages = source.flatMap(dest => 
+    (dest.galleryAll?.length ? dest.galleryAll : dest.gallery).map(img => ({
       src: img,
       destination: dest.title
     }))

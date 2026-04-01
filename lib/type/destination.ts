@@ -17,7 +17,10 @@ export interface DestinationDetails {
   };
   included: string[];
   notIncluded: string[];
-  features: string[];
+  marketing: string[];
+  features?: string[];
+  galleryPrimary?: string[];
+  galleryAll?: string[];
   gallery: string[];
   reservation?: {
     deposit: string;
@@ -63,6 +66,17 @@ export type AdminDestination = {
   district: string;
   commune: string;
   photos: PhotoDestinationGroup[];
+  marketing?: DestinationMarketingItem[];
+};
+
+export type DestinationMarketingItem = {
+  id: string;
+  libelle: string;
+  description: string | null;
+  ordreAffichage: number | null;
+  estActif: boolean;
+  dateCreation?: string;
+  dateModification?: string;
 };
 
 export type DestinationAssociationItem = {
@@ -206,6 +220,13 @@ export type SavePhotoDestinationBulkPayload = {
   estPrincipale: boolean;
   dateObtenir: string;
   imageFiles: File[];
+};
+
+export type SaveDestinationMarketingPayload = {
+  libelle: string;
+  description?: string | null;
+  ordreAffichage?: number | null;
+  estActif?: boolean;
 };
 
 export type SaveTypeTransportPayload = {

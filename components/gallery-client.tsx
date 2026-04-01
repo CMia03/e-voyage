@@ -2,8 +2,7 @@
 
 import Image from "next/image";
 import { ImageLightbox } from "@/components/image-lightbox";
-import { useState } from "react";
-import { destinationsData } from "@/lib/destinations";
+import { useMemo, useState } from "react";
 
 interface GalleryImage {
   src: string;
@@ -31,10 +30,19 @@ export function GalleryClient({ images }: GalleryClientProps) {
     setLightboxOpen(true);
   };
 
-  const destinations = [
-    { id: "all", name: "Toutes les destinations" },
-    ...destinationsData.map(dest => ({ id: dest.id, name: dest.title }))
-  ];
+  const destinations = useMemo(() => {
+    const byId = new Map<string, string>();
+    images.forEach((img) => {
+      if (!byId.has(img.destinationId)) {
+        byId.set(img.destinationId, img.destination);
+      }
+    });
+
+    return [
+      { id: "all", name: "Toutes les destinations" },
+      ...Array.from(byId.entries()).map(([id, name]) => ({ id, name })),
+    ];
+  }, [images]);
 
   return (
     <>

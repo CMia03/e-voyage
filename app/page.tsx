@@ -150,7 +150,7 @@ export default async function Home() {
                   Découvrez un aperçu de nos destinations à Madagascar
                 </p>
               </div>
-              <HomeGallery />
+              <HomeGallery destinations={destinationsData} />
             </div>
           </div>
         </section>
