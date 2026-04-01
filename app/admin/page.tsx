@@ -12,7 +12,7 @@ import { AdminDashboard } from "@/app/admin/dashboard";
 import { AdminDestinations } from "@/app/admin/destinations";
 import { AdminActivites } from "@/app/admin/activites/page";
 import { AdminHebergements } from "@/app/admin/hebergements/page";
-import { AuthSession, loadAuth } from "@/lib/auth";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -33,14 +33,14 @@ const localizer = dateFnsLocalizer({
 });
 
 export default function AdminPage() {
+  const { session, isLoading, isAuthenticated, getValidToken } = useAuth();
   const [active, setActive] = useState<AdminSection>("dashboard");
   const [selectedDestinationId, setSelectedDestinationId] = useState<string | null>(null);
   const [selectedActiviteId, setSelectedActiviteId] = useState<string | null>(null);
   const [selectedHebergementId, setSelectedHebergementId] = useState<string | null>(null);
-  const [ready, setReady] = useState(false);
-  const [session, setSession] = useState<AuthSession | null>(null);
-  const role = session?.role ?? null;
+  
   const accessToken = session?.accessToken ?? null;
+  const role = session?.role ?? null;
 
   const [events, setEvents] = useState<Array<{
     id: number;
@@ -81,17 +81,11 @@ export default function AdminPage() {
   }, [selectedYear, selectedDate]);
 
   // Charger les destinations depuis l'API
-  useEffect(() => {
-    if (accessToken) {
-      loadDestinations();
-    }
-  }, [accessToken]);
-
   const loadDestinations = async () => {
     try {
       // Importer la fonction API ici pour éviter les dépendances circulaires
       const { listAdminDestinations } = await import("@/lib/api/destinations");
-      const response = await listAdminDestinations(accessToken);
+      const response = await listAdminDestinations(accessToken || "");
       if (response.data) {
         setDestinations(response.data.map(dest => ({ id: dest.id, nom: dest.nom })));
       }
@@ -99,6 +93,12 @@ export default function AdminPage() {
       console.error("Erreur lors du chargement des destinations:", error);
     }
   };
+
+  useEffect(() => {
+    if (accessToken) {
+      loadDestinations();
+    }
+  }, [accessToken, loadDestinations]);
 
   // Gérer le clic sur une date du calendrier
   const handleSelectSlot = ({ start, end }: { start: Date; end: Date }) => {
@@ -187,15 +187,26 @@ export default function AdminPage() {
     });
   };
 
-  useEffect(() => {
-    // Load localStorage auth only on the client to avoid hydration mismatch.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSession(loadAuth());
-    setReady(true);
-  }, []);
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Chargement...</div>
+      </div>
+    );
+  }
 
-  if (!ready) {
-    return null;
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <h1 className="text-2xl font-semibold">Accès non autorisé</h1>
+          <p className="text-muted-foreground">Vous devez être connecté pour accéder à cette page.</p>
+          <Link href="/login">
+            <Button>Se connecter</Button>
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   if (!role) {
