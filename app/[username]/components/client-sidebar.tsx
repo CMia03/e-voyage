@@ -13,7 +13,7 @@ export function ClientSidebar({
 }) {
   return (
     <aside className="hidden w-72 border-r border-border/50 bg-card/50 p-5 md:block">
-      <p className="mb-3 text-xs uppercase tracking-wide text-muted-foreground">Navigation client</p>
+      {/* <p className="mb-3 text-xs uppercase tracking-wide text-muted-foreground">Navigation client</p> */}
       <nav className="space-y-2">
         <SidebarButton active={active === "destinations"} icon={<Compass className="size-4" />} label="Liste destinations" onClick={() => onSelect("destinations")} />
         <SidebarButton active={active === "planifications"} icon={<CalendarDays className="size-4" />} label="Planifications destination" onClick={() => onSelect("planifications")} />

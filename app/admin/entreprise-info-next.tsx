@@ -4,8 +4,8 @@ import { FormEvent, useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getErrorMessage } from "@/lib/api/client";
-import { getEntrepriseInfoAdmin, updateEntrepriseInfo } from "@/lib/api/entreprise-info";
+import { ApiError, getErrorMessage } from "@/lib/api/client";
+import { getEntrepriseInfoAdmin, getEntrepriseInfoPublic, updateEntrepriseInfo } from "@/lib/api/entreprise-info";
 import { EntrepriseInfo } from "@/lib/type/entreprise-info";
 
 type Props = {
@@ -72,7 +72,18 @@ export function AdminEntrepriseInfo({ accessToken }: Props) {
         setForm(mapInfoToForm(response.data ?? null));
       } catch (loadError) {
         if (!active) return;
-        setError(getErrorMessage(loadError, "Impossible de charger les informations de l'entreprise."));
+        if (loadError instanceof ApiError && loadError.status === 403) {
+          try {
+            const publicResponse = await getEntrepriseInfoPublic();
+            if (!active) return;
+            setForm(mapInfoToForm(publicResponse.data ?? null));
+          } catch {
+            // ignore fallback failure; we still show auth error below
+          }
+          setError("Acces refuse (403). Verifiez votre session admin puis reconnectez-vous.");
+        } else {
+          setError(getErrorMessage(loadError, "Impossible de charger les informations de l'entreprise."));
+        }
       } finally {
         if (active) setIsLoading(false);
       }
@@ -109,7 +120,11 @@ export function AdminEntrepriseInfo({ accessToken }: Props) {
       setForm(mapInfoToForm(response.data ?? null));
       setSuccess("Informations de l'entreprise mises a jour avec succes.");
     } catch (saveError) {
-      setError(getErrorMessage(saveError, "Impossible de sauvegarder les informations de l'entreprise."));
+      if (saveError instanceof ApiError && saveError.status === 403) {
+        setError("Acces refuse (403) pendant l'enregistrement. Reconnectez-vous avec un compte admin.");
+      } else {
+        setError(getErrorMessage(saveError, "Impossible de sauvegarder les informations de l'entreprise."));
+      }
     } finally {
       setIsSaving(false);
     }
@@ -199,7 +214,7 @@ export function AdminEntrepriseInfo({ accessToken }: Props) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <h3 className="text-xl font-semibold">Cool Voyage</h3>
+              <h3 className="text-xl font-semibold">{form.nomEntreprise || "Cool Voyage"}</h3>
               <p className="mt-2 text-sm text-muted-foreground">
                 {form.description || "Votre agence de voyage de confiance pour decouvrir Madagascar."}
               </p>

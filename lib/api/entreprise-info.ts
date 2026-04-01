@@ -6,13 +6,17 @@ export function getEntrepriseInfoPublic() {
 }
 
 export function getEntrepriseInfoAdmin(token?: string) {
-  return apiRequest<ApiEnvelope<EntrepriseInfo>>("/api/entreprise-info", { token });
+  return apiRequest<ApiEnvelope<EntrepriseInfo>>("/api/entreprise-info", {
+    token,
+    autoRefresh: true,
+  });
 }
 
 export function updateEntrepriseInfo(payload: SaveEntrepriseInfoPayload, token?: string) {
   return apiRequest<ApiEnvelope<EntrepriseInfo>>("/api/entreprise-info", {
     method: "PUT",
     token,
+    autoRefresh: true,
     body: payload,
   });
 }
