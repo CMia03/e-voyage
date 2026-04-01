@@ -76,10 +76,10 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
     <div className="space-y-8">
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          Dashboard
+          Tableau de bord
         </h1>
         <p className="text-sm text-muted-foreground">
-          Overview of activity and content health for Cool Voyage.
+          Vue d&apos;ensemble de l&apos;activité et de l&apos;état du contenu pour Cool Voyage.
         </p>
       </div>
 
@@ -107,29 +107,29 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent className="text-xs text-muted-foreground">
-                Last update: {dashboardData?.data.destinations.lastUpdate || "N/A"}
+                Dernière mise à jour: {dashboardData?.data.destinations.lastUpdate || "N/A"}
               </CardContent>
             </Card>
             <Card className="border-border/50">
               <CardHeader>
-                <CardDescription>Hebergements</CardDescription>
+                <CardDescription>Hébergements</CardDescription>
                 <CardTitle className="text-2xl">
                   {dashboardData?.data.hebergements.count || 0}
                 </CardTitle>
               </CardHeader>
               <CardContent className="text-xs text-muted-foreground">
-                {dashboardData?.data.hebergements.pendingReviews || 0} pending reviews
+                {dashboardData?.data.hebergements.pendingReviews || 0} avis en attente
               </CardContent>
             </Card>
             <Card className="border-border/50">
               <CardHeader>
-                <CardDescription>Activites</CardDescription>
+                <CardDescription>Activités</CardDescription>
                 <CardTitle className="text-2xl">
                   {dashboardData?.data.activites.count || 0}
                 </CardTitle>
               </CardHeader>
               <CardContent className="text-xs text-muted-foreground">
-                {dashboardData?.data.activites.newThisMonth || 0} new this month
+                {dashboardData?.data.activites.newThisMonth || 0} nouvelles ce mois-ci
               </CardContent>
             </Card>
             <Card className="border-border/50">
@@ -148,26 +148,26 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
       <section className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Recent activity</CardTitle>
-            <CardDescription>Latest changes across modules</CardDescription>
+            <CardTitle>Activité récente</CardTitle>
+            <CardDescription>Derniers changements dans les modules</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3 text-sm text-foreground">
               <div className="flex items-center justify-between rounded-md border bg-card/50 px-3 py-2">
-                <span>Updated destination pricing: Manambato</span>
-                <span className="text-xs text-muted-foreground">2h ago</span>
+                <span>Mise à jour des tarifs de destination: Manambato</span>
+                <span className="text-xs text-muted-foreground">il y a 2h</span>
               </div>
               <div className="flex items-center justify-between rounded-md border bg-card/50 px-3 py-2">
-                <span>New activity added: Paddle tour</span>
-                <span className="text-xs text-muted-foreground">6h ago</span>
+                <span>Nouvelle activité ajoutée: Tour en paddle</span>
+                <span className="text-xs text-muted-foreground">il y a 6h</span>
               </div>
               <div className="flex items-center justify-between rounded-md border bg-card/50 px-3 py-2">
-                <span>3 reservations requested</span>
-                <span className="text-xs text-muted-foreground">Yesterday</span>
+                <span>3 réservations demandées</span>
+                <span className="text-xs text-muted-foreground">Hier</span>
               </div>
               <div className="flex items-center justify-between rounded-md border bg-card/50 px-3 py-2">
-                <span>2 reviews waiting for approval</span>
-                <span className="text-xs text-muted-foreground">Yesterday</span>
+                <span>2 avis en attente d&apos;approbation</span>
+                <span className="text-xs text-muted-foreground">Hier</span>
               </div>
             </div>
           </CardContent>
@@ -175,8 +175,8 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
 
         <Card>
           <CardHeader>
-            <CardTitle>Raccourcie</CardTitle>
-            <CardDescription>Common admin tasks</CardDescription>
+            <CardTitle>Raccourcis</CardTitle>
+            <CardDescription>Tâches administratives courantes</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
             <Button 
@@ -201,7 +201,7 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
               + Activité
             </Button>
             <Button className="w-full" variant="ghost">
-              Review pending avis
+              Vérifier les avis en attente
             </Button>
           </CardContent>
         </Card>
@@ -210,20 +210,20 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
       <section className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Traffic snapshot</CardTitle>
-            <CardDescription>Weekly visits and searches</CardDescription>
+            <CardTitle>Snapshots du trafic</CardTitle>
+            <CardDescription>Visites et recherches hebdomadaires</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-foreground">
             <div className="flex items-center justify-between rounded-md border bg-card/50 px-3 py-2">
-              <span>Visits</span>
+              <span>Visites</span>
               <span className="text-sm font-medium">4,120</span>
             </div>
             <div className="flex items-center justify-between rounded-md border bg-card/50 px-3 py-2">
-              <span>Searches</span>
+              <span>Recherches</span>
               <span className="text-sm font-medium">1,480</span>
             </div>
             <div className="flex items-center justify-between rounded-md border bg-card/50 px-3 py-2">
-              <span>Conversion</span>
+              <span>Taux de conversion</span>
               <span className="text-sm font-medium">3.1%</span>
             </div>
           </CardContent>
@@ -231,21 +231,21 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
 
         <Card>
           <CardHeader>
-            <CardTitle>System status</CardTitle>
-            <CardDescription>Ops checklist</CardDescription>
+            <CardTitle>État du système</CardTitle>
+            <CardDescription>Liste de vérification des opérations</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-foreground">
             <div className="flex items-center justify-between rounded-md border bg-card/50 px-3 py-2">
-              <span>API connectivity</span>
+              <span>Connectivité API</span>
               <span className="text-emerald-600">OK</span>
             </div>
             <div className="flex items-center justify-between rounded-md border bg-card/50 px-3 py-2">
-              <span>Email queue</span>
-              <span className="text-emerald-600">Healthy</span>
+              <span>File d&apos;attente email</span>
+              <span className="text-emerald-600">Fonctionnel</span>
             </div>
             <div className="flex items-center justify-between rounded-md border bg-card/50 px-3 py-2">
-              <span>Backups</span>
-              <span className="text-emerald-600">Up to date</span>
+              <span>Sauvegardes</span>
+              <span className="text-emerald-600">À jour</span>
             </div>
           </CardContent>
         </Card>
@@ -256,7 +256,7 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
           <Card>
             <CardHeader>
               <CardTitle>Utilisateurs</CardTitle>
-              <CardDescription>List of all users (admin only).</CardDescription>
+              <CardDescription>Liste de tous les utilisateurs (admin uniquement).</CardDescription>
             </CardHeader>
             <CardContent>
               {usersError ? (
@@ -264,7 +264,7 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
               ) : null}
               <div className="space-y-2 text-sm">
                 {users.length === 0 && !usersError ? (
-                  <p className="text-muted-foreground">No users loaded.</p>
+                  <p className="text-muted-foreground">Aucun utilisateur chargé.</p>
                 ) : null}
                 {users.map((user) => (
                   <div
@@ -281,7 +281,7 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
                       {user.role}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {user.estActif ? "Active" : "Inactive"}
+                      {user.estActif ? "Actif" : "Inactif"}
                     </div>
                   </div>
                 ))}
