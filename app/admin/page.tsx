@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Calendar, dateFnsLocalizer } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
@@ -34,11 +34,16 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
-export default function AdminPage() {
-  const { session, isLoading, isAuthenticated, getValidToken } = useAuth();
+function AdminPageWithSearchParams() {
   const searchParams = useSearchParams();
   const section = searchParams.get("section");
-  const [active, setActive] = useState<AdminSection>(section as AdminSection || "dashboard");
+  
+  return <AdminPageContent initialSection={section as AdminSection} />;
+}
+
+function AdminPageContent({ initialSection }: { initialSection?: AdminSection }) {
+  const { session, isLoading, isAuthenticated, getValidToken } = useAuth();
+  const [active, setActive] = useState<AdminSection>(initialSection || "dashboard");
   const [selectedDestinationId, setSelectedDestinationId] = useState<string | null>(null);
   const [selectedActiviteId, setSelectedActiviteId] = useState<string | null>(null);
   const [selectedHebergementId, setSelectedHebergementId] = useState<string | null>(null);
@@ -157,10 +162,10 @@ export default function AdminPage() {
 
   // Mettre à jour la section active quand le paramètre d'URL change
   useEffect(() => {
-    if (section) {
-      setActive(section as AdminSection);
+    if (initialSection) {
+      setActive(initialSection);
     }
-  }, [section]);
+  }, [initialSection]);
 
   // Charger les destinations depuis l'API
   const loadDestinations = async () => {
@@ -589,5 +594,13 @@ export default function AdminPage() {
       
       <AdminFooter />
     </div>
+  );
+}
+
+export default function AdminPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="text-lg">Chargement...</div></div>}>
+      <AdminPageWithSearchParams />
+    </Suspense>
   );
 }
