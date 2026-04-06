@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Home, MapPin, Building, Play, ChevronDown, Users, Calendar } from "lucide-react";
+
 export type AdminSection =
   | "dashboard"
   | "destinations"
@@ -123,16 +124,14 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               <button
                 type="button"
                 onClick={() => onSelect("hebergements")}
-                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
-                  active === "hebergements"
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${active === "hebergements"
                     ? "bg-emerald-500/10 font-medium text-emerald-600"
                     : "text-muted-foreground hover:bg-primary/10"
-                }`}
+                  }`}
               >
                 <span className="mr-2">•</span>
-                Tous les hébergements
+                Liste des hébergements
               </button>
-              
               <button
                 type="button"
                 onClick={() => onSelect("hebergements-create")}
@@ -143,13 +142,11 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
                 }`}
               >
                 <span className="mr-2">•</span>
-                Ajouter un hébergement
+                Ajouter hébergement
               </button>
-
             </div>
           )}
         </div>
-        
 
         <div className="space-y-1">
           <button
@@ -173,48 +170,41 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               <button
                 type="button"
                 onClick={() => onSelect("activites")}
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${active === "activites"
+                    ? "bg-emerald-500/10 font-medium text-emerald-600"
+                    : "text-muted-foreground hover:bg-primary/10"
+                  }`}
+              >
+                <span className="mr-2">•</span>
+                Liste des activités
+              </button>
+              <button
+                type="button"
+                onClick={() => onSelect("activites-create")}
                 className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
-                  active === "activites"
+                  active === "activites-create"
                     ? "bg-emerald-500/10 font-medium text-emerald-600"
                     : "text-muted-foreground hover:bg-primary/10"
                 }`}
               >
                 <span className="mr-2">•</span>
-                Toutes les activités
-              </button>
-              <button
-                type="button"
-                onClick={() => {}}
-                className="flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
-              >
-                <span className="mr-2">•</span>
-                Ajouter une activité
-              </button>
-              <button
-                type="button"
-                onClick={() => {}}
-                className="flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
-              >
-                <span className="mr-2">•</span>
-                Catégories
+                Ajouter activité
               </button>
             </div>
           )}
         </div>
-        
+
         <button
           type="button"
           onClick={() => onSelect("planification")}
-          className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
-            active === "planification"
+          className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${active === "planification"
               ? "bg-emerald-500/10 font-medium text-emerald-600"
               : "text-muted-foreground hover:bg-primary/10"
-          }`}
+            }`}
         >
           <Calendar className="mr-3 h-4 w-4" />
           Planification
         </button>
-        
       </nav>
     </aside>
   );

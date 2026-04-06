@@ -8,6 +8,13 @@ import { ApiError, getErrorMessage } from "@/lib/api/client";
 import { getProfile } from "@/lib/api/auth";
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { Menu, Home, MapPin, Building, Play, ChevronDown, Calendar } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 type UserProfile = {
   id: string;
@@ -31,7 +38,17 @@ export function AdminHeader() {
   const [auth, setAuth] = useState<AuthSession | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev =>
+      prev.includes(section)
+        ? prev.filter(s => s !== section)
+        : [...prev, section]
+    );
+  };
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -103,14 +120,27 @@ export function AdminHeader() {
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex h-16 w-full max-w-[1400px] items-center justify-between px-4 sm:px-6">
-        <Link href="/" className="flex cursor-pointer items-center gap-3">
-          <span className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent sm:text-2xl">
-            🌴 Cool Voyage
-          </span>
-          {/* <span className="rounded-full bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-600">
-            Admin
-          </span> */}
-        </Link>
+        <div className="flex items-center gap-4">
+          {/* Menu Hamburger Mobile */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Menu mobile</span>
+          </Button>
+          
+          <Link href="/" className="flex cursor-pointer items-center gap-3">
+            <span className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent sm:text-2xl">
+              🌴 Cool Voyage
+            </span>
+            {/* <span className="rounded-full bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-600">
+              Admin
+            </span> */}
+          </Link>
+        </div>
 
         <div className="flex items-center gap-4">
           <Button asChild variant="outline" size="sm">
@@ -290,6 +320,225 @@ export function AdminHeader() {
           )}
         </div>
       </div>
+      
+      {/* Mobile Menu Sheet */}
+      <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+        <SheetContent side="left" className="w-[85vw] sm:w-[400px] p-0">
+          <div className="flex flex-col h-full">
+            {/* Header avec gradient */}
+            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 px-6 py-8 border-b">
+              <SheetHeader>
+                <SheetTitle className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                  🌴 Admin Cool Voyage
+                </SheetTitle>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Menu administration
+                </p>
+              </SheetHeader>
+            </div>
+            
+            {/* Navigation */}
+            <nav className="flex-1 px-4 py-6 space-y-1">
+              <button
+                type="button"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
+                  window.location.search.includes('section=dashboard')
+                    ? "bg-emerald-500/10 font-medium text-emerald-600"
+                    : "text-muted-foreground hover:bg-primary/10"
+                }`}
+              >
+                <Home className="mr-3 h-4 w-4" />
+                Dashboard
+              </button>
+
+              <div className="space-y-1">
+                <button
+                  type="button"
+                  onClick={() => toggleSection("destinations")}
+                  className="flex w-full cursor-pointer items-center justify-between rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
+                >
+                  <div className="flex items-center">
+                    <MapPin className="mr-3 h-4 w-4" />
+                    Destinations
+                  </div>
+                  <ChevronDown
+                    className={`h-4 w-4 transition-all duration-300 ease-in-out transform ${
+                      expandedSections.includes("destinations") ? "rotate-180" : "rotate-0"
+                    }`}
+                  />
+                </button>
+
+                {expandedSections.includes("destinations") && (
+                  <div className="ml-4 space-y-1 pl-4 border-l-2 border-emerald-200 dark:border-emerald-800">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        window.location.href = '/admin?section=destinations';
+                      }}
+                      className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
+                        window.location.search.includes('section=destinations')
+                          ? "bg-emerald-500/10 font-medium text-emerald-600"
+                          : "text-muted-foreground hover:bg-primary/10"
+                      }`}
+                    >
+                      <span className="mr-2">•</span>
+                      Liste des destinations
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        window.location.href = '/admin?section=destinations-create';
+                      }}
+                      className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
+                        window.location.search.includes('section=destinations-create')
+                          ? "bg-emerald-500/10 font-medium text-emerald-600"
+                          : "text-muted-foreground hover:bg-primary/10"
+                      }`}
+                    >
+                      <span className="mr-2">•</span>
+                      Ajouter destination
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-1">
+                <button
+                  type="button"
+                  onClick={() => toggleSection("hebergements")}
+                  className="flex w-full cursor-pointer items-center justify-between rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
+                >
+                  <div className="flex items-center">
+                    <Building className="mr-3 h-4 w-4" />
+                    Hébergements
+                  </div>
+                  <ChevronDown
+                    className={`h-4 w-4 transition-all duration-300 ease-in-out transform ${
+                      expandedSections.includes("hebergements") ? "rotate-180" : "rotate-0"
+                    }`}
+                  />
+                </button>
+
+                {expandedSections.includes("hebergements") && (
+                  <div className="ml-4 space-y-1 pl-4 border-l-2 border-emerald-200 dark:border-emerald-800">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        window.location.href = '/admin?section=hebergements';
+                      }}
+                      className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
+                        window.location.search.includes('section=hebergements')
+                          ? "bg-emerald-500/10 font-medium text-emerald-600"
+                          : "text-muted-foreground hover:bg-primary/10"
+                      }`}
+                    >
+                      <span className="mr-2">•</span>
+                      Liste des hébergements
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        window.location.href = '/admin?section=hebergements-create';
+                      }}
+                      className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
+                        window.location.search.includes('section=hebergements-create')
+                          ? "bg-emerald-500/10 font-medium text-emerald-600"
+                          : "text-muted-foreground hover:bg-primary/10"
+                      }`}
+                    >
+                      <span className="mr-2">•</span>
+                      Ajouter hébergement
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-1">
+                <button
+                  type="button"
+                  onClick={() => toggleSection("activites")}
+                  className="flex w-full cursor-pointer items-center justify-between rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
+                >
+                  <div className="flex items-center">
+                    <Play className="mr-3 h-4 w-4" />
+                    Activités
+                  </div>
+                  <ChevronDown
+                    className={`h-4 w-4 transition-all duration-300 ease-in-out transform ${
+                      expandedSections.includes("activites") ? "rotate-180" : "rotate-0"
+                    }`}
+                  />
+                </button>
+
+                {expandedSections.includes("activites") && (
+                  <div className="ml-4 space-y-1 pl-4 border-l-2 border-emerald-200 dark:border-emerald-800">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        window.location.href = '/admin?section=activites';
+                      }}
+                      className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
+                        window.location.search.includes('section=activites')
+                          ? "bg-emerald-500/10 font-medium text-emerald-600"
+                          : "text-muted-foreground hover:bg-primary/10"
+                      }`}
+                    >
+                      <span className="mr-2">•</span>
+                      Liste des activités
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        window.location.href = '/admin?section=activites-create';
+                      }}
+                      className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
+                        window.location.search.includes('section=activites-create')
+                          ? "bg-emerald-500/10 font-medium text-emerald-600"
+                          : "text-muted-foreground hover:bg-primary/10"
+                      }`}
+                    >
+                      <span className="mr-2">•</span>
+                      Ajouter activité
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  window.location.href = '/admin?section=planification';
+                }}
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
+                  window.location.search.includes('section=planification')
+                    ? "bg-emerald-500/10 font-medium text-emerald-600"
+                    : "text-muted-foreground hover:bg-primary/10"
+                }`}
+              >
+                <Calendar className="mr-3 h-4 w-4" />
+                Planification
+              </button>
+            </nav>
+            
+            {/* Footer avec lien vers site */}
+            <div className="border-t px-6 py-6 bg-muted/30">
+              <Button asChild variant="outline" className="w-full">
+                <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
+                  Voir le site
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </header>
   );
 }
