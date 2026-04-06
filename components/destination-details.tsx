@@ -2,9 +2,8 @@
 
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DestinationDetails } from "@/lib/destinations";
+import { DestinationDetails } from "@/lib/type/destination";
 import { Check, X, Phone, Calendar, MapPin, Clock } from "lucide-react";
 import { ImageLightbox } from "@/components/image-lightbox";
 import { useState } from "react";

@@ -2,14 +2,23 @@ import { Header } from "@/components/header";
 import { Hero } from "@/components/hero";
 import { DestinationCard } from "@/components/destination-card";
 import { Footer } from "@/components/footer";
-import { Button } from "@/components/ui/button";
-import { destinationsData } from "@/lib/destinations";
 import { SmoothScrollButtons } from "@/components/smooth-scroll-buttons";
 import { HomeGallery } from "@/components/home-gallery";
+import { listDestinations } from "@/lib/api/destinations";
+import { destinationsData as fallbackDestinations } from "@/lib/destinations";
 
-// Utiliser directement destinationsData
+export default async function Home() {
+  let destinationsData = fallbackDestinations;
 
-export default function Home() {
+  try {
+    const apiDestinations = await listDestinations();
+    if (apiDestinations.length > 0) {
+      destinationsData = apiDestinations;
+    }
+  } catch {
+    destinationsData = fallbackDestinations;
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
@@ -154,10 +163,10 @@ export default function Home() {
                 <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-emerald-500/5 via-teal-500/5 to-cyan-500/5 pointer-events-none" />
                 <div className="relative">
                   <h2 className="mb-6 text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent">
-                    Prêt à partir à l'aventure ?
+                    Prêt à partir à l  aventure ?
                   </h2>
                   <p className="mb-8 sm:mb-10 text-lg sm:text-xl text-muted-foreground px-4 leading-relaxed">
-                    Contactez-nous dès aujourd'hui pour organiser votre voyage de rêve à Madagascar
+                    Contactez-nous dès aujourd hui pour organiser votre voyage de rêve à Madagascar
                   </p>
                   <SmoothScrollButtons />
                 </div>

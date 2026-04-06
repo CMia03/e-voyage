@@ -77,8 +77,12 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.redirect(redirectUrl);
 
+<<<<<<< HEAD
   } catch (error) {
     console.error('Google OAuth error:', error);
+=======
+  } catch {
+>>>>>>> 10920787acb2953a48777fce1d3df4a15d89cc45
     return NextResponse.redirect(
       new URL('/login?error=auth_failed', request.url)
     );

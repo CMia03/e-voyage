@@ -18,14 +18,13 @@ export function Header() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const isHomePage = pathname === "/";
+  const mobileSheetId = "public-mobile-menu-sheet";
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-    // Si on est sur la page d'accueil, faire un smooth scroll
     if (isHomePage) {
       handleSmoothScrollClick(e, href, 80);
       setOpen(false);
     } else {
-      // Sinon, laisser le lien normal fonctionner (redirection vers la page d'accueil)
       setOpen(false);
     }
   };
@@ -90,7 +89,7 @@ export function Header() {
               <span className="sr-only">Menu</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="right" className="w-[85vw] sm:w-[400px] p-0">
+          <SheetContent id={mobileSheetId} side="right" className="w-[85vw] sm:w-[400px] p-0">
             <div className="flex flex-col h-full">
               {/* Header avec gradient */}
               <div className="bg-gradient-to-br from-emerald-50 to-teal-50 px-6 py-8 border-b">
@@ -148,9 +147,12 @@ export function Header() {
                 </Link>
               </nav>
               
-
               {/* Footer avec bouton */}
               <div className="border-t px-6 py-6 bg-muted/30">
+                <p className="text-xs text-center text-muted-foreground mt-4">
+                  📱 034 66 885 42
+                </p>
+                
                 <Link
                   href="/login"
                   className="flex items-center justify-center gap-2 w-full mt-3 px-4 py-3 rounded-lg text-sm font-medium transition-all bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 dark:text-emerald-400 dark:hover:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/50"

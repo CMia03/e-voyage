@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
-import { DestinationDetails } from "@/lib/destinations";
+import { DestinationDetails } from "@/lib/type/destination";
 
 interface DestinationCardProps {
   destination: DestinationDetails;

@@ -1,37 +1,6 @@
 import { apiRequest } from "@/lib/api/client";
+import { AuthResponse, ConfirmRegistrationPayload, LoginPayload, RegisterPayload } from "../type/data";
 
-export type LoginPayload = {
-  login: string;
-  motDePasse: string;
-};
-
-export type RegisterPayload = {
-  nom: string;
-  prenom: string;
-  email: string;
-  telephone: string;
-  dateNaissance: string;
-  adress: string;
-  login: string;
-  motDePasse: string;
-  nationalite: string;
-};
-
-export type ConfirmRegistrationPayload = {
-  email: string;
-  code: string;
-};
-
-export type AuthResponse = {
-  accessToken: string;
-  refreshToken?: string;
-  role: string;
-  userId?: string;
-  login?: string;
-  nom?: string;
-  prenom?: string;
-  [key: string]: unknown;
-};
 
 export function login(payload: LoginPayload) {
   return apiRequest<AuthResponse>("/api/auth/login", {
@@ -62,9 +31,39 @@ export function loginWithGoogle() {
   window.location.href = '/api/auth/google';
 }
 
+export function refreshToken(refreshToken: string) {
+  return apiRequest<{
+    accessToken: string;
+    refreshToken?: string;
+    role: string;
+    userId?: string;
+    login?: string;
+    nom?: string;
+    prenom?: string;
+  }>("/api/auth/refresh-token", {
+    method: "POST",
+    body: { refreshToken },
+  });
+}
+
 export function getProfile(token: string) {
   return apiRequest<{ data?: unknown }>("/api/auth/me", {
     token,
   });
 }
 
+export function updateProfile(token: string, profileData: {
+  nom: string;
+  prenom: string;
+  email: string;
+  telephone: string;
+  dateNaissance: string;
+  adress: string;
+  nationalite: string;
+}) {
+  return apiRequest<{ data?: unknown }>("/api/auth/me", {
+    token,
+    method: "PUT",
+    body: profileData,
+  });
+}

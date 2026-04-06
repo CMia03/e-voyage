@@ -3,7 +3,6 @@
 import Image from "next/image";
 import { ImageLightbox } from "@/components/image-lightbox";
 import { useState } from "react";
-import Link from "next/link";
 import { destinationsData } from "@/lib/destinations";
 
 interface GalleryImage {
@@ -21,7 +20,6 @@ export function GalleryClient({ images }: GalleryClientProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [selectedDestination, setSelectedDestination] = useState<string>("all");
 
-  // Filtrer les images selon la destination sélectionnée
   const filteredImages = selectedDestination === "all" 
     ? images 
     : images.filter(img => img.destinationId === selectedDestination);
@@ -33,7 +31,6 @@ export function GalleryClient({ images }: GalleryClientProps) {
     setLightboxOpen(true);
   };
 
-  // Obtenir les destinations uniques
   const destinations = [
     { id: "all", name: "Toutes les destinations" },
     ...destinationsData.map(dest => ({ id: dest.id, name: dest.title }))

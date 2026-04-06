@@ -1,23 +1,21 @@
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { DestinationDetailsComponent } from "@/components/destination-details";
-import { getDestinationById } from "@/lib/destinations";
+import { getDestinationById } from "@/lib/api/destinations";
+import { getDestinationById as getFallbackDestinationById } from "@/lib/destinations";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-export async function generateStaticParams() {
-  return [
-    { id: "manambato" },
-    { id: "ambila-lemaintso" },
-    { id: "sainte-marie" },
-    { id: "le-grand-sud" },
-  ];
-}
-
 export default async function DestinationPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const destination = getDestinationById(id);
+  let destination = null;
+
+  try {
+    destination = await getDestinationById(id);
+  } catch {
+    destination = getFallbackDestinationById(id) ?? null;
+  }
 
   if (!destination) {
     notFound();
