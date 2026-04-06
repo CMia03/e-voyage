@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { getErrorMessage } from "@/lib/api/client";
 import { listUsers, UserSummary } from "@/lib/api/users";
 import { getDashboardData } from "@/lib/api/dashboard";
 import { DashboardResponse } from "@/lib/type/dashboard";
 import { DASHBOARD_TEXTS } from "@/lib/constants/texts";
 import { Loader2 } from "lucide-react";
+import { ActivityChart } from "@/components/ui/activity-chart";
+import { UserStatsChart } from "@/components/ui/user-stats-chart";
+import { ActivityData } from "@/lib/type/dashboard";
 
 type AdminDashboardProps = {
   role: string;
@@ -17,12 +18,37 @@ type AdminDashboardProps = {
 };
 
 export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
-  const router = useRouter();
   const [users, setUsers] = useState<UserSummary[]>([]);
   const [usersError, setUsersError] = useState("");
   const [dashboardData, setDashboardData] = useState<DashboardResponse | null>(null);
   const [dashboardError, setDashboardError] = useState("");
   const [loading, setLoading] = useState(true);
+
+  // Generate dynamic activity data based on current dashboard counts
+  const activityData = useMemo((): ActivityData[] => {
+    // Use current values from dashboard cards
+    const currentDestinations = dashboardData?.data.destinations.count || 0;
+    const currentHebergements = dashboardData?.data.hebergements.count || 0;
+    const currentActivites = dashboardData?.data.activites.count || 0;
+    
+    // Create simple historical progression based on current values
+    return [
+      { month: "Jan", destination: Math.max(0, currentDestinations - 4), hebergement: Math.max(0, currentHebergements - 3), activite: Math.max(0, currentActivites - 2) },
+      { month: "Fév", destination: Math.max(0, currentDestinations - 3), hebergement: Math.max(0, currentHebergements - 2), activite: Math.max(0, currentActivites - 1) },
+      { month: "Mar", destination: Math.max(0, currentDestinations - 2), hebergement: Math.max(0, currentHebergements - 1), activite: Math.max(0, currentActivites - 1) },
+      { month: "Avr", destination: Math.max(0, currentDestinations - 1), hebergement: Math.max(0, currentHebergements - 1), activite: Math.max(0, currentActivites) },
+      { month: "Mai", destination: Math.max(0, currentDestinations - 1), hebergement: Math.max(0, currentHebergements), activite: Math.max(0, currentActivites) },
+      { month: "Jun", destination: currentDestinations, hebergement: currentHebergements, activite: currentActivites },
+    ];
+  }, [dashboardData]);
+
+  // Mock data for user stats
+  const userStatsData = [
+    { name: "Admins", value: 5, color: "#3b82f6" },
+    { name: "Premium", value: 120, color: "#10b981" },
+    { name: "Standard", value: 280, color: "#6b7280" },
+    { name: "Nouveaux", value: 45, color: "#f59e0b" },
+  ];
 
   useEffect(() => {
     if (role !== "ADMIN" || !accessToken) return;
@@ -153,23 +179,8 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
             <CardDescription>{DASHBOARD_TEXTS.LATEST_CHANGES}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3 text-sm text-foreground">
-              <div className="flex items-center justify-between rounded-md border bg-card/50 px-3 py-2">
-                <span>{DASHBOARD_TEXTS.ACTIVITY_ITEMS.PRICING_UPDATE}</span>
-                <span className="text-xs text-muted-foreground">{DASHBOARD_TEXTS.TIME_AGO.TWO_HOURS}</span>
-              </div>
-              <div className="flex items-center justify-between rounded-md border bg-card/50 px-3 py-2">
-                <span>{DASHBOARD_TEXTS.ACTIVITY_ITEMS.NEW_ACTIVITY}</span>
-                <span className="text-xs text-muted-foreground">{DASHBOARD_TEXTS.TIME_AGO.SIX_HOURS}</span>
-              </div>
-              <div className="flex items-center justify-between rounded-md border bg-card/50 px-3 py-2">
-                <span>{DASHBOARD_TEXTS.ACTIVITY_ITEMS.RESERVATIONS}</span>
-                <span className="text-xs text-muted-foreground">{DASHBOARD_TEXTS.TIME_AGO.YESTERDAY}</span>
-              </div>
-              <div className="flex items-center justify-between rounded-md border bg-card/50 px-3 py-2">
-                <span>{DASHBOARD_TEXTS.ACTIVITY_ITEMS.REVIEWS_PENDING}</span>
-                <span className="text-xs text-muted-foreground">{DASHBOARD_TEXTS.TIME_AGO.YESTERDAY}</span>
-              </div>
+            <div className="space-y-6">
+              <ActivityChart data={activityData} />
             </div>
           </CardContent>
         </Card>
@@ -179,79 +190,16 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
             <CardTitle>{DASHBOARD_TEXTS.SHORTCUTS}</CardTitle>
             <CardDescription>{DASHBOARD_TEXTS.COMMON_TASKS}</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-2">
-            <Button 
-              className="w-full" 
-              variant="default"
-              onClick={() => router.push('/admin/destination/creation')}
-            >
-              {DASHBOARD_TEXTS.BUTTONS.ADD_DESTINATION}
-            </Button>
-            <Button 
-              className="w-full" 
-              variant="outline"
-              onClick={() => router.push('/admin/hebergements/creation')}
-            >
-              {DASHBOARD_TEXTS.BUTTONS.ADD_HEBERGEMENT}
-            </Button>
-            <Button 
-              className="w-full" 
-              variant="outline"
-              onClick={() => router.push('/admin/activites/creation')}
-            >
-              {DASHBOARD_TEXTS.BUTTONS.ADD_ACTIVITE}
-            </Button>
-            <Button className="w-full" variant="ghost">
-              {DASHBOARD_TEXTS.BUTTONS.REVIEW_PENDING}
-            </Button>
-          </CardContent>
-        </Card>
-      </section>
-
-      <section className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Snapshots du trafic</CardTitle>
-            <CardDescription>Visites et recherches hebdomadaires</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm text-foreground">
-            <div className="flex items-center justify-between rounded-md border bg-card/50 px-3 py-2">
-              <span>Visites</span>
-              <span className="text-sm font-medium">4,120</span>
-            </div>
-            <div className="flex items-center justify-between rounded-md border bg-card/50 px-3 py-2">
-              <span>Recherches</span>
-              <span className="text-sm font-medium">1,480</span>
-            </div>
-            <div className="flex items-center justify-between rounded-md border bg-card/50 px-3 py-2">
-              <span>Taux de conversion</span>
-              <span className="text-sm font-medium">3.1%</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>État du système</CardTitle>
-            <CardDescription>Liste de vérification des opérations</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm text-foreground">
-            <div className="flex items-center justify-between rounded-md border bg-card/50 px-3 py-2">
-              <span>Connectivité API</span>
-              <span className="text-emerald-600">OK</span>
-            </div>
-            <div className="flex items-center justify-between rounded-md border bg-card/50 px-3 py-2">
-              <span>File d&apos;attente email</span>
-              <span className="text-emerald-600">Fonctionnel</span>
-            </div>
-            <div className="flex items-center justify-between rounded-md border bg-card/50 px-3 py-2">
-              <span>Sauvegardes</span>
-              <span className="text-emerald-600">À jour</span>
+          <CardContent>
+            <div>
+              <h4 className="text-sm font-medium mb-3">Utilisateurs enregistrés</h4>
+              <UserStatsChart data={userStatsData} />
             </div>
           </CardContent>
         </Card>
       </section>
 
+      
       {role === "ADMIN" ? (
         <section className="grid gap-4">
           <Card>

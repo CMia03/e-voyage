@@ -1,3 +1,10 @@
+export interface ActivityData {
+  month: string;
+  destination: number;
+  hebergement: number;
+  activite: number;
+}
+
 export interface DashboardData {
   destinations: {
     count: number;
@@ -15,6 +22,7 @@ export interface DashboardData {
     count: number;
     status: string;
   };
+  monthlyActivity?: ActivityData[];
 }
 
 export interface DashboardResponse {
