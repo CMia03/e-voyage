@@ -114,7 +114,7 @@ export function HebergementForm({
     <form className="space-y-8" onSubmit={onSubmit}>
       <section className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2 md:col-span-2">
-          <label className="text-sm font-medium">Nom</label>
+          <label className="text-sm font-medium">Nom *</label>
           <Input
             value={form.nom}
             onChange={(event) => {
@@ -130,18 +130,18 @@ export function HebergementForm({
         </div>
 
         <div className="space-y-2 md:col-span-2">
-          <label className="text-sm font-medium">Description</label>
+          <label className="text-sm font-medium">Description *</label>
           <textarea
             value={form.description}
             onChange={(event) => onUpdate("description", event.target.value)}
-            placeholder="Description"
+            placeholder="Description de l'hebergement"
             className="min-h-28 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
             required
           />
         </div>
 
         <div className="space-y-2 md:col-span-2">
-          <label className="text-sm font-medium">Adresse</label>
+          <label className="text-sm font-medium">Adresse *</label>
           <Input
             value={form.adresse}
             onChange={(event) => onUpdate("adresse", event.target.value)}
@@ -295,7 +295,7 @@ export function HebergementForm({
         <div className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Latitude</label>
+              <label className="text-sm font-medium">Latitude *</label>
               <Input
                 type="number"
                 step="any"
@@ -305,7 +305,7 @@ export function HebergementForm({
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Longitude</label>
+              <label className="text-sm font-medium">Longitude *</label>
               <Input
                 type="number"
                 step="any"

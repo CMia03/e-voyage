@@ -75,7 +75,7 @@ export function AdminHebergementsCreation({
     setShowSuccessAlert(true);
     const timeout = window.setTimeout(() => {
       setShowSuccessAlert(false);
-    }, 4500);
+    }, 3000);
 
     return () => window.clearTimeout(timeout);
   }, [successMessage]);
@@ -90,7 +90,7 @@ export function AdminHebergementsCreation({
     setShowErrorAlert(true);
     const timeout = window.setTimeout(() => {
       setShowErrorAlert(false);
-    }, 5000);
+    }, 3000);
 
     return () => window.clearTimeout(timeout);
   }, [error]);

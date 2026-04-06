@@ -100,7 +100,7 @@ export function ActiviteForm({
     <form className="space-y-8" onSubmit={onSubmit}>
       <section className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2 md:col-span-2">
-          <label className="text-sm font-medium">Nom</label>
+          <label className="text-sm font-medium">Nom *</label>
           <Input
             value={form.nom}
             onChange={(event) => {
@@ -116,7 +116,7 @@ export function ActiviteForm({
         </div>
 
         <div className="space-y-2 md:col-span-2">
-          <label className="text-sm font-medium">Description</label>
+          <label className="text-sm font-medium">Description *</label>
           <textarea
             value={form.description}
             onChange={(event) => onUpdate("description", event.target.value)}
@@ -175,7 +175,7 @@ export function ActiviteForm({
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Duree (heures)</label>
+          <label className="text-sm font-medium">Durée (heures) *</label>
           <Input
             type="number"
             min="0"
@@ -187,7 +187,7 @@ export function ActiviteForm({
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Participants minimum</label>
+          <label className="text-sm font-medium">Participants minimum *</label>
           <Input
             type="number"
             min="0"
@@ -198,29 +198,27 @@ export function ActiviteForm({
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Participants maximum</label>
+          <label className="text-sm font-medium">Participants maximum *</label>
           <Input
             value={form.participantsMax}
             onChange={(event) => onUpdate("participantsMax", event.target.value)}
-            placeholder="10"
             required
           />
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Niveau de difficulte</label>
+          <label className="text-sm font-medium">Niveau de difficulté *</label>
           <Input
             value={form.niveauxDeDifficulte}
             onChange={(event) =>
               onUpdate("niveauxDeDifficulte", event.target.value)
             }
-            placeholder="Facile, Moyen, Difficile"
             required
           />
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Categorie</label>
+          <label className="text-sm font-medium">Catégorie *</label>
           <div className="flex gap-2">
             <Select
               value={form.idCategorie}
@@ -277,7 +275,7 @@ export function ActiviteForm({
         <div className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Latitude</label>
+              <label className="text-sm font-medium">Latitude *</label>
               <Input
                 type="number"
                 step="any"
@@ -287,7 +285,7 @@ export function ActiviteForm({
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Longitude</label>
+              <label className="text-sm font-medium">Longitude *</label>
               <Input
                 type="number"
                 step="any"
