@@ -1,42 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Activite } from "@/lib/type/activite";
 
 // Simuler une base de données en mémoire
-let activites: any[] = [
-  {
-    id: "1",
-    nom: "Randonnée dans les mangroves",
-    slug: "randonnee-mangroves",
-    description: "Explorez les magnifiques mangroves de Madagascar",
-    dureeHeures: 3,
-    participantMin: 2,
-    participantsMax: 10,
-    niveauxDeDifficulte: "Facile",
-    latitude: -18.766947,
-    longitude: 46.869107,
-    estActif: true,
-    idCategorie: "1",
-    equipementsFournis: ["Bottines", "Eau", "Snacks"],
-    imagePrincipale: "/images/activite1.jpg",
-    dateCreation: new Date().toISOString(),
-  },
-  {
-    id: "2",
-    nom: "Kayak sur la rivière",
-    slug: "kayak-riviere",
-    description: "Balade en kayak sur les rivières tranquilles",
-    dureeHeures: 2,
-    participantMin: 1,
-    participantsMax: 8,
-    niveauxDeDifficulte: "Moyen",
-    latitude: -18.866947,
-    longitude: 46.969107,
-    estActif: true,
-    idCategorie: "2",
-    equipementsFournis: ["Kayak", "Pagaie", "Gilet de sauvetage"],
-    imagePrincipale: "/images/activite2.jpg",
-    dateCreation: new Date().toISOString(),
-  },
-];
+const activites: Activite[] = [];
 
 export async function GET(request: NextRequest) {
   try {
@@ -79,24 +45,30 @@ export async function POST(request: NextRequest) {
     if (contentType?.includes("multipart/form-data")) {
       // Gérer FormData
       const formData = await request.formData();
-      body = Object.fromEntries(formData.entries());
+      const formDataBody = Object.fromEntries(formData.entries());
       
-      // Convertir les champs numériques
-      if (body.dureeHeures) body.dureeHeures = Number(body.dureeHeures);
-      if (body.participantMin) body.participantMin = Number(body.participantMin);
-      if (body.participantsMax) body.participantsMax = Number(body.participantsMax);
-      if (body.latitude) body.latitude = Number(body.latitude);
-      if (body.longitude) body.longitude = Number(body.longitude);
-      if (body.estActif) body.estActif = body.estActif === "true";
-      
-      // Gérer les équipements fournis
-      if (body.equipementsFournis) {
-        if (Array.isArray(body.equipementsFournis)) {
-          body.equipementsFournis = body.equipementsFournis;
-        } else {
-          body.equipementsFournis = [body.equipementsFournis];
+      // Gérer les équipements fournis séparément
+      let equipementsFournis: string[] = [];
+      if (formDataBody.equipementsFournis) {
+        const equipementsValue = formDataBody.equipementsFournis;
+        if (Array.isArray(equipementsValue)) {
+          equipementsFournis = equipementsValue.filter(item => typeof item === 'string') as string[];
+        } else if (typeof equipementsValue === 'string') {
+          equipementsFournis = [equipementsValue];
         }
       }
+      
+      // Convertir les champs numériques
+      body = {
+        ...formDataBody,
+        dureeHeures: formDataBody.dureeHeures ? Number(formDataBody.dureeHeures) : undefined,
+        participantMin: formDataBody.participantMin ? Number(formDataBody.participantMin) : undefined,
+        participantsMax: formDataBody.participantsMax ? Number(formDataBody.participantsMax) : undefined,
+        latitude: formDataBody.latitude ? Number(formDataBody.latitude) : undefined,
+        longitude: formDataBody.longitude ? Number(formDataBody.longitude) : undefined,
+        estActif: formDataBody.estActif === "true",
+        equipementsFournis,
+      };
     } else {
       // Gérer JSON
       body = await request.json();

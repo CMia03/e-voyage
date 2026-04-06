@@ -1,23 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { CategorieActivite } from "@/lib/type/activite";
 
 // Simuler une base de données en mémoire
-let categories: any[] = [
-  {
-    id: "1",
-    nom: "Randonnée",
-    description: "Activités de randonnée et trekking",
-  },
-  {
-    id: "2", 
-    nom: "Sports nautiques",
-    description: "Kayak, paddle, et autres sports aquatiques",
-  },
-  {
-    id: "3",
-    nom: "Découverte",
-    description: "Visites et activités culturelles",
-  },
-];
+const categories: CategorieActivite[] = [];
 
 export async function GET(request: NextRequest) {
   try {
@@ -64,10 +49,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Créer la nouvelle catégorie
-    const nouvelleCategorie = {
+    const nouvelleCategorie: CategorieActivite = {
       id: (categories.length + 1).toString(),
       nom: body.nom,
-      description: body.description || "",
+      dateCreation: new Date().toISOString(),
+      dateModification: new Date().toISOString(),
     };
 
     categories.push(nouvelleCategorie);

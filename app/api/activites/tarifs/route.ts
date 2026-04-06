@@ -1,32 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { TarifActivite } from "@/lib/type/activite";
 
 // Simuler une base de données en mémoire
-let tarifs: any[] = [
-  {
-    id: "1",
-    idActivite: "1",
-    typeClient: "Adulte",
-    prix: 25000,
-    devise: "MGA",
-    description: "Tarif adulte pour la randonnée",
-  },
-  {
-    id: "2",
-    idActivite: "1", 
-    typeClient: "Enfant",
-    prix: 15000,
-    devise: "MGA",
-    description: "Tarif enfant pour la randonnée",
-  },
-  {
-    id: "3",
-    idActivite: "2",
-    typeClient: "Adulte",
-    prix: 30000,
-    devise: "MGA",
-    description: "Tarif adulte pour le kayak",
-  },
-];
+const tarifs: TarifActivite[] = [];
 
 export async function GET(request: NextRequest) {
   try {
@@ -73,11 +49,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Créer le nouveau tarif
-    const nouveauTarif = {
+    const nouveauTarif: TarifActivite = {
       id: (tarifs.length + 1).toString(),
-      ...body,
+      categorieAge: body.categorieAge || null,
+      prixParPersonne: body.prixParPersonne || null,
+      prixParHeur: body.prixParHeur || null,
       devise: body.devise || "MGA",
-      description: body.description || "",
+      estActif: body.estActif ?? true,
+      dateValiditeDebut: body.dateValiditeDebut || null,
+      dateValiditeFin: body.dateValiditeFin || null,
+      dateCreation: new Date().toISOString(),
+      dateModification: null,
+      idActivite: body.idActivite,
+      nomActivite: body.nomActivite || "",
     };
 
     tarifs.push(nouveauTarif);

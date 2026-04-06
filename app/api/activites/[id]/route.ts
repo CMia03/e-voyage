@@ -20,52 +20,11 @@ interface UpdateActiviteBody {
 }
 
 // Simuler une base de données en mémoire
-const activites: Activite[] = [
-  {
-    id: "1",
-    nom: "Randonnée dans les mangroves",
-    slug: "randonnee-mangroves",
-    description: "Explorez les magnifiques mangroves de Madagascar",
-    dureeHeures: 3,
-    participantMin: 2,
-    participantsMax: "10",
-    niveauxDeDifficulte: "Facile",
-    latitude: -18.766947,
-    longitude: 46.869107,
-    estActif: true,
-    equipementsFournis: ["Bottines", "Eau", "Snacks"],
-    imagePrincipale: "/images/activite1.jpg",
-    dateCreation: new Date().toISOString(),
-    idCategorie: "1",
-    nomCategorie: "",
-    tarifs: [],
-    photos: [],
-  },
-  {
-    id: "2",
-    nom: "Kayak sur la rivière",
-    slug: "kayak-riviere",
-    description: "Balade en kayak sur les rivières tranquilles",
-    dureeHeures: 2,
-    participantMin: 1,
-    participantsMax: "8",
-    niveauxDeDifficulte: "Moyen",
-    latitude: -18.866947,
-    longitude: 46.969107,
-    estActif: true,
-    equipementsFournis: ["Kayak", "Pagaie", "Gilet de sauvetage"],
-    imagePrincipale: "/images/activite2.jpg",
-    dateCreation: new Date().toISOString(),
-    idCategorie: "2",
-    nomCategorie: "",
-    tarifs: [],
-    photos: [],
-  },
-];
+const activites: Activite[] = [];
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Simuler une vérification d'authentification
@@ -77,7 +36,8 @@ export async function GET(
       );
     }
 
-    const activite = activites.find(a => a.id === params.id);
+    const resolvedParams = await params;
+    const activite = activites.find(a => a.id === resolvedParams.id);
 
     if (!activite) {
       return NextResponse.json(
@@ -100,7 +60,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Simuler une vérification d'authentification
@@ -151,7 +111,8 @@ export async function PUT(
       body = await request.json();
     }
 
-    const activiteIndex = activites.findIndex(a => a.id === params.id);
+    const resolvedParams = await params;
+    const activiteIndex = activites.findIndex(a => a.id === resolvedParams.id);
 
     if (activiteIndex === -1) {
       return NextResponse.json(
@@ -164,7 +125,7 @@ export async function PUT(
     const updatedActivite: Activite = {
       ...activites[activiteIndex],
       ...body,
-      id: params.id, // Préserver l'ID
+      id: resolvedParams.id, // Préserver l'ID
       // Ensure participantsMax is always a string to match Activite type
       participantsMax: body.participantsMax !== undefined 
         ? String(body.participantsMax) 
@@ -187,7 +148,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Simuler une vérification d'authentification
@@ -199,7 +160,8 @@ export async function DELETE(
       );
     }
 
-    const activiteIndex = activites.findIndex(a => a.id === params.id);
+    const resolvedParams = await params;
+    const activiteIndex = activites.findIndex(a => a.id === resolvedParams.id);
 
     if (activiteIndex === -1) {
       return NextResponse.json(

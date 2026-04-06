@@ -1,36 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 
 // Simuler une base de données en mémoire
-let tarifs: any[] = [
-  {
-    id: "1",
-    idActivite: "1",
-    typeClient: "Adulte",
-    prix: 25000,
-    devise: "MGA",
-    description: "Tarif adulte pour la randonnée",
-  },
-  {
-    id: "2",
-    idActivite: "1", 
-    typeClient: "Enfant",
-    prix: 15000,
-    devise: "MGA",
-    description: "Tarif enfant pour la randonnée",
-  },
-  {
-    id: "3",
-    idActivite: "2",
-    typeClient: "Adulte",
-    prix: 30000,
-    devise: "MGA",
-    description: "Tarif adulte pour le kayak",
-  },
-];
+const tarifs: Array<{
+  id: string;
+  idActivite: string;
+  typeClient: string;
+  prix: number;
+  devise: string;
+  description: string;
+}> = [];
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Simuler une vérification d'authentification
@@ -43,8 +25,8 @@ export async function PUT(
     }
 
     const body = await request.json();
-
-    const tarifIndex = tarifs.findIndex(t => t.id === params.id);
+    const resolvedParams = await params;
+    const tarifIndex = tarifs.findIndex(t => t.id === resolvedParams.id);
 
     if (tarifIndex === -1) {
       return NextResponse.json(
@@ -57,7 +39,7 @@ export async function PUT(
     tarifs[tarifIndex] = {
       ...tarifs[tarifIndex],
       ...body,
-      id: params.id, // Préserver l'ID
+      id: resolvedParams.id, // Préserver l'ID
     };
 
     return NextResponse.json({
@@ -74,7 +56,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Simuler une vérification d'authentification
@@ -86,7 +68,8 @@ export async function DELETE(
       );
     }
 
-    const tarifIndex = tarifs.findIndex(t => t.id === params.id);
+    const resolvedParams = await params;
+    const tarifIndex = tarifs.findIndex(t => t.id === resolvedParams.id);
 
     if (tarifIndex === -1) {
       return NextResponse.json(
