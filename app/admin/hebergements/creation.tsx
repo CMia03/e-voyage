@@ -65,34 +65,21 @@ export function AdminHebergementsCreation({
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [showErrorAlert, setShowErrorAlert] = useState(false);
 
+  // Gérer l'affichage des alertes
   useEffect(() => {
-    if (!successMessage) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setShowSuccessAlert(false);
-      return;
+    if (successMessage) {
+      setShowSuccessAlert(true);
+      const timeout = setTimeout(() => setShowSuccessAlert(false), 3000);
+      return () => clearTimeout(timeout);
     }
-
-    setShowSuccessAlert(true);
-    const timeout = window.setTimeout(() => {
-      setShowSuccessAlert(false);
-    }, 3000);
-
-    return () => window.clearTimeout(timeout);
   }, [successMessage]);
 
   useEffect(() => {
-    if (!error) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setShowErrorAlert(false);
-      return;
+    if (error) {
+      setShowErrorAlert(true);
+      const timeout = setTimeout(() => setShowErrorAlert(false), 3000);
+      return () => clearTimeout(timeout);
     }
-
-    setShowErrorAlert(true);
-    const timeout = window.setTimeout(() => {
-      setShowErrorAlert(false);
-    }, 3000);
-
-    return () => window.clearTimeout(timeout);
   }, [error]);
 
   const successAlert = successMessage && showSuccessAlert ? (

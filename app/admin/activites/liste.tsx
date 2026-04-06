@@ -68,7 +68,6 @@ export function AdminActivitesListe({
 
   useEffect(() => {
     if (!successMessage) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowSuccessAlert(false);
       return;
     }
@@ -83,7 +82,6 @@ export function AdminActivitesListe({
 
   useEffect(() => {
     if (!error) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowErrorAlert(false);
       return;
     }
@@ -186,8 +184,34 @@ export function AdminActivitesListe({
               {activites.map((activite) => (
                 <div
                   key={activite.id}
-                  className="rounded-2xl border border-border/50 bg-card/50 p-4 shadow-sm"
+                  className="overflow-hidden rounded-2xl border border-border/50 bg-card/50 shadow-sm"
                 >
+                  <div className="relative">
+                    {activite.imagePrincipale ? (
+                      <div className="w-full h-48 bg-muted/20 p-2">
+                        <img
+                          src={activite.imagePrincipale}
+                          alt={activite.nom}
+                          className="w-full h-full rounded-md object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex h-48 w-full items-center justify-center bg-muted/40 text-sm text-muted-foreground">
+                        Aucune image
+                      </div>
+                    )}
+                    <span
+                      className={`absolute right-3 top-3 rounded-full px-2.5 py-1 text-xs font-medium shadow-sm ${
+                        activite.estActif
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-slate-200 text-slate-700"
+                      }`}
+                    >
+                      {activite.estActif ? "Actif" : "Inactif"}
+                    </span>
+                  </div>
+
+                  <div className="p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
                       <h3 className="text-lg font-semibold">{activite.nom}</h3>
@@ -254,6 +278,7 @@ export function AdminActivitesListe({
                       <Trash2 className="size-4" />
                       {isDeletingId === activite.id ? "Suppression..." : "Supprimer"}
                     </Button>
+                  </div>
                   </div>
                 </div>
               ))}

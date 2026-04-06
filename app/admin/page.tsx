@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Calendar, dateFnsLocalizer } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
-import fr from "date-fns/locale/fr";
+import { fr } from "date-fns/locale/fr";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { AdminHeader } from "@/app/admin/components/header";
 import { AdminSidebar, type AdminSection } from "@/app/admin/components/sidebar";
@@ -34,7 +35,9 @@ const localizer = dateFnsLocalizer({
 
 export default function AdminPage() {
   const { session, isLoading, isAuthenticated, getValidToken } = useAuth();
-  const [active, setActive] = useState<AdminSection>("dashboard");
+  const searchParams = useSearchParams();
+  const section = searchParams.get("section");
+  const [active, setActive] = useState<AdminSection>(section as AdminSection || "dashboard");
   const [selectedDestinationId, setSelectedDestinationId] = useState<string | null>(null);
   const [selectedActiviteId, setSelectedActiviteId] = useState<string | null>(null);
   const [selectedHebergementId, setSelectedHebergementId] = useState<string | null>(null);
@@ -80,6 +83,13 @@ export default function AdminPage() {
     setCalendarDate(newDate);
   }, [selectedYear, selectedDate]);
 
+  // Mettre à jour la section active quand le paramètre d'URL change
+  useEffect(() => {
+    if (section) {
+      setActive(section as AdminSection);
+    }
+  }, [section]);
+
   // Charger les destinations depuis l'API
   const loadDestinations = async () => {
     try {
@@ -89,8 +99,8 @@ export default function AdminPage() {
       if (response.data) {
         setDestinations(response.data.map(dest => ({ id: dest.id, nom: dest.nom })));
       }
-    } catch (error) {
-      console.error("Erreur lors du chargement des destinations:", error);
+    } catch {
+      // Erreur silencieuse lors du chargement des destinations
     }
   };
 
@@ -98,7 +108,8 @@ export default function AdminPage() {
     if (accessToken) {
       loadDestinations();
     }
-  }, [accessToken, loadDestinations]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessToken]);
 
   // Gérer le clic sur une date du calendrier
   const handleSelectSlot = ({ start, end }: { start: Date; end: Date }) => {

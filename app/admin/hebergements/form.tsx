@@ -94,21 +94,21 @@ export function HebergementForm({
   const [showTypeCreator, setShowTypeCreator] = useState(false);
   const [showEquipementCreator, setShowEquipementCreator] = useState(false);
   const [selectedEquipementId, setSelectedEquipementId] = useState("");
-  const [imagePreview, setImagePreview] = useState("");
+  const imagePreview = form.imageFile 
+    ? URL.createObjectURL(form.imageFile)
+    : form.urlImagePrincipale || "";
 
   const selectedEquipements = equipements.filter((equipement) =>
     form.idsPlus.includes(equipement.id)
   );
 
   useEffect(() => {
-    if (form.imageFile) {
-      const objectUrl = URL.createObjectURL(form.imageFile);
-      setImagePreview(objectUrl);
-      return () => URL.revokeObjectURL(objectUrl);
-    }
-
-    setImagePreview(form.urlImagePrincipale || "");
-  }, [form.imageFile, form.urlImagePrincipale]);
+    return () => {
+      if (form.imageFile) {
+        URL.revokeObjectURL(form.imageFile);
+      }
+    };
+  }, [form.imageFile]);
 
   return (
     <form className="space-y-8" onSubmit={onSubmit}>
@@ -152,48 +152,50 @@ export function HebergementForm({
 
         <div className="space-y-2 md:col-span-2">
           <label className="text-sm font-medium">Image principale</label>
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px]">
-            <div className="space-y-2">
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => document.getElementById('hebergement-image-file-input')?.click()}
-                  className="flex-1"
-                >
-                  Choisir un fichier
-                </Button>
-                <Input
-                  id="hebergement-image-file-input"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(event) =>
-                    onUpdate("imageFile", event.target.files?.[0] ?? null)
-                  }
-                />
-              </div>
-              <Input
-                value={form.urlImagePrincipale}
-                onChange={(event) => onUpdate("urlImagePrincipale", event.target.value)}
-                placeholder="https://... (optionnel si fichier choisi)"
-              />
-              <p className="text-xs text-muted-foreground">
-                Choisis un fichier pour l&apos;upload Cloudinary, ou colle une URL existante.
-              </p>
-            </div>
-            <div className="overflow-hidden rounded-xl border border-border/50 bg-muted/20">
-              {imagePreview ? (
-                <img
-                  src={imagePreview}
-                  alt={form.nom || "Apercu hebergement"}
-                  className="h-40 w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-40 items-center justify-center px-4 text-center text-sm text-muted-foreground">
-                  Apercu image
+          <div className="grid gap-4 lg:grid-cols-1">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => document.getElementById('hebergement-image-file-input')?.click()}
+                    className="flex-1"
+                  >
+                    Choisir un fichier
+                  </Button>
+                  <Input
+                    id="hebergement-image-file-input"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(event) =>
+                      onUpdate("imageFile", event.target.files?.[0] ?? null)
+                    }
+                  />
                 </div>
-              )}
+                <Input
+                  value={form.urlImagePrincipale}
+                  onChange={(event) => onUpdate("urlImagePrincipale", event.target.value)}
+                  placeholder="https://... (optionnel si fichier choisi)"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Choisis un fichier pour l&apos;upload Cloudinary, ou colle une URL existante.
+                </p>
+              </div>
+              <div className="overflow-hidden rounded-xl border border-border/50 bg-muted/20">
+                {imagePreview ? (
+                  <img
+                    src={imagePreview}
+                    alt={form.nom || "Apercu hebergement"}
+                    className="h-40 w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-40 items-center justify-center px-4 text-center text-sm text-muted-foreground">
+                    Apercu image
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
