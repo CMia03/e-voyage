@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -59,16 +59,11 @@ export function DestinationForm({
   makeSlug,
   isEditing = false,
 }: DestinationFormProps) {
-  const [imagePreview, setImagePreview] = useState("");
-
-  useEffect(() => {
+  const imagePreview = useMemo(() => {
     if (form.imageFile) {
-      const objectUrl = URL.createObjectURL(form.imageFile);
-      setImagePreview(objectUrl);
-      return () => URL.revokeObjectURL(objectUrl);
+      return URL.createObjectURL(form.imageFile);
     }
-
-    setImagePreview(form.urlImagePrincipale || "");
+    return form.urlImagePrincipale || "";
   }, [form.imageFile, form.urlImagePrincipale]);
 
   return (

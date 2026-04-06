@@ -104,11 +104,11 @@ export function HebergementForm({
 
   useEffect(() => {
     return () => {
-      if (form.imageFile) {
-        URL.revokeObjectURL(form.imageFile);
+      if (form.imageFile && imagePreview) {
+        URL.revokeObjectURL(imagePreview);
       }
     };
-  }, [form.imageFile]);
+  }, [form.imageFile, imagePreview]);
 
   return (
     <form className="space-y-8" onSubmit={onSubmit}>

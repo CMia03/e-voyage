@@ -68,17 +68,23 @@ export function AdminHebergementsCreation({
   // Gérer l'affichage des alertes
   useEffect(() => {
     if (successMessage) {
-      setShowSuccessAlert(true);
-      const timeout = setTimeout(() => setShowSuccessAlert(false), 3000);
-      return () => clearTimeout(timeout);
+      const showTimeout = setTimeout(() => setShowSuccessAlert(true), 0);
+      const hideTimeout = setTimeout(() => setShowSuccessAlert(false), 3000);
+      return () => {
+        clearTimeout(showTimeout);
+        clearTimeout(hideTimeout);
+      };
     }
   }, [successMessage]);
 
   useEffect(() => {
     if (error) {
-      setShowErrorAlert(true);
-      const timeout = setTimeout(() => setShowErrorAlert(false), 3000);
-      return () => clearTimeout(timeout);
+      const showTimeout = setTimeout(() => setShowErrorAlert(true), 0);
+      const hideTimeout = setTimeout(() => setShowErrorAlert(false), 3000);
+      return () => {
+        clearTimeout(showTimeout);
+        clearTimeout(hideTimeout);
+      };
     }
   }, [error]);
 
