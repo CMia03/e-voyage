@@ -154,13 +154,25 @@ export function HebergementForm({
           <label className="text-sm font-medium">Image principale</label>
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px]">
             <div className="space-y-2">
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={(event) =>
-                  onUpdate("imageFile", event.target.files?.[0] ?? null)
-                }
-              />
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => document.getElementById('hebergement-image-file-input')?.click()}
+                  className="flex-1"
+                >
+                  Choisir un fichier
+                </Button>
+                <Input
+                  id="hebergement-image-file-input"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(event) =>
+                    onUpdate("imageFile", event.target.files?.[0] ?? null)
+                  }
+                />
+              </div>
               <Input
                 value={form.urlImagePrincipale}
                 onChange={(event) => onUpdate("urlImagePrincipale", event.target.value)}
