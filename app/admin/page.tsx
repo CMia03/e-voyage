@@ -14,6 +14,7 @@ import { AdminDestinations } from "@/app/admin/destinations";
 import { AdminActivites } from "@/app/admin/activites/page";
 import { AdminHebergements } from "@/app/admin/hebergements/page";
 import { useAuth } from "@/hooks/useAuth";
+import { loadAuth, clearAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -44,6 +45,77 @@ export default function AdminPage() {
   
   const accessToken = session?.accessToken ?? null;
   const role = session?.role ?? null;
+
+  // Vérifier automatiquement l'expiration de la session et déconnecter
+  useEffect(() => {
+    const checkSessionExpiration = () => {
+      const currentSession = loadAuth();
+      if (!currentSession) {
+        // Pas de session, rediriger vers login
+        clearAuth();
+        window.location.href = '/login';
+        return;
+      }
+
+      // Vérifier si le token est expiré
+      try {
+        const tokenPayload = JSON.parse(atob(currentSession.accessToken.split('.')[1]));
+        const currentTime = Date.now() / 1000; // Convertir en secondes
+        
+        if (tokenPayload.exp && tokenPayload.exp < currentTime) {
+          // Token expiré, déconnecter automatiquement
+          console.log("Session expirée, déconnexion automatique");
+          clearAuth();
+          window.location.href = '/login';
+          return;
+        }
+      } catch (error) {
+        // Erreur lors du décodage du token, déconnecter
+        console.error("Erreur lors de la vérification du token:", error);
+        clearAuth();
+        window.location.href = '/login';
+      }
+    };
+
+    // Vérifier immédiatement
+    checkSessionExpiration();
+
+    // Vérifier toutes les 30 secondes
+    const interval = setInterval(checkSessionExpiration, 30000);
+
+    // Nettoyer l'intervalle au démontage
+    return () => clearInterval(interval);
+  }, []);
+
+  // Vérifier quand la fenêtre reprend le focus
+  useEffect(() => {
+    const handleFocus = () => {
+      const currentSession = loadAuth();
+      if (!currentSession) {
+        clearAuth();
+        window.location.href = '/login';
+        return;
+      }
+
+      try {
+        const tokenPayload = JSON.parse(atob(currentSession.accessToken.split('.')[1]));
+        const currentTime = Date.now() / 1000;
+        
+        if (tokenPayload.exp && tokenPayload.exp < currentTime) {
+          console.log("Session expirée lors du focus, déconnexion automatique");
+          clearAuth();
+          window.location.href = '/login';
+        }
+      } catch (error) {
+        console.error("Erreur lors de la vérification du token au focus:", error);
+        clearAuth();
+        window.location.href = '/login';
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
 
   const [events, setEvents] = useState<Array<{
     id: number;
