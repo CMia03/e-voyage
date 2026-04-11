@@ -16,6 +16,7 @@ import { AdminHebergements } from "@/app/admin/hebergements/page";
 import { AdminNotifications } from "@/app/admin/notifications/page";
 import { AdminAvis } from "@/app/admin/avis/page";
 import { AdminEntrepriseInfo } from "@/app/admin/entreprise-info-next";
+import { AdminUsers } from "@/app/admin/users/page";
 import { useAuth } from "@/hooks/useAuth";
 import { loadAuth, clearAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -36,29 +37,6 @@ const localizer = dateFnsLocalizer({
   getDay,
   locales,
 });
-
-type AdminSection =
-  | "dashboard"
-  | "destinations"
-  | "destinations-create"
-  | "destinations-edit"
-  | "activites"
-  | "activites-create"
-  | "activites-edit"
-  | "activites-categories"
-  | "hebergements"
-  | "hebergements-create"
-  | "hebergements-edit"
-  | "hebergements-tarifs"
-  | "hebergements-types"
-  | "hebergements-equipements"
-  | "utilisateurs"
-  | "reservations"
-  | "avis"
-  | "notifications"
-  | "statistiques"
-  | "entreprise-info"
-  | "planification";
 
 function AdminPageWithSearchParams() {
   const searchParams = useSearchParams();
@@ -438,6 +416,10 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
             <AdminNotifications />
           ) : active === "avis" ? (
             <AdminAvis />
+          ) : active === "utilisateurs" ? (
+            <AdminUsers />
+          ) : active === "entreprise-info" ? (
+            <AdminEntrepriseInfo accessToken={accessToken ?? ""} />
           ) : active === "planification" ? (
             <div className="space-y-8">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">

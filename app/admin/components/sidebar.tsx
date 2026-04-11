@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Home, MapPin, Building, Play, ChevronDown, Users, Calendar, Bell, Star } from "lucide-react";
+import { Home, MapPin, Building, Play, ChevronDown, Users, Calendar, Bell, Star, Briefcase } from "lucide-react";
 
 export type AdminSection =
   | "dashboard"
@@ -23,6 +23,7 @@ export type AdminSection =
   | "avis"
   | "notifications"
   | "statistiques"
+  | "entreprise-info"
   | "planification";
 
 interface AdminSidebarProps {
@@ -239,6 +240,32 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
             </div>
           )}
         </div>
+
+        <button
+          type="button"
+          onClick={() => onSelect("utilisateurs")}
+          className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
+            active === "utilisateurs"
+              ? "bg-emerald-500/10 font-medium text-emerald-600"
+              : "text-muted-foreground hover:bg-primary/10"
+          }`}
+        >
+          <Users className="mr-3 h-4 w-4" />
+          Gestion des utilisateurs
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onSelect("entreprise-info")}
+          className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
+            active === "entreprise-info"
+              ? "bg-emerald-500/10 font-medium text-emerald-600"
+              : "text-muted-foreground hover:bg-primary/10"
+          }`}
+        >
+          <Briefcase className="mr-3 h-4 w-4" />
+          Info entreprise
+        </button>
 
         <button
           type="button"
