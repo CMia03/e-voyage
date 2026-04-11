@@ -13,6 +13,8 @@ import { AdminDashboard } from "@/app/admin/dashboard";
 import { AdminDestinations } from "@/app/admin/destinations";
 import { AdminActivites } from "@/app/admin/activites/page";
 import { AdminHebergements } from "@/app/admin/hebergements/page";
+import { AdminNotifications } from "@/app/admin/notifications/page";
+import { AdminAvis } from "@/app/admin/avis/page";
 import { useAuth } from "@/hooks/useAuth";
 import { loadAuth, clearAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -408,6 +410,10 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
               accessToken={accessToken ?? ""}
               initialView="equipements"
             />
+          ) : active === "notifications" ? (
+            <AdminNotifications />
+          ) : active === "avis" ? (
+            <AdminAvis />
           ) : active === "planification" ? (
             <div className="space-y-8">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
