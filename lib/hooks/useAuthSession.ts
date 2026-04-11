@@ -11,7 +11,17 @@ export function useAuthSession() {
   }, [router]);
 
   useEffect(() => {
+    const isProtectedRoute = () => {
+      const path = window.location.pathname;
+      return path.startsWith('/admin') || path.startsWith('/dashboard');
+    };
+
     const checkSession = () => {
+      // Only check authentication on protected routes
+      if (!isProtectedRoute()) {
+        return;
+      }
+
       const auth = loadAuth();
       
       if (!auth || !auth.accessToken) {

@@ -17,6 +17,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return path.startsWith('/admin') || path.startsWith('/dashboard');
     };
 
+    // Only check authentication on protected routes
     if (isProtectedRoute()) {
       const auth = loadAuth();
       if (!auth || !auth.accessToken) {
