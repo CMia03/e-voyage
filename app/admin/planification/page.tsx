@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar, dateFnsLocalizer } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { fr } from "date-fns/locale/fr";
+import { useBreadcrumbs } from "../contexts/breadcrumbs-context";
 
 const locales = {
   fr: fr,
@@ -19,6 +20,7 @@ const localizer = dateFnsLocalizer({
 });
 
 export default function PlanificationPage() {
+  const { setBreadcrumbs } = useBreadcrumbs();
   const [events] = useState([
     {
       id: 1,
@@ -33,6 +35,13 @@ export default function PlanificationPage() {
       end: new Date(new Date().getTime() + 27 * 60 * 60 * 1000),
     },
   ]);
+
+  useEffect(() => {
+    setBreadcrumbs([
+      { label: "Admin", href: "/admin" },
+      { label: "Planification", isActive: true }
+    ]);
+  }, [setBreadcrumbs]);
 
   return (
     <div className="space-y-8 h-full">

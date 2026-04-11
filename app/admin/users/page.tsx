@@ -21,9 +21,11 @@ import {
 } from "lucide-react";
 import { UserProfile } from "@/lib/type/data";
 import { Label } from "@/components/ui/label";
+import { useBreadcrumbs } from "../contexts/breadcrumbs-context";
 
 export function AdminUsers() {
   const router = useRouter();
+  const { setBreadcrumbs } = useBreadcrumbs();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -33,6 +35,13 @@ export function AdminUsers() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [auth, setAuth] = useState<AuthSession | null>(null);
+
+  useEffect(() => {
+    setBreadcrumbs([
+      { label: "Admin", href: "/admin" },
+      { label: "Utilisateurs", isActive: true }
+    ]);
+  }, [setBreadcrumbs]);
 
   const [formData, setFormData] = useState({
     nom: "",
