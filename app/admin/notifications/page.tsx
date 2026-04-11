@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Bell, Check, X, Trash2, Eye, Clock, User, Calendar } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { useBreadcrumbs } from "../contexts/breadcrumbs-context";
 
 interface Notification {
   id: string;
@@ -20,6 +21,7 @@ interface Notification {
 }
 
 export function AdminNotifications() {
+  const { setBreadcrumbs } = useBreadcrumbs();
   const [notifications, setNotifications] = useState<Notification[]>([
     {
       id: "1",
@@ -69,6 +71,13 @@ export function AdminNotifications() {
       priority: "high"
     }
   ]);
+
+  useEffect(() => {
+    setBreadcrumbs([
+      { label: "Admin", href: "/admin" },
+      { label: "Notifications", isActive: true }
+    ]);
+  }, [setBreadcrumbs]);
 
   const [filter, setFilter] = useState<"all" | "read" | "unread">("all");
   const [typeFilter, setTypeFilter] = useState<"all" | "info" | "success" | "warning" | "error">("all");

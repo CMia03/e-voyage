@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useBreadcrumbs } from "../contexts/breadcrumbs-context";
 
 interface Avis {
   id: string;
@@ -28,6 +29,7 @@ interface Avis {
 }
 
 export function AdminAvis() {
+  const { setBreadcrumbs } = useBreadcrumbs();
   const [avis, setAvis] = useState<Avis[]>([
     {
       id: "1",
@@ -94,6 +96,13 @@ export function AdminAvis() {
       notHelpful: 7
     }
   ]);
+
+  useEffect(() => {
+    setBreadcrumbs([
+      { label: "Admin", href: "/admin" },
+      { label: "Avis", isActive: true }
+    ]);
+  }, [setBreadcrumbs]);
 
   const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
   const [ratingFilter, setRatingFilter] = useState<"all" | "5" | "4" | "3" | "2" | "1">("all");
