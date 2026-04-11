@@ -297,7 +297,7 @@ export function AdminAvis() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Statut</label>
-              <Select value={filter} onValueChange={(value: any) => setFilter(value)}>
+              <Select value={filter} onValueChange={(value: "all" | "pending" | "approved" | "rejected") => setFilter(value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -311,7 +311,7 @@ export function AdminAvis() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Note</label>
-              <Select value={ratingFilter} onValueChange={(value: any) => setRatingFilter(value)}>
+              <Select value={ratingFilter} onValueChange={(value: "all" | "5" | "4" | "3" | "2" | "1") => setRatingFilter(value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -415,7 +415,7 @@ export function AdminAvis() {
                               R
                             </div>
                             <span className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
-                              Réponse de l'équipe
+                              Réponse de l équipe
                             </span>
                             <span className="text-xs text-muted-foreground">
                               {review.responseDate && formatDate(review.responseDate)}
@@ -484,9 +484,9 @@ export function AdminAvis() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-2xl max-h-[80vh] overflow-y-auto">
             <CardHeader>
-              <CardTitle>Répondre à l'avis</CardTitle>
+              <CardTitle>Répondre à l avis</CardTitle>
               <CardDescription>
-                Répondez à l'avis de {selectedAvis.clientName}
+                Répondez à l avis de {selectedAvis.clientName}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

@@ -64,8 +64,8 @@ export function SearchBar() {
 
     // Search accommodations
     try {
-      const hebergements = await listHebergements();
-      hebergements.forEach((heberg) => {
+      const hebergementsResponse = await listHebergements();
+      hebergementsResponse.data?.forEach((heberg) => {
         if (
           heberg.nom.toLowerCase().includes(queryLower) ||
           heberg.description?.toLowerCase().includes(queryLower)
@@ -85,8 +85,8 @@ export function SearchBar() {
 
     // Search activities
     try {
-      const activites = await listActivites();
-      activites.forEach((activite) => {
+      const activitesResponse = await listActivites();
+      activitesResponse.data?.forEach((activite) => {
         if (
           activite.nom.toLowerCase().includes(queryLower) ||
           activite.description?.toLowerCase().includes(queryLower)
@@ -159,7 +159,7 @@ export function SearchBar() {
   };
 
   return (
-    <div ref={searchRef} className="relative w-full max-w-md">
+    <div ref={searchRef} className="relative w-full">
       <div className="relative">
         <Input
           type="text"
@@ -233,7 +233,7 @@ export function SearchBar() {
             </div>
           ) : query.trim() ? (
             <div className="p-4 text-center text-sm text-muted-foreground">
-              Aucun résultat trouvé pour "{query}"
+              Aucun résultat trouvé pour &quot;{query}&quot;
             </div>
           ) : null}
         </div>
