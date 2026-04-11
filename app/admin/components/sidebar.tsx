@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { Home, MapPin, Building, Play, ChevronDown, Users, Calendar, Bell, Star } from "lucide-react";
 
-type AdminSection =
+export type AdminSection =
   | "dashboard"
   | "destinations"
   | "destinations-create"
@@ -10,6 +11,7 @@ type AdminSection =
   | "hebergements"
   | "hebergements-create"
   | "hebergements-edit"
+  | "hebergements-tarifs"
   | "hebergements-types"
   | "hebergements-equipements"
   | "activites"
@@ -20,7 +22,9 @@ type AdminSection =
   | "reservations"
   | "avis"
   | "notifications"
-  | "statistiques";
+  | "statistiques"
+  | "planification";
+    "entreprise-info";
 
 interface AdminSidebarProps {
   active: AdminSection;
@@ -41,7 +45,6 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
   return (
     <aside className="hidden w-64 border-r border-border/50 bg-card/50 backdrop-blur-sm px-4 py-6 sm:block overflow-y-auto">
       <nav className="space-y-1">
-        {/* Dashboard - toujours visible */}
         <button
           type="button"
           onClick={() => onSelect("dashboard")}
@@ -50,13 +53,10 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               : "text-muted-foreground hover:bg-primary/10"
             }`}
         >
-          <svg className="mr-3 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-          </svg>
+          <Home className="mr-3 h-4 w-4" />
           Dashboard
         </button>
 
-        {/* Section Destinations avec sous-sections */}
         <div className="space-y-1">
           <button
             type="button"
@@ -64,21 +64,14 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
             className="flex w-full cursor-pointer items-center justify-between rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
           >
             <div className="flex items-center">
-              <svg className="mr-3 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
+              <MapPin className="mr-3 h-4 w-4" />
               Destinations
             </div>
-            <svg
-              className={`h-4 w-4 transition-transform duration-200 ${expandedSections.includes("destinations") ? "rotate-180" : ""
-                }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
+            <ChevronDown
+              className={`h-4 w-4 transition-all duration-300 ease-in-out transform ${
+                expandedSections.includes("destinations") ? "rotate-180" : "rotate-0"
+              }`}
+            />
           </button>
 
           {expandedSections.includes("destinations") && (
@@ -92,7 +85,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
                   }`}
               >
                 <span className="mr-2">•</span>
-                Toutes les destinations
+                Liste des destinations
               </button>
               <button
                 type="button"
@@ -104,41 +97,12 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
                 }`}
               >
                 <span className="mr-2">•</span>
-
-              </button>
-              <button
-                type="button"
-                onClick={() => {}}
-                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
-                  active === "activites"
-                    ? "bg-emerald-500/10 font-medium text-emerald-600"
-                    : "text-muted-foreground hover:bg-primary/10"
-                }`}
-              >
-                <span className="mr-2">•</span>
-                Catégories
-              </button>
-              <button
-                type="button"
-                onClick={() => {}}
-                className="flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
-              >
-                <span className="mr-2">•</span>
-                Régions
-              </button>
-              <button
-                type="button"
-                onClick={() => {}}
-                className="flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
-              >
-                <span className="mr-2">•</span>
-                Saisons recommandées
+                Ajouter destination
               </button>
             </div>
           )}
         </div>
 
-        {/* Section Hébergements avec sous-sections */}
         <div className="space-y-1">
           <button
             type="button"
@@ -146,20 +110,14 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
             className="flex w-full cursor-pointer items-center justify-between rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
           >
             <div className="flex items-center">
-              <svg className="mr-3 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
+              <Building className="mr-3 h-4 w-4" />
               Hébergements
             </div>
-            <svg
-              className={`h-4 w-4 transition-transform duration-200 ${expandedSections.includes("hebergements") ? "rotate-180" : ""
-                }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
+            <ChevronDown
+              className={`h-4 w-4 transition-all duration-300 ease-in-out transform ${
+                expandedSections.includes("hebergements") ? "rotate-180" : "rotate-0"
+              }`}
+            />
           </button>
 
           {expandedSections.includes("hebergements") && (
@@ -167,16 +125,14 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               <button
                 type="button"
                 onClick={() => onSelect("hebergements")}
-                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
-                  active === "hebergements"
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${active === "hebergements"
                     ? "bg-emerald-500/10 font-medium text-emerald-600"
                     : "text-muted-foreground hover:bg-primary/10"
-                }`}
+                  }`}
               >
                 <span className="mr-2">•</span>
-                Tous les hébergements
+                Liste des hébergements
               </button>
-              
               <button
                 type="button"
                 onClick={() => onSelect("hebergements-create")}
@@ -187,15 +143,12 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
                 }`}
               >
                 <span className="mr-2">•</span>
-                Ajouter un hébergement
+                Ajouter hébergement
               </button>
-
             </div>
           )}
         </div>
-        
 
-        {/* Section Activités avec sous-sections */}
         <div className="space-y-1">
           <button
             type="button"
@@ -203,21 +156,14 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
             className="flex w-full cursor-pointer items-center justify-between rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
           >
             <div className="flex items-center">
-              <svg className="mr-3 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              <Play className="mr-3 h-4 w-4" />
               Activités
             </div>
-            <svg
-              className={`h-4 w-4 transition-transform duration-200 ${expandedSections.includes("activites") ? "rotate-180" : ""
-                }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
+            <ChevronDown
+              className={`h-4 w-4 transition-all duration-300 ease-in-out transform ${
+                expandedSections.includes("activites") ? "rotate-180" : "rotate-0"
+              }`}
+            />
           </button>
 
           {expandedSections.includes("activites") && (
@@ -225,35 +171,103 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               <button
                 type="button"
                 onClick={() => onSelect("activites")}
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${active === "activites"
+                    ? "bg-emerald-500/10 font-medium text-emerald-600"
+                    : "text-muted-foreground hover:bg-primary/10"
+                  }`}
+              >
+                <span className="mr-2">•</span>
+                Liste des activités
+              </button>
+              <button
+                type="button"
+                onClick={() => onSelect("activites-create")}
                 className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
-                  active === "activites"
+                  active === "activites-create"
                     ? "bg-emerald-500/10 font-medium text-emerald-600"
                     : "text-muted-foreground hover:bg-primary/10"
                 }`}
               >
                 <span className="mr-2">•</span>
-                Toutes les activités
-              </button>
-              <button
-                type="button"
-                onClick={() => {}}
-                className="flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
-              >
-                <span className="mr-2">•</span>
-                Ajouter une activité
-              </button>
-              <button
-                type="button"
-                onClick={() => {}}
-                className="flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
-              >
-                <span className="mr-2">•</span>
-                Catégories
+                Ajouter activité
               </button>
             </div>
           )}
         </div>
-        
+
+        <div className="space-y-1">
+          <button
+            type="button"
+            onClick={() => toggleSection("notifications-avis")}
+            className="flex w-full cursor-pointer items-center justify-between rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
+          >
+            <div className="flex items-center">
+              <Bell className="mr-3 h-4 w-4" />
+              Notifications & Avis
+            </div>
+            <ChevronDown
+              className={`h-4 w-4 transition-all duration-300 ease-in-out transform ${
+                expandedSections.includes("notifications-avis") ? "rotate-180" : "rotate-0"
+              }`}
+            />
+          </button>
+
+          {expandedSections.includes("notifications-avis") && (
+            <div className="ml-4 space-y-1 pl-4 border-l-2 border-emerald-200 dark:border-emerald-800">
+              <button
+                type="button"
+                onClick={() => onSelect("notifications")}
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${active === "notifications"
+                    ? "bg-emerald-500/10 font-medium text-emerald-600"
+                    : "text-muted-foreground hover:bg-primary/10"
+                  }`}
+              >
+                <span className="mr-2">·</span>
+                Notifications
+              </button>
+              <button
+                type="button"
+                onClick={() => onSelect("avis")}
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
+                  active === "avis"
+                    ? "bg-emerald-500/10 font-medium text-emerald-600"
+                    : "text-muted-foreground hover:bg-primary/10"
+                }`}
+              >
+                <span className="mr-2">·</span>
+                Avis
+              </button>
+            </div>
+          )}
+        </div>
+
+       
+
+        <button
+          type="button"
+          onClick={() => onSelect("planification")}
+          className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${active === "planification"
+              ? "bg-emerald-500/10 font-medium text-emerald-600"
+              : "text-muted-foreground hover:bg-primary/10"
+            }`}
+        >
+          <Calendar className="mr-3 h-4 w-4" />
+          Planification
+        </button>
+
+         <button
+          type="button"
+          onClick={() => onSelect("entreprise-info")}
+          className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
+            active === "entreprise-info"
+              ? "bg-emerald-500/10 font-medium text-emerald-600"
+              : "text-muted-foreground hover:bg-primary/10"
+          }`}
+        >
+          <span className="mr-2">🏢</span>
+          Info d'entreprise
+        </button>
+
       </nav>
     </aside>
   );

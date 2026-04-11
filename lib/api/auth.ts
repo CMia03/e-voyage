@@ -40,7 +40,7 @@ export function refreshToken(refreshToken: string) {
     login?: string;
     nom?: string;
     prenom?: string;
-  }>("/api/auth/refresh", {
+  }>("/api/auth/refresh-token", {
     method: "POST",
     body: { refreshToken },
   });
@@ -49,5 +49,21 @@ export function refreshToken(refreshToken: string) {
 export function getProfile(token: string) {
   return apiRequest<{ data?: unknown }>("/api/auth/me", {
     token,
+  });
+}
+
+export function updateProfile(token: string, profileData: {
+  nom: string;
+  prenom: string;
+  email: string;
+  telephone: string;
+  dateNaissance: string;
+  adress: string;
+  nationalite: string;
+}) {
+  return apiRequest<{ data?: unknown }>("/api/auth/me", {
+    token,
+    method: "PUT",
+    body: profileData,
   });
 }

@@ -1,0 +1,69 @@
+import { useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { loadAuth, clearAuth } from '@/lib/auth';
+
+export function useAuthSession() {
+  const router = useRouter();
+
+  const logout = useCallback(() => {
+    clearAuth();
+    router.push('/login');
+  }, [router]);
+
+  useEffect(() => {
+    const isProtectedRoute = () => {
+      const path = window.location.pathname;
+      return path.startsWith('/admin') || path.startsWith('/dashboard');
+    };
+
+    const checkSession = () => {
+      // Only check authentication on protected routes
+      if (!isProtectedRoute()) {
+        return;
+      }
+
+      const auth = loadAuth();
+      
+      if (!auth || !auth.accessToken) {
+        logout();
+        return;
+      }
+
+      if (auth.expiresAt && Date.now() > auth.expiresAt) {
+        console.log('Session expired - logging out');
+        logout();
+        return;
+      }
+    };
+
+    checkSession();
+    const interval = setInterval(checkSession, 30 * 1000);
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        checkSession();
+      }
+    };
+
+    const handleFocus = () => {
+      checkSession();
+    };
+
+    const handleBeforeUnload = () => {
+      checkSession();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [logout]);
+
+  return { logout };
+}

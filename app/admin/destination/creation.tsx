@@ -2,6 +2,7 @@
 
 import { CheckCircle2, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,6 +46,7 @@ export function AdminDestinationCreation({
 }: AdminDestinationCreationProps) {
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [showErrorAlert, setShowErrorAlert] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     if (!successMessage) {
@@ -55,10 +57,18 @@ export function AdminDestinationCreation({
     setShowSuccessAlert(true);
     const timeout = window.setTimeout(() => {
       setShowSuccessAlert(false);
-    }, 4500);
+    }, 3000);
 
-    return () => window.clearTimeout(timeout);
-  }, [successMessage]);
+    // Redirection automatique vers la liste des destinations après succès
+    const redirectTimeout = window.setTimeout(() => {
+      router.push("/admin?section=destinations");
+    }, 1500);
+
+    return () => {
+      window.clearTimeout(timeout);
+      window.clearTimeout(redirectTimeout);
+    };
+  }, [successMessage, router]);
 
   useEffect(() => {
     if (!error) {
@@ -69,7 +79,7 @@ export function AdminDestinationCreation({
     setShowErrorAlert(true);
     const timeout = window.setTimeout(() => {
       setShowErrorAlert(false);
-    }, 5000);
+    }, 3000);
 
     return () => window.clearTimeout(timeout);
   }, [error]);

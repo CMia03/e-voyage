@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -59,23 +59,18 @@ export function DestinationForm({
   makeSlug,
   isEditing = false,
 }: DestinationFormProps) {
-  const [imagePreview, setImagePreview] = useState("");
-
-  useEffect(() => {
+  const imagePreview = useMemo(() => {
     if (form.imageFile) {
-      const objectUrl = URL.createObjectURL(form.imageFile);
-      setImagePreview(objectUrl);
-      return () => URL.revokeObjectURL(objectUrl);
+      return URL.createObjectURL(form.imageFile);
     }
-
-    setImagePreview(form.urlImagePrincipale || "");
+    return form.urlImagePrincipale || "";
   }, [form.imageFile, form.urlImagePrincipale]);
 
   return (
     <form className="space-y-8" onSubmit={onSubmit}>
       <section className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2 md:col-span-2">
-          <label className="text-sm font-medium">Nom</label>
+          <label className="text-sm font-medium">Nom *</label>
           <Input
             value={form.nom}
             onChange={(event) => {
@@ -91,17 +86,18 @@ export function DestinationForm({
         </div>
 
         <div className="space-y-2 md:col-span-2">
-          <label className="text-sm font-medium">Description</label>
+          <label className="text-sm font-medium">Description *</label>
           <textarea
             value={form.description}
             onChange={(event) => onUpdate("description", event.target.value)}
             placeholder="Description de la destination"
             className="min-h-28 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            required
           />
         </div>
 
         <div className="space-y-2 md:col-span-2">
-          <label className="text-sm font-medium">Adresse</label>
+          <label className="text-sm font-medium">Adresse *</label>
           <Input
             value={form.adresse}
             onChange={(event) => onUpdate("adresse", event.target.value)}
@@ -113,13 +109,25 @@ export function DestinationForm({
           <label className="text-sm font-medium">Image principale</label>
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px]">
             <div className="space-y-2">
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={(event) =>
-                  onUpdate("imageFile", event.target.files?.[0] ?? null)
-                }
-              />
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => document.getElementById('destination-image-file-input')?.click()}
+                  className="flex-1"
+                >
+                  Choisir un fichier
+                </Button>
+                <Input
+                  id="destination-image-file-input"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(event) =>
+                    onUpdate("imageFile", event.target.files?.[0] ?? null)
+                  }
+                />
+              </div>
               <Input
                 value={form.urlImagePrincipale}
                 onChange={(event) => onUpdate("urlImagePrincipale", event.target.value)}
@@ -200,7 +208,7 @@ export function DestinationForm({
         <div className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Latitude</label>
+              <label className="text-sm font-medium">Latitude *</label>
               <Input
                 type="number"
                 step="any"
@@ -210,7 +218,7 @@ export function DestinationForm({
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Longitude</label>
+              <label className="text-sm font-medium">Longitude *</label>
               <Input
                 type="number"
                 step="any"

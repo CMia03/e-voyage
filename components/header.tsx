@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Search } from "lucide-react";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import {
@@ -13,9 +13,12 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { handleSmoothScrollClick } from "@/lib/smooth-scroll";
+import { SearchBar } from "@/components/search-bar";
+import { cn } from "@/lib/utils";
 
 export function Header() {
   const [open, setOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const pathname = usePathname();
   const isHomePage = pathname === "/";
   const mobileSheetId = "public-mobile-menu-sheet";
@@ -73,13 +76,45 @@ export function Header() {
             Contact
           </Link>
 
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsSearchOpen(!isSearchOpen)}
+            className="relative"
+          >
+            <Search className="h-5 w-5" />
+            <span className="sr-only">Rechercher</span>
+          </Button>
+
           <Button asChild variant="outline" size="sm">
             <Link href="/login">Se connecter</Link>
           </Button>
 
 
-
         </nav>
+
+        {/* Search Bar - Conditionnel */}
+        <div className={cn(
+          "absolute top-full left-0 right-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/50 shadow-lg z-50 transition-all duration-300 ease-in-out",
+          isSearchOpen 
+            ? "opacity-100 translate-y-0 visible" 
+            : "opacity-0 -translate-y-2 invisible pointer-events-none"
+        )}>
+            <div className="container mx-auto px-4 py-4">
+              <div className="flex items-center gap-4">
+                <SearchBar />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsSearchOpen(false)}
+                  className="ml-auto"
+                >
+                  <X className="h-4 w-4" />
+                  <span className="sr-only">Fermer la recherche</span>
+                </Button>
+              </div>
+            </div>
+          </div>
 
         {/* Mobile Navigation */}
         <Sheet open={open} onOpenChange={setOpen}>
@@ -105,6 +140,11 @@ export function Header() {
               
               {/* Navigation */}
               <nav className="flex-1 px-6 py-6 space-y-2">
+                {/* Search Bar for Mobile */}
+                <div className="px-4 pb-4">
+                  <SearchBar />
+                </div>
+                
                 <Link 
                   href="/#destinations" 
                   onClick={(e) => handleClick(e, "#destinations")}

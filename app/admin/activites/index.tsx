@@ -359,7 +359,7 @@ export function AdminActivites({
       ) : null}
 
       <AdminActivitesCreation
-        open={mode === "creation" && initialView !== "creation"}
+        open={mode === "creation"}
         embedded={mode === "creation" && initialView === "creation"}
         form={form}
         categories={categories}
@@ -381,7 +381,7 @@ export function AdminActivites({
       />
 
       <AdminActivitesModif
-        open={mode === "modif" && initialView !== "modif"}
+        open={mode === "modif"}
         embedded={mode === "modif" && initialView === "modif"}
         form={form}
         categories={categories}

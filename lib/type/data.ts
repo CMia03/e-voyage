@@ -30,3 +30,22 @@ export type AuthResponse = {
   prenom?: string;
   [key: string]: unknown;
 };
+
+
+export type UserProfile = {
+  id: string;
+  nom: string;
+  prenom: string;
+  email: string;
+  telephone: string;
+  dateNaissance: string;
+  adress: string;
+  login: string;
+  role: string;
+  nationalite: string;
+  estActif: boolean;
+  dateCreation: string;
+  derniereConnexion: string;
+  photoProfilUrl: string | null;
+};
+
