@@ -8,7 +8,7 @@ import { ApiError, getErrorMessage } from "@/lib/api/client";
 import { getProfile } from "@/lib/api/auth";
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { Menu, Home, MapPin, Building, Play, ChevronDown, Calendar } from "lucide-react";
+import { Menu, Home, MapPin, Building, Play, ChevronDown, Calendar, Users, Bell, Star, Briefcase } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -515,6 +515,91 @@ export function AdminHeader() {
                   </div>
                 )}
               </div>
+
+              <div className="space-y-1">
+                <button
+                  type="button"
+                  onClick={() => toggleSection("notifications-avis")}
+                  className="flex w-full cursor-pointer items-center justify-between rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
+                >
+                  <div className="flex items-center">
+                    <Bell className="mr-3 h-4 w-4" />
+                    Notifications & Avis
+                  </div>
+                  <ChevronDown
+                    className={`h-4 w-4 transition-all duration-300 ease-in-out transform ${
+                      expandedSections.includes("notifications-avis") ? "rotate-180" : "rotate-0"
+                    }`}
+                  />
+                </button>
+
+                {expandedSections.includes("notifications-avis") && (
+                  <div className="ml-4 space-y-1 pl-4 border-l-2 border-emerald-200 dark:border-emerald-800">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        window.location.href = '/admin?section=notifications';
+                      }}
+                      className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
+                        window.location.search.includes('section=notifications')
+                          ? "bg-emerald-500/10 font-medium text-emerald-600"
+                          : "text-muted-foreground hover:bg-primary/10"
+                      }`}
+                    >
+                      <span className="mr-2">·</span>
+                      Notifications
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        window.location.href = '/admin?section=avis';
+                      }}
+                      className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
+                        window.location.search.includes('section=avis')
+                          ? "bg-emerald-500/10 font-medium text-emerald-600"
+                          : "text-muted-foreground hover:bg-primary/10"
+                      }`}
+                    >
+                      <span className="mr-2">·</span>
+                      Avis
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  window.location.href = '/admin?section=utilisateurs';
+                }}
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
+                  window.location.search.includes('section=utilisateurs')
+                    ? "bg-emerald-500/10 font-medium text-emerald-600"
+                    : "text-muted-foreground hover:bg-primary/10"
+                }`}
+              >
+                <Users className="mr-3 h-4 w-4" />
+                Gestion des utilisateurs
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  window.location.href = '/admin?section=entreprise-info';
+                }}
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
+                  window.location.search.includes('section=entreprise-info')
+                    ? "bg-emerald-500/10 font-medium text-emerald-600"
+                    : "text-muted-foreground hover:bg-primary/10"
+                }`}
+              >
+                <Briefcase className="mr-3 h-4 w-4" />
+                Info entreprise
+              </button>
 
               <button
                 type="button"
