@@ -13,10 +13,12 @@ import { AdminDashboard } from "@/app/admin/dashboard";
 import { AdminDestinations } from "@/app/admin/destinations";
 import { AdminActivites } from "@/app/admin/activites/page";
 import { AdminHebergements } from "@/app/admin/hebergements/page";
-import { loadAuth } from "@/lib/auth";
 import { AdminNotifications } from "@/app/admin/notifications/page";
 import { AdminAvis } from "@/app/admin/avis/page";
+import { AdminEntrepriseInfo } from "@/app/admin/entreprise-info-next";
+import { AdminUsers } from "@/app/admin/users/page";
 import { useAuth } from "@/hooks/useAuth";
+import { loadAuth, clearAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -24,27 +26,6 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
 
-type AdminSection =
-  | "dashboard"
-  | "destinations"
-  | "destinations-create"
-  | "destinations-edit"
-  | "activites"
-  | "activites-create"
-  | "activites-edit"
-  | "activites-categories"
-  | "hebergements"
-  | "hebergements-create"
-  | "hebergements-edit"
-  | "hebergements-tarifs"
-  | "hebergements-types"
-  | "hebergements-equipements"
-  | "utilisateurs"
-  | "reservations"
-  | "avis"
-  | "notifications"
-  | "statistiques"
-  | "entreprise-info";
 const locales = {
   fr: fr,
 };
@@ -435,6 +416,10 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
             <AdminNotifications />
           ) : active === "avis" ? (
             <AdminAvis />
+          ) : active === "utilisateurs" ? (
+            <AdminUsers />
+          ) : active === "entreprise-info" ? (
+            <AdminEntrepriseInfo accessToken={accessToken ?? ""} />
           ) : active === "planification" ? (
             <div className="space-y-8">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">

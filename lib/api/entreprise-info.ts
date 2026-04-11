@@ -20,4 +20,3 @@ export function updateEntrepriseInfo(payload: SaveEntrepriseInfoPayload, token?:
     body: payload,
   });
 }
-

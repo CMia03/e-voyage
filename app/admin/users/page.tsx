@@ -19,12 +19,10 @@ import {
   X, 
   UserPlus
 } from "lucide-react";
-import { AdminSidebar } from "@/app/admin/components/sidebar-nav";
-import { AdminHeader } from "@/app/admin/components/header";
 import { UserProfile } from "@/lib/type/data";
 import { Label } from "@/components/ui/label";
 
-export default function UsersManagementPage() {
+export function AdminUsers() {
   const router = useRouter();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
@@ -213,25 +211,7 @@ export default function UsersManagementPage() {
 
   return (
     <SessionGuard>
-      <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
-        {/* Header Admin */}
-        <AdminHeader />
-
-        <div className="flex">
-          {/* Sidebar */}
-          <AdminSidebar 
-            active="utilisateurs"
-            onSelect={(section) => {
-              if (section === "utilisateurs") {
-                // Déjà sur la page utilisateurs
-              } else {
-                router.push(`/admin/${section}`);
-              }
-            }}
-          />
-
-          {/* Contenu principal */}
-          <div className="flex-1 p-6">
+      <div className="space-y-6">
           {/* Header */}
           <div className="mb-8">
             <div className="flex items-center justify-between">
@@ -568,8 +548,6 @@ export default function UsersManagementPage() {
               )}
             </Card>
           </div>
-        </div>
-        </div>
       </div>
     </SessionGuard>
   );
