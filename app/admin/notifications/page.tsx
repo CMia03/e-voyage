@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Bell, Check, X, Trash2, Eye, Clock, User, Calendar } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -203,7 +203,7 @@ export function AdminNotifications() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Statut</label>
-              <Select value={filter} onValueChange={(value: any) => setFilter(value)}>
+              <Select value={filter} onValueChange={(value: "all" | "read" | "unread") => setFilter(value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -216,7 +216,7 @@ export function AdminNotifications() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Type</label>
-              <Select value={typeFilter} onValueChange={(value: any) => setTypeFilter(value)}>
+              <Select value={typeFilter} onValueChange={(value: "all" | "info" | "success" | "warning" | "error") => setTypeFilter(value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -334,4 +334,8 @@ export function AdminNotifications() {
       </div>
     </div>
   );
+}
+
+export default function AdminNotificationsPage() {
+  return <AdminNotifications />;
 }

@@ -351,7 +351,7 @@ export function AdminAvis() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-4 flex-1">
                     <Avatar className="h-12 w-12">
-                      <AvatarImage src={review.clientAvatar} />
+                      {review.clientAvatar && <AvatarImage src={review.clientAvatar} />}
                       <AvatarFallback>
                         {review.clientName.split(' ').map(n => n[0]).join('').toUpperCase()}
                       </AvatarFallback>
@@ -539,3 +539,5 @@ export function AdminAvis() {
     </div>
   );
 }
+
+export default AdminAvis;

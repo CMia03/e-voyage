@@ -18,12 +18,17 @@ const Avatar = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElem
 )
 Avatar.displayName = "Avatar"
 
-const AvatarImage = React.forwardRef<HTMLImageElement, React.ImgHTMLAttributes<HTMLImageElement>>(
-  ({ className, alt = "", ...props }, ref) => (
+interface AvatarImageProps extends Omit<React.ComponentProps<typeof Image>, 'alt'> {
+  alt?: string;
+}
+
+const AvatarImage = React.forwardRef<HTMLImageElement, AvatarImageProps>(
+  ({ className, alt = "", src, ...props }, ref) => (
     <Image
       ref={ref}
       className={cn("aspect-square h-full w-full object-cover", className)}
       alt={alt}
+      src={src}
       {...props}
     />
   )
