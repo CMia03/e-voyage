@@ -14,6 +14,7 @@ import {
   SaveTypeElementJourPayload,
   SaveTypeTransportPayload,
   SaveDestinationPayload,
+  SaveDestinationMarketingPayload,
   Transport,
   TypeElementJour,
   TypeTransport,
@@ -24,13 +25,28 @@ type DestinationApiResponse =
   | DestinationDetails
   | { data?: DestinationDetails[] | DestinationDetails };
 
+function normalizeDestination(item: DestinationDetails): DestinationDetails {
+  const galleryAll = item.galleryAll?.length ? item.galleryAll : item.gallery ?? [];
+  const galleryPrimary = item.galleryPrimary?.length
+    ? item.galleryPrimary
+    : (item.gallery?.length ? item.gallery : (item.image ? [item.image] : []));
+
+  return {
+    ...item,
+    marketing: item.marketing?.length ? item.marketing : item.features ?? [],
+    galleryPrimary,
+    galleryAll,
+    gallery: galleryPrimary,
+  };
+}
+
 function toArray(value: DestinationApiResponse): DestinationDetails[] {
   if (Array.isArray(value)) {
-    return value;
+    return value.map(normalizeDestination);
   }
 
   if ("data" in value && Array.isArray(value.data)) {
-    return value.data;
+    return value.data.map(normalizeDestination);
   }
 
   return [];
@@ -38,27 +54,27 @@ function toArray(value: DestinationApiResponse): DestinationDetails[] {
 
 function toItem(value: DestinationApiResponse): DestinationDetails | null {
   if (Array.isArray(value)) {
-    return value[0] ?? null;
+    return value[0] ? normalizeDestination(value[0]) : null;
   }
 
   if ("data" in value) {
     if (Array.isArray(value.data)) {
-      return value.data[0] ?? null;
+      return value.data[0] ? normalizeDestination(value.data[0]) : null;
     }
 
-    return value.data ?? null;
+    return value.data ? normalizeDestination(value.data) : null;
   }
 
-  return "id" in value ? value : null;
+  return "id" in value ? normalizeDestination(value) : null;
 }
 
 export async function listDestinations() {
-  const response = await apiRequest<DestinationApiResponse>("/api/destinations");
+  const response = await apiRequest<DestinationApiResponse>("/api/public/destinations");
   return toArray(response);
 }
 
 export async function getDestinationById(id: string) {
-  const response = await apiRequest<DestinationApiResponse>(`/api/destinations/${id}`);
+  const response = await apiRequest<DestinationApiResponse>(`/api/public/destinations/${id}`);
   return toItem(response);
 }
 
@@ -147,6 +163,18 @@ export function createDestinationPhotosBulk(
     method: "POST",
     token,
     body: buildPhotoDestinationBulkFormData(payload),
+  });
+}
+
+export function updateDestinationPhotoPrincipale(
+  photoId: string,
+  estPrincipale: boolean,
+  token?: string
+) {
+  return apiRequest<ApiEnvelope>(`/api/destinations/photos/${photoId}/principale`, {
+    method: "PUT",
+    token,
+    body: { estPrincipale },
   });
 }
 
@@ -239,6 +267,35 @@ export function createPrestationReference(
     method: "POST",
     token,
     body: payload,
+  });
+}
+
+export function listDestinationMarketing(destinationId: string, token?: string) {
+  return apiRequest<ApiEnvelope>(`/api/destinations/${destinationId}/marketing`, {
+    token,
+  });
+}
+
+export function createDestinationMarketing(
+  destinationId: string,
+  payload: SaveDestinationMarketingPayload,
+  token?: string
+) {
+  return apiRequest<ApiEnvelope>(`/api/destinations/${destinationId}/marketing`, {
+    method: "POST",
+    token,
+    body: payload,
+  });
+}
+
+export function deleteDestinationMarketing(
+  destinationId: string,
+  marketingId: string,
+  token?: string
+) {
+  return apiRequest<ApiEnvelope>(`/api/destinations/${destinationId}/marketing/${marketingId}`, {
+    method: "DELETE",
+    token,
   });
 }
 

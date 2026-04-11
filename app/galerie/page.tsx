@@ -1,16 +1,26 @@
 import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
-import { ImageLightbox } from "@/components/image-lightbox";
-import { destinationsData } from "@/lib/destinations";
+import { FooterDynamic } from "@/components/footer-dynamic";
+import { listDestinations } from "@/lib/api/destinations";
+import { destinationsData as fallbackDestinations } from "@/lib/destinations";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import Image from "next/image";
 import { GalleryClient } from "@/components/gallery-client";
 
-export default function GaleriePage() {
+export default async function GaleriePage() {
+  let destinationsData = fallbackDestinations;
+
+  try {
+    const apiDestinations = await listDestinations();
+    if (apiDestinations.length > 0) {
+      destinationsData = apiDestinations;
+    }
+  } catch {
+    destinationsData = fallbackDestinations;
+  }
+
   // Récupérer toutes les images de toutes les destinations
   const allImages = destinationsData.flatMap(dest => 
-    dest.gallery.map(img => ({
+    (dest.galleryAll?.length ? dest.galleryAll : dest.gallery).map(img => ({
       src: img,
       destination: dest.title,
       destinationId: dest.id
@@ -51,7 +61,7 @@ export default function GaleriePage() {
           </div>
         </section>
       </main>
-      <Footer />
+      <FooterDynamic />
     </div>
   );
 }

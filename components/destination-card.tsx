@@ -13,7 +13,8 @@ interface DestinationCardProps {
 }
 
 export function DestinationCard({ destination }: DestinationCardProps) {
-  const { title, description, image, price, features, gallery = [], id } = destination;
+  const { title, description, image, price, marketing, features, gallery = [], id } = destination;
+  const marketingItems = marketing?.length ? marketing : (features ?? []);
   const images = gallery.length > 0 ? gallery : [image];
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -70,7 +71,7 @@ export function DestinationCard({ destination }: DestinationCardProps) {
       </CardHeader>
       <CardContent className="flex-1">
         <ul className="space-y-2">
-          {features.map((feature, index) => (
+          {marketingItems.map((feature, index) => (
             <li key={index} className="flex items-center text-sm text-muted-foreground">
               <span className="mr-2 text-primary">✓</span>
               <span className="line-clamp-1">{feature}</span>

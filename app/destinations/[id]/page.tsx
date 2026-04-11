@@ -1,5 +1,5 @@
 import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
+import { FooterDynamic } from "@/components/footer-dynamic";
 import { DestinationDetailsComponent } from "@/components/destination-details";
 import { getDestinationById } from "@/lib/api/destinations";
 import { getDestinationById as getFallbackDestinationById } from "@/lib/destinations";
@@ -34,7 +34,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ id
         </div>
         <DestinationDetailsComponent destination={destination} />
       </main>
-      <Footer />
+      <FooterDynamic />
     </div>
   );
 }

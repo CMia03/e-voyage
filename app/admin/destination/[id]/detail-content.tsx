@@ -19,12 +19,16 @@ import {
 } from "@/components/ui/dialog";
 import { loadAuth } from "@/lib/auth";
 import {
+  createDestinationMarketing,
   createDestinationPhotosBulk,
+  deleteDestinationMarketing,
   getAdminDestination,
+  updateDestinationPhotoPrincipale,
 } from "@/lib/api/destinations";
 import { getErrorMessage } from "@/lib/api/client";
 import type {
   AdminDestination,
+  SaveDestinationMarketingPayload,
   SavePhotoDestinationBulkPayload,
 } from "@/lib/type/destination";
 
@@ -37,6 +41,20 @@ const initialPhotoForm: PhotoDestinationFormState = {
   dateObtenir: "",
   estPrincipale: false,
   imageFiles: [],
+};
+
+type MarketingFormState = {
+  libelle: string;
+  description: string;
+  ordreAffichage: string;
+  estActif: boolean;
+};
+
+const initialMarketingForm: MarketingFormState = {
+  libelle: "",
+  description: "",
+  ordreAffichage: "0",
+  estActif: true,
 };
 
 type AdminDestinationDetailContentProps = {
@@ -59,6 +77,10 @@ export function AdminDestinationDetailContent({
   const [photoForm, setPhotoForm] = useState<PhotoDestinationFormState>(initialPhotoForm);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [updatingPhotoId, setUpdatingPhotoId] = useState<string | null>(null);
+  const [isMarketingDialogOpen, setIsMarketingDialogOpen] = useState(false);
+  const [marketingForm, setMarketingForm] = useState<MarketingFormState>(initialMarketingForm);
+  const [isSubmittingMarketing, setIsSubmittingMarketing] = useState(false);
 
   const sortedPhotoGroups = useMemo(
     () =>
@@ -73,6 +95,14 @@ export function AdminDestinationDetailContent({
       (destination?.photos ?? []).reduce(
         (count, group) => count + (group.images?.length ?? 0),
         0
+      ),
+    [destination]
+  );
+
+  const marketingItems = useMemo(
+    () =>
+      [...(destination?.marketing ?? [])].sort(
+        (a, b) => (a.ordreAffichage ?? 0) - (b.ordreAffichage ?? 0)
       ),
     [destination]
   );
@@ -120,6 +150,13 @@ export function AdminDestinationDetailContent({
     setPhotoForm((current) => ({ ...current, [key]: value }));
   }
 
+  function updateMarketingForm<K extends keyof MarketingFormState>(
+    key: K,
+    value: MarketingFormState[K]
+  ) {
+    setMarketingForm((current) => ({ ...current, [key]: value }));
+  }
+
   async function reloadDestination() {
     if (!accessToken) return;
     const response = await getAdminDestination(destinationId, accessToken);
@@ -130,6 +167,20 @@ export function AdminDestinationDetailContent({
     setPhotoForm(initialPhotoForm);
     setError("");
     setIsDialogOpen(true);
+  }
+
+  function openMarketingDialog() {
+    setMarketingForm(initialMarketingForm);
+    setError("");
+    setIsMarketingDialogOpen(true);
+  }
+
+  function closeMarketingDialog() {
+    if (!isSubmittingMarketing) {
+      setIsMarketingDialogOpen(false);
+      setMarketingForm(initialMarketingForm);
+      setError("");
+    }
   }
 
   function closeImageDialog() {
@@ -181,6 +232,65 @@ export function AdminDestinationDetailContent({
     }
   }
 
+  async function handleSubmitMarketing(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!accessToken) return;
+
+    setIsSubmittingMarketing(true);
+    setError("");
+
+    try {
+      const payload: SaveDestinationMarketingPayload = {
+        libelle: marketingForm.libelle.trim(),
+        description: marketingForm.description.trim() || null,
+        ordreAffichage: Number(marketingForm.ordreAffichage || 0),
+        estActif: marketingForm.estActif,
+      };
+
+      await createDestinationMarketing(destinationId, payload, accessToken);
+      await reloadDestination();
+      setIsMarketingDialogOpen(false);
+      setMarketingForm(initialMarketingForm);
+      setSuccessMessage("Element marketing ajoute avec succes.");
+    } catch (saveError) {
+      setError(getErrorMessage(saveError, "Impossible d'ajouter cet element marketing"));
+    } finally {
+      setIsSubmittingMarketing(false);
+    }
+  }
+
+  async function handleDeleteMarketing(marketingId: string) {
+    if (!accessToken) return;
+    const confirmed = window.confirm("Supprimer cet element marketing ?");
+    if (!confirmed) return;
+
+    setError("");
+    try {
+      await deleteDestinationMarketing(destinationId, marketingId, accessToken);
+      await reloadDestination();
+      setSuccessMessage("Element marketing supprime avec succes.");
+    } catch (deleteError) {
+      setError(getErrorMessage(deleteError, "Impossible de supprimer cet element marketing"));
+    }
+  }
+
+  async function handleTogglePhotoPrincipale(photoId: string, estPrincipale: boolean) {
+    if (!accessToken) return;
+
+    setUpdatingPhotoId(photoId);
+    setError("");
+
+    try {
+      await updateDestinationPhotoPrincipale(photoId, estPrincipale, accessToken);
+      await reloadDestination();
+      setSuccessMessage(estPrincipale ? "Image marquee comme principale." : "Image retiree des principales.");
+    } catch (toggleError) {
+      setError(getErrorMessage(toggleError, "Impossible de modifier le statut principal de cette image"));
+    } finally {
+      setUpdatingPhotoId(null);
+    }
+  }
+
   function handleOpenGallery() {
     const galleryElement = document.getElementById("gallery-section");
     if (galleryElement) {
@@ -224,6 +334,9 @@ export function AdminDestinationDetailContent({
             </div>
 
             <div className="flex flex-wrap gap-2">
+              <Button type="button" size="sm" variant="outline" onClick={openMarketingDialog}>
+                Ajouter Marketing
+              </Button>
               <Button type="button" size="sm" onClick={openImageDialog}>
                 Ajouter des images
               </Button>
@@ -242,7 +355,7 @@ export function AdminDestinationDetailContent({
           </div>
 
           {/* Messages d'alerte */}
-          {error && !isDialogOpen ? (
+          {error && !isDialogOpen && !isMarketingDialogOpen ? (
             <Alert variant="destructive">
               <AlertTitle>Erreur</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
@@ -309,6 +422,54 @@ export function AdminDestinationDetailContent({
             </CardContent>
           </Card>
 
+          <Card className="border-border/50 shadow-sm">
+            <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <CardTitle>Marketing destination</CardTitle>
+                <CardDescription>
+                  {marketingItems.length} element{marketingItems.length > 1 ? "s" : ""} marketing pour cette destination.
+                </CardDescription>
+              </div>
+              <Button type="button" size="sm" onClick={openMarketingDialog}>
+                Ajouter Marketing
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {marketingItems.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Aucun marketing pour le moment.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {marketingItems.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex flex-col gap-3 rounded-xl border border-border/50 bg-card/40 px-4 py-3 sm:flex-row sm:items-start sm:justify-between"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold">{item.libelle}</p>
+                        {item.description ? (
+                          <p className="mt-1 text-sm text-muted-foreground">{item.description}</p>
+                        ) : null}
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          Ordre: {item.ordreAffichage ?? 0} | Statut: {item.estActif ? "Actif" : "Inactif"}
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteMarketing(item.id)}
+                      >
+                        Supprimer
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Galerie d'images */}
           <div id="gallery-section">
             <Card className="border-border/50 shadow-sm">
@@ -344,9 +505,11 @@ export function AdminDestinationDetailContent({
                   </div>
                 ) : (
                   <div className="max-h-[60vh] space-y-6 overflow-y-auto pr-2">
-                    {sortedPhotoGroups.map((photoGroup, index) => (
+                    {sortedPhotoGroups.map((photoGroup, index) => {
+                      const groupKey = `${photoGroup.titre}-${photoGroup.dateObtenir ?? "no-date"}-${photoGroup.ordreAffichage ?? 0}-${index}`;
+                      return (
                       <div
-                        key={`${photoGroup.titre}-${photoGroup.dateObtenir ?? index}-${photoGroup.ordreAffichage ?? 0}`}
+                        key={groupKey}
                         className="grid gap-4 rounded-2xl border border-border/50 bg-card/50 p-5 transition-shadow hover:shadow-md xl:grid-cols-[300px_minmax(0,1fr)]"
                       >
                         <div className="relative">
@@ -394,7 +557,7 @@ export function AdminDestinationDetailContent({
                               className="pointer-events-auto relative z-50 h-9 w-9 rounded-full bg-background/90 px-0 shadow-md backdrop-blur"
                               onClick={() =>
                                 scrollPhotoGroup(
-                                  `${photoGroup.titre}-${photoGroup.dateObtenir ?? index}-${photoGroup.ordreAffichage ?? 0}`,
+                                  groupKey,
                                   "left"
                                 )
                               }
@@ -408,7 +571,7 @@ export function AdminDestinationDetailContent({
                               className="pointer-events-auto relative z-50 h-9 w-9 rounded-full bg-background/90 px-0 shadow-md backdrop-blur"
                               onClick={() =>
                                 scrollPhotoGroup(
-                                  `${photoGroup.titre}-${photoGroup.dateObtenir ?? index}-${photoGroup.ordreAffichage ?? 0}`,
+                                  groupKey,
                                   "right"
                                 )
                               }
@@ -419,7 +582,7 @@ export function AdminDestinationDetailContent({
                         <div
                           ref={(node) => {
                             photoScrollerRefs.current[
-                              `${photoGroup.titre}-${photoGroup.dateObtenir ?? index}-${photoGroup.ordreAffichage ?? 0}`
+                              groupKey
                             ] = node;
                           }}
                           className="flex gap-3 overflow-x-hidden overflow-y-visible px-12 py-6"
@@ -429,12 +592,27 @@ export function AdminDestinationDetailContent({
                               key={image.id}
                               className="group relative z-0 w-[180px] min-w-[180px] overflow-visible rounded-xl transition-all hover:z-20"
                             >
-                              <div className="rounded-xl border border-border/50 bg-muted/20 transition-all hover:shadow-lg">
+                              <div className="relative overflow-visible rounded-xl border border-border/50 bg-muted/20 transition-all hover:shadow-lg">
                               <img
                                 src={image.url}
                                 alt={photoGroup.titre || destination?.nom || "Photo destination"}
-                                className="relative z-10 h-32 w-full rounded-lg object-cover transition-transform duration-700 ease-out group-hover:scale-[1.75] group-hover:shadow-2xl"
+                                className="relative z-0 h-32 w-full rounded-lg object-cover transition-transform duration-700 ease-out group-hover:scale-[1.75] group-hover:shadow-2xl"
                               />
+                              <div className="relative z-30 border-t border-border/40 bg-background/95 px-2 py-2">
+                                <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  <input
+                                    type="checkbox"
+                                    checked={Boolean(image.estPrincipale)}
+                                    disabled={updatingPhotoId === image.id}
+                                    onChange={(event) =>
+                                      handleTogglePhotoPrincipale(image.id, event.target.checked)
+                                    }
+                                  />
+                                  <span>
+                                    {updatingPhotoId === image.id ? "Mise a jour..." : "Image principale"}
+                                  </span>
+                                </label>
+                              </div>
                               
                               {/* {image.description ? (
                                 <div className="border-t border-border/40 bg-background/95 px-3 py-2">
@@ -450,7 +628,7 @@ export function AdminDestinationDetailContent({
                         </div>
                         </div>
                       </div>
-                    ))}
+                    )})}
                   </div>
                 )}
               </CardContent>
@@ -503,6 +681,82 @@ export function AdminDestinationDetailContent({
                 ) : (
                   "Ajouter les images"
                 )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isMarketingDialogOpen} onOpenChange={closeMarketingDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Ajouter Marketing</DialogTitle>
+            <DialogDescription>
+              Ajoutez un argument marketing qui sera affiche dans le detail de la destination.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmitMarketing} className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Libelle</label>
+              <input
+                value={marketingForm.libelle}
+                onChange={(event) => updateMarketingForm("libelle", event.target.value)}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                placeholder="Ex: Plages paradisiaques"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Description</label>
+              <textarea
+                value={marketingForm.description}
+                onChange={(event) => updateMarketingForm("description", event.target.value)}
+                className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                placeholder="Description marketing (optionnel)"
+              />
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Ordre d'affichage</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={marketingForm.ordreAffichage}
+                  onChange={(event) => updateMarketingForm("ordreAffichage", event.target.value)}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                />
+              </div>
+              <label className="mt-7 flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={marketingForm.estActif}
+                  onChange={(event) => updateMarketingForm("estActif", event.target.checked)}
+                />
+                Marketing actif
+              </label>
+            </div>
+
+            {error ? (
+              <Alert variant="destructive">
+                <AlertTitle>Erreur</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            ) : null}
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={closeMarketingDialog}
+                disabled={isSubmittingMarketing}
+              >
+                Annuler
+              </Button>
+              <Button type="submit" disabled={isSubmittingMarketing}>
+                {isSubmittingMarketing ? "Ajout..." : "Ajouter"}
               </Button>
             </DialogFooter>
           </form>

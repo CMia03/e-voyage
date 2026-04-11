@@ -1,7 +1,7 @@
 import { Header } from "@/components/header";
 import { Hero } from "@/components/hero";
 import { DestinationCard } from "@/components/destination-card";
-import { Footer } from "@/components/footer";
+import { FooterDynamic } from "@/components/footer-dynamic";
 import { SmoothScrollButtons } from "@/components/smooth-scroll-buttons";
 import { HomeGallery } from "@/components/home-gallery";
 import { listDestinations } from "@/lib/api/destinations";
@@ -150,7 +150,7 @@ export default async function Home() {
                   Découvrez un aperçu de nos destinations à Madagascar
                 </p>
               </div>
-              <HomeGallery />
+              <HomeGallery destinations={destinationsData} />
             </div>
           </div>
         </section>
@@ -175,7 +175,7 @@ export default async function Home() {
           </div>
         </section>
       </main>
-      <Footer />
+      <FooterDynamic />
     </div>
   );
 }

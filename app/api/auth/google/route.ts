@@ -1,4 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
+
+type BackendGoogleAuthResponse = {
+  accessToken: string;
+  refreshToken?: string;
+  role?: string;
+  userId?: string;
+  login?: string;
+  nom?: string;
+  prenom?: string;
+};
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -67,13 +77,41 @@ export async function GET(request: NextRequest) {
     // Ici vous devriez appeler votre service utilisateur
     
     // Rediriger vers le frontend avec les informations de l'utilisateur
+    const splitName = String(userData.name || "").trim().split(/\s+/).filter(Boolean);
+    const prenom = splitName.length > 0 ? splitName[0] : "";
+    const nom = splitName.length > 1 ? splitName.slice(1).join(" ") : splitName[0] || "Utilisateur";
+
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+    const backendResponse = await fetch(`${apiBaseUrl}/api/auth/google-login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: userData.email,
+        nom,
+        prenom,
+        photoProfilUrl: userData.picture,
+      }),
+      cache: "no-store",
+    });
+
+    if (!backendResponse.ok) {
+      throw new Error("Backend google login failed");
+    }
+
+    const backendData = await backendResponse.json() as BackendGoogleAuthResponse;
+
     const redirectUrl = new URL('/login', request.url);
     redirectUrl.searchParams.set('google_login', 'true');
-    redirectUrl.searchParams.set('email', userData.email);
-    redirectUrl.searchParams.set('name', userData.name);
-    redirectUrl.searchParams.set('picture', userData.picture);
-    redirectUrl.searchParams.set('access_token', tokenData.access_token);
-    redirectUrl.searchParams.set('refresh_token', tokenData.refresh_token || '');
+    redirectUrl.searchParams.set('email', String(userData.email || ''));
+    redirectUrl.searchParams.set('access_token', String(backendData.accessToken || ''));
+    redirectUrl.searchParams.set('refresh_token', String(backendData.refreshToken || ''));
+    redirectUrl.searchParams.set('role', String(backendData.role || 'USER'));
+    redirectUrl.searchParams.set('user_id', String(backendData.userId || userData.email || ''));
+    redirectUrl.searchParams.set('login', String(backendData.login || userData.email || ''));
+    redirectUrl.searchParams.set('nom', String(backendData.nom || nom || ''));
+    redirectUrl.searchParams.set('prenom', String(backendData.prenom || prenom || ''));
 
     return NextResponse.redirect(redirectUrl);
 

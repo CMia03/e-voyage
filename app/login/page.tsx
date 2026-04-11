@@ -6,6 +6,7 @@ import Link from "next/link";
 import { login, loginWithGoogle } from "@/lib/api/auth";
 import { getErrorMessage } from "@/lib/api/client";
 import { saveAuth } from "@/lib/auth";
+import { resolvePostLoginPath } from "@/lib/auth-redirect";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnimatedBackground } from "@/components/animated-background";
@@ -22,23 +23,27 @@ function LoginContent() {
   useEffect(() => {
     const googleLogin = searchParams.get('google_login');
     const email = searchParams.get('email');
-    const name = searchParams.get('name');
     const accessToken = searchParams.get('access_token');
     const refreshToken = searchParams.get('refresh_token');
+    const role = searchParams.get('role');
+    const userId = searchParams.get('user_id');
+    const login = searchParams.get('login');
+    const nom = searchParams.get('nom');
+    const prenom = searchParams.get('prenom');
 
     if (googleLogin === 'true' && email && accessToken) {
       const authPayload = {
         accessToken,
         refreshToken: refreshToken || undefined,
-        role: 'USER',
-        userId: email,
-        login: email,
-        nom: name?.split(' ')[1] || '',
-        prenom: name?.split(' ')[0] || '',
+        role: role || 'USER',
+        userId: userId || email,
+        login: login || email,
+        nom: nom || '',
+        prenom: prenom || '',
       };
 
       saveAuth(authPayload);
-      router.push('/admin');
+      router.push(resolvePostLoginPath(authPayload));
     }
 
     const error = searchParams.get('error');
@@ -62,7 +67,7 @@ function LoginContent() {
           ? (response as { data?: typeof response }).data ?? response
           : response;
 
-      saveAuth({
+      const authPayload = {
         accessToken: (payload as { accessToken: string })?.accessToken,
         refreshToken: (payload as { refreshToken: string })?.refreshToken,
         role: (payload as { role: string })?.role,
@@ -70,9 +75,9 @@ function LoginContent() {
         login: (payload as { login?: string })?.login,
         nom: (payload as { nom?: string })?.nom,
         prenom: (payload as { prenom?: string })?.prenom,
-      });
-
-      router.push("/admin");
+      };
+      saveAuth(authPayload);
+      router.push(resolvePostLoginPath(authPayload));
 
     } catch (error) {
       setLoginError(getErrorMessage(error, "Network error. Please try again."));

@@ -21,7 +21,8 @@ type AdminSection =
   | "reservations"
   | "avis"
   | "notifications"
-  | "statistiques";
+  | "statistiques"
+  | "entreprise-info";
 
 interface AdminSidebarProps {
   active: AdminSection;

@@ -17,7 +17,10 @@ export interface DestinationDetails {
   };
   included: string[];
   notIncluded: string[];
-  features: string[];
+  marketing: string[];
+  features?: string[];
+  galleryPrimary?: string[];
+  galleryAll?: string[];
   gallery: string[];
   reservation?: {
     deposit: string;
@@ -63,6 +66,17 @@ export type AdminDestination = {
   district: string;
   commune: string;
   photos: PhotoDestinationGroup[];
+  marketing?: DestinationMarketingItem[];
+};
+
+export type DestinationMarketingItem = {
+  id: string;
+  libelle: string;
+  description: string | null;
+  ordreAffichage: number | null;
+  estActif: boolean;
+  dateCreation?: string;
+  dateModification?: string;
 };
 
 export type DestinationAssociationItem = {
@@ -122,6 +136,7 @@ export type Transport = {
   latitudeArrivee: number | null;
   duree: string;
   distanceKm: number | null;
+  budgetPrevu: number | null;
   geojsonTrajet: string;
   dateCreation?: string;
   dateModification?: string;
@@ -138,6 +153,8 @@ export type ElementJourPlanification = {
   heureFin: string | null;
   ordreAffichage: number | null;
   budgetPrevu: number | null;
+  minimumTarifParPersonne: number | null;
+  maximumTarifParPersonne: number | null;
   devise: string | null;
   estActif: boolean;
   dateCreation?: string;
@@ -163,6 +180,8 @@ export type JourPlanificationVoyage = {
   dateCreation?: string;
   dateModification?: string;
   idPlanificationVoyage: string;
+  minimumTarifParPersonne: number | null;
+  maximumTarifParPersonne: number | null;
   elements: ElementJourPlanification[];
 };
 
@@ -208,6 +227,13 @@ export type SavePhotoDestinationBulkPayload = {
   imageFiles: File[];
 };
 
+export type SaveDestinationMarketingPayload = {
+  libelle: string;
+  description?: string | null;
+  ordreAffichage?: number | null;
+  estActif?: boolean;
+};
+
 export type SaveTypeTransportPayload = {
   nom: string;
 };
@@ -238,6 +264,7 @@ export type SaveTransportPayload = {
   latitudeArrivee?: number | null;
   duree: string;
   distanceKm?: number | null;
+  budgetPrevu?: number | null;
   geojsonTrajet?: string;
   idTypeTransport: string;
   idPlanificationVoyage: string;

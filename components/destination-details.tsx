@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DestinationDetails } from "@/lib/type/destination";
 import { Check, X, Phone, Calendar, MapPin, Clock } from "lucide-react";
 import { ImageLightbox } from "@/components/image-lightbox";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getEntrepriseInfoPublic } from "@/lib/api/entreprise-info";
 
 interface DestinationDetailsProps {
   destination: DestinationDetails;
@@ -15,6 +16,36 @@ interface DestinationDetailsProps {
 export function DestinationDetailsComponent({ destination }: DestinationDetailsProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const galleryAll = destination.galleryAll?.length ? destination.galleryAll : destination.gallery;
+  const [reservationContacts, setReservationContacts] = useState({
+    phone: destination.reservation?.phone ?? "",
+    orangeMoney: destination.reservation?.orangeMoney ?? "",
+    infoPhone: destination.reservation?.infoPhone ?? "",
+  });
+
+  useEffect(() => {
+    let active = true;
+    const loadEntrepriseContacts = async () => {
+      try {
+        const response = await getEntrepriseInfoPublic();
+        if (!active || !response.data) return;
+
+        setReservationContacts((current) => ({
+          phone: response.data?.contactYas || current.phone,
+          orangeMoney: response.data?.contactOrange || current.orangeMoney,
+          infoPhone: response.data?.contactPlusInfos || current.infoPhone,
+        }));
+      } catch {
+        // keep destination static contacts on failure
+      }
+    };
+
+    void loadEntrepriseContacts();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   return (
     <div className="container mx-auto px-4 py-6 sm:py-12">
       <div className="mx-auto max-w-6xl">
@@ -153,25 +184,25 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-primary" />
                   <span className="font-medium">Mvola :</span>
-                  <a href={`tel:${destination.reservation.phone}`} className="text-primary hover:underline">
-                    {destination.reservation.phone}
+                  <a href={`tel:${reservationContacts.phone}`} className="text-primary hover:underline">
+                    {reservationContacts.phone}
                   </a>
                 </div>
-                {destination.reservation.orangeMoney && (
+                {reservationContacts.orangeMoney && (
                   <div className="flex items-center gap-2">
                     <Phone className="h-4 w-4 text-primary" />
                     <span className="font-medium">Orange Money :</span>
-                    <a href={`tel:${destination.reservation.orangeMoney}`} className="text-primary hover:underline">
-                      {destination.reservation.orangeMoney}
+                    <a href={`tel:${reservationContacts.orangeMoney}`} className="text-primary hover:underline">
+                      {reservationContacts.orangeMoney}
                     </a>
                   </div>
                 )}
-                {destination.reservation.infoPhone && (
+                {reservationContacts.infoPhone && (
                   <div className="flex items-center gap-2">
                     <Phone className="h-4 w-4 text-primary" />
                     <span className="font-medium">Plus d'infos :</span>
-                    <a href={`tel:${destination.reservation.infoPhone}`} className="text-primary hover:underline">
-                      {destination.reservation.infoPhone}
+                    <a href={`tel:${reservationContacts.infoPhone}`} className="text-primary hover:underline">
+                      {reservationContacts.infoPhone}
                     </a>
                   </div>
                 )}
@@ -184,11 +215,11 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
         )}
 
           {/* Galerie d'images */}
-          {destination.gallery.length > 1 && (
+          {galleryAll.length > 1 && (
             <div className="mb-6 sm:mb-8">
               <h2 className="mb-4 text-xl sm:text-2xl font-bold">Galerie</h2>
               <div className="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-3">
-              {destination.gallery.map((img, index) => (
+              {galleryAll.map((img, index) => (
                 <button
                   key={index}
                   onClick={() => {
@@ -213,7 +244,7 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
 
       {/* Lightbox */}
       <ImageLightbox
-        images={destination.gallery}
+        images={galleryAll}
         currentIndex={selectedImageIndex}
         isOpen={lightboxOpen}
         onClose={() => setLightboxOpen(false)}
