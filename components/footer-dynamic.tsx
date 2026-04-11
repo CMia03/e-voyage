@@ -12,33 +12,21 @@ type FooterInfo = {
   adresse: string;
 };
 
-const defaultFooterInfo: FooterInfo = {
-  nomEntreprise: "Cool Voyage",
-  description:
-    "Votre agence de voyage de confiance pour decouvrir Madagascar. Des sejours organises a prix abordables vers les plus belles destinations.",
-  contactYas: "+261 34 66 885 42",
-  contactOrange: "+261 32 55 596 16",
-  contactAirtel: "",
-  contactGmail: "",
-  contactPlusInfos: "+261 34 66 885 42",
-  adresse: "Antananarivo, Madagascar",
-};
-
 function toPhoneHref(phone: string) {
   return `tel:${phone.replace(/\s+/g, "")}`;
 }
 
 export async function FooterDynamic() {
   const currentYear = new Date().getFullYear();
-  let info = defaultFooterInfo;
+  let info: FooterInfo | null = null;
 
   try {
     const response = await getEntrepriseInfoPublic();
     const data = response.data;
     if (data) {
       info = {
-        nomEntreprise: data.nomEntreprise || defaultFooterInfo.nomEntreprise,
-        description: data.description || defaultFooterInfo.description,
+        nomEntreprise: data.nomEntreprise || "",
+        description: data.description || "",
         contactYas: data.contactYas || "",
         contactOrange: data.contactOrange || "",
         contactAirtel: data.contactAirtel || "",
@@ -48,7 +36,31 @@ export async function FooterDynamic() {
       };
     }
   } catch {
-    info = defaultFooterInfo;
+    info = null;
+  }
+
+  // If no data or all fields are empty, show "A revoir"
+  const isEmpty = !info || (
+    !info.nomEntreprise && 
+    !info.description && 
+    !info.contactYas && 
+    !info.contactOrange && 
+    !info.contactAirtel && 
+    !info.contactGmail && 
+    !info.contactPlusInfos && 
+    !info.adresse
+  );
+
+  if (isEmpty) {
+    return (
+      <footer id="contact" className="border-t bg-muted/50">
+        <div className="container mx-auto px-4 py-8 sm:py-12">
+          <div className="mx-auto max-w-4xl text-center">
+            <p className="text-muted-foreground">A revoir</p>
+          </div>
+        </div>
+      </footer>
+    );
   }
 
   return (
