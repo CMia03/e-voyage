@@ -15,6 +15,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { AdminSearchBar } from "@/components/admin-search-bar";
 
 type UserProfile = {
   id: string;
@@ -143,6 +144,8 @@ export function AdminHeader() {
         </div>
 
         <div className="flex items-center gap-4">
+          <AdminSearchBar />
+          
           <Button asChild variant="outline" size="sm">
             <Link href="/">Voir site</Link>
           </Button>
@@ -339,6 +342,11 @@ export function AdminHeader() {
             
             {/* Navigation */}
             <nav className="flex-1 px-4 py-6 space-y-1">
+              {/* Search Bar for Mobile */}
+              <div className="px-3 pb-4">
+                <AdminSearchBar />
+              </div>
+              
               <button
                 type="button"
                 onClick={() => setIsMobileMenuOpen(false)}

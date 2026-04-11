@@ -13,6 +13,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { handleSmoothScrollClick } from "@/lib/smooth-scroll";
+import { SearchBar } from "@/components/search-bar";
 
 export function Header() {
   const [open, setOpen] = useState(false);
@@ -73,6 +74,8 @@ export function Header() {
             Contact
           </Link>
 
+          <SearchBar />
+
           <Button asChild variant="outline" size="sm">
             <Link href="/login">Se connecter</Link>
           </Button>
@@ -105,6 +108,11 @@ export function Header() {
               
               {/* Navigation */}
               <nav className="flex-1 px-6 py-6 space-y-2">
+                {/* Search Bar for Mobile */}
+                <div className="px-4 pb-4">
+                  <SearchBar />
+                </div>
+                
                 <Link 
                   href="/#destinations" 
                   onClick={(e) => handleClick(e, "#destinations")}
