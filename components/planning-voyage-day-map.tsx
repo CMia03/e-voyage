@@ -6,10 +6,11 @@ import { useEffect, useMemo, useState } from "react";
 import { GeoJSON, MapContainer, Marker, Polyline, Popup, TileLayer } from "react-leaflet";
 import L from "leaflet";
 import type { GeoJsonObject } from "geojson";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   DestinationAssociationItem,
   ElementJourPlanification,
@@ -94,6 +95,8 @@ export function PlanningVoyageDayMap({
   );
 
   const [selectedDayId, setSelectedDayId] = useState<string>(sortedDays[0]?.id ?? "");
+  const [openActionMenuKey, setOpenActionMenuKey] = useState<string | null>(null);
+  const [detailDialogContent, setDetailDialogContent] = useState<{ title: string; description: string } | null>(null);
 
   useEffect(() => {
     if (!sortedDays.length) {
@@ -236,6 +239,20 @@ export function PlanningVoyageDayMap({
     return [-18.8792, 47.5079];
   }, [validSegments, dayPlaceMarkers]);
 
+  function openDayDetails(day: JourPlanificationVoyage) {
+    setDetailDialogContent({
+      title: day.titre || `Jour ${day.numeroJour ?? "-"}`,
+      description: `Date: ${formatDayDate(day.dateJour)}\nBlocs: ${(day.elements ?? []).length}\nDescription: ${day.description || "-"}`,
+    });
+  }
+
+  function openElementDetails(element: ElementJourPlanification) {
+    setDetailDialogContent({
+      title: element.titre || element.nomTypeElementJour || "Bloc",
+      description: `Type: ${element.nomTypeElementJour || "-"}\nDebut: ${element.heureDebut || "-"}\nFin: ${element.heureFin || "-"}\nBudget: ${element.budgetPrevu ?? "-"} ${element.devise || "MGA"}\nDescription: ${element.description || "-"}`,
+    });
+  }
+
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,1fr)]">
       <div className="overflow-hidden rounded-2xl border border-border/60">
@@ -356,30 +373,62 @@ export function PlanningVoyageDayMap({
                   <Badge variant="secondary">Jour {day.numeroJour ?? "-"}</Badge>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">{formatDayDate(day.dateJour)}</span>
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="outline"
-                      className="size-7"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onEditDay(day);
-                      }}
-                    >
-                      <Pencil className="size-3.5" />
-                    </Button>
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="destructive"
-                      className="size-7"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onDeleteDay(day.id);
-                      }}
-                    >
-                      <Trash2 className="size-3.5" />
-                    </Button>
+                    <div className="relative">
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="outline"
+                        className="size-7"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setOpenActionMenuKey((current) => (current === `day-${day.id}` ? null : `day-${day.id}`));
+                        }}
+                      >
+                        <MoreVertical className="size-3.5" />
+                      </Button>
+                      {openActionMenuKey === `day-${day.id}` ? (
+                        <div className="absolute right-0 top-8 z-20 w-40 rounded-xl border border-border bg-background p-1.5 shadow-lg">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="w-full justify-start"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setOpenActionMenuKey(null);
+                              onEditDay(day);
+                            }}
+                          >
+                            <Pencil className="size-3.5" />
+                            Modifier
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="w-full justify-start"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setOpenActionMenuKey(null);
+                              openDayDetails(day);
+                            }}
+                          >
+                            Détaille
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="w-full justify-start text-destructive hover:text-destructive"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setOpenActionMenuKey(null);
+                              onDeleteDay(day.id);
+                            }}
+                          >
+                            <Trash2 className="size-3.5" />
+                            Supprimer
+                          </Button>
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
                 <p className="mt-2 text-sm font-medium">{day.titre || `Jour ${day.numeroJour ?? ""}`}</p>
@@ -414,7 +463,7 @@ export function PlanningVoyageDayMap({
                                 {element.nomHebergement ? ` • ${element.nomHebergement}` : ""}
                               </p>
                             </div>
-                            <div className="flex items-center gap-1.5">
+                            <div className="relative">
                               <Button
                                 type="button"
                                 size="icon"
@@ -422,23 +471,55 @@ export function PlanningVoyageDayMap({
                                 className="size-6"
                                 onClick={(event) => {
                                   event.stopPropagation();
-                                  onEditElement(day.id, element);
+                                  setOpenActionMenuKey((current) =>
+                                    current === `element-${element.id}` ? null : `element-${element.id}`
+                                  );
                                 }}
                               >
-                                <Pencil className="size-3" />
+                                <MoreVertical className="size-3" />
                               </Button>
-                              <Button
-                                type="button"
-                                size="icon"
-                                variant="destructive"
-                                className="size-6"
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  onDeleteElement(element.id);
-                                }}
-                              >
-                                <Trash2 className="size-3" />
-                              </Button>
+                              {openActionMenuKey === `element-${element.id}` ? (
+                                <div className="absolute right-0 top-7 z-20 w-40 rounded-xl border border-border bg-background p-1.5 shadow-lg">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    className="w-full justify-start"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      setOpenActionMenuKey(null);
+                                      onEditElement(day.id, element);
+                                    }}
+                                  >
+                                    <Pencil className="size-3" />
+                                    Modifier
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    className="w-full justify-start"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      setOpenActionMenuKey(null);
+                                      openElementDetails(element);
+                                    }}
+                                  >
+                                    Détaille
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    className="w-full justify-start text-destructive hover:text-destructive"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      setOpenActionMenuKey(null);
+                                      onDeleteElement(element.id);
+                                    }}
+                                  >
+                                    <Trash2 className="size-3" />
+                                    Supprimer
+                                  </Button>
+                                </div>
+                              ) : null}
                             </div>
                           </div>
                         </div>
@@ -465,6 +546,16 @@ export function PlanningVoyageDayMap({
           })}
         </div>
       </div>
+      <Dialog open={Boolean(detailDialogContent)} onOpenChange={(open) => !open && setDetailDialogContent(null)}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{detailDialogContent?.title || "Détaille"}</DialogTitle>
+            <DialogDescription className="whitespace-pre-line">
+              {detailDialogContent?.description || "-"}
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -136,6 +136,7 @@ export type Transport = {
   latitudeArrivee: number | null;
   duree: string;
   distanceKm: number | null;
+  budgetPrevu: number | null;
   geojsonTrajet: string;
   dateCreation?: string;
   dateModification?: string;
@@ -152,6 +153,8 @@ export type ElementJourPlanification = {
   heureFin: string | null;
   ordreAffichage: number | null;
   budgetPrevu: number | null;
+  minimumTarifParPersonne: number | null;
+  maximumTarifParPersonne: number | null;
   devise: string | null;
   estActif: boolean;
   dateCreation?: string;
@@ -177,6 +180,8 @@ export type JourPlanificationVoyage = {
   dateCreation?: string;
   dateModification?: string;
   idPlanificationVoyage: string;
+  minimumTarifParPersonne: number | null;
+  maximumTarifParPersonne: number | null;
   elements: ElementJourPlanification[];
 };
 
@@ -259,6 +264,7 @@ export type SaveTransportPayload = {
   latitudeArrivee?: number | null;
   duree: string;
   distanceKm?: number | null;
+  budgetPrevu?: number | null;
   geojsonTrajet?: string;
   idTypeTransport: string;
   idPlanificationVoyage: string;
