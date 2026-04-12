@@ -1,17 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MessageSquare, Search, Calendar, MapPin } from "lucide-react";
+import { MessageSquare, Search, Calendar, MapPin, Star } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useBreadcrumbs } from "../contexts/breadcrumbs-context";
+import { getAllNotations, NotationData } from "@/lib/api/notations";
 
 export function AdminAvis() {
   const { setBreadcrumbs } = useBreadcrumbs();
-  const [avis] = useState<any[]>([]);
+  const [avis, setAvis] = useState<NotationData[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setBreadcrumbs([
@@ -19,6 +20,24 @@ export function AdminAvis() {
       { label: "Avis", isActive: true }
     ]);
   }, [setBreadcrumbs]);
+
+  useEffect(() => {
+    const fetchNotations = async () => {
+      try {
+        setLoading(true);
+        const response = await getAllNotations();
+        if (response.success) {
+          setAvis(response.data);
+        }
+      } catch (error) {
+        console.error('Error fetching notations:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNotations();
+  }, []);
 
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -30,6 +49,11 @@ export function AdminAvis() {
       year: 'numeric'
     });
   };
+
+  const filteredAvis = avis.filter((avi) =>
+    avi.nomUser.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    avi.nomDestination.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="space-y-8">
@@ -63,37 +87,71 @@ export function AdminAvis() {
       </Card>
 
       <div className="space-y-4">
-        {avis.length === 0 ? (
+        {loading ? (
+          <Card className="border-border/50">
+            <CardContent className="py-12 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <h3 className="text-lg font-medium text-foreground mb-2">
+                Chargement des avis...
+              </h3>
+            </CardContent>
+          </Card>
+        ) : filteredAvis.length === 0 ? (
           <Card className="border-border/50">
             <CardContent className="py-12 text-center">
               <MessageSquare className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium text-foreground mb-2">
-                Aucun avis trouvé
+                {searchTerm ? "Aucun avis trouvé pour cette recherche" : "Aucun avis trouvé"}
               </h3>
               <p className="text-muted-foreground">
-                Vous n avez aucun avis pour le moment.
+                {searchTerm ? "Essayez une autre recherche." : "Vous n'avez aucun avis pour le moment."}
               </p>
             </CardContent>
           </Card>
         ) : (
-          avis.map((review) => (
-            <Card key={review.id} className="border-border/50">
+          filteredAvis.map((avi) => (
+            <Card key={avi.idAvis} className="border-border/50">
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
                   <Avatar className="h-12 w-12">
-                    {review.clientAvatar && <AvatarImage src={review.clientAvatar} />}
                     <AvatarFallback>
-                      {review.clientName?.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
+                      {avi.nomUser?.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
-                    <h3 className="font-medium text-foreground">{review.clientName}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {formatDate(review.date)}
-                    </p>
-                    <p className="text-sm text-foreground mt-2">
-                      {review.comment}
-                    </p>
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-medium text-foreground">{avi.nomUser}</h3>
+                      <div className="flex items-center gap-1">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`h-4 w-4 ${
+                              i < avi.nombreEtoiles
+                                ? "fill-yellow-400 text-yellow-400"
+                                : "fill-gray-300 text-gray-300"
+                            }`}
+                          />
+                        ))}
+                        <span className="ml-2 text-sm font-medium text-foreground">
+                          {avi.nombreEtoiles}/5
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                      <MapPin className="h-4 w-4" />
+                      <span>{avi.nomDestination}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Calendar className="h-4 w-4" />
+                      <span>{formatDate(avi.dateCreation)}</span>
+                    </div>
+                    {avi.status && (
+                      <div className="mt-2">
+                        <Badge variant={avi.status === 'actif' ? 'default' : 'secondary'}>
+                          {avi.status}
+                        </Badge>
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>

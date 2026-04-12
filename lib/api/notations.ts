@@ -61,3 +61,14 @@ export async function getDestinationNotations(destinationId: string): Promise<Al
     throw error;
   }
 }
+
+// Récupérer toutes les notations (toutes destinations confondues)
+export async function getAllNotations(): Promise<AllNotationsResponse> {
+  try {
+    const response = await axios.get('/api/notations');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching all notations:', error);
+    throw error;
+  }
+}
