@@ -132,13 +132,17 @@ export default async function Home() {
             <div className="mx-auto max-w-[95vw] xl:max-w-[1400px]">
               <div className="grid gap-6 sm:gap-8 md:gap-10 sm:grid-cols-2 lg:grid-cols-4 items-stretch">
                 {destinationsData.map((destination) => (
-                  <DestinationCard key={destination.id} destination={destination} />
+                  <DestinationCard 
+                    key={destination.id} 
+                    destination={destination} 
+                  />
                 ))}
               </div>
             </div>
           </div>
         </section>
 
+        
         <section id="gallery" className="py-16 sm:py-24 bg-gradient-to-b from-background via-muted/30 to-background">
           <div className="container mx-auto px-4">
             <div className="mx-auto max-w-6xl">

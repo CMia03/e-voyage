@@ -1,17 +1,12 @@
 import { DestinationDetails } from "@/lib/type/destination";
 
-export const destinationsData: DestinationDetails[] = [];
-export function getDestinationById(id: string): DestinationDetails | undefined {
-  return destinationsData.find(dest => dest.id === id);
-}
-
-
-/*
+export const destinationsData: DestinationDetails[] = [
   {
     id: "manambato",
     title: "Manambato",
     description: "Un havre de paix au bord du canal des Pangalanes, parfait pour se ressourcer en pleine nature. Découvrez la vie authentique malgache.",
     image: "/images/Manbt1.jpg",
+    rating: 4.5,
     price: "À partir de 450.000 AR",
     priceDetails: {
       shared4: "450.000 AR/personne (4 par chambre)",
@@ -72,6 +67,7 @@ export function getDestinationById(id: string): DestinationDetails | undefined {
     title: "Ambila Lemaintso - Manambato",
     description: "Découvrez cette station balnéaire idyllique avec ses plages de sable fin et ses eaux turquoise. Un paradis tropical au bord de l'océan Indien. Aventure en train et balade en bateau vers le canal de Pangalana.",
     image: "/images/mbntb8188311489601893394_n.jpg",
+    rating: 4.8,
     price: "À partir de 300.000 AR",
     priceDetails: {
       shared4: "350.000 AR/personne (4 par chambre)",
@@ -130,6 +126,7 @@ export function getDestinationById(id: string): DestinationDetails | undefined {
     title: "Sainte-Marie",
     description: "L'île aux trésors avec ses baleines à bosse, ses plages de rêve et son histoire fascinante de pirates. Une destination unique et magique. Île paradisiaque !",
     image: "/images/stMarie1.jpg",
+    rating: 4.9,
     price: "1.050.000 AR/personne",
     priceDetails: {
       shared2: "1.050.000 AR/personne (à base de 2 par chambre)"
@@ -185,13 +182,12 @@ export function getDestinationById(id: string): DestinationDetails | undefined {
       infoPhone: "034 66 885 42"
     }
   },
-
-  
   {
     id: "le-grand-sud",
     title: "Le Grand Sud",
     description: "Explorez les paysages époustouflants du sud malgache : baobabs majestueux, canyons impressionnants et plages sauvages. Une aventure inoubliable. Tena ahita tany anie ee !",
     image: "/images/sud1.jpg",
+    rating: 4.7,
     price: "1.700.000 AR/personne",
     duration: "10 jours (1 au 10 septembre)",
     dates: "1 au 10 septembre 2025",
@@ -252,6 +248,9 @@ export function getDestinationById(id: string): DestinationDetails | undefined {
     }
   }
 ];
-*/
+
+export function getDestinationById(id: string): DestinationDetails | undefined {
+  return destinationsData.find(dest => dest.id === id);
+}
 
 
