@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { NotationsService } from '@/lib/data/notations-service';
 
 export async function GET(
   request: NextRequest,
@@ -7,31 +8,16 @@ export async function GET(
   try {
     const { destinationId, utilisateurId } = params;
 
-    // Simuler la récupération de la notation spécifique de l'utilisateur
-    // Dans un vrai projet, vous auriez une base de données ici
     console.log(`Fetching user rating for destination ${destinationId} by user ${utilisateurId}`);
     
-    // Simuler une recherche en base de données
-    // Pour la démo, on retourne une notation aléatoire ou aucune
-    const hasRated = Math.random() > 0.5; // 50% de chance que l'utilisateur ait déjà noté
+    // Récupérer la vraie notation de l'utilisateur depuis le service de données
+    const userNotation = await NotationsService.getUserNotationForDestination(destinationId, utilisateurId);
     
-    if (hasRated) {
-      const mockRating = {
-        idDestination: destinationId,
-        idAvis: "123",
-        idUser: utilisateurId,
-        nomUser: "Utilisateur Actuel",
-        nomDestination: "Destination Test",
-        dateCreation: "2024-01-15T10:30:00Z",
-        dateModification: "2024-01-15T10:30:00Z",
-        status: "actif",
-        nombreEtoiles: Math.floor(Math.random() * 5) + 1 // Rating aléatoire entre 1 et 5
-      };
-
+    if (userNotation) {
       return NextResponse.json({
         success: true,
         message: 'User rating retrieved successfully',
-        data: mockRating,
+        data: userNotation,
         timestamp: new Date().toISOString()
       });
     } else {
@@ -75,33 +61,31 @@ export async function POST(
       );
     }
 
-    // Simuler l'enregistrement en base de données
-    // Dans un vrai projet, vous auriez une base de données ici
     console.log(`Saving rating ${body.rating} for destination ${destinationId} by user ${utilisateurId}`);
     
-    // Simuler une sauvegarde réussie
-    const success = Math.random() > 0.1; // 90% de chance de succès pour la démo
+    // Sauvegarder la notation dans les vraies données
+    const savedNotation = await NotationsService.saveNotation({
+      idDestination: destinationId,
+      idUser: utilisateurId,
+      nomUser: body.nomUser || `User ${utilisateurId}`,
+      nomDestination: body.nomDestination || `Destination ${destinationId}`,
+      status: "actif",
+      nombreEtoiles: body.rating
+    });
 
-    if (success) {
-      return NextResponse.json({
-        success: true,
-        message: 'Rating saved successfully',
-        rating: body.rating,
-        destinationId,
-        utilisateurId,
-        timestamp: new Date().toISOString()
-      });
-    } else {
-      return NextResponse.json({
-        success: false,
-        error: 'Failed to save rating. Please try again.'
-      }, { status: 500 });
-    }
+    return NextResponse.json({
+      success: true,
+      message: 'Rating saved successfully',
+      rating: savedNotation.nombreEtoiles,
+      destinationId,
+      utilisateurId,
+      timestamp: new Date().toISOString()
+    });
 
   } catch (error) {
     console.error('Error saving rating:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to save rating. Please try again.' },
       { status: 500 }
     );
   }
