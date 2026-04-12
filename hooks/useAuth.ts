@@ -165,7 +165,7 @@ export function useAuth(): UseAuthReturn {
     }
   }, [logout]);
 
-  return {
+  const authResult = {
     session,
     isLoading,
     isAuthenticated: !!session && isAuthenticated(),
@@ -175,6 +175,9 @@ export function useAuth(): UseAuthReturn {
     getValidToken: getValidTokenCallback,
     forceRefresh: forceRefreshCallback,
   };
+  
+  console.log("useAuth result:", authResult);
+  return authResult;
 }
 
 // Hook pour les requêtes API avec gestion automatique du token
