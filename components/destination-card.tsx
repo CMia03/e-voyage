@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { StarRating } from "@/components/ui/star-rating";
 import { useEffect, useState } from "react";
 import { DestinationDetails } from "@/lib/type/destination";
+import { useAuth } from "@/hooks/useAuth";
 
 interface DestinationCardProps {
   destination: DestinationDetails;
@@ -15,6 +16,8 @@ interface DestinationCardProps {
 
 export function DestinationCard({ destination }: DestinationCardProps) {
   const { title, description, image, price, marketing, features, gallery = [], id } = destination;
+  const { isAuthenticated } = useAuth();
+  console.log("DestinationCard - isAuthenticated:", isAuthenticated);
   const marketingItems = marketing?.length ? marketing : (features ?? []);
   const images = gallery.length > 0 ? gallery : [image];
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -86,7 +89,7 @@ export function DestinationCard({ destination }: DestinationCardProps) {
       </CardContent>
       <CardFooter className="flex-shrink-0 flex-col space-y-3">
         <div className="w-full flex justify-center">
-          <StarRating rating={4.5} size="sm" />
+          <StarRating rating={4.5} size="sm" isAuthenticated={isAuthenticated} />
         </div>
         <Button variant="default" asChild size="sm" className="w-full">
             <Link href={`/destinations/${id}`}>

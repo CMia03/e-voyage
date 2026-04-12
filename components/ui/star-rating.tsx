@@ -2,22 +2,26 @@
 
 import { Star } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface StarRatingProps {
   rating: number;
   maxRating?: number;
   size?: "sm" | "md" | "lg";
   className?: string;
+  isAuthenticated?: boolean;
 }
 
 export function StarRating({ 
   rating, 
   maxRating = 5, 
   size = "sm",
-  className = "" 
+  className = "",
+  isAuthenticated = false
 }: StarRatingProps) {
   const [hoveredRating, setHoveredRating] = useState(0);
   const [clickedRating, setClickedRating] = useState(0);
+  const router = useRouter();
 
   const sizeClasses = {
     sm: "w-3 h-3",
@@ -26,6 +30,15 @@ export function StarRating({
   };
 
   const handleStarClick = (index: number) => {
+    console.log("Star clicked - isAuthenticated:", isAuthenticated);
+    if (!isAuthenticated) {
+      // Rediriger vers la page de connexion avec un message
+      console.log("Redirecting to login...");
+      router.push("/login?message=Pour noter, vous devez vous connecter");
+      return;
+    }
+    // Si connecté, permettre la notation
+    console.log("User is authenticated, setting rating...");
     setClickedRating(index + 1);
   };
 
