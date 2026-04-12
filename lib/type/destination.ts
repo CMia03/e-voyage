@@ -4,6 +4,7 @@ export interface DestinationDetails {
   description: string;
   image: string;
   price: string;
+  rating?: number;
   priceDetails?: {
     shared4?: string;
     shared2?: string;
