@@ -1,45 +1,102 @@
 "use client";
 
 import { Star } from "lucide-react";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { getUserRating, saveUserRating } from "@/lib/api/notations";
 
 interface StarRatingProps {
   rating: number;
+  destinationId: string;
   maxRating?: number;
   size?: "sm" | "md" | "lg";
   className?: string;
   isAuthenticated?: boolean;
 }
 
-export function StarRating({ 
-  rating, 
-  maxRating = 5, 
-  size = "sm",
+export function StarRating({
+  rating,
+  destinationId,
+  maxRating = 5,
+  size = "md",
   className = "",
-  isAuthenticated = false
+  isAuthenticated = false,
 }: StarRatingProps) {
+  const [currentRating, setCurrentRating] = useState(0); // Commence à 0 (gris)
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [hoveredRating, setHoveredRating] = useState(0);
-  const [clickedRating, setClickedRating] = useState(0);
-  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+  const { session } = useAuth();
+  const userId = session?.userId;
 
-  const sizeClasses = {
-    sm: "w-3 h-3",
-    md: "w-4 h-4", 
-    lg: "w-5 h-5"
+  console.log("StarRating props:", { rating, destinationId, isAuthenticated, userId });
+
+  // Effet pour charger la notation existante de l'utilisateur
+  useEffect(() => {
+    const fetchUserRating = async () => {
+      if (!isAuthenticated || !userId || !destinationId) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        const response = await getUserRating(destinationId, userId);
+
+        if (response.success && response.data) {
+          // L'utilisateur a déjà noté, afficher sa notation
+          setCurrentRating(response.data.nombreEtoiles);
+          console.log("User existing rating found:", response.data.nombreEtoiles);
+        } else {
+          // L'utilisateur n'a pas encore noté, garder 0 (gris)
+          setCurrentRating(0);
+          console.log("No existing rating found for user");
+        }
+      } catch (error) {
+        console.error("Error fetching user rating:", error);
+        setCurrentRating(0);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserRating();
+  }, [isAuthenticated, userId, destinationId]);
+
+  const starSize = {
+    sm: "h-4 w-4",
+    md: "h-5 w-5",
+    lg: "h-6 w-6",
   };
 
-  const handleStarClick = (index: number) => {
-    console.log("Star clicked - isAuthenticated:", isAuthenticated);
-    if (!isAuthenticated) {
-      // Rediriger vers la page de connexion avec un message
-      console.log("Redirecting to login...");
-      router.push("/login?message=Pour noter, vous devez vous connecter");
+  const handleRatingClick = async (starValue: number) => {
+    if (!isAuthenticated || !userId) {
+      // Gérer le cas où l'utilisateur n'est pas authentifié ou l'ID utilisateur est manquant
+      console.log("User not authenticated or userId is missing.");
       return;
     }
-    // Si connecté, permettre la notation
-    console.log("User is authenticated, setting rating...");
-    setClickedRating(index + 1);
+
+    if (isSubmitting) {
+      console.log("Already submitting rating...");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const response = await saveUserRating(destinationId, userId, starValue);
+
+      if (response.success) {
+        setCurrentRating(starValue);
+        console.log("Rating saved successfully:", starValue);
+      } else {
+        console.error("Failed to save rating:", response.message);
+      }
+    } catch (error) {
+      console.error("Error saving rating:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleMouseEnter = (index: number) => {
@@ -52,20 +109,37 @@ export function StarRating({
 
   return (
     <div className={`flex items-center gap-1 ${className}`}>
-      {[...Array(maxRating)].map((_, index) => {
-        const isActive = clickedRating > 0 ? index < clickedRating : index < hoveredRating;
+      {isLoading && (
+        <div className="mr-2 text-sm text-blue-600 animate-pulse">
+          Chargement...
+        </div>
+      )}
+      {isSubmitting && (
+        <div className="mr-2 text-sm text-green-600 animate-pulse">
+          Envoi en cours...
+        </div>
+      )}
+      {[...Array(maxRating)].map((_, i) => {
+        const starValue = i + 1;
+        const hasBeenRated = currentRating > 0; // Vérifie si l'utilisateur a déjà noté
+        const isActive = hasBeenRated && starValue <= currentRating;
+        const isHovered = starValue <= hoveredRating;
         
         return (
           <Star
-            key={index}
-            className={`${sizeClasses[size]} cursor-pointer transition-colors duration-200 ${
-              isActive 
-                ? "fill-yellow-400 text-yellow-400" 
-                : "fill-gray-300 text-gray-300"
-            }`}
-            onClick={() => handleStarClick(index)}
-            onMouseEnter={() => handleMouseEnter(index)}
-            onMouseLeave={handleMouseLeave}
+            key={starValue}
+            className={cn(
+              starSize[size],
+              "cursor-pointer transition-colors duration-200",
+              // Couleur initiale grise, jaune seulement si noté ou en survol
+              (isActive || isHovered)
+                ? "fill-yellow-400 text-yellow-400"
+                : "fill-gray-300 text-gray-300",
+              (isLoading || isSubmitting) && "opacity-50 cursor-not-allowed"
+            )}
+            onClick={() => !isLoading && !isSubmitting && handleRatingClick(starValue)}
+            onMouseEnter={() => !isLoading && !isSubmitting && handleMouseEnter(i)}
+            onMouseLeave={() => !isLoading && !isSubmitting && handleMouseLeave()}
           />
         );
       })}
@@ -74,7 +148,9 @@ export function StarRating({
         size === "md" ? "text-sm" : 
         "text-base"
       } text-muted-foreground`}>
-        {clickedRating || rating}/{maxRating}
+        {isLoading ? "Chargement..." : 
+         currentRating > 0 ? `${currentRating}/${maxRating}` : 
+         "Non noté"}
       </span>
     </div>
   );

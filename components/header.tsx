@@ -50,7 +50,7 @@ export function Header() {
     if (!session) return "";
     return session.prenom && session.nom 
       ? `${session.prenom} ${session.nom}`
-      : session.login || session.userId || "Utilisateur";
+      : session.userId || session.login || "Utilisateur";
   };
 
   return (

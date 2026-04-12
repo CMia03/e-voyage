@@ -71,7 +71,7 @@ export function AdminAvis() {
                 Aucun avis trouvé
               </h3>
               <p className="text-muted-foreground">
-                Vous n'avez aucun avis pour le moment.
+                Vous n avez aucun avis pour le moment.
               </p>
             </CardContent>
           </Card>
