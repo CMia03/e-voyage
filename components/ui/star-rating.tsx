@@ -9,6 +9,7 @@ import { getUserRating, saveUserRating } from "@/lib/api/notations";
 interface StarRatingProps {
   rating: number;
   destinationId: string;
+  destinationName?: string;
   maxRating?: number;
   size?: "sm" | "md" | "lg";
   className?: string;
@@ -18,6 +19,7 @@ interface StarRatingProps {
 export function StarRating({
   rating,
   destinationId,
+  destinationName,
   maxRating = 5,
   size = "md",
   className = "",
@@ -30,7 +32,6 @@ export function StarRating({
   const { session } = useAuth();
   const userId = session?.userId;
 
-  console.log("StarRating props:", { rating, destinationId, isAuthenticated, userId });
 
   // Effet pour charger la notation existante de l'utilisateur
   useEffect(() => {
@@ -84,7 +85,9 @@ export function StarRating({
 
     try {
       setIsSubmitting(true);
-      const response = await saveUserRating(destinationId, userId, starValue);
+      const token = session?.accessToken;
+      const nomUser = session?.nom ? `${session.prenom || ''} ${session.nom}`.trim() : session?.login || `User ${userId}`;
+      const response = await saveUserRating(destinationId, userId, starValue, token, nomUser, destinationName);
 
       if (response.success) {
         setCurrentRating(starValue);
