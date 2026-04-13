@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { getUserRating, saveUserRating } from "@/lib/api/notations";
+import { useRouter } from "next/navigation";
 
 interface StarRatingProps {
   rating: number;
@@ -31,6 +32,7 @@ export function StarRating({
   const [isLoading, setIsLoading] = useState(true);
   const { session } = useAuth();
   const userId = session?.userId;
+  const router = useRouter();
 
 
   // Effet pour charger la notation existante de l'utilisateur
@@ -73,8 +75,9 @@ export function StarRating({
 
   const handleRatingClick = async (starValue: number) => {
     if (!isAuthenticated || !userId) {
-      // Gérer le cas où l'utilisateur n'est pas authentifié ou l'ID utilisateur est manquant
-      console.log("User not authenticated or userId is missing.");
+      // Rediriger vers la page login si l'utilisateur n'est pas authentifié
+      console.log("User not authenticated, redirecting to login...");
+      router.push('/login');
       return;
     }
 
@@ -153,7 +156,7 @@ export function StarRating({
       } text-muted-foreground`}>
         {isLoading ? "Chargement..." : 
          currentRating > 0 ? `${currentRating}/${maxRating}` : 
-         "Non noté"}
+         "noté"}
       </span>
     </div>
   );
