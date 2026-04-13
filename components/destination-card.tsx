@@ -88,7 +88,7 @@ export function DestinationCard({ destination }: DestinationCardProps) {
       </CardContent>
       <CardFooter className="flex-shrink-0 flex-col space-y-3">
         <div className="w-full flex justify-center">
-          <StarRating rating={0} destinationId={id} size="sm" isAuthenticated={isAuthenticated} />
+          <StarRating rating={0} destinationId={id} destinationName={title} size="sm" isAuthenticated={isAuthenticated} />
         </div>
         <Button variant="default" asChild size="sm" className="w-full">
             <Link href={`/destinations/${id}`}>

@@ -5,14 +5,16 @@ import { MessageSquare, Search, Calendar, MapPin, Star } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useBreadcrumbs } from "../contexts/breadcrumbs-context";
-import { getAllNotations, NotationData } from "@/lib/api/notations";
+import { getAllNotationsFromApi, NotationData } from "@/lib/api/notations";
 
 export function AdminAvis() {
   const { setBreadcrumbs } = useBreadcrumbs();
   const [avis, setAvis] = useState<NotationData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedDestination, setSelectedDestination] = useState("dest1"); // Destination par défaut
 
   useEffect(() => {
     setBreadcrumbs([
@@ -25,7 +27,7 @@ export function AdminAvis() {
     const fetchNotations = async () => {
       try {
         setLoading(true);
-        const response = await getAllNotations();
+        const response = await getAllNotationsFromApi();
         if (response.success) {
           setAvis(response.data);
         }
@@ -63,10 +65,12 @@ export function AdminAvis() {
             Avis des clients
           </h1>
           <p className="text-sm text-muted-foreground">
-            Gérez et modérez tous les avis laissés par vos clients.
+            Gérez et modérez les avis pour la destination sélectionnée.
           </p>
         </div>
       </div>
+
+    
 
       <Card className="border-border/50">
         <CardHeader>
