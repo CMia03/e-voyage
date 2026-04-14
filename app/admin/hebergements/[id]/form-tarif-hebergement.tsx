@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { Plus } from "lucide-react";
@@ -13,12 +13,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TypeChambre } from "@/lib/type/hebergement";
+import { GammeTarif, TypeChambre } from "@/lib/type/hebergement";
 
 export type TarifFormState = {
   prixReservation: string;
   prixParNuit: string;
   devise: string;
+  gamme: GammeTarif;
   capacite: string;
   petitDejeunerInclus: boolean;
   estActif: boolean;
@@ -62,7 +63,7 @@ export function FormTarifHebergement({
           </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <div className="space-y-2 xl:col-span-2">
             <label className="text-sm font-medium">Type de chambre</label>
             <div className="flex gap-2">
@@ -142,11 +143,11 @@ export function FormTarifHebergement({
         <div className="mb-4">
           <h3 className="text-base font-semibold">Tarification</h3>
           <p className="text-sm text-muted-foreground">
-            Definis les prix, la devise et les options appliquees a cette offre.
+            Definis les prix, la devise, la gamme et les options appliquees a cette offre.
           </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Prix / nuit</label>
             <Input
@@ -177,6 +178,19 @@ export function FormTarifHebergement({
               onChange={(event) => onUpdate("devise", event.target.value)}
               placeholder="MGA, EUR, USD..."
             />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Gamme</label>
+            <Select value={form.gamme} onValueChange={(value) => onUpdate("gamme", value as GammeTarif)}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Choisir une gamme" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="MOYENNE">Moyenne</SelectItem>
+                <SelectItem value="LUXE">Luxe</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 

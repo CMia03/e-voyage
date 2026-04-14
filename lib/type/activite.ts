@@ -1,4 +1,4 @@
-export type Activite = {
+﻿export type Activite = {
   id: string;
   nom: string;
   slug: string;
@@ -43,9 +43,17 @@ export type CategorieActivite = {
   dateModification: string;
 };
 
+export type CategorieClientActivite = {
+  id: string;
+  nom: string;
+  dateCreation: string;
+  dateModification: string;
+};
+
 export type TarifActivite = {
   id: string;
-  categorieAge: string | null;
+  idCategorieClient: string | null;
+  nomCategorieClient: string | null;
   prixParPersonne: number | null;
   prixParHeur: number | null;
   devise: string;
@@ -65,7 +73,7 @@ export type PhotoActivite = {
 };
 
 export type SaveTarifActivitePayload = {
-  categorieAge: string;
+  idCategorieClient: string;
   prixParPersonne?: number | null;
   prixParHeur?: number | null;
   devise: string;

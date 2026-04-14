@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -64,6 +64,12 @@ import { SectionReservation } from "./components/section-reservation";
 import { SectionResume } from "./components/section-resume";
 import { VoyageSectionsNav } from "./components/voyage-sections-nav";
 import { getSectionDescription, PlanningSection } from "./planning-sections.config";
+import { BudgetFormModal } from "./components/budget-form-modal";
+import { listCategorieClientActivites } from "@/lib/api/activites";
+import { BudgetisationPlanificationVoyage, SaveBudgetisationPlanificationVoyagePayload } from "@/lib/type/budgetisation-planification";
+import { createBudgetisationPlanification, deleteBudgetisationPlanification , updateBudgetisationPlanification  , listBudgetisationsByPlanification } from "@/lib/api/budgetisation-planification";
+
+
 
 const HebergementMap = dynamic(
   () => import("@/components/hebergement-map").then((mod) => mod.HebergementMap),
@@ -130,6 +136,15 @@ type BudgetSuggestion = {
   label: string;
   montant: number;
   devise: string;
+};
+
+type BudgetFormData = {
+  planificationId: string;
+  idCategorieClient: string;
+  gamme: string;
+  prixNormal: number;
+  reduction: number;
+  nombrePersonnes: number;
 };
 
 type LinkedDetailTarget =
@@ -208,6 +223,8 @@ const initialElementForm: ElementFormState = {
   idActivite: "",
   idHebergement: "",
 };
+
+
 
 function formatDate(value?: string | null) {
   if (!value) return "Date non renseignee";
@@ -350,6 +367,8 @@ export function AdminDestinationPlanningContentNext({ destinationId }: Props) {
   const [typeElementJours, setTypeElementJours] = useState<TypeElementJour[]>([]);
   const [tarifsActivites, setTarifsActivites] = useState<TarifActivite[]>([]);
   const [tarifsHebergements, setTarifsHebergements] = useState<TarifHebergement[]>([]);
+  // Dans les states (vers ligne 200-250)
+  const [budgetsPlanification, setBudgetsPlanification] = useState<BudgetisationPlanificationVoyage[]>([]);
   const [selectedPlanificationId, setSelectedPlanificationId] = useState("");
   const [selectedTransportId, setSelectedTransportId] = useState<string | null>(null);
   const [selectedSection, setSelectedSection] = useState<PlanningSection>("planning");
@@ -393,6 +412,11 @@ export function AdminDestinationPlanningContentNext({ destinationId }: Props) {
   const [successMessage, setSuccessMessage] = useState("");
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [showErrorAlert, setShowErrorAlert] = useState(false);
+  const [categoriesClient, setCategoriesClient] = useState<Array<{ id: string; nom: string }>>([]);
+
+  
+const [showBudgetModal, setShowBudgetModal] = useState(false);
+const [editingBudget, setEditingBudget] = useState<any>(null);
 
   const selectedPlanification = useMemo(() => planifications.find((item) => item.id === selectedPlanificationId) ?? null, [planifications, selectedPlanificationId]);
   const availableJourDateRange = useMemo(() => {
@@ -432,6 +456,86 @@ export function AdminDestinationPlanningContentNext({ destinationId }: Props) {
     () => [...(selectedPlanification?.jours ?? [])].sort((a, b) => (a.numeroJour ?? 9999) - (b.numeroJour ?? 9999)),
     [selectedPlanification]
   );
+
+
+
+  // // Fonction pour sauvegarder un budget
+  // const handleSaveBudget = async (budgetData: any) => {
+  //   try {
+  //     if (editingBudget) {
+  //       // Appel API pour modifier
+  //       // await updateBudget(editingBudget.id, budgetData, accessToken);
+  //       setSuccessMessage("Budget modifié avec succès.");
+  //     } else {
+  //       // Appel API pour créer
+  //       // await createBudget(budgetData, accessToken);
+  //       setSuccessMessage("Budget ajouté avec succès.");
+  //     }
+  //     setShowBudgetModal(false);
+  //     setEditingBudget(null);
+  //     await refreshPlanifications(); // Rafraîchir les données
+  //   } catch (err) {
+  //     setError(getErrorMessage(err, "Impossible d'enregistrer le budget"));
+  //   }
+  // };
+
+  async function handleSaveBudget(budgetData: BudgetFormData) {
+    try {
+      const payload: SaveBudgetisationPlanificationVoyagePayload = {
+        idPlanificationVoyage: budgetData.planificationId,
+        idCategorieClient: budgetData.idCategorieClient,
+        gamme: budgetData.gamme,
+        prixNormal: budgetData.prixNormal,
+        reduction: budgetData.reduction || 0,
+        nombrePersonnes: budgetData.nombrePersonnes,
+      };
+
+      if (editingBudget) {
+        // ✅ Modification - utilise l'ID du budget existant
+        await updateBudgetisationPlanification(editingBudget.id, payload, accessToken);
+        setSuccessMessage("Budget modifié avec succès.");
+      } else {
+        // ✅ Création
+        await createBudgetisationPlanification(payload, accessToken);
+        setSuccessMessage("Budget ajouté avec succès.");
+      }
+      setShowBudgetModal(false);
+      setEditingBudget(null);
+      await refreshPlanifications();
+      // Rafraîchir les budgets
+      await loadBudgetsForPlanification(selectedPlanificationId);
+    } catch (err) {
+      setError(getErrorMessage(err, "Impossible d'enregistrer le budget"));
+    }
+  }
+
+  async function handleDeleteBudget(budgetId: string) {
+    if (!window.confirm("Voulez-vous vraiment supprimer ce budget ?")) return;
+    try {
+      await deleteBudgetisationPlanification(budgetId, accessToken);
+      setSuccessMessage("Budget supprimé avec succès.");
+      await refreshPlanifications();
+      // Rafraîchir les budgets après suppression
+      await loadBudgetsForPlanification(selectedPlanificationId);
+    } catch (err) {
+      setError(getErrorMessage(err, "Impossible de supprimer le budget"));
+    }
+  }
+
+  // Utilise des noms différents pour éviter les conflits
+  function handleOpenAddBudgetModal() {
+    setEditingBudget(null);
+    setShowBudgetModal(true);
+  }
+
+  function handleOpenEditBudgetModal(budget: BudgetisationPlanificationVoyage) {
+    setEditingBudget(budget);
+    setShowBudgetModal(true);
+  }
+
+
+
+
   const budgetSuggestions = useMemo<BudgetSuggestion[]>(() => {
     if (selectedTypeElementJour?.code === "ACTIVITE" && elementForm.idActivite) {
       const activiteTarifs = tarifsActivites
@@ -445,7 +549,7 @@ export function AdminDestinationPlanningContentNext({ destinationId }: Props) {
           const unite = tarif.prixParPersonne !== null && tarif.prixParPersonne !== undefined ? "par personne" : "par heure";
           return {
             id: tarif.id,
-            label: `${tarif.categorieAge || "Tarif"} (${unite})`,
+            label: `${tarif.nomCategorieClient || "Tarif"} (${unite})`,
             montant,
             devise: tarif.devise || "MGA",
           };
@@ -514,6 +618,13 @@ export function AdminDestinationPlanningContentNext({ destinationId }: Props) {
     return () => window.clearTimeout(timeout);
   }, [error]);
 
+  useEffect(() => {
+  console.log("Planification changed:", selectedPlanificationId); // ← AJOUTE CE LOG
+  if (selectedPlanificationId && accessToken) {
+    loadBudgetsForPlanification(selectedPlanificationId);
+  }
+}, [selectedPlanificationId, accessToken]);
+
   async function loadPage() {
     setIsLoading(true);
     setIsRefreshingPlanifications(true);
@@ -546,8 +657,10 @@ export function AdminDestinationPlanningContentNext({ destinationId }: Props) {
     setIsRefreshingPlanifications(true);
     try {
       const response = await listPlanificationsByDestination(destinationId, accessToken);
+      const categoriesResponse = await listCategorieClientActivites(accessToken);
       const nextPlanifications = response.data ?? [];
       setPlanifications(nextPlanifications);
+      setCategoriesClient(categoriesResponse.data ?? []);
       setSelectedPlanificationId((current) => {
         if (nextPlanifications.some((item) => item.id === current)) return current;
         return nextPlanifications[0]?.id ?? "";
@@ -561,6 +674,7 @@ export function AdminDestinationPlanningContentNext({ destinationId }: Props) {
       setIsRefreshingPlanifications(false);
     }
   }
+
 
   function updatePlanificationForm<K extends keyof PlanificationFormState>(key: K, value: PlanificationFormState[K]) {
     setPlanificationForm((current) => ({ ...current, [key]: value }));
@@ -765,7 +879,7 @@ export function AdminDestinationPlanningContentNext({ destinationId }: Props) {
           const unite = tarif.prixParPersonne !== null && tarif.prixParPersonne !== undefined ? "par personne" : "par heure";
           return {
             id: tarif.id,
-            label: `${tarif.categorieAge || "Tarif"} (${unite})`,
+            label: `${tarif.nomCategorieClient || "Tarif"} (${unite})`,
             montant,
             devise: tarif.devise || "MGA",
           };
@@ -1222,6 +1336,18 @@ export function AdminDestinationPlanningContentNext({ destinationId }: Props) {
     }
   }
 
+  async function loadBudgetsForPlanification(planificationId: string) {
+    if (!planificationId) return;
+    try {
+      const response = await listBudgetisationsByPlanification(planificationId, accessToken);
+      console.log("Budgets chargés:", response.data); // ← AJOUTE CE LOG
+      setBudgetsPlanification(response.data ?? []);
+    } catch (err) {
+      console.error("Erreur chargement budgets:", err);
+      setBudgetsPlanification([]);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <AdminHeader />
@@ -1306,12 +1432,31 @@ export function AdminDestinationPlanningContentNext({ destinationId }: Props) {
                   onDeleteElement={(elementId) => void handleDeleteElement(elementId)}
                 />
               ) : selectedSection === "budget" ? (
-                <SectionBudget
-                  planification={selectedPlanification}
-                  sortedDays={sortedDays}
-                  tarifsActivites={tarifsActivites}
-                  tarifsHebergements={tarifsHebergements}
-                />
+
+                  // <SectionBudget
+                  //   planification={selectedPlanification}
+                  //   sortedDays={sortedDays}
+                  //   tarifsActivites={tarifsActivites}
+                  //   tarifsHebergements={tarifsHebergements}
+                  //   budgetsPlanification={budgetsPlanification}
+                  //   isAdmin={true}
+                  //   onAddBudget={handleAddBudget}
+                  //   onEditBudget={handleEditBudget}
+                  //   onDeleteBudget={handleDeleteBudget}
+                  // />
+
+                  <SectionBudget
+                    planification={selectedPlanification}
+                    sortedDays={sortedDays}
+                    tarifsActivites={tarifsActivites}
+                    tarifsHebergements={tarifsHebergements}
+                    budgetsPlanification={budgetsPlanification}
+                    isAdmin={true}
+                    onAddBudget={handleOpenAddBudgetModal}      // ← Nom modifié
+                    onEditBudget={handleOpenEditBudgetModal}    // ← Nom modifié
+                    onDeleteBudget={handleDeleteBudget}
+                  />
+
               ) : (
                 <SectionReservation planification={selectedPlanification} />
               )}
@@ -1759,7 +1904,7 @@ export function AdminDestinationPlanningContentNext({ destinationId }: Props) {
                           <button type="button" className="w-full text-left" onClick={() => updateElementForm("idTransport", transport.id)}>
                             <p className="text-sm font-medium">{transport.depart} {"->"} {transport.arrivee}</p>
                             <p className="mt-1 text-xs text-muted-foreground">
-                              {transport.nomTypeTransport} • Distance: {transport.distanceKm ?? "-"} km • Budget: {transport.budgetPrevu ?? "-"} MGA
+                              {transport.nomTypeTransport}  -  Distance: {transport.distanceKm ?? "-"} km  -  Budget: {transport.budgetPrevu ?? "-"} MGA
                             </p>
                           </button>
                           <div className="mt-2 flex flex-wrap gap-2">
@@ -1946,7 +2091,31 @@ export function AdminDestinationPlanningContentNext({ destinationId }: Props) {
         </DialogContent>
       </Dialog>
 
+      {/* <BudgetFormModal
+        open={showBudgetModal}
+        onClose={() => {
+          setShowBudgetModal(false);
+          setEditingBudget(null);
+        }}
+        onSave={handleSaveBudget}
+        planificationId={selectedPlanificationId}
+        initialBudget={editingBudget}
+      /> */}
+
+      <BudgetFormModal
+        open={showBudgetModal}
+        onClose={() => {
+          setShowBudgetModal(false);
+          setEditingBudget(null);
+        }}
+        onSave={handleSaveBudget}
+        planificationId={selectedPlanificationId}
+        initialBudget={editingBudget}
+        categoriesClient={categoriesClient}
+      />
+
       <AdminFooter />
     </div>
   );
 }
+

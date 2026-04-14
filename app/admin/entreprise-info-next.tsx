@@ -127,6 +127,7 @@ export function AdminEntrepriseInfo({ accessToken }: Props) {
       }
     } finally {
       setIsSaving(false);
+        
     }
   }
 

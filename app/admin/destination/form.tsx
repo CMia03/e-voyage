@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import dynamic from "next/dynamic";
 import { useMemo } from "react";
@@ -28,11 +28,7 @@ export type DestinationFormState = {
   imageFile: File | null;
   latitude: string;
   longitude: string;
-  nombreEtoiles: string;
   estActif: boolean;
-  region: string;
-  district: string;
-  commune: string;
 };
 
 type DestinationFormProps = {
@@ -113,7 +109,7 @@ export function DestinationForm({
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={() => document.getElementById('destination-image-file-input')?.click()}
+                  onClick={() => document.getElementById("destination-image-file-input")?.click()}
                   className="flex-1"
                 >
                   Choisir un fichier
@@ -151,45 +147,6 @@ export function DestinationForm({
               )}
             </div>
           </div>
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Region</label>
-          <Input
-            value={form.region}
-            onChange={(event) => onUpdate("region", event.target.value)}
-            placeholder="Alaotra Mangoro"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium">District</label>
-          <Input
-            value={form.district}
-            onChange={(event) => onUpdate("district", event.target.value)}
-            placeholder="Toamasina II"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Commune</label>
-          <Input
-            value={form.commune}
-            onChange={(event) => onUpdate("commune", event.target.value)}
-            placeholder="Manambato"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Nombre d&apos;etoiles</label>
-          <Input
-            type="number"
-            min="0"
-            max="5"
-            value={form.nombreEtoiles}
-            onChange={(event) => onUpdate("nombreEtoiles", event.target.value)}
-            placeholder="0"
-          />
         </div>
 
         <div className="flex items-center gap-3 rounded-xl border border-border/50 bg-muted/20 px-4 py-3 md:col-span-2">
@@ -244,9 +201,6 @@ export function DestinationForm({
           <div className="mt-3 space-y-2 text-sm text-muted-foreground">
             <p>
               <span className="font-medium text-foreground">Nom :</span> {form.nom || "-"}
-            </p>
-            <p>
-              <span className="font-medium text-foreground">Region :</span> {form.region || "-"}
             </p>
             <p>
               <span className="font-medium text-foreground">Adresse :</span> {form.adresse || "-"}

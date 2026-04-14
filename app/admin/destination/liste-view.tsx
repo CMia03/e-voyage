@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -12,7 +12,6 @@ import {
   Pencil,
   Plus,
   RefreshCcw,
-  Star,
   Trash2,
   X,
 } from "lucide-react";
@@ -132,54 +131,50 @@ export function AdminDestinationListe({
       </div>
 
       <div className="p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="space-y-1">
-          <h3 className="text-lg font-semibold">{destination.nom}</h3>
-          <p className="text-sm text-muted-foreground">
-            {destination.region || destination.district || "Localisation non renseignee"}
-          </p>
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-1">
+            <h3 className="text-lg font-semibold">{destination.nom}</h3>
+            <p className="text-sm text-muted-foreground">
+              {destination.adresse || "Adresse non renseignee"}
+            </p>
+          </div>
         </div>
-      </div>
 
-      <p className="mt-3 line-clamp-3 text-sm text-muted-foreground">
-        {destination.description || "Aucune description"}
-      </p>
+        <p className="mt-3 line-clamp-3 text-sm text-muted-foreground">
+          {destination.description || "Aucune description"}
+        </p>
 
-      <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
-        <span className="rounded-full bg-muted px-2.5 py-1">{destination.slug}</span>
-        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1">
-          <MapPin className="size-3.5" />
-          {destination.commune || destination.adresse || "Sans adresse"}
-        </span>
-        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1">
-          <Star className="size-3.5" />
-          {destination.nombreEtoiles ?? 0} etoile(s)
-        </span>
-      </div>
+        <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
+          <span className="rounded-full bg-muted px-2.5 py-1">{destination.slug}</span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1">
+            <MapPin className="size-3.5" />
+            {destination.adresse || "Sans adresse"}
+          </span>
+        </div>
 
-      <div className="mt-5 flex flex-wrap gap-2">
-        <Button asChild size="sm" variant="secondary">
-          <Link href={`/admin/destination/${destination.id}`}>Voir details</Link>
-        </Button>
-        <Button asChild size="sm" variant="outline">
-          <Link href={`/admin/destination/${destination.id}/associations`}>
-            Ajout hebergement/Activite
-          </Link>
-        </Button>
-        <Button size="sm" variant="outline" onClick={() => onEdit(destination.id)}>
-          <Pencil className="size-4" />
-          Modifier
-        </Button>
-        <Button
-          size="sm"
-          variant="destructive"
-          onClick={() => onDelete(destination.id)}
-          disabled={isDeletingId === destination.id}
-        >
-          <Trash2 className="size-4" />
-          {isDeletingId === destination.id ? "Suppression..." : "Supprimer"}
-        </Button>
-      </div>
+        <div className="mt-5 flex flex-wrap gap-2">
+          <Button asChild size="sm" variant="secondary">
+            <Link href={`/admin/destination/${destination.id}`}>Voir details</Link>
+          </Button>
+          <Button asChild size="sm" variant="outline">
+            <Link href={`/admin/destination/${destination.id}/associations`}>
+              Ajout hebergement/Activite
+            </Link>
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => onEdit(destination.id)}>
+            <Pencil className="size-4" />
+            Modifier
+          </Button>
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={() => onDelete(destination.id)}
+            disabled={isDeletingId === destination.id}
+          >
+            <Trash2 className="size-4" />
+            {isDeletingId === destination.id ? "Suppression..." : "Supprimer"}
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -203,14 +198,10 @@ export function AdminDestinationListe({
           </span>
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
-          <span>{destination.region || destination.district || "Region non renseignee"}</span>
+          <span>{destination.adresse || "Adresse non renseignee"}</span>
           <span className="flex items-center gap-1">
             <MapPin className="size-3.5" />
-            {destination.commune || destination.adresse || "Sans adresse"}
-          </span>
-          <span className="flex items-center gap-1">
-            <Star className="size-3.5" />
-            {destination.nombreEtoiles ?? 0}
+            {destination.latitude}, {destination.longitude}
           </span>
           <span className="max-w-[200px] truncate">{destination.slug}</span>
         </div>

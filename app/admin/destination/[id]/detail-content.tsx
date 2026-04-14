@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -214,10 +214,10 @@ export function AdminDestinationDetailContent({
       await createDestinationPhotosBulk(destinationId, payload, accessToken);
       await reloadDestination();
       setPhotoForm(initialPhotoForm);
-      setSuccessMessage("Images ajoutées avec succès.");
+      setSuccessMessage("Images ajoutÃ©es avec succÃ¨s.");
       setIsDialogOpen(false);
       
-      // Scroll vers la galerie après ajout réussi
+      // Scroll vers la galerie aprÃ¨s ajout rÃ©ussi
       setTimeout(() => {
         const galleryElement = document.getElementById("gallery-section");
         if (galleryElement) {
@@ -318,16 +318,16 @@ export function AdminDestinationDetailContent({
       <AdminHeader />
       <main className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6 sm:py-8">
         <div className="space-y-8">
-          {/* En-tête avec actions rapides */}
+          {/* En-tÃªte avec actions rapides */}
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-3">
               <Button asChild variant="outline" size="sm">
-                <Link href="/admin">← Retour aux destinations</Link>
+                <Link href="/admin">â† Retour aux destinations</Link>
               </Button>
 
               {/* <div>
                 <h1 className="text-3xl font-semibold tracking-tight">
-                  {destination?.nom ?? "Détail destination"}
+                  {destination?.nom ?? "DÃ©tail destination"}
                 </h1>
               </div> */}
 
@@ -364,7 +364,7 @@ export function AdminDestinationDetailContent({
 
           {successMessage ? (
             <Alert variant="success" className="animate-in fade-in-50 slide-in-from-top-5">
-              <AlertTitle>Succès</AlertTitle>
+              <AlertTitle>SuccÃ¨s</AlertTitle>
               <AlertDescription>{successMessage}</AlertDescription>
             </Alert>
           ) : null}
@@ -373,7 +373,7 @@ export function AdminDestinationDetailContent({
           <Card className="border-border/50 shadow-sm">
             <CardHeader>
               <CardTitle>Informations principales</CardTitle>
-              <CardDescription>Résumé rapide de la destination.</CardDescription>
+              <CardDescription>RÃ©sumÃ© rapide de la destination.</CardDescription>
             </CardHeader>
             <CardContent>
               {isLoading ? (
@@ -404,13 +404,10 @@ export function AdminDestinationDetailContent({
 
                   <div className="grid gap-2 text-sm xl:w-[260px] xl:min-w-[260px]">
                     <div className="rounded-xl border border-border/50 bg-card/50 px-3 py-2.5">
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Adresse : {destination.adresse || "Non renseignée"}</p>
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Adresse : {destination.adresse || "Non renseignÃ©e"}</p>
                     </div>
                     <div className="rounded-xl border border-border/50 bg-card/50 px-3 py-2.5">
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Région :  {destination.region || "Non renseignée"}</p>
-                    </div>
-                    <div className="rounded-xl border border-border/50 bg-card/50 px-3 py-2.5">
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Coordonnées : {destination.latitude}, {destination.longitude}</p>
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">CoordonnÃ©es : {destination.latitude}, {destination.longitude}</p>
                     </div>
                   </div>
                 </div>
@@ -476,9 +473,9 @@ export function AdminDestinationDetailContent({
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle>Galerie multimédia</CardTitle>
+                    <CardTitle>Galerie multimÃ©dia</CardTitle>
                     <CardDescription>
-                      {totalImages} image{totalImages > 1 ? "s" : ""} répartie
+                      {totalImages} image{totalImages > 1 ? "s" : ""} rÃ©partie
                       {totalImages > 1 ? "s" : ""} dans {sortedPhotoGroups.length} lot
                       {sortedPhotoGroups.length > 1 ? "s" : ""}
                     </CardDescription>
@@ -491,7 +488,7 @@ export function AdminDestinationDetailContent({
               <CardContent>
                 {sortedPhotoGroups.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="mb-4 text-4xl">📷</div>
+                    <div className="mb-4 text-4xl">ðŸ“·</div>
                     <p className="text-sm text-muted-foreground">
                       Aucune image disponible pour le moment.
                     </p>
@@ -500,7 +497,7 @@ export function AdminDestinationDetailContent({
                       className="mt-4"
                       onClick={openImageDialog}
                     >
-                      Ajouter vos premières images
+                      Ajouter vos premiÃ¨res images
                     </Button>
                   </div>
                 ) : (
@@ -520,7 +517,7 @@ export function AdminDestinationDetailContent({
                               </h3>
                               {photoGroup.dateObtenir && (
                                 <p className="text-xs text-muted-foreground">
-                                  📅 {new Date(photoGroup.dateObtenir).toLocaleDateString("fr-FR", {
+                                  ðŸ“… {new Date(photoGroup.dateObtenir).toLocaleDateString("fr-FR", {
                                     day: "numeric",
                                     month: "long",
                                     year: "numeric",
@@ -535,7 +532,7 @@ export function AdminDestinationDetailContent({
                                   : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
                               }`}
                             >
-                              {photoGroup.estPrincipale ? "⭐ Principale" : "📸 Secondaire"}
+                              {photoGroup.estPrincipale ? "â­ Principale" : "ðŸ“¸ Secondaire"}
                             </span>
                           </div>
                           {photoGroup.description && (
@@ -562,7 +559,7 @@ export function AdminDestinationDetailContent({
                                 )
                               }
                             >
-                              ←
+                              â†
                             </Button>
                             <Button
                               type="button"
@@ -576,7 +573,7 @@ export function AdminDestinationDetailContent({
                                 )
                               }
                             >
-                              →
+                              â†’
                             </Button>
                           </div>
                         <div
@@ -643,8 +640,8 @@ export function AdminDestinationDetailContent({
           <DialogHeader>
             <DialogTitle>Ajouter des images</DialogTitle>
             <DialogDescription>
-              Ajoutez plusieurs images avec les mêmes métadonnées (titre, description, date).
-              Les images seront regroupées automatiquement.
+              Ajoutez plusieurs images avec les mÃªmes mÃ©tadonnÃ©es (titre, description, date).
+              Les images seront regroupÃ©es automatiquement.
             </DialogDescription>
           </DialogHeader>
 
@@ -767,4 +764,6 @@ export function AdminDestinationDetailContent({
     </div>
   );
 }
+
+
 

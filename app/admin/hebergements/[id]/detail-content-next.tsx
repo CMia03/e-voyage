@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -38,6 +38,7 @@ const initialTarifForm: TarifFormState = {
   prixReservation: "",
   prixParNuit: "",
   devise: "MGA",
+  gamme: "MOYENNE",
   capacite: "2",
   petitDejeunerInclus: false,
   estActif: true,
@@ -168,6 +169,7 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
       prixReservation: tarif.prixReservation !== null && tarif.prixReservation !== undefined ? String(tarif.prixReservation) : "",
       prixParNuit: String(tarif.prixParNuit ?? ""),
       devise: tarif.devise ?? "MGA",
+      gamme: tarif.gamme ?? "MOYENNE",
       capacite: String(tarif.capacite ?? "2"),
       petitDejeunerInclus: Boolean(tarif.petitDejeunerInclus),
       estActif: Boolean(tarif.estActif),
@@ -239,6 +241,7 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
         prixReservation: tarifForm.prixReservation ? Number(tarifForm.prixReservation) : null,
         prixParNuit: Number(tarifForm.prixParNuit),
         devise: tarifForm.devise.trim() || "MGA",
+        gamme: tarifForm.gamme,
         capacite: Number(tarifForm.capacite),
         petitDejeunerInclus: tarifForm.petitDejeunerInclus,
         estActif: tarifForm.estActif,
@@ -270,6 +273,7 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
         prixReservation: tarifForm.prixReservation ? Number(tarifForm.prixReservation) : null,
         prixParNuit: Number(tarifForm.prixParNuit),
         devise: tarifForm.devise.trim() || "MGA",
+        gamme: tarifForm.gamme,
         capacite: Number(tarifForm.capacite),
         petitDejeunerInclus: tarifForm.petitDejeunerInclus,
         estActif: tarifForm.estActif,
@@ -611,3 +615,8 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
     </div>
   );
 }
+
+
+
+
+

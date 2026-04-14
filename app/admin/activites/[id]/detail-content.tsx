@@ -17,19 +17,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { getErrorMessage } from "@/lib/api/client";
 import {
   createActivitePhotos,
+  createCategorieClientActivite,
   createTarifActivite,
   deleteActivitePhoto,
   deleteTarifActivite,
   getActivite,
+  listCategorieClientActivites,
   updateTarifActivite,
 } from "@/lib/api/activites";
 import { loadAuth } from "@/lib/auth";
-import { Activite, SavePhotoActivitePayload, SaveTarifActivitePayload, TarifActivite } from "@/lib/type/activite";
+import { Activite, CategorieClientActivite, SavePhotoActivitePayload, SaveTarifActivitePayload, TarifActivite } from "@/lib/type/activite";
 
 type Props = { activiteId: string };
 
 type TarifFormState = {
-  categorieAge: string;
+  idCategorieClient: string;
   prixParHeur: string;
   devise: string;
   estActif: boolean;
@@ -38,7 +40,7 @@ type TarifFormState = {
 };
 
 const initialTarifForm: TarifFormState = {
-  categorieAge: "",
+  idCategorieClient: "",
   prixParHeur: "",
   devise: "MGA",
   estActif: true,
@@ -46,21 +48,17 @@ const initialTarifForm: TarifFormState = {
   dateValiditeFin: "",
 };
 
-const ageCategories = [
-  "Enfant",
-  "Jeune",
-  "Adulte",
-  "Senior",
-  "Tout public",
-];
-
 export function AdminActiviteDetailContent({ activiteId }: Props) {
   const router = useRouter();
   const [accessToken, setAccessToken] = useState("");
   const [role, setRole] = useState("");
   const [activite, setActivite] = useState<Activite | null>(null);
+  const [categoriesClient, setCategoriesClient] = useState<CategorieClientActivite[]>([]);
+  const [newCategorieClientName, setNewCategorieClientName] = useState("");
+  const [showCategorieClientCreator, setShowCategorieClientCreator] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSavingTarif, setIsSavingTarif] = useState(false);
+  const [isCreatingCategorieClient, setIsCreatingCategorieClient] = useState(false);
   const [isSavingPhotos, setIsSavingPhotos] = useState(false);
   const [isDeletingTarifId, setIsDeletingTarifId] = useState<string | null>(null);
   const [isDeletingPhotoId, setIsDeletingPhotoId] = useState<string | null>(null);
@@ -132,8 +130,14 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
     setIsLoading(true);
     setError("");
     try {
-      const response = await getActivite(activiteId, accessToken);
-      setActivite(response.data ?? null);
+      const [activiteResponse, categoriesClientResponse] = await Promise.all([
+        getActivite(activiteId, accessToken),
+        listCategorieClientActivites(accessToken),
+      ]);
+      setActivite(activiteResponse.data ?? null);
+      setCategoriesClient(
+        [...(categoriesClientResponse.data ?? [])].sort((a, b) => a.nom.localeCompare(b.nom, "fr", { sensitivity: "base" }))
+      );
     } catch (loadError) {
       setError(getErrorMessage(loadError, "Impossible de charger le detail de l'activite"));
     } finally {
@@ -152,7 +156,7 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
 
   function formFromTarif(tarif: TarifActivite): TarifFormState {
     return {
-      categorieAge: tarif.categorieAge ?? "",
+      idCategorieClient: tarif.idCategorieClient ?? "",
       prixParHeur: tarif.prixParHeur !== null && tarif.prixParHeur !== undefined ? String(tarif.prixParHeur) : "",
       devise: tarif.devise ?? "MGA",
       estActif: Boolean(tarif.estActif),
@@ -164,18 +168,22 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
   function openCreateTarifDialog() {
     setEditingTarifId(null);
     setTarifForm(initialTarifForm);
+    setNewCategorieClientName("");
+    setShowCategorieClientCreator(false);
     setIsTarifDialogOpen(true);
   }
 
   function openEditTarifDialog(tarif: TarifActivite) {
     setEditingTarifId(tarif.id);
     setTarifForm(formFromTarif(tarif));
+    setNewCategorieClientName("");
+    setShowCategorieClientCreator(false);
     setIsTarifDialogOpen(true);
   }
 
   function buildTarifPayload(): SaveTarifActivitePayload {
     return {
-      categorieAge: tarifForm.categorieAge,
+      idCategorieClient: tarifForm.idCategorieClient,
       prixParPersonne: null,
       prixParHeur: tarifForm.prixParHeur ? Number(tarifForm.prixParHeur) : null,
       devise: tarifForm.devise.trim() || "MGA",
@@ -184,6 +192,35 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
       dateValiditeFin: tarifForm.dateValiditeFin,
       idActivite: activiteId,
     };
+  }
+
+  async function handleCreateCategorieClient() {
+    const trimmed = newCategorieClientName.trim();
+    if (!trimmed) {
+      setError("Renseigne le nom de la categorie client.");
+      return;
+    }
+
+    setIsCreatingCategorieClient(true);
+    setError("");
+    setSuccessMessage("");
+    try {
+      const response = await createCategorieClientActivite(trimmed, accessToken);
+      const createdCategory = response.data;
+      if (createdCategory) {
+        setCategoriesClient((current) =>
+          [...current, createdCategory].sort((a, b) => a.nom.localeCompare(b.nom, "fr", { sensitivity: "base" }))
+        );
+        setTarifForm((current) => ({ ...current, idCategorieClient: createdCategory.id }));
+      }
+      setNewCategorieClientName("");
+      setShowCategorieClientCreator(false);
+      setSuccessMessage("Categorie client ajoutee avec succes.");
+    } catch (createError) {
+      setError(getErrorMessage(createError, "Impossible d'ajouter la categorie client"));
+    } finally {
+      setIsCreatingCategorieClient(false);
+    }
   }
 
   async function handleSubmitTarif(event: React.FormEvent<HTMLFormElement>) {
@@ -416,7 +453,7 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
                           </h3>
                           <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                             <span className="rounded-full bg-muted px-2.5 py-1">
-                              Categorie: {tarif.categorieAge || "-"}
+                              Categorie client: {tarif.nomCategorieClient || "-"}
                             </span>
                             <span className="rounded-full bg-muted px-2.5 py-1">
                               {tarif.dateValiditeDebut || "-"} - {tarif.dateValiditeFin || "-"}
@@ -491,6 +528,8 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
           if (!value) {
             setTarifForm(initialTarifForm);
             setEditingTarifId(null);
+            setNewCategorieClientName("");
+            setShowCategorieClientCreator(false);
           }
         }}
       >
@@ -503,19 +542,56 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
           <form className="space-y-6" onSubmit={handleSubmitTarif}>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-medium">Categorie d'age</label>
-                <Select value={tarifForm.categorieAge} onValueChange={(value) => updateTarifForm("categorieAge", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choisir une categorie d'age" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ageCategories.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <label className="text-sm font-medium">Categorie client</label>
+                <div className="flex gap-2">
+                  <Select value={tarifForm.idCategorieClient} onValueChange={(value) => updateTarifForm("idCategorieClient", value)}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Choisir une categorie client" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categoriesClient.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.nom}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setShowCategorieClientCreator((current) => !current)}
+                    aria-label="Ajouter une categorie client"
+                  >
+                    <Plus className="size-4" />
+                  </Button>
+                </div>
+                {showCategorieClientCreator ? (
+                  <div className="rounded-xl border border-border/50 bg-muted/20 p-3">
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <Input
+                        placeholder="Nouvelle categorie client"
+                        value={newCategorieClientName}
+                        onChange={(event) => setNewCategorieClientName(event.target.value)}
+                      />
+                      <div className="flex gap-2">
+                        <Button type="button" onClick={handleCreateCategorieClient} disabled={isCreatingCategorieClient}>
+                          {isCreatingCategorieClient ? "Ajout..." : "Ajouter"}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => {
+                            setShowCategorieClientCreator(false);
+                            setNewCategorieClientName("");
+                          }}
+                        >
+                          Annuler
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Prix par heure</label>

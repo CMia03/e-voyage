@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 
@@ -34,11 +34,7 @@ const initialFormState: DestinationFormState = {
   imageFile: null,
   latitude: "-18.8792",
   longitude: "47.5079",
-  nombreEtoiles: "0",
   estActif: true,
-  region: "",
-  district: "",
-  commune: "",
 };
 
 function makeSlug(value: string) {
@@ -61,11 +57,7 @@ function formFromDestination(destination: AdminDestinationItem): DestinationForm
     imageFile: null,
     latitude: String(destination.latitude ?? 0),
     longitude: String(destination.longitude ?? 0),
-    nombreEtoiles: String(destination.nombreEtoiles ?? 0),
     estActif: Boolean(destination.estActif),
-    region: destination.region ?? "",
-    district: destination.district ?? "",
-    commune: destination.commune ?? "",
   };
 }
 
@@ -79,11 +71,7 @@ function payloadFromForm(form: DestinationFormState): SaveDestinationPayload {
     imageFile: form.imageFile,
     latitude: Number(form.latitude),
     longitude: Number(form.longitude),
-    nombreEtoiles: Number(form.nombreEtoiles || 0),
     estActif: form.estActif,
-    region: form.region.trim(),
-    district: form.district.trim(),
-    commune: form.commune.trim(),
   };
 }
 

@@ -39,9 +39,4 @@ export function updateUser(token: string, userId: string, userData: {
   });
 }
 
-export function listUsers(token: string) {
-  return apiRequest<{ data?: UserSummary[] }>("/api/utilisateurs", {
-    token,
-  });
-}
 

@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getErrorMessage } from "@/lib/api/client";
-import { listUsers, UserSummary } from "@/lib/api/users";
+import { getUsers, UserSummary } from "@/lib/api/users";
 import { getDashboardData } from "@/lib/api/dashboard";
 import { DashboardResponse } from "@/lib/type/dashboard";
 import { DASHBOARD_TEXTS } from "@/lib/constants/texts";
@@ -55,7 +55,7 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
     let active = true;
     const loadUsers = async () => {
       try {
-        const response = await listUsers(accessToken);
+        const response = await getUsers(accessToken);
         if (active) {
           setUsers(response?.data ?? []);
         }

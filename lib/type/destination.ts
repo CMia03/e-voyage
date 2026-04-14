@@ -1,4 +1,4 @@
-export interface DestinationDetails {
+﻿export interface DestinationDetails {
   id: string;
   title: string;
   description: string;
@@ -58,13 +58,9 @@ export type AdminDestination = {
   urlImagePrincipale: string;
   latitude: number;
   longitude: number;
-  nombreEtoiles: number;
   estActif: boolean;
   dateCreation?: string;
   dateModification?: string;
-  region: string;
-  district: string;
-  commune: string;
   photos: PhotoDestinationGroup[];
   marketing?: DestinationMarketingItem[];
 };
@@ -211,11 +207,7 @@ export type SaveDestinationPayload = {
   imageFile?: File | null;
   latitude: number;
   longitude: number;
-  nombreEtoiles: number;
   estActif: boolean;
-  region: string;
-  district: string;
-  commune: string;
 };
 
 export type SavePhotoDestinationBulkPayload = {
@@ -293,3 +285,5 @@ export type SaveElementJourPlanificationPayload = {
   idActivite?: string | null;
   idHebergement?: string | null;
 };
+
+

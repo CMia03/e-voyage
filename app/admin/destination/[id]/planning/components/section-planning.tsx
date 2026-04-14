@@ -71,188 +71,229 @@ export function SectionPlanning({
             Aucun jour de planning pour cette planification.
           </div>
         ) : (
-          <div className="grid gap-4 xl:grid-cols-3 2xl:grid-cols-4">
-            {sortedDays.map((jour) => {
-              const sortedElements = [...(jour.elements ?? [])].sort(
-                (a, b) => (a.ordreAffichage ?? 9999) - (b.ordreAffichage ?? 9999)
-              );
+          // Conteneur avec scroll horizontal
+          <div className="overflow-x-auto pb-4">
+            <div className="flex gap-4" style={{ minWidth: "max-content" }}>
+              {sortedDays.map((jour) => {
+                const sortedElements = [...(jour.elements ?? [])].sort(
+                  (a, b) => (a.ordreAffichage ?? 9999) - (b.ordreAffichage ?? 9999)
+                );
 
-              return (
-                <div key={jour.id} className="rounded-3xl border border-border/60 bg-card/40 p-4 shadow-sm">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary">Jour {jour.numeroJour ?? "-"}</Badge>
-                        {jour.dateJour ? <span className="text-xs text-muted-foreground">{formatDate(jour.dateJour)}</span> : null}
-                      </div>
-                      <h3 className="text-base font-semibold">{jour.titre || `Jour ${jour.numeroJour ?? ""}`}</h3>
-                      {jour.description ? <p className="text-sm text-muted-foreground">{jour.description}</p> : null}
-                    </div>
-                    <div className="relative">
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="outline"
-                        onClick={() =>
-                          setOpenActionMenuKey((current) => (current === `jour-${jour.id}` ? null : `jour-${jour.id}`))
-                        }
-                      >
-                        <MoreVertical className="size-4" />
-                      </Button>
-                      {openActionMenuKey === `jour-${jour.id}` ? (
-                        <div className="absolute right-0 top-10 z-20 w-44 rounded-xl border border-border bg-background p-1.5 shadow-lg">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            className="w-full justify-start"
-                            onClick={() => {
-                              setOpenActionMenuKey(null);
-                              onEditJour(jour);
-                            }}
-                          >
-                            <Pencil className="size-4" />
-                            Modifier
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            className="w-full justify-start"
-                            onClick={() => {
-                              setOpenActionMenuKey(null);
-                              onJourDetails(jour);
-                            }}
-                          >
-                            Détaille
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            className="w-full justify-start text-destructive hover:text-destructive"
-                            onClick={() => {
-                              setOpenActionMenuKey(null);
-                              onDeleteJour(jour.id);
-                            }}
-                            disabled={isDeletingId === jour.id}
-                          >
-                            <Trash2 className="size-4" />
-                            {isDeletingId === jour.id ? "Suppression..." : "Supprimer"}
-                          </Button>
+                return (
+                  <div 
+                    key={jour.id} 
+                    className="w-[400px] flex-shrink-0 rounded-3xl border border-border/60 bg-card/40 p-4 shadow-sm"
+                  >
+                    {/* En-tête du jour */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary">Jour {jour.numeroJour ?? "-"}</Badge>
+                          {jour.dateJour ? <span className="text-xs text-muted-foreground">{formatDate(jour.dateJour)}</span> : null}
                         </div>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  {sortedElements.length === 0 ? (
-                    <div className="mt-4 flex justify-center">
-                      <Button type="button" size="sm" variant="outline" onClick={() => onAddElement(jour, 0)}>
-                        <Plus className="size-4" />
-                        Ajouter un bloc
-                      </Button>
-                    </div>
-                  ) : null}
-
-                  <div className="mt-4 space-y-3">
-                    {sortedElements.length === 0 ? (
-                      <div className="rounded-2xl border border-dashed border-border/60 bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground">
-                        Aucun bloc pour ce jour.
+                        <h3 className="text-base font-semibold">{jour.titre || `Jour ${jour.numeroJour ?? ""}`}</h3>
+                        {jour.description ? <p className="text-sm text-muted-foreground line-clamp-2">{jour.description}</p> : null}
                       </div>
-                    ) : (
-                      sortedElements.map((element, index) => (
-                        <div key={element.id} className="space-y-3">
-                          <div className="rounded-2xl border border-border/50 bg-background/70 p-4">
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="space-y-2">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <Badge variant="outline">{element.nomTypeElementJour || "Element"}</Badge>
-                                  {element.estActif ? <Badge variant="secondary">Actif</Badge> : <Badge variant="outline">Inactif</Badge>}
-                                </div>
-                                <h4 className="font-medium">{getElementDisplayTitle(element)}</h4>
-                                {element.description ? <p className="text-sm text-muted-foreground">{element.description}</p> : null}
-                                <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                                  <span className="rounded-full bg-muted px-2.5 py-1">Debut: {formatDateTime(element.heureDebut)}</span>
-                                  <span className="rounded-full bg-muted px-2.5 py-1">Fin: {formatDateTime(element.heureFin)}</span>
-                                  <span className="rounded-full bg-muted px-2.5 py-1">
-                                    Budget: {element.budgetPrevu ?? "-"} {element.devise || "MGA"}
-                                  </span>
-                                </div>
-                                {getLinkedLabel(element) ? (
-                                  <button
-                                    type="button"
-                                    className="text-left text-xs font-medium text-emerald-700 hover:text-emerald-900 hover:underline"
-                                    onClick={() => onOpenLinkedDetails(element)}
-                                  >
-                                    Lie a: {getLinkedLabel(element)} (voir details)
-                                  </button>
-                                ) : null}
-                              </div>
-                              <div className="relative">
-                                <Button
-                                  type="button"
-                                  size="icon"
-                                  variant="outline"
-                                  onClick={() =>
-                                    setOpenActionMenuKey((current) =>
-                                      current === `element-${element.id}` ? null : `element-${element.id}`
-                                    )
-                                  }
-                                >
-                                  <MoreVertical className="size-4" />
-                                </Button>
-                                {openActionMenuKey === `element-${element.id}` ? (
-                                  <div className="absolute right-0 top-10 z-20 w-44 rounded-xl border border-border bg-background p-1.5 shadow-lg">
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      className="w-full justify-start"
-                                      onClick={() => {
-                                        setOpenActionMenuKey(null);
-                                        onEditElement(jour.id, element);
-                                      }}
-                                    >
-                                      <Pencil className="size-4" />
-                                      Modifier
-                                    </Button>
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      className="w-full justify-start"
-                                      onClick={() => {
-                                        setOpenActionMenuKey(null);
-                                        onElementDetails(jour, element);
-                                      }}
-                                    >
-                                      Détaille
-                                    </Button>
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      className="w-full justify-start text-destructive hover:text-destructive"
-                                      onClick={() => {
-                                        setOpenActionMenuKey(null);
-                                        onDeleteElement(element.id);
-                                      }}
-                                      disabled={isDeletingId === element.id}
-                                    >
-                                      <Trash2 className="size-4" />
-                                      {isDeletingId === element.id ? "Suppression..." : "Supprimer"}
-                                    </Button>
-                                  </div>
-                                ) : null}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex justify-center">
-                            <Button type="button" size="icon" variant="outline" className="rounded-full" onClick={() => onAddElement(jour, index + 1)}>
-                              <Plus className="size-4" />
+                      <div className="relative">
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="outline"
+                          onClick={() =>
+                            setOpenActionMenuKey((current) => (current === `jour-${jour.id}` ? null : `jour-${jour.id}`))
+                          }
+                        >
+                          <MoreVertical className="size-4" />
+                        </Button>
+                        {openActionMenuKey === `jour-${jour.id}` ? (
+                          <div className="absolute right-0 top-10 z-20 w-44 rounded-xl border border-border bg-background p-1.5 shadow-lg">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              className="w-full justify-start"
+                              onClick={() => {
+                                setOpenActionMenuKey(null);
+                                onEditJour(jour);
+                              }}
+                            >
+                              <Pencil className="size-4" />
+                              Modifier
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              className="w-full justify-start"
+                              onClick={() => {
+                                setOpenActionMenuKey(null);
+                                onJourDetails(jour);
+                              }}
+                            >
+                              Détaille
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              className="w-full justify-start text-destructive hover:text-destructive"
+                              onClick={() => {
+                                setOpenActionMenuKey(null);
+                                onDeleteJour(jour.id);
+                              }}
+                              disabled={isDeletingId === jour.id}
+                            >
+                              <Trash2 className="size-4" />
+                              {isDeletingId === jour.id ? "Suppression..." : "Supprimer"}
                             </Button>
                           </div>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    {/* Bouton ajouter un bloc (si vide) */}
+                    {sortedElements.length === 0 ? (
+                      <div className="mt-4 flex justify-center">
+                        <Button type="button" size="sm" variant="outline" onClick={() => onAddElement(jour, 0)}>
+                          <Plus className="size-4" />
+                          Ajouter un bloc
+                        </Button>
+                      </div>
+                    ) : null}
+
+                    {/* Liste des éléments - scroll vertical à l'intérieur du jour */}
+                    <div className="mt-4 space-y-3 max-h-[500px] overflow-y-auto">
+                      {sortedElements.length === 0 ? (
+                        <div className="rounded-2xl border border-dashed border-border/60 bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground">
+                          Aucun bloc pour ce jour.
                         </div>
-                      ))
+                      ) : (
+                        sortedElements.map((element, index) => (
+                          <div key={element.id} className="space-y-3">
+                            <div className="rounded-2xl border border-border/50 bg-background/70 p-3">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="space-y-1.5 flex-1 min-w-0">
+                                  <div className="flex flex-wrap items-center gap-1.5">
+                                    <Badge variant="outline" className="text-[10px]">{element.nomTypeElementJour || "Element"}</Badge>
+                                    {element.estActif ? (
+                                      <Badge variant="secondary" className="text-[10px]">Actif</Badge>
+                                    ) : (
+                                      <Badge variant="outline" className="text-[10px]">Inactif</Badge>
+                                    )}
+                                  </div>
+                                  <h4 className="font-medium text-sm line-clamp-2">{getElementDisplayTitle(element)}</h4>
+                                  {element.description ? (
+                                    <p className="text-xs text-muted-foreground line-clamp-2">{element.description}</p>
+                                  ) : null}
+                                  <div className="flex flex-wrap gap-1.5 text-[10px] text-muted-foreground">
+                                    <span className="rounded-full bg-muted px-2 py-0.5">Début: {formatDateTime(element.heureDebut)}</span>
+                                    <span className="rounded-full bg-muted px-2 py-0.5">Fin: {formatDateTime(element.heureFin)}</span>
+                                    <span className="rounded-full bg-muted px-2 py-0.5">
+                                      Budget: {element.budgetPrevu ?? "-"} {element.devise || "MGA"}
+                                    </span>
+                                  </div>
+                                  {getLinkedLabel(element) ? (
+                                    <button
+                                      type="button"
+                                      className="text-left text-[10px] font-medium text-emerald-700 hover:text-emerald-900 hover:underline"
+                                      onClick={() => onOpenLinkedDetails(element)}
+                                    >
+                                      Lié à: {getLinkedLabel(element)}
+                                    </button>
+                                  ) : null}
+                                </div>
+                                <div className="relative shrink-0">
+                                  <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="outline"
+                                    className="h-7 w-7"
+                                    onClick={() =>
+                                      setOpenActionMenuKey((current) =>
+                                        current === `element-${element.id}` ? null : `element-${element.id}`
+                                      )
+                                    }
+                                  >
+                                    <MoreVertical className="size-3.5" />
+                                  </Button>
+                                  {openActionMenuKey === `element-${element.id}` ? (
+                                    <div className="absolute right-0 top-8 z-20 w-40 rounded-xl border border-border bg-background p-1 shadow-lg">
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        className="w-full justify-start text-xs"
+                                        onClick={() => {
+                                          setOpenActionMenuKey(null);
+                                          onEditElement(jour.id, element);
+                                        }}
+                                      >
+                                        <Pencil className="size-3 mr-2" />
+                                        Modifier
+                                      </Button>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        className="w-full justify-start text-xs"
+                                        onClick={() => {
+                                          setOpenActionMenuKey(null);
+                                          onElementDetails(jour, element);
+                                        }}
+                                      >
+                                        Détail
+                                      </Button>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        className="w-full justify-start text-xs text-destructive hover:text-destructive"
+                                        onClick={() => {
+                                          setOpenActionMenuKey(null);
+                                          onDeleteElement(element.id);
+                                        }}
+                                        disabled={isDeletingId === element.id}
+                                      >
+                                        <Trash2 className="size-3 mr-2" />
+                                        {isDeletingId === element.id ? "Suppression..." : "Supprimer"}
+                                      </Button>
+                                    </div>
+                                  ) : null}
+                                </div>
+                              </div>
+                            </div>
+                            {/* Bouton + entre les éléments */}
+                            {index < sortedElements.length - 1 && (
+                              <div className="flex justify-center">
+                                <Button 
+                                  type="button" 
+                                  size="icon" 
+                                  variant="outline" 
+                                  className="rounded-full h-6 w-6"
+                                  onClick={() => onAddElement(jour, index + 1)}
+                                >
+                                  <Plus className="size-3" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    
+                    {/* Bouton ajouter à la fin du jour */}
+                    {sortedElements.length > 0 && (
+                      <div className="mt-3 flex justify-center pt-2 border-t border-border/40">
+                        <Button 
+                          type="button" 
+                          size="sm" 
+                          variant="ghost" 
+                          className="text-xs"
+                          onClick={() => onAddElement(jour, sortedElements.length)}
+                        >
+                          <Plus className="size-3 mr-1" />
+                          Ajouter un bloc
+                        </Button>
+                      </div>
                     )}
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         )}
       </CardContent>

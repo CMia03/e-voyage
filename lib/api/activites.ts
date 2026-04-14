@@ -1,7 +1,8 @@
-import { apiRequest } from "@/lib/api/client";
+﻿import { apiRequest } from "@/lib/api/client";
 import {
   Activite,
   CategorieActivite,
+  CategorieClientActivite,
   PhotoActivite,
   SaveActivitePayload,
   SavePhotoActivitePayload,
@@ -94,6 +95,26 @@ export function listActiviteCategories(token?: string) {
 export function createActiviteCategorie(nom: string, token?: string) {
   return apiRequest<ApiDataEnvelope<CategorieActivite>>(
     "/api/activites/categories",
+    {
+      method: "POST",
+      token,
+      body: { nom },
+    }
+  );
+}
+
+export function listCategorieClientActivites(token?: string) {
+  return apiRequest<ApiDataEnvelope<CategorieClientActivite[]>>(
+    "/api/activites/categories-client",
+    {
+      token,
+    }
+  );
+}
+
+export function createCategorieClientActivite(nom: string, token?: string) {
+  return apiRequest<ApiDataEnvelope<CategorieClientActivite>>(
+    "/api/activites/categories-client",
     {
       method: "POST",
       token,

@@ -7,7 +7,7 @@ import { Search, X, MapPin, Home, Calendar, Users, Settings } from "lucide-react
 import { listAdminDestinations } from "@/lib/api/destinations";
 import { listHebergements } from "@/lib/api/hebergements";
 import { listActivites } from "@/lib/api/activites";
-import { listUsers } from "@/lib/api/users";
+import { getUsers } from "@/lib/api/users";
 import { loadAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
@@ -138,7 +138,7 @@ export function AdminSearchBar() {
     // Search users from database (admin specific)
     if (token) {
       try {
-        const response = await listUsers(token);
+        const response = await getUsers(token);
         const users = response.data || [];
         users.forEach((user: any) => {
           if (

@@ -1,4 +1,4 @@
-export type Hebergement = {
+﻿export type Hebergement = {
   id: string;
   nom: string;
   slug: string;
@@ -74,11 +74,14 @@ export type PhotoHebergementChambre = {
   nomTypeSalle: string;
 };
 
+export type GammeTarif = "MOYENNE" | "LUXE";
+
 export type TarifHebergement = {
   id: string;
   prixReservation: number | null;
   prixParNuit: number;
   devise: string;
+  gamme: GammeTarif;
   capacite: number;
   petitDejeunerInclus: boolean;
   estActif: boolean;
@@ -97,6 +100,7 @@ export type SaveTarifHebergementPayload = {
   prixReservation?: number | null;
   prixParNuit: number;
   devise: string;
+  gamme: GammeTarif;
   capacite: number;
   petitDejeunerInclus: boolean;
   estActif: boolean;

@@ -1,4 +1,4 @@
-import { apiRequest, ApiEnvelope } from "@/lib/api/client";
+﻿import { apiRequest, ApiEnvelope } from "@/lib/api/client";
 import {
   AdminDestination,
   DestinationDetails,
@@ -87,11 +87,7 @@ function buildDestinationFormData(payload: SaveDestinationPayload) {
   formData.append("urlImagePrincipale", payload.urlImagePrincipale);
   formData.append("latitude", String(payload.latitude));
   formData.append("longitude", String(payload.longitude));
-  formData.append("nombreEtoiles", String(payload.nombreEtoiles));
   formData.append("estActif", String(payload.estActif));
-  formData.append("region", payload.region);
-  formData.append("district", payload.district);
-  formData.append("commune", payload.commune);
 
   if (payload.imageFile) {
     formData.append("imageFile", payload.imageFile);
@@ -458,3 +454,5 @@ export function calculateTransportRoute(id: string, token?: string) {
     token,
   });
 }
+
+
