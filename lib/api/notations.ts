@@ -88,6 +88,24 @@ export async function getAllNotations(): Promise<AllNotationsResponse> {
   }
 }
 
+// Supprimer la notation d'un utilisateur pour une destination
+export async function deleteUserRating(destinationId: string, userId: string, token: string): Promise<{ success: boolean, message: string }> {
+  try {
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    const response = await axios.delete(
+      `http://localhost:8080/api/notations/destination/${destinationId}/utilisateur/${userId}`,
+      { headers }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting user rating:', error);
+    throw error;
+  }
+}
+
 // Récupérer toutes les notations depuis l'API /all
 export async function getAllNotationsFromApi(): Promise<AllNotationsResponse> {
   try {
