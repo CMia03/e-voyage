@@ -1,20 +1,40 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { MessageSquare, Search, Calendar, MapPin, Star } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { MessageSquare, Search, Calendar, MapPin, Star, Trash2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useBreadcrumbs } from "../contexts/breadcrumbs-context";
-import { getAllNotationsFromApi, NotationData } from "@/lib/api/notations";
+import { getAllNotationsFromApi, deleteUserRating, NotationData } from "@/lib/api/notations";
+import { useAuth } from "@/hooks/useAuth";
 
 export function AdminAvis() {
   const { setBreadcrumbs } = useBreadcrumbs();
+  const { session } = useAuth();
   const [avis, setAvis] = useState<NotationData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDestination, setSelectedDestination] = useState("dest1"); // Destination par défaut
+  const [selectedDestination, setSelectedDestination] = useState("all"); // Destination par défaut, 'all' pour afficher tous les avis
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const fetchNotations = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await getAllNotationsFromApi();
+      if (response.success) {
+        // Filtrer les avis par destination sélectionnée
+        const filteredAvis = selectedDestination === "all" 
+          ? response.data 
+          : response.data.filter(avi => avi.idDestination === selectedDestination);
+        setAvis(filteredAvis);
+      }
+    } catch (error) {
+      console.error('Error fetching notations:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedDestination]);
 
   useEffect(() => {
     setBreadcrumbs([
@@ -24,24 +44,33 @@ export function AdminAvis() {
   }, [setBreadcrumbs]);
 
   useEffect(() => {
-    const fetchNotations = async () => {
-      try {
-        setLoading(true);
-        const response = await getAllNotationsFromApi();
-        if (response.success) {
-          setAvis(response.data);
-        }
-      } catch (error) {
-        console.error('Error fetching notations:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchNotations();
-  }, []);
+  }, [selectedDestination, fetchNotations]);
 
   const [searchTerm, setSearchTerm] = useState("");
+
+  const handleDeleteAvis = async (avi: NotationData) => {
+    if (!session?.accessToken) {
+      alert("Vous devez être authentifié pour supprimer un avis");
+      return;
+    }
+
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer l'avis de ${avi.nomUser} pour ${avi.nomDestination} ?`)) {
+      return;
+    }
+
+    try {
+      setDeletingId(avi.idAvis);
+      await deleteUserRating(avi.idDestination, avi.idUser, session.accessToken);
+      // Rafraîchir la liste des avis
+      fetchNotations();
+    } catch (error) {
+      console.error('Error deleting avis:', error);
+      alert("Erreur lors de la suppression de l'avis");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -123,6 +152,20 @@ export function AdminAvis() {
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-medium text-foreground">{avi.nomUser}</h3>
+                      <button
+                        onClick={() => handleDeleteAvis(avi)}
+                        disabled={deletingId === avi.idAvis}
+                        className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {deletingId === avi.idAvis ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-medium text-foreground">{avi.nomUser}</h3>
                       <div className="flex items-center gap-1">
