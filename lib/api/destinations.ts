@@ -1,4 +1,5 @@
-﻿import { apiRequest, ApiEnvelope } from "@/lib/api/client";
+import { apiRequest, ApiEnvelope } from "@/lib/api/client";
+import axios from "axios";
 import {
   AdminDestination,
   DestinationDetails,
@@ -455,4 +456,9 @@ export function calculateTransportRoute(id: string, token?: string) {
   });
 }
 
-
+export function getDestinationDetailsFromBackend(id: string, token?: string) {
+  return apiRequest<ApiEnvelope<DestinationDetails>>(`/api/public/destinations/${id}`, {
+    method: "GET",
+    token,
+  });
+}

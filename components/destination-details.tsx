@@ -200,7 +200,7 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
                 {reservationContacts.infoPhone && (
                   <div className="flex items-center gap-2">
                     <Phone className="h-4 w-4 text-primary" />
-                    <span className="font-medium">Plus d'infos :</span>
+                    <span className="font-medium">Plus d infos :</span>
                     <a href={`tel:${reservationContacts.infoPhone}`} className="text-primary hover:underline">
                       {reservationContacts.infoPhone}
                     </a>

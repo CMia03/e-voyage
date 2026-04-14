@@ -9,6 +9,7 @@ import {
   initializeSessionManager,
   withTokenRefresh 
 } from "@/lib/session-manager";
+import { checkAndLoadGoogleUserProfile, hasPreviousGoogleSession } from "@/lib/auto-auth";
 
 interface UseAuthReturn {
   session: AuthSession | null;
@@ -33,25 +34,42 @@ export function useAuth(): UseAuthReturn {
         const savedSession = loadAuth();
         
         if (savedSession) {
-          // Vérifier si le token est valide
-          if (isAuthenticated()) {
-            const validToken = await getValidToken();
-            if (validToken) {
-              setSession(savedSession);
-            } else {
-              // Token expiré et non rafraîchissable
+          // Vérifier si c'est un utilisateur Google et charger son profil automatiquement
+          if (hasPreviousGoogleSession()) {
+            try {
+              const googleResult = await checkAndLoadGoogleUserProfile();
+              if (googleResult.session) {
+                setSession(googleResult.session);
+              } else {
+                clearAuth();
+                setSession(null);
+              }
+            } catch (error) {
+              console.error("Erreur lors du chargement du profil Google:", error);
               clearAuth();
               setSession(null);
             }
           } else {
-            // Token expiré, essayer de rafraîchir
-            const refreshedSession = await forceRefreshToken();
-            if (refreshedSession) {
-              setSession(refreshedSession);
+            // Vérifier si le token est valide
+            if (isAuthenticated()) {
+              const validToken = await getValidToken();
+              if (validToken) {
+                setSession(savedSession);
+              } else {
+                // Token expiré et non rafraîchissable
+                clearAuth();
+                setSession(null);
+              }
             } else {
-              // Échec du refresh, déconnecter automatiquement
-              clearAuth();
-              setSession(null);
+              // Token expiré, essayer de rafraîchir
+              const refreshedSession = await forceRefreshToken();
+              if (refreshedSession) {
+                setSession(refreshedSession);
+              } else {
+                // Échec du refresh, déconnecter automatiquement
+                clearAuth();
+                setSession(null);
+              }
             }
           }
         }
@@ -147,7 +165,7 @@ export function useAuth(): UseAuthReturn {
     }
   }, [logout]);
 
-  return {
+  const authResult = {
     session,
     isLoading,
     isAuthenticated: !!session && isAuthenticated(),
@@ -157,6 +175,9 @@ export function useAuth(): UseAuthReturn {
     getValidToken: getValidTokenCallback,
     forceRefresh: forceRefreshCallback,
   };
+  
+  console.log("useAuth result:", authResult);
+  return authResult;
 }
 
 // Hook pour les requêtes API avec gestion automatique du token

@@ -5,8 +5,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Plus, X } from "lucide-react";
 
-import { AdminFooter } from "@/app/admin/components/footer";
-import { AdminHeader } from "@/app/admin/components/header";
 import { FormTarifHebergement, TarifFormState } from "./form-tarif-hebergement";
 import { ListeTarifHebergement } from "./liste-tarif-hebergement";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -407,11 +405,10 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
   ) : null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-muted/30 to-background text-foreground">
-      <AdminHeader />
+    <>
       {errorAlert}
       {successAlert}
-      <main className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6 sm:py-8">
+      <div className="space-y-8">
         <div className="space-y-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-3">
@@ -477,7 +474,7 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
             onOpenPhotoModal={openPhotoDialog}
           />
         </div>
-      </main>
+      </div>
 
       <Dialog open={isTarifDialogOpen} onOpenChange={setIsTarifDialogOpen}>
         <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
@@ -509,7 +506,7 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
         <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Modifier un tarif</DialogTitle>
-            <DialogDescription>Met a jour les informations de ce tarif d'hebergement.</DialogDescription>
+            <DialogDescription>Met a jour les informations de ce tarif d hebergement.</DialogDescription>
           </DialogHeader>
           <FormTarifHebergement
             form={tarifForm}
@@ -610,9 +607,7 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
           </form>
         </DialogContent>
       </Dialog>
-
-      <AdminFooter />
-    </div>
+    </>
   );
 }
 

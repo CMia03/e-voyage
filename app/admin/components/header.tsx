@@ -7,8 +7,9 @@ import { loadAuth, clearAuth, AuthSession } from "@/lib/auth";
 import { ApiError, getErrorMessage } from "@/lib/api/client";
 import { getProfile } from "@/lib/api/auth";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { Menu, Home, MapPin, Building, Play, ChevronDown, Calendar } from "lucide-react";
+import { Menu, Home, MapPin, Building, Play, ChevronDown, Calendar, Users, Bell, Star, Briefcase } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -36,12 +37,18 @@ type UserProfile = {
 
 export function AdminHeader() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [auth, setAuth] = useState<AuthSession | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev =>
@@ -135,11 +142,8 @@ export function AdminHeader() {
           
           <Link href="/" className="flex cursor-pointer items-center gap-3">
             <span className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent sm:text-2xl">
-              🌴 Cool Voyage
+              Cool Voyage
             </span>
-            {/* <span className="rounded-full bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-600">
-              Admin
-            </span> */}
           </Link>
         </div>
 
@@ -332,7 +336,7 @@ export function AdminHeader() {
             <div className="bg-gradient-to-br from-emerald-50 to-teal-50 px-6 py-8 border-b">
               <SheetHeader>
                 <SheetTitle className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                  🌴 Admin Cool Voyage
+                  Admin Cool Voyage
                 </SheetTitle>
                 <p className="text-sm text-muted-foreground mt-2">
                   Menu administration
@@ -351,7 +355,7 @@ export function AdminHeader() {
                 type="button"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
-                  window.location.search.includes('section=dashboard')
+                  searchParams?.get('section') === 'dashboard' || (!searchParams?.get('section') && isClient)
                     ? "bg-emerald-500/10 font-medium text-emerald-600"
                     : "text-muted-foreground hover:bg-primary/10"
                 }`}
@@ -383,30 +387,30 @@ export function AdminHeader() {
                       type="button"
                       onClick={() => {
                         setIsMobileMenuOpen(false);
-                        window.location.href = '/admin?section=destinations';
+                        router.push('/admin?section=destinations');
                       }}
                       className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
-                        window.location.search.includes('section=destinations')
+                        searchParams?.get('section') === 'destinations'
                           ? "bg-emerald-500/10 font-medium text-emerald-600"
                           : "text-muted-foreground hover:bg-primary/10"
                       }`}
                     >
-                      <span className="mr-2">•</span>
+                      <span className="mr-2"></span>
                       Liste des destinations
                     </button>
                     <button
                       type="button"
                       onClick={() => {
                         setIsMobileMenuOpen(false);
-                        window.location.href = '/admin?section=destinations-create';
+                        router.push('/admin?section=destinations-create');
                       }}
                       className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
-                        window.location.search.includes('section=destinations-create')
+                        searchParams?.get('section') === 'destinations-create'
                           ? "bg-emerald-500/10 font-medium text-emerald-600"
                           : "text-muted-foreground hover:bg-primary/10"
                       }`}
                     >
-                      <span className="mr-2">•</span>
+                      <span className="mr-2"></span>
                       Ajouter destination
                     </button>
                   </div>
@@ -436,30 +440,30 @@ export function AdminHeader() {
                       type="button"
                       onClick={() => {
                         setIsMobileMenuOpen(false);
-                        window.location.href = '/admin?section=hebergements';
+                        router.push('/admin?section=hebergements');
                       }}
                       className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
-                        window.location.search.includes('section=hebergements')
+                        searchParams?.get('section') === 'hebergements'
                           ? "bg-emerald-500/10 font-medium text-emerald-600"
                           : "text-muted-foreground hover:bg-primary/10"
                       }`}
                     >
-                      <span className="mr-2">•</span>
+                      <span className="mr-2"></span>
                       Liste des hébergements
                     </button>
                     <button
                       type="button"
                       onClick={() => {
                         setIsMobileMenuOpen(false);
-                        window.location.href = '/admin?section=hebergements-create';
+                        router.push('/admin?section=hebergements-create');
                       }}
                       className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
-                        window.location.search.includes('section=hebergements-create')
+                        searchParams?.get('section') === 'hebergements-create'
                           ? "bg-emerald-500/10 font-medium text-emerald-600"
                           : "text-muted-foreground hover:bg-primary/10"
                       }`}
                     >
-                      <span className="mr-2">•</span>
+                      <span className="mr-2"></span>
                       Ajouter hébergement
                     </button>
                   </div>
@@ -489,31 +493,84 @@ export function AdminHeader() {
                       type="button"
                       onClick={() => {
                         setIsMobileMenuOpen(false);
-                        window.location.href = '/admin?section=activites';
+                        router.push('/admin?section=activites');
                       }}
                       className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
-                        window.location.search.includes('section=activites')
+                        searchParams?.get('section') === 'activites'
                           ? "bg-emerald-500/10 font-medium text-emerald-600"
                           : "text-muted-foreground hover:bg-primary/10"
                       }`}
                     >
-                      <span className="mr-2">•</span>
+                      <span className="mr-2"></span>
                       Liste des activités
                     </button>
                     <button
                       type="button"
                       onClick={() => {
                         setIsMobileMenuOpen(false);
-                        window.location.href = '/admin?section=activites-create';
+                        router.push('/admin?section=activites-create');
                       }}
                       className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
-                        window.location.search.includes('section=activites-create')
+                        searchParams?.get('section') === 'activites-create'
                           ? "bg-emerald-500/10 font-medium text-emerald-600"
                           : "text-muted-foreground hover:bg-primary/10"
                       }`}
                     >
-                      <span className="mr-2">•</span>
+                      <span className="mr-2"></span>
                       Ajouter activité
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-1">
+                <button
+                  type="button"
+                  onClick={() => toggleSection("notifications-avis")}
+                  className="flex w-full cursor-pointer items-center justify-between rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
+                >
+                  <div className="flex items-center">
+                    <Bell className="mr-3 h-4 w-4" />
+                    Notifications & Avis
+                  </div>
+                  <ChevronDown
+                    className={`h-4 w-4 transition-all duration-300 ease-in-out transform ${
+                      expandedSections.includes("notifications-avis") ? "rotate-180" : "rotate-0"
+                    }`}
+                  />
+                </button>
+
+                {expandedSections.includes("notifications-avis") && (
+                  <div className="ml-4 space-y-1 pl-4 border-l-2 border-emerald-200 dark:border-emerald-800">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        router.push('/admin?section=notifications');
+                      }}
+                      className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
+                        searchParams?.get('section') === 'notifications'
+                          ? "bg-emerald-500/10 font-medium text-emerald-600"
+                          : "text-muted-foreground hover:bg-primary/10"
+                      }`}
+                    >
+                      <span className="mr-2">·</span>
+                      Notifications
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        router.push('/admin?section=avis');
+                      }}
+                      className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
+                        searchParams?.get('section') === 'avis'
+                          ? "bg-emerald-500/10 font-medium text-emerald-600"
+                          : "text-muted-foreground hover:bg-primary/10"
+                      }`}
+                    >
+                      <span className="mr-2">·</span>
+                      Avis
                     </button>
                   </div>
                 )}
@@ -523,10 +580,42 @@ export function AdminHeader() {
                 type="button"
                 onClick={() => {
                   setIsMobileMenuOpen(false);
-                  window.location.href = '/admin?section=planification';
+                  router.push('/admin?section=utilisateurs');
                 }}
                 className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
-                  window.location.search.includes('section=planification')
+                  searchParams?.get('section') === 'utilisateurs'
+                    ? "bg-emerald-500/10 font-medium text-emerald-600"
+                    : "text-muted-foreground hover:bg-primary/10"
+                }`}
+              >
+                <Users className="mr-3 h-4 w-4" />
+                Gestion des utilisateurs
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  router.push('/admin?section=entreprise-info');
+                }}
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
+                  searchParams?.get('section') === 'entreprise-info'
+                    ? "bg-emerald-500/10 font-medium text-emerald-600"
+                    : "text-muted-foreground hover:bg-primary/10"
+                }`}
+              >
+                <Briefcase className="mr-3 h-4 w-4" />
+                Info entreprise
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  router.push('/admin?section=planification');
+                }}
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
+                  searchParams?.get('section') === 'planification'
                     ? "bg-emerald-500/10 font-medium text-emerald-600"
                     : "text-muted-foreground hover:bg-primary/10"
                 }`}

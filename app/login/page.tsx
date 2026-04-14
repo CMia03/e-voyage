@@ -17,6 +17,7 @@ function LoginContent() {
   const [loginValue, setLoginValue] = useState("");
   const [passwordValue, setPasswordValue] = useState("");
   const [loginError, setLoginError] = useState("");
+  const [infoMessage, setInfoMessage] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
@@ -30,6 +31,12 @@ function LoginContent() {
     const login = searchParams.get('login');
     const nom = searchParams.get('nom');
     const prenom = searchParams.get('prenom');
+    const message = searchParams.get('message');
+
+    // Afficher le message de redirection
+    if (message) {
+      setInfoMessage(message);
+    }
 
     if (googleLogin === 'true' && email && accessToken) {
       const authPayload = {
@@ -76,7 +83,9 @@ function LoginContent() {
         nom: (payload as { nom?: string })?.nom,
         prenom: (payload as { prenom?: string })?.prenom,
       };
+      console.log("Saving auth payload:", authPayload);
       saveAuth(authPayload);
+      console.log("Auth saved, redirecting to:", resolvePostLoginPath(authPayload));
       router.push(resolvePostLoginPath(authPayload));
 
     } catch (error) {
@@ -163,6 +172,14 @@ function LoginContent() {
                   </label>
                 </div>
               </div>
+
+              {infoMessage ? (
+                <div className="p-3 rounded-md bg-blue-500/20 border border-blue-500/50 backdrop-blur-sm">
+                  <p className="text-sm text-blue-200 text-center">
+                    {infoMessage}
+                  </p>
+                </div>
+              ) : null}
 
               {loginError ? (
                 <div className="p-3 rounded-md bg-red-500/20 border border-red-500/50 backdrop-blur-sm">

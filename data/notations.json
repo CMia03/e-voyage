@@ -1,0 +1,77 @@
+[
+  {
+    "idDestination": "dest1",
+    "idAvis": "1",
+    "idUser": "user1",
+    "nomUser": "Jean Dupont",
+    "nomDestination": "Paris, France",
+    "dateCreation": "2024-01-15T10:30:00Z",
+    "dateModification": "2024-01-15T10:30:00Z",
+    "status": "actif",
+    "nombreEtoiles": 4
+  },
+  {
+    "idDestination": "dest2",
+    "idAvis": "2",
+    "idUser": "user2",
+    "nomUser": "Marie Martin",
+    "nomDestination": "Rome, Italie",
+    "dateCreation": "2024-01-16T14:20:00Z",
+    "dateModification": "2024-01-16T14:20:00Z",
+    "status": "actif",
+    "nombreEtoiles": 5
+  },
+  {
+    "idDestination": "dest1",
+    "idAvis": "3",
+    "idUser": "user3",
+    "nomUser": "Pierre Durand",
+    "nomDestination": "Paris, France",
+    "dateCreation": "2024-01-17T09:15:00Z",
+    "dateModification": "2024-01-17T09:15:00Z",
+    "status": "actif",
+    "nombreEtoiles": 3
+  },
+  {
+    "idDestination": "dest3",
+    "idAvis": "4",
+    "idUser": "user4",
+    "nomUser": "Sophie Bernard",
+    "nomDestination": "Barcelone, Espagne",
+    "dateCreation": "2024-01-18T16:45:00Z",
+    "dateModification": "2024-01-18T16:45:00Z",
+    "status": "actif",
+    "nombreEtoiles": 5
+  },
+  {
+    "idDestination": "dest4",
+    "idAvis": "5",
+    "idUser": "user5",
+    "nomUser": "Lucas Petit",
+    "nomDestination": "Londres, Royaume-Uni",
+    "dateCreation": "2024-01-19T11:30:00Z",
+    "dateModification": "2024-01-19T11:30:00Z",
+    "status": "actif",
+    "nombreEtoiles": 4
+  },
+  {
+    "idDestination": "dest5",
+    "idAvis": "6",
+    "idUser": "user6",
+    "nomUser": "Emma Laurent",
+    "nomDestination": "Amsterdam, Pays-Bas",
+    "dateCreation": "2024-01-20T13:20:00Z",
+    "dateModification": "2024-01-20T13:20:00Z",
+    "status": "actif",
+    "nombreEtoiles": 5
+  },
+  {
+    "nomUser": "Mia Mia",
+    "nomDestination": "Manambato",
+    "status": "actif",
+    "nombreEtoiles": 5,
+    "idAvis": "1776060276221",
+    "dateCreation": "2026-04-13T06:04:36.221Z",
+    "dateModification": "2026-04-13T09:34:57.465Z"
+  }
+]

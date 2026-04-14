@@ -6,9 +6,8 @@ import { Calendar, dateFnsLocalizer } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import { fr } from "date-fns/locale/fr";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { AdminHeader } from "@/app/admin/components/header";
-import { AdminSidebar, type AdminSection } from "@/app/admin/components/sidebar";
-import { AdminFooter } from "@/app/admin/components/footer";
+import { useAdminNavigation } from "@/app/admin/contexts/admin-navigation-context";
+import { type AdminSection } from "@/app/admin/components/sidebar";
 import { AdminDashboard } from "@/app/admin/dashboard";
 import { AdminDestinations } from "@/app/admin/destinations";
 import { AdminActivites } from "@/app/admin/activites/page";
@@ -47,10 +46,17 @@ function AdminPageWithSearchParams() {
 
 function AdminPageContent({ initialSection }: { initialSection?: AdminSection }) {
   const { session, isLoading, isAuthenticated, getValidToken } = useAuth();
-  const [active, setActive] = useState<AdminSection>(initialSection || "dashboard");
+  const { active, setActive } = useAdminNavigation();
   const [selectedDestinationId, setSelectedDestinationId] = useState<string | null>(null);
   const [selectedActiviteId, setSelectedActiviteId] = useState<string | null>(null);
   const [selectedHebergementId, setSelectedHebergementId] = useState<string | null>(null);
+
+  // Set initial section from URL params
+  useEffect(() => {
+    if (initialSection) {
+      setActive(initialSection);
+    }
+  }, [initialSection, setActive]);
   
   const accessToken = session?.accessToken ?? null;
   const role = session?.role ?? null;
@@ -303,51 +309,35 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
 
   if (!role) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-background via-muted/30 to-background text-foreground">
-        <AdminHeader />
-        <main className="mx-auto w-full max-w-[800px] px-4 py-10 sm:py-16">
-          <div className="rounded-2xl border border-border/50 bg-card/50 p-8 text-center backdrop-blur-sm">
-            <h1 className="text-2xl font-semibold">Back office</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Please login to access the admin area.
-            </p>
-            <div className="mt-6">
-              <Button asChild variant="default">
-                <Link href="/login">Se connecter</Link>
-              </Button>
-            </div>
-          </div>
-        </main>
-        <AdminFooter />
+      <div className="rounded-2xl border border-border/50 bg-card/50 p-8 text-center backdrop-blur-sm">
+        <h1 className="text-2xl font-semibold">Back office</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Please login to access the admin area.
+        </p>
+        <div className="mt-6">
+          <Button asChild variant="default">
+            <Link href="/login">Se connecter</Link>
+          </Button>
+        </div>
       </div>
     );
   }
 
   if (role !== "ADMIN") {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-background via-muted/30 to-background text-foreground">
-        <AdminHeader />
-        <main className="mx-auto w-full max-w-[800px] px-4 py-10 sm:py-16">
-          <div className="rounded-2xl border border-border/50 bg-card/50 p-8 text-center backdrop-blur-sm">
-            <h1 className="text-2xl font-semibold">Back office</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Access is limited for standard users.
-            </p>
-          </div>
-        </main>
-        <AdminFooter />
+      <div className="rounded-2xl border border-border/50 bg-card/50 p-8 text-center backdrop-blur-sm">
+        <h1 className="text-2xl font-semibold">Back office</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Access is limited for standard users.
+        </p>
       </div>
     );
   }
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-muted/30 to-background text-foreground">
-      <AdminHeader />
-      <div className="mx-auto flex w-full max-w-[1400px] min-h-screen">
-        <AdminSidebar active={active} onSelect={setActive} />
-        <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8 overflow-auto min-h-0">
-          {active === "dashboard" ? (
-            <AdminDashboard accessToken={accessToken ?? ""} role={role} />
-          ) : active === "destinations" ? (
+    <div className="w-full">
+      {active === "dashboard" ? (
+        <AdminDashboard accessToken={accessToken ?? ""} role={role} />
+      ) : active === "destinations" ? (
             <AdminDestinations
               accessToken={accessToken ?? ""}
               initialView="liste"
@@ -511,8 +501,6 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
           ) : (
             <AdminDestinations accessToken={accessToken ?? ""} initialView="liste" />
           )}
-        </main>
-      </div>
       
       {/* Modale pour créer un événement */}
       {showEventModal && (
@@ -603,8 +591,6 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
           </Card>
         </div>
       )}
-      
-      <AdminFooter />
     </div>
   );
 }

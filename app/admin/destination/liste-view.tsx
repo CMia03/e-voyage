@@ -68,33 +68,26 @@ export function AdminDestinationListe({
   onEdit,
   onDelete,
 }: AdminDestinationListeProps) {
-  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
-  const [showErrorAlert, setShowErrorAlert] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
+  const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
 
+  // Auto-dismiss success message after 4.5 seconds
   useEffect(() => {
-    if (!successMessage) {
-      setShowSuccessAlert(false);
-      return;
-    }
+    if (!successMessage) return;
 
-    setShowSuccessAlert(true);
     const timeout = window.setTimeout(() => {
-      setShowSuccessAlert(false);
+      setDismissedAlerts(prev => new Set(prev).add(`success-${successMessage}`));
     }, 4500);
 
     return () => window.clearTimeout(timeout);
   }, [successMessage]);
 
+  // Auto-dismiss error message after 5 seconds
   useEffect(() => {
-    if (!error) {
-      setShowErrorAlert(false);
-      return;
-    }
+    if (!error) return;
 
-    setShowErrorAlert(true);
     const timeout = window.setTimeout(() => {
-      setShowErrorAlert(false);
+      setDismissedAlerts(prev => new Set(prev).add(`error-${error}`));
     }, 5000);
 
     return () => window.clearTimeout(timeout);
@@ -308,7 +301,7 @@ export function AdminDestinationListe({
         </div>
       </div>
 
-      {error && showErrorAlert ? (
+      {error && !dismissedAlerts.has(`error-${error}`) ? (
         <Alert
           variant="destructive"
           className="fixed right-6 top-24 z-[70] w-[min(420px,calc(100vw-2rem))] shadow-xl"
@@ -320,7 +313,7 @@ export function AdminDestinationListe({
             </div>
             <button
               type="button"
-              onClick={() => setShowErrorAlert(false)}
+              onClick={() => setDismissedAlerts(prev => new Set(prev).add(`error-${error}`))}
               className="rounded-md p-1 text-red-700/70 transition-colors hover:bg-red-100 hover:text-red-900"
               aria-label="Fermer l'alerte"
             >
@@ -330,7 +323,7 @@ export function AdminDestinationListe({
         </Alert>
       ) : null}
 
-      {successMessage && showSuccessAlert ? (
+      {successMessage && !dismissedAlerts.has(`success-${successMessage}`) ? (
         <Alert
           variant="success"
           className="fixed right-6 top-24 z-[70] w-[min(420px,calc(100vw-2rem))] border-emerald-300 shadow-xl"
@@ -343,7 +336,7 @@ export function AdminDestinationListe({
             </div>
             <button
               type="button"
-              onClick={() => setShowSuccessAlert(false)}
+              onClick={() => setDismissedAlerts(prev => new Set(prev).add(`success-${successMessage}`))}
               className="rounded-md p-1 text-emerald-700/70 transition-colors hover:bg-emerald-100 hover:text-emerald-900"
               aria-label="Fermer l'alerte"
             >

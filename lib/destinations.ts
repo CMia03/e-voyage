@@ -1,6 +1,10 @@
 import { DestinationDetails } from "@/lib/type/destination";
 
 export const destinationsData: DestinationDetails[] = [];
+export function getDestinationById(id: string): DestinationDetails | undefined {
+  return destinationsData.find(dest => dest.id === id);
+}
+
 
 /*
   {
@@ -250,7 +254,4 @@ export const destinationsData: DestinationDetails[] = [];
 ];
 */
 
-export function getDestinationById(id: string): DestinationDetails | undefined {
-  return destinationsData.find(dest => dest.id === id);
-}
 

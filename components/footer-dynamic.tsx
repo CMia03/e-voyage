@@ -12,33 +12,21 @@ type FooterInfo = {
   adresse: string;
 };
 
-const defaultFooterInfo: FooterInfo = {
-  nomEntreprise: "Cool Voyage",
-  description:
-    "Votre agence de voyage de confiance pour decouvrir Madagascar. Des sejours organises a prix abordables vers les plus belles destinations.",
-  contactYas: "+261 34 66 885 42",
-  contactOrange: "+261 32 55 596 16",
-  contactAirtel: "",
-  contactGmail: "",
-  contactPlusInfos: "+261 34 66 885 42",
-  adresse: "Antananarivo, Madagascar",
-};
-
 function toPhoneHref(phone: string) {
   return `tel:${phone.replace(/\s+/g, "")}`;
 }
 
 export async function FooterDynamic() {
   const currentYear = new Date().getFullYear();
-  let info = defaultFooterInfo;
+  let info: FooterInfo | null = null;
 
   try {
     const response = await getEntrepriseInfoPublic();
     const data = response.data;
     if (data) {
       info = {
-        nomEntreprise: data.nomEntreprise || defaultFooterInfo.nomEntreprise,
-        description: data.description || defaultFooterInfo.description,
+        nomEntreprise: data.nomEntreprise || "",
+        description: data.description || "",
         contactYas: data.contactYas || "",
         contactOrange: data.contactOrange || "",
         contactAirtel: data.contactAirtel || "",
@@ -48,7 +36,31 @@ export async function FooterDynamic() {
       };
     }
   } catch {
-    info = defaultFooterInfo;
+    info = null;
+  }
+
+  // If no data or all fields are empty, show "A revoir"
+  const isEmpty = !info || (
+    !info.nomEntreprise && 
+    !info.description && 
+    !info.contactYas && 
+    !info.contactOrange && 
+    !info.contactAirtel && 
+    !info.contactGmail && 
+    !info.contactPlusInfos && 
+    !info.adresse
+  );
+
+  if (isEmpty) {
+    return (
+      <footer id="contact" className="border-t bg-muted/50">
+        <div className="container mx-auto px-4 py-8 sm:py-12">
+          <div className="mx-auto max-w-4xl text-center">
+            <p className="text-muted-foreground">A revoir</p>
+          </div>
+        </div>
+      </footer>
+    );
   }
 
   return (
@@ -57,8 +69,8 @@ export async function FooterDynamic() {
         <div className="mx-auto max-w-4xl">
           <div className="grid gap-6 sm:gap-8 sm:grid-cols-2 md:grid-cols-3">
             <div>
-              <h3 className="mb-4 text-xl font-bold">🌴 {info.nomEntreprise}</h3>
-              <p className="text-sm text-muted-foreground">{info.description}</p>
+              <h3 className="mb-4 text-xl font-bold">🌴 {info!.nomEntreprise}</h3>
+              <p className="text-sm text-muted-foreground">{info!.description}</p>
             </div>
             <div>
               <h4 className="mb-4 font-semibold">Destinations</h4>
@@ -88,50 +100,50 @@ export async function FooterDynamic() {
             <div>
               <h4 className="mb-4 font-semibold">Contact</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                {info.contactYas ? (
+                {info!.contactYas ? (
                   <li className="flex items-center gap-2">
                     <span>📱</span>
-                    <a href={toPhoneHref(info.contactYas)} className="hover:text-primary">
-                      Yas : {info.contactYas}
+                    <a href={toPhoneHref(info!.contactYas)} className="hover:text-primary">
+                      Yas : {info!.contactYas}
                     </a>
                   </li>
                 ) : null}
-                {info.contactOrange ? (
+                {info!.contactOrange ? (
                   <li className="flex items-center gap-2">
                     <span>📱</span>
-                    <a href={toPhoneHref(info.contactOrange)} className="hover:text-primary">
-                      Orange : {info.contactOrange}
+                    <a href={toPhoneHref(info!.contactOrange)} className="hover:text-primary">
+                      Orange : {info!.contactOrange}
                     </a>
                   </li>
                 ) : null}
-                {info.contactAirtel ? (
+                {info!.contactAirtel ? (
                   <li className="flex items-center gap-2">
                     <span>📱</span>
-                    <a href={toPhoneHref(info.contactAirtel)} className="hover:text-primary">
-                      Airtel : {info.contactAirtel}
+                    <a href={toPhoneHref(info!.contactAirtel)} className="hover:text-primary">
+                      Airtel : {info!.contactAirtel}
                     </a>
                   </li>
                 ) : null}
-                {info.contactGmail ? (
+                {info!.contactGmail ? (
                   <li className="flex items-center gap-2">
                     <span>✉️</span>
-                    <a href={`mailto:${info.contactGmail}`} className="hover:text-primary">
-                      Gmail : {info.contactGmail}
+                    <a href={`mailto:${info!.contactGmail}`} className="hover:text-primary">
+                      Gmail : {info!.contactGmail}
                     </a>
                   </li>
                 ) : null}
-                {info.contactPlusInfos ? (
+                {info!.contactPlusInfos ? (
                   <li className="flex items-center gap-2">
                     <span>☎️</span>
-                    <a href={toPhoneHref(info.contactPlusInfos)} className="hover:text-primary">
-                      Plus d&apos;infos : {info.contactPlusInfos}
+                    <a href={toPhoneHref(info!.contactPlusInfos)} className="hover:text-primary">
+                      Plus d&apos;infos : {info!.contactPlusInfos}
                     </a>
                   </li>
                 ) : null}
-                {info.adresse ? (
+                {info!.adresse ? (
                   <li className="flex items-center gap-2">
                     <span>📍</span>
-                    <span>{info.adresse}</span>
+                    <span>{info!.adresse}</span>
                   </li>
                 ) : null}
               </ul>
@@ -139,7 +151,7 @@ export async function FooterDynamic() {
           </div>
           <div className="mt-8 border-t pt-8 text-center text-sm text-muted-foreground">
             <p>
-              &copy; {currentYear} {info.nomEntreprise}. Tous droits reserves.
+              &copy; {currentYear} {info!.nomEntreprise}. Tous droits reserves.
             </p>
           </div>
         </div>
