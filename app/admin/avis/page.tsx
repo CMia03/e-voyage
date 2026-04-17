@@ -122,7 +122,7 @@ export function AdminAvis() {
       <div className="space-y-4">
         {loading ? (
           <Card className="border-border/50">
-            <CardContent className="py-12 text-center">
+            <CardContent className="py-2 text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
               <h3 className="text-lg font-medium text-foreground mb-2">
                 Chargement des avis...
@@ -131,7 +131,7 @@ export function AdminAvis() {
           </Card>
         ) : filteredAvis.length === 0 ? (
           <Card className="border-border/50">
-            <CardContent className="py-12 text-center">
+            <CardContent className="py-2 text-center">
               <MessageSquare className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium text-foreground mb-2">
                 {searchTerm ? "Aucun avis trouvé pour cette recherche" : "Aucun avis trouvé"}
@@ -144,7 +144,7 @@ export function AdminAvis() {
         ) : (
           filteredAvis.map((avi) => (
             <Card key={avi.idAvis} className="border-border/50">
-              <CardContent className="p-6">
+              <CardContent className="px-6 py-0.5">
                 <div className="flex items-start gap-4">
                   <Avatar className="h-12 w-12">
                     <AvatarFallback>
@@ -167,7 +167,6 @@ export function AdminAvis() {
                       </button>
                     </div>
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-medium text-foreground">{avi.nomUser}</h3>
                       <div className="flex items-center gap-1">
                         {[...Array(5)].map((_, i) => (
                           <Star

@@ -136,7 +136,7 @@ export function AdminCommentaires() {
       <div className="space-y-4">
         {loading ? (
           <Card className="border-border/50">
-            <CardContent className="py-12 text-center">
+            <CardContent className="py-4 text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
               <h3 className="text-lg font-medium text-foreground mb-2">
                 Chargement des commentaires...
@@ -145,7 +145,7 @@ export function AdminCommentaires() {
           </Card>
         ) : filteredCommentaires.length === 0 ? (
           <Card className="border-border/50">
-            <CardContent className="py-12 text-center">
+            <CardContent className="py-4 text-center">
               <MessageCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium text-foreground mb-2">
                 {searchTerm ? "Aucun commentaire trouvé pour cette recherche" : "Aucun commentaire trouvé"}
@@ -158,7 +158,7 @@ export function AdminCommentaires() {
         ) : (
           filteredCommentaires.map((commentaire) => (
             <Card key={`${commentaire.idUser}-${commentaire.idDestination}`} className="border-border/50">
-              <CardContent className="p-6">
+              <CardContent className="px-6 py-2">
                 <div className="flex items-start gap-4">
                   <Avatar className="h-12 w-12">
                     <AvatarFallback>
