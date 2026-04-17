@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useBreadcrumbs } from "../contexts/breadcrumbs-context";
-import { getAllNotationsFromApi, deleteUserRating, NotationData } from "@/lib/api/notations";
+import { getAllNotationsFromApi, deleteUserRating } from "@/lib/api/notations";
+import { NotationData } from "@/lib/type/notation";
 import { useAuth } from "@/hooks/useAuth";
 
 export function AdminAvis() {

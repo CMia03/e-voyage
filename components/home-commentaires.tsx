@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { MessageCircle, Star, MapPin, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { MessageCircle, MapPin, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { getPublicCommentaires } from "@/lib/api/commentaires";
 import { CommentaireData } from "@/lib/type/commentaire";
 import { listDestinations } from "@/lib/api/destinations";
@@ -25,28 +25,20 @@ export function HomeCommentaires() {
       try {
         setLoading(true);
         
-        // Charger les destinations pour avoir les noms
         const destinationsData = await listDestinations();
         setDestinations(destinationsData.map(dest => ({ id: dest.id, nom: dest.nom })));
         
-        // Charger les commentaires publics
         const response = await getPublicCommentaires();
-        console.log("Réponse API commentaires:", response);
         
         if (response.success && response.data) {
-          console.log("Commentaires bruts:", response.data);
           
-          // Filtrer uniquement les commentaires validés (status = true)
           const commentairesValidés = response.data.filter(commentaire => commentaire.status === true);
-          console.log("Commentaires validés:", commentairesValidés);
           
-          // Ajouter les noms de destinations aux commentaires
           const commentairesWithDestinations = commentairesValidés.map(commentaire => ({
             ...commentaire,
             destinationName: destinationsData.find(dest => dest.id === commentaire.idDestination)?.nom || `Destination ${commentaire.idDestination}`
           }));
           
-          // Trier par date du plus récent au plus ancien
           setCommentaires(commentairesWithDestinations.sort((a, b) => 
             new Date(b.dateCreation).getTime() - new Date(a.dateCreation).getTime()
           ));
@@ -63,13 +55,12 @@ export function HomeCommentaires() {
     loadData();
   }, []);
 
-  // Effet pour le défilement automatique du carrousel
   useEffect(() => {
     if (commentaires.length <= 1 || isPaused) return;
 
     intervalRef.current = setInterval(() => {
       setCurrentIndex((prevIndex) => (prevIndex + 1) % commentaires.length);
-    }, 4000); // Change de commentaire toutes les 4 secondes
+    }, 4000);
 
     return () => {
       if (intervalRef.current) {
@@ -136,7 +127,6 @@ export function HomeCommentaires() {
         </div>
         
         <div className="relative max-w-5xl mx-auto">
-          {/* Boutons de navigation */}
           {commentaires.length > 1 && (
             <>
               <button
@@ -156,7 +146,6 @@ export function HomeCommentaires() {
             </>
           )}
           
-          {/* Carrousel */}
           <div 
             className="relative overflow-hidden rounded-2xl"
             onMouseEnter={() => setIsPaused(true)}
@@ -173,7 +162,6 @@ export function HomeCommentaires() {
                 >
                   <Card className="border-4 border-border bg-gradient-to-br from-card/95 to-card/80 backdrop-blur-sm hover:shadow-2xl hover:shadow-emerald-500/20 transition-all duration-300 h-full">
                     <CardContent className="p-8 sm:p-12">
-                      {/* Infos du client en haut */}
                       <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-4">
                           <Avatar className="h-12 w-12 border-2 border-emerald-200">
@@ -197,12 +185,8 @@ export function HomeCommentaires() {
                         </div>
                       </div>
                       
-                      {/* Message en forme de bulle en dessous */}
                       <div className="relative">
-                        {/* Pointe de la bulle */}
                         <div className="absolute -top-2 left-8 w-4 h-4 bg-gradient-to-br from-muted/50 to-muted/30 transform rotate-45 border-l-4 border-t-4 border-border"></div>
-                        
-                        {/* Contenu du message */}
                         <div className="bg-gradient-to-br from-muted/50 to-muted/30 rounded-2xl p-6 sm:p-8 border-4 border-border">
                           <p className="text-base sm:text-lg text-foreground leading-relaxed italic">
                             "{commentaire.contenu}"
@@ -234,7 +218,6 @@ export function HomeCommentaires() {
             </div>
           </div>
           
-          {/* Indicateurs */}
           {commentaires.length > 1 && (
             <div className="flex justify-center gap-2 mt-6">
               {commentaires.map((_, index) => (

@@ -52,7 +52,6 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
   const [selectedActiviteId, setSelectedActiviteId] = useState<string | null>(null);
   const [selectedHebergementId, setSelectedHebergementId] = useState<string | null>(null);
 
-  // Set initial section from URL params
   useEffect(() => {
     if (initialSection) {
       setActive(initialSection);
@@ -62,48 +61,39 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
   const accessToken = session?.accessToken ?? null;
   const role = session?.role ?? null;
 
-  // Vérifier automatiquement l'expiration de la session et déconnecter
   useEffect(() => {
     const checkSessionExpiration = () => {
       const currentSession = loadAuth();
       if (!currentSession) {
-        // Pas de session, rediriger vers login
         clearAuth();
         window.location.href = '/login';
         return;
       }
 
-      // Vérifier si le token est expiré
       try {
         const tokenPayload = JSON.parse(atob(currentSession.accessToken.split('.')[1]));
-        const currentTime = Date.now() / 1000; // Convertir en secondes
+        const currentTime = Date.now() / 1000;
         
         if (tokenPayload.exp && tokenPayload.exp < currentTime) {
-          // Token expiré, déconnecter automatiquement
           console.log("Session expirée, déconnexion automatique");
           clearAuth();
           window.location.href = '/login';
           return;
         }
       } catch (error) {
-        // Erreur lors du décodage du token, déconnecter
         console.error("Erreur lors de la vérification du token:", error);
         clearAuth();
         window.location.href = '/login';
       }
     };
 
-    // Vérifier immédiatement
     checkSessionExpiration();
 
-    // Vérifier toutes les 30 secondes
     const interval = setInterval(checkSessionExpiration, 30000);
 
-    // Nettoyer l'intervalle au démontage
     return () => clearInterval(interval);
   }, []);
 
-  // Vérifier quand la fenêtre reprend le focus
   useEffect(() => {
     const handleFocus = () => {
       const currentSession = loadAuth();
@@ -118,12 +108,10 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
         const currentTime = Date.now() / 1000;
         
         if (tokenPayload.exp && tokenPayload.exp < currentTime) {
-          console.log("Session expirée lors du focus, déconnexion automatique");
-          clearAuth();
+            clearAuth();
           window.location.href = '/login';
         }
       } catch (error) {
-        console.error("Erreur lors de la vérification du token au focus:", error);
         clearAuth();
         window.location.href = '/login';
       }
@@ -160,35 +148,29 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
     end: new Date(),
   });
 
-  // Générer les années (année actuelle à +10 ans)
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 11 }, (_, i) => currentYear + i);
 
-  // Mettre à jour la date du calendrier quand l'année ou la date change
   useEffect(() => {
     const newDate = new Date(selectedDate);
     newDate.setFullYear(selectedYear);
     setCalendarDate(newDate);
   }, [selectedYear, selectedDate]);
 
-  // Mettre à jour la section active quand le paramètre d'URL change
   useEffect(() => {
     if (initialSection) {
       setActive(initialSection);
     }
   }, [initialSection]);
 
-  // Charger les destinations depuis l'API
   const loadDestinations = async () => {
     try {
-      // Importer la fonction API ici pour éviter les dépendances circulaires
       const { listAdminDestinations } = await import("@/lib/api/destinations");
       const response = await listAdminDestinations(accessToken || "");
       if (response.data) {
         setDestinations(response.data.map(dest => ({ id: dest.id, nom: dest.nom })));
       }
     } catch {
-      // Erreur silencieuse lors du chargement des destinations
     }
   };
 
@@ -199,7 +181,6 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessToken]);
 
-  // Gérer le clic sur une date du calendrier
   const handleSelectSlot = ({ start, end }: { start: Date; end: Date }) => {
     setSelectedSlot({ start, end });
     setSelectedEvent(null);
@@ -213,7 +194,6 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
     setShowEventModal(true);
   };
 
-  // Gérer le clic sur un événement existant
   const handleSelectEvent = (event: { id: number; title: string; start: Date; end: Date }) => {
     setSelectedEvent(event);
     setSelectedSlot(null);
@@ -227,7 +207,6 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
     setShowEventModal(true);
   };
 
-  // Enregistrer un nouvel événement ou modifier un existant
   const handleSaveEvent = () => {
     if (newEvent.title && newEvent.destinationId) {
       const destination = destinations.find(d => d.id === newEvent.destinationId);
@@ -238,14 +217,12 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
       };
 
       if (isEditMode && selectedEvent) {
-        // Modifier l'événement existant
         setEvents(events.map(event => 
           event.id === selectedEvent.id 
             ? { ...event, ...eventData }
             : event
         ));
       } else {
-        // Créer un nouvel événement
         const event = {
           id: Date.now(),
           ...eventData,
@@ -258,7 +235,6 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
     }
   };
 
-  // Supprimer un événement
   const handleDeleteEvent = () => {
     if (selectedEvent) {
       setEvents(events.filter(event => event.id !== selectedEvent.id));
@@ -267,13 +243,11 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
     }
   };
 
-  // Annuler la création/modification d'événement
   const handleCancelEvent = () => {
     setShowEventModal(false);
     resetEventForm();
   };
 
-  // Réinitialiser le formulaire
   const resetEventForm = () => {
     setSelectedEvent(null);
     setSelectedSlot(null);
@@ -505,7 +479,7 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
             <AdminDestinations accessToken={accessToken ?? ""} initialView="liste" />
           )}
       
-      {/* Modale pour créer un événement */}
+      {/* Event Modal */}
       {showEventModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-md">

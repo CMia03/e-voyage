@@ -20,3 +20,18 @@ export interface AllCommentairesResponse {
   data: CommentaireData[];
   timestamp: string;
 }
+
+export interface Comment {
+  id: string;
+  user: string;
+  content: string;
+  date: string;
+  rating?: number;
+  userId?: string;
+}
+
+export interface DestinationSidebarProps {
+  destinationId: string;
+  destinationName: string;
+  averageRating: number;
+}

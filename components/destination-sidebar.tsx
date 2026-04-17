@@ -6,24 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { StarRating } from "@/components/ui/star-rating";
 import { useAuth } from "@/hooks/useAuth";
-import { getDestinationNotations, NotationData } from "@/lib/api/notations";
-import { addCommentaire, getDestinationPublicCommentaires, CommentaireData } from "@/lib/api/commentaires";
+import { getDestinationNotations } from "@/lib/api/notations";
+import { NotationData } from "@/lib/type/notation";
+import { addCommentaire, getDestinationPublicCommentaires } from "@/lib/api/commentaires";
+import { CommentaireData } from "@/lib/type/commentaire";
 import { MessageCircle, Star, User, Calendar } from "lucide-react";
+import { Comment, DestinationSidebarProps } from "@/lib/type/commentaire";
 
-interface Comment {
-  id: string;
-  user: string;
-  content: string;
-  date: string;
-  rating?: number;
-  userId?: string;
-}
-
-interface DestinationSidebarProps {
-  destinationId: string;
-  destinationName: string;
-  averageRating: number;
-}
 
 export function DestinationSidebar({ destinationId, destinationName, averageRating }: DestinationSidebarProps) {
   const { session, isAuthenticated } = useAuth();
@@ -96,14 +85,11 @@ export function DestinationSidebar({ destinationId, destinationName, averageRati
       const nomUser = session?.nom || session?.login || "Anonyme";
       const token = session?.accessToken;
       
-      // Appeler l'API pour ajouter le commentaire
       const response = await addCommentaire(destinationId, userId, newComment, token, nomUser);
       
       if (response.success) {
-        // Ne pas ajouter le commentaire localement - il doit être validé par l'admin
         setNewComment("");
         
-        // Afficher un message de confirmation
         alert("Votre commentaire a été soumis et est en attente de validation par l'administrateur.");
       } else {
         console.error('Error adding comment:', response.message);
@@ -119,12 +105,11 @@ export function DestinationSidebar({ destinationId, destinationName, averageRati
   const calculateAverageRating = () => {
     if (notations.length === 0) return averageRating;
     const sum = notations.reduce((acc, notation) => acc + notation.nombreEtoiles, 0);
-    return (sum / notations.length).toFixed(1);
+    return sum / notations.length;
   };
 
   return (
     <div className="w-full lg:w-80 space-y-6">
-      {/* Section Notation */}
       <Card className="sticky top-6">
         <CardHeader className="pb-0">
           <CardTitle className="flex items-center gap-2">
@@ -133,17 +118,16 @@ export function DestinationSidebar({ destinationId, destinationName, averageRati
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-1">
-          {/* Moyenne des notations */}
           <div className="text-center p-1 bg-muted/50 rounded-lg">
             <div className="text-2xl font-bold text-primary mb-0">
-              {calculateAverageRating()}/5
+              {calculateAverageRating().toFixed(1)}/5
             </div>
             <div className="flex justify-center mb-0">
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
                   className={`h-4 w-4 ${
-                    i < parseFloat(calculateAverageRating())
+                    i < calculateAverageRating()
                       ? "fill-yellow-400 text-yellow-400"
                       : "fill-gray-300 text-gray-300"
                   }`}

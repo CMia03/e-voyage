@@ -56,8 +56,8 @@ export async function GET(request: NextRequest) {
           count: activitesCount,
           newThisMonth: activitesNewThisMonth
         },
-        avisEnAttente: {
-          count: avisEnAttenteCount,
+        notations: {
+          totalCount: avisEnAttenteCount,
           status: avisEnAttenteStatus
         }
       },

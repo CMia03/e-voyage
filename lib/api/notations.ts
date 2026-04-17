@@ -2,8 +2,6 @@ import { apiRequest, ApiEnvelope } from "@/lib/api/client";
 import axios from "axios";
 import { AllNotationsResponse, NotationData, NotationResponse } from "../type/notation";
 
-
-
 export async function getUserRating(destinationId: string, userId: string): Promise<NotationResponse> {
   return apiRequest<NotationResponse>(
     `/api/notations/destination/${destinationId}/utilisateur/${userId}`
@@ -48,7 +46,6 @@ export async function deleteUserRating(destinationId: string, userId: string, to
   );
 }
 
-// Récupérer toutes les notations depuis l'API /all
 export async function getAllNotationsFromApi(): Promise<AllNotationsResponse> {
   return apiRequest<AllNotationsResponse>(
     '/api/notations/all'
