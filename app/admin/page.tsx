@@ -7,7 +7,36 @@ import { format, parse, startOfWeek, getDay } from "date-fns";
 import { fr } from "date-fns/locale/fr";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { useAdminNavigation } from "@/app/admin/contexts/admin-navigation-context";
-import { type AdminSection } from "@/app/admin/components/sidebar";
+import { AdminSection } from "./components/sidebar";
+
+// Fonction de validation pour les sections admin
+function isValidAdminSection(section: string): section is AdminSection {
+  const validSections: AdminSection[] = [
+    "dashboard",
+    "destinations",
+    "destinations-create", 
+    "destinations-edit",
+    "hebergements",
+    "hebergements-create",
+    "hebergements-edit",
+    "hebergements-tarifs",
+    "hebergements-types", 
+    "hebergements-equipements",
+    "activites",
+    "activites-create",
+    "activites-edit",
+    "activites-categories",
+    "utilisateurs",
+    "reservations",
+    "avis",
+    "commentaires",
+    "notifications",
+    "statistiques",
+    "entreprise-info",
+    "planification"
+  ];
+  return validSections.includes(section as AdminSection);
+}
 import { AdminDashboard } from "@/app/admin/dashboard";
 import { AdminDestinations } from "@/app/admin/destinations";
 import { AdminActivites } from "@/app/admin/activites/page";
@@ -52,11 +81,41 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
   const [selectedActiviteId, setSelectedActiviteId] = useState<string | null>(null);
   const [selectedHebergementId, setSelectedHebergementId] = useState<string | null>(null);
 
+  // Synchroniser l'état avec l'URL au chargement et au changement
   useEffect(() => {
     if (initialSection) {
       setActive(initialSection);
     }
   }, [initialSection, setActive]);
+
+  // Synchroniser l'URL quand l'état change
+  useEffect(() => {
+    if (active !== "dashboard") {
+      const url = new URL(window.location.href);
+      url.searchParams.set('section', active);
+      window.history.replaceState({}, '', url.toString());
+    } else {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('section');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, [active]);
+
+  // Écouter les changements d'URL (navigation boutons précédent/suivant)
+  useEffect(() => {
+    const handlePopState = () => {
+      const url = new URL(window.location.href);
+      const section = url.searchParams.get('section');
+      if (section && isValidAdminSection(section)) {
+        setActive(section as AdminSection);
+      } else {
+        setActive('dashboard');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [setActive]);
   
   const accessToken = session?.accessToken ?? null;
   const role = session?.role ?? null;
