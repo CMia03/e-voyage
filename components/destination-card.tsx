@@ -69,7 +69,7 @@ export function DestinationCard({ destination }: DestinationCardProps) {
         <div className="flex justify-between items-start">
           <div className="flex-1">
             <CardTitle className="text-xl sm:text-2xl">{title}</CardTitle>
-            <CardDescription className="text-sm sm:text-base line-clamp-2">{description} et {id} </CardDescription>
+            <CardDescription className="text-sm sm:text-base line-clamp-2">{description}</CardDescription>
           </div>
         </div>
       </CardHeader>

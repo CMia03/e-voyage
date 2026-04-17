@@ -1,27 +1,31 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
-
-import { AdminDestinationDetailContent } from "./detail-content";
-import { useBreadcrumbs } from "../../contexts/breadcrumbs-context";
 
 export default function AdminDestinationDetailPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const destinationId = typeof params?.id === "string" ? params.id : "";
-  const { setBreadcrumbs } = useBreadcrumbs();
 
   useEffect(() => {
-    setBreadcrumbs([
-      { label: "Admin", href: "/admin" },
-      { label: "Destinations", href: "/admin?section=destinations" },
-      { label: "Détail destination", isActive: true }
-    ]);
-  }, [setBreadcrumbs]);
+    if (!destinationId) return;
+    
+    // Rediriger vers la page admin principale avec l'ID en paramètre
+    const url = new URL("/admin", window.location.origin);
+    url.searchParams.set("section", "destinations-edit");
+    url.searchParams.set("destinationId", destinationId);
+    
+    // Garder les autres paramètres existants
+    searchParams.forEach((value, key) => {
+      if (key !== "section" && key !== "destinationId") {
+        url.searchParams.set(key, value);
+      }
+    });
+    
+    router.replace(url.toString());
+  }, [destinationId, router, searchParams]);
 
-  if (!destinationId) {
-    return null;
-  }
-
-  return <AdminDestinationDetailContent destinationId={destinationId} />;
+  return <div>Redirection...</div>;
 }

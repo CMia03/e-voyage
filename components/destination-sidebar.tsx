@@ -10,6 +10,7 @@ import { getDestinationNotations } from "@/lib/api/notations";
 import { NotationData } from "@/lib/type/notation";
 import { addCommentaire, getDestinationPublicCommentaires } from "@/lib/api/commentaires";
 import { CommentaireData } from "@/lib/type/commentaire";
+import { createNotification } from "@/lib/api/notifications";
 import { MessageCircle, Star, User, Calendar } from "lucide-react";
 import { Comment, DestinationSidebarProps } from "@/lib/type/commentaire";
 
@@ -89,6 +90,20 @@ export function DestinationSidebar({ destinationId, destinationName, averageRati
       
       if (response.success) {
         setNewComment("");
+        
+        // Créer une notification pour l'admin
+        try {
+          await createNotification(
+            "commentaire",
+            "Nouveau commentaire",
+            `${nomUser} a commenté la destination "${destinationName}"`,
+            "/admin?section=commentaires",
+            destinationId,
+            session?.accessToken
+          );
+        } catch (notifError) {
+          console.error("Erreur lors de la création de la notification:", notifError);
+        }
         
         alert("Votre commentaire a été soumis et est en attente de validation par l'administrateur.");
       } else {

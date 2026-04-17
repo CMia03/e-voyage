@@ -70,16 +70,34 @@ const localizer = dateFnsLocalizer({
 function AdminPageWithSearchParams() {
   const searchParams = useSearchParams();
   const section = searchParams.get("section");
+  const destinationId = searchParams.get("destinationId");
+  const activiteId = searchParams.get("activiteId");
+  const hebergementId = searchParams.get("id"); // Pour hébergements
   
-  return <AdminPageContent initialSection={section as AdminSection} />;
+  return <AdminPageContent 
+    initialSection={section as AdminSection} 
+    initialDestinationId={destinationId}
+    initialActiviteId={activiteId}
+    initialHebergementId={hebergementId}
+  />;
 }
 
-function AdminPageContent({ initialSection }: { initialSection?: AdminSection }) {
+function AdminPageContent({ 
+  initialSection, 
+  initialDestinationId, 
+  initialActiviteId, 
+  initialHebergementId 
+}: { 
+  initialSection?: AdminSection;
+  initialDestinationId?: string | null;
+  initialActiviteId?: string | null;
+  initialHebergementId?: string | null;
+}) {
   const { session, isLoading, isAuthenticated, getValidToken } = useAuth();
   const { active, setActive } = useAdminNavigation();
-  const [selectedDestinationId, setSelectedDestinationId] = useState<string | null>(null);
-  const [selectedActiviteId, setSelectedActiviteId] = useState<string | null>(null);
-  const [selectedHebergementId, setSelectedHebergementId] = useState<string | null>(null);
+  const [selectedDestinationId, setSelectedDestinationId] = useState<string | null>(initialDestinationId || null);
+  const [selectedActiviteId, setSelectedActiviteId] = useState<string | null>(initialActiviteId || null);
+  const [selectedHebergementId, setSelectedHebergementId] = useState<string | null>(initialHebergementId || null);
 
   // Synchroniser l'état avec l'URL au chargement et au changement
   useEffect(() => {
@@ -87,6 +105,13 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
       setActive(initialSection);
     }
   }, [initialSection, setActive]);
+
+  // Mettre à jour les IDs quand ils changent
+  useEffect(() => {
+    if (initialDestinationId !== undefined) setSelectedDestinationId(initialDestinationId);
+    if (initialActiviteId !== undefined) setSelectedActiviteId(initialActiviteId);
+    if (initialHebergementId !== undefined) setSelectedHebergementId(initialHebergementId);
+  }, [initialDestinationId, initialActiviteId, initialHebergementId]);
 
   // Synchroniser l'URL quand l'état change
   useEffect(() => {

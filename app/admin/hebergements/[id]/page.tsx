@@ -1,35 +1,38 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AdminHebergementDetailContentNext } from "./detail-content-next";
-import { useBreadcrumbs } from "../../contexts/breadcrumbs-context";
 
 export default function AdminHebergementDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { setBreadcrumbs } = useBreadcrumbs();
-  const [hebergementId, setHebergementId] = useState<string>("");
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     const loadParams = async () => {
       const { id } = await params;
-      setHebergementId(id);
       
-      setBreadcrumbs([
-        { label: "Admin", href: "/admin" },
-        { label: "Hébergements", href: "/admin?section=hebergements" },
-        { label: "Détail hébergement", isActive: true }
-      ]);
+      // Rediriger vers la page admin principale avec l'ID en paramètre
+      const url = new URL("/admin", window.location.origin);
+      url.searchParams.set("section", "hebergements-edit");
+      url.searchParams.set("id", id);
+      
+      // Garder les autres paramètres existants
+      searchParams.forEach((value, key) => {
+        if (key !== "section" && key !== "id") {
+          url.searchParams.set(key, value);
+        }
+      });
+      
+      router.replace(url.toString());
     };
 
     loadParams();
-  }, [params, setBreadcrumbs]);
+  }, [params, router, searchParams]);
 
-  if (!hebergementId) {
-    return <div>Chargement...</div>;
-  }
-
-  return <AdminHebergementDetailContentNext hebergementId={hebergementId} />;
+  return <div>Redirection...</div>;
 }
