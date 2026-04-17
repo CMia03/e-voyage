@@ -167,7 +167,7 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent className="text-xs text-muted-foreground">
-                {dashboardData?.data.avisEnAttente.status || DASHBOARD_TEXTS.NO_DATA}
+               Vos avis
               </CardContent>
             </Card>
           </section>
