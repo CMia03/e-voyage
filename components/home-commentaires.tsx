@@ -1,20 +1,24 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { MessageCircle, Star, MapPin, Calendar } from "lucide-react";
-import { getPublicCommentaires, CommentaireData } from "@/lib/api/commentaires";
+import { MessageCircle, Star, MapPin, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { getPublicCommentaires } from "@/lib/api/commentaires";
+import { CommentaireData } from "@/lib/type/commentaire";
 import { listDestinations } from "@/lib/api/destinations";
 
 interface CommentaireWithDestination extends CommentaireData {
-  destinationName?: string;
+  nomDestination?: string;
 }
 
 export function HomeCommentaires() {
   const [commentaires, setCommentaires] = useState<CommentaireWithDestination[]>([]);
   const [loading, setLoading] = useState(true);
   const [destinations, setDestinations] = useState<Array<{ id: string; nom: string }>>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -27,9 +31,14 @@ export function HomeCommentaires() {
         
         // Charger les commentaires publics
         const response = await getPublicCommentaires();
+        console.log("Réponse API commentaires:", response);
+        
         if (response.success && response.data) {
+          console.log("Commentaires bruts:", response.data);
+          
           // Filtrer uniquement les commentaires validés (status = true)
           const commentairesValidés = response.data.filter(commentaire => commentaire.status === true);
+          console.log("Commentaires validés:", commentairesValidés);
           
           // Ajouter les noms de destinations aux commentaires
           const commentairesWithDestinations = commentairesValidés.map(commentaire => ({
@@ -41,6 +50,8 @@ export function HomeCommentaires() {
           setCommentaires(commentairesWithDestinations.sort((a, b) => 
             new Date(b.dateCreation).getTime() - new Date(a.dateCreation).getTime()
           ));
+        } else {
+          console.log("Pas de commentaires ou erreur de chargement");
         }
       } catch (error) {
         console.error('Error loading commentaires:', error);
@@ -51,6 +62,35 @@ export function HomeCommentaires() {
 
     loadData();
   }, []);
+
+  // Effet pour le défilement automatique du carrousel
+  useEffect(() => {
+    if (commentaires.length <= 1 || isPaused) return;
+
+    intervalRef.current = setInterval(() => {
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % commentaires.length);
+    }, 4000); // Change de commentaire toutes les 4 secondes
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [commentaires.length, isPaused]);
+
+  const goToPrevious = () => {
+    setCurrentIndex((prevIndex) => 
+      prevIndex === 0 ? commentaires.length - 1 : prevIndex - 1
+    );
+  };
+
+  const goToNext = () => {
+    setCurrentIndex((prevIndex) => (prevIndex + 1) % commentaires.length);
+  };
+
+  const goToSlide = (index: number) => {
+    setCurrentIndex(index);
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -81,26 +121,6 @@ export function HomeCommentaires() {
     );
   }
 
-  if (commentaires.length === 0) {
-    return (
-      <section className="py-16 sm:py-24 bg-gradient-to-b from-background via-muted/30 to-background">
-        <div className="container mx-auto px-4">
-          <div className="mx-auto max-w-4xl mb-12 sm:mb-16 text-center">
-            <h2 className="mb-6 text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent">
-              Témoignages Clients
-            </h2>
-            <p className="text-lg sm:text-xl text-muted-foreground px-4 leading-relaxed">
-              Découvrez ce que nos clients pensent de leurs voyages
-            </p>
-          </div>
-          <div className="text-center">
-            <MessageCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">Aucun témoignage pour le moment</p>
-          </div>
-        </div>
-      </section>
-    );
-  }
 
   return (
     <section className="py-16 sm:py-24 bg-gradient-to-b from-background via-muted/30 to-background relative overflow-hidden">
@@ -115,49 +135,123 @@ export function HomeCommentaires() {
           </p>
         </div>
         
-        <div className="grid gap-6 sm:gap-8 md:gap-10 lg:grid-cols-2 xl:grid-cols-3 max-w-7xl mx-auto">
-          {commentaires.slice(0, 6).map((commentaire) => (
-            <Card key={`${commentaire.idUser}-${commentaire.idDestination}`} className="border-border/50 bg-card/50 backdrop-blur-sm hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300">
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10">
-                    <AvatarFallback className="bg-emerald-100 text-emerald-600">
-                      {(commentaire.nomUser || commentaire.idUser).split(' ').map((n: string) => n[0]).join('').toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-foreground truncate">
-                      {commentaire.nomUser || 'Client'}
-                    </h3>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <MapPin className="h-3 w-3" />
-                      <span className="truncate">{commentaire.destinationName}</span>
-                    </div>
-                  </div>
+        <div className="relative max-w-5xl mx-auto">
+          {/* Boutons de navigation */}
+          {commentaires.length > 1 && (
+            <>
+              <button
+                onClick={goToPrevious}
+                className="absolute -left-16 top-1/2 -translate-y-1/2 z-20 bg-background/90 backdrop-blur-sm border border-border/50 rounded-full p-3 hover:bg-background hover:shadow-lg transition-all duration-200 group shadow-lg cursor-pointer"
+                aria-label="Commentaire précédent"
+              >
+                <ChevronLeft className="h-5 w-5 text-foreground group-hover:text-emerald-600 transition-colors" />
+              </button>
+              <button
+                onClick={goToNext}
+                className="absolute -right-16 top-1/2 -translate-y-1/2 z-20 bg-background/90 backdrop-blur-sm border border-border/50 rounded-full p-3 hover:bg-background hover:shadow-lg transition-all duration-200 group shadow-lg cursor-pointer"
+                aria-label="Commentaire suivant"
+              >
+                <ChevronRight className="h-5 w-5 text-foreground group-hover:text-emerald-600 transition-colors" />
+              </button>
+            </>
+          )}
+          
+          {/* Carrousel */}
+          <div 
+            className="relative overflow-hidden rounded-2xl"
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
+          >
+            <div 
+              className="flex transition-transform duration-500 ease-in-out h-full"
+              style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+            >
+              {commentaires.length > 0 ? commentaires.map((commentaire, index) => (
+                <div
+                  key={`${commentaire.idUser}-${commentaire.idDestination}`}
+                  className="w-full flex-shrink-0"
+                >
+                  <Card className="border-4 border-border bg-gradient-to-br from-card/95 to-card/80 backdrop-blur-sm hover:shadow-2xl hover:shadow-emerald-500/20 transition-all duration-300 h-full">
+                    <CardContent className="p-8 sm:p-12">
+                      {/* Infos du client en haut */}
+                      <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-4">
+                          <Avatar className="h-12 w-12 border-2 border-emerald-200">
+                            <AvatarFallback className="bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700 font-semibold">
+                              {(commentaire.nomUser || commentaire.idUser).split(' ').map((n: string) => n[0]).join('').toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <h3 className="font-semibold text-foreground text-base sm:text-lg">
+                              {commentaire.nomUser || 'Client'}
+                            </h3>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <MapPin className="h-4 w-4" />
+                              <span>{commentaire.nomDestination}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Calendar className="h-4 w-4" />
+                          <span>{formatDate(commentaire.dateCreation)}</span>
+                        </div>
+                      </div>
+                      
+                      {/* Message en forme de bulle en dessous */}
+                      <div className="relative">
+                        {/* Pointe de la bulle */}
+                        <div className="absolute -top-2 left-8 w-4 h-4 bg-gradient-to-br from-muted/50 to-muted/30 transform rotate-45 border-l-4 border-t-4 border-border"></div>
+                        
+                        {/* Contenu du message */}
+                        <div className="bg-gradient-to-br from-muted/50 to-muted/30 rounded-2xl p-6 sm:p-8 border-4 border-border">
+                          <p className="text-base sm:text-lg text-foreground leading-relaxed italic">
+                            "{commentaire.contenu}"
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="bg-muted/50 rounded-lg p-4 mb-3">
-                  <p className="text-sm text-foreground leading-relaxed">
-                    "{commentaire.contenu}"
-                  </p>
+              )) : (
+                <div className="w-full flex-shrink-0">
+                  <Card className="border-4 border-border bg-gradient-to-br from-card/95 to-card/80 backdrop-blur-sm h-full">
+                    <CardContent className="p-8 sm:p-12 text-center">
+                      <div className="relative">
+                        <div className="bg-gradient-to-br from-muted/50 to-muted/30 rounded-2xl p-8 sm:p-12 border-4 border-border">
+                          <MessageCircle className="mx-auto h-16 w-16 text-muted-foreground mb-6" />
+                          <p className="text-lg sm:text-xl text-foreground leading-relaxed mb-4">
+                            "Soyez le premier à partager votre expérience !"
+                          </p>
+                          <p className="text-base text-muted-foreground">
+                            Les témoignages de nos clients apparaîtront ici une fois validés.
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Calendar className="h-3 w-3" />
-                  <span>{formatDate(commentaire.dateCreation)}</span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-        
-        {commentaires.length > 6 && (
-          <div className="text-center mt-8">
-            <p className="text-sm text-muted-foreground">
-              {commentaires.length - 6} autres témoignages disponibles
-            </p>
+              )}
+            </div>
           </div>
-        )}
+          
+          {/* Indicateurs */}
+          {commentaires.length > 1 && (
+            <div className="flex justify-center gap-2 mt-6">
+              {commentaires.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => goToSlide(index)}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                    index === currentIndex 
+                      ? "w-8 bg-emerald-500" 
+                      : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                  }`}
+                  aria-label={`Aller au commentaire ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );
