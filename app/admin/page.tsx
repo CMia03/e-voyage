@@ -14,6 +14,7 @@ import { AdminActivites } from "@/app/admin/activites/page";
 import { AdminHebergements } from "@/app/admin/hebergements/page";
 import { AdminNotifications } from "@/app/admin/notifications/page";
 import { AdminAvis } from "@/app/admin/avis/page";
+import { AdminCommentaires } from "@/app/admin/commentaires/page";
 import { AdminEntrepriseInfo } from "@/app/admin/entreprise-info-next";
 import { AdminUsers } from "@/app/admin/users/page";
 import { useAuth } from "@/hooks/useAuth";
@@ -406,6 +407,8 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
             <AdminNotifications />
           ) : active === "avis" ? (
             <AdminAvis />
+          ) : active === "commentaires" ? (
+            <AdminCommentaires />
           ) : active === "utilisateurs" ? (
             <AdminUsers />
           ) : active === "entreprise-info" ? (

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Home, MapPin, Building, Play, ChevronDown, Users, Calendar, Bell, Star, Briefcase } from "lucide-react";
+import { Home, MapPin, Building, Play, ChevronDown, Users, Calendar, Bell, Star, Briefcase, MessageCircle } from "lucide-react";
 
 export type AdminSection =
   | "dashboard"
@@ -21,6 +21,7 @@ export type AdminSection =
   | "utilisateurs"
   | "reservations"
   | "avis"
+  | "commentaires"
   | "notifications"
   | "statistiques"
   | "entreprise-info"
@@ -238,6 +239,18 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
                 <span className="mr-2">·</span>
                 Avis
               </button>
+              <button
+                type="button"
+                onClick={() => onSelect("commentaires")}
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
+                  active === "commentaires"
+                    ? "bg-emerald-500/10 font-medium text-emerald-600"
+                    : "text-muted-foreground hover:bg-primary/10"
+                }`}
+              >
+                <span className="mr-2">·</span>
+                Commentaires
+              </button>
             </div>
           )}
         </div>
@@ -282,19 +295,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
           Planification
         </button>
 
-         <button
-          type="button"
-          onClick={() => onSelect("entreprise-info")}
-          className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
-            active === "entreprise-info"
-              ? "bg-emerald-500/10 font-medium text-emerald-600"
-              : "text-muted-foreground hover:bg-primary/10"
-          }`}
-        >
-          <span className="mr-2">🏢</span>
-          Info d'entreprise
-        </button>
-
+       
       </nav>
     </aside>
   );
