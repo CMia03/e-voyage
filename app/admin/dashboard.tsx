@@ -163,7 +163,7 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
               <CardHeader>
                 <CardDescription>{DASHBOARD_TEXTS.AVIS_EN_ATTENTE}</CardDescription>
                 <CardTitle className="text-2xl">
-                  {dashboardData?.data.avisEnAttente.count || 0}
+                  {dashboardData?.data.notations.totalCount || 0}
                 </CardTitle>
               </CardHeader>
               <CardContent className="text-xs text-muted-foreground">
