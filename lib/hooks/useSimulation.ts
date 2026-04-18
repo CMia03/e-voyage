@@ -1,8 +1,9 @@
 // lib/api/hooks/useSimulation.ts
 
 import { useState, useEffect, useCallback } from "react";
-import { simulerPlanification } from "@/lib/api/simulationService";
+import { calculerSeuilMinimum, simulerPlanification } from "@/lib/api/simulationService";
 import { 
+    SeuilMinimumResponse,
     SimulationRequest, 
     SimulationResponse, 
     DestinationType, 
@@ -24,6 +25,7 @@ export function useSimulation() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [result, setResult] = useState<SimulationResponse | null>(null);
+    const [minimumBudget, setMinimumBudget] = useState<SeuilMinimumResponse | null>(null);
 
     const [selectedDestinationId, setSelectedDestinationId] = useState("");
     const [selectedPlanificationId, setSelectedPlanificationId] = useState("");
@@ -103,6 +105,7 @@ export function useSimulation() {
                     setPlanifications([]);
                     setSelectedPlanificationId("");
                     setResult(null);
+                    setMinimumBudget(null);
                     setElementsSelectionnes([]);
                 }
             } catch (err) {
@@ -114,6 +117,53 @@ export function useSimulation() {
         };
         loadPlanifications();
     }, [selectedDestinationId]);
+
+    useEffect(() => {
+        if (!selectedPlanificationId || !selectedCategorieId || !selectedGamme || nombrePersonnes <= 0) {
+            setMinimumBudget(null);
+            return;
+        }
+
+        let active = true;
+
+        const loadMinimumBudget = async () => {
+            try {
+                const session = loadAuth();
+                const token = session?.accessToken;
+                const response = await calculerSeuilMinimum(
+                    {
+                        destinationId: selectedDestinationId,
+                        planificationId: selectedPlanificationId,
+                        idCategorieClient: selectedCategorieId,
+                        gamme: selectedGamme,
+                        nombrePersonnes,
+                    },
+                    token
+                );
+
+                if (active) {
+                    setMinimumBudget(response);
+                }
+            } catch (err) {
+                console.error("Erreur calcul seuil minimum:", err);
+                if (active) {
+                    setMinimumBudget(null);
+                }
+            }
+        };
+
+        void loadMinimumBudget();
+
+        return () => {
+            active = false;
+        };
+    }, [
+        selectedDestinationId,
+        selectedPlanificationId,
+        selectedCategorieId,
+        selectedGamme,
+        nombrePersonnes,
+    ]);
 
     // Lancer la simulation
     const lancerSimulation = useCallback(async (selection?: string[]) => {
@@ -210,6 +260,7 @@ export function useSimulation() {
         loading,
         error,
         result,
+        minimumBudget,
         selectedDestinationId,
         setSelectedDestinationId,
         selectedPlanificationId,

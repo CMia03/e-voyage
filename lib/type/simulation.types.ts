@@ -10,6 +10,20 @@ export type SimulationRequest = {
     elementsSelectionnes?: string[];
 };
 
+export type SeuilMinimumRequest = {
+    destinationId: string;
+    planificationId: string;
+    idCategorieClient: string;
+    gamme: string;
+    nombrePersonnes: number;
+};
+
+export type SeuilMinimumResponse = {
+    coutObligatoire: number;
+    margeMinimale: number;
+    seuilMinimum: number;
+};
+
 export type DestinationType = {
     id: string;
     title: string;

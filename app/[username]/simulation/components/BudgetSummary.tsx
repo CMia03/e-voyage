@@ -22,11 +22,21 @@ export function BudgetSummary({
 }: BudgetSummaryProps) {
     const pourcentage = budgetClient > 0 ? (totalCoche / budgetClient) * 100 : 0;
     const estDansBudget = reste >= 0;
+    const hasMinimumBudget = seuilMinimum > 0;
+    const minimumBudget = hasMinimumBudget ? seuilMinimum : 0;
     const maxBudget =
         adminBudget && adminBudget > 0
             ? adminBudget
-            : Math.max(budgetClient, totalCoche, seuilMinimum, 1);
-    const budgetClientRatio = Math.min(100, (budgetClient / maxBudget) * 100);
+            : Math.max(budgetClient, totalCoche, minimumBudget, 1);
+    const budgetRange = Math.max(maxBudget - minimumBudget, 1);
+    const clampedBudgetClient = Math.min(Math.max(budgetClient, minimumBudget), maxBudget);
+    // const budgetClientRatio = ((clampedBudgetClient - minimumBudget) / budgetRange) * 100;
+
+    const  budgetClientRatio = ((Math.max(totalCoche, minimumBudget) - minimumBudget) / budgetRange) * 100;
+
+    console.log("///////////////////////////Reste est dans le Budgé ///////////////////////////////////")
+    console.log(reste);
+
 
     return (
         <div className="space-y-3 rounded-lg border bg-white p-4">
@@ -34,7 +44,7 @@ export function BudgetSummary({
 
             <div>
                 <div className="mb-1 flex justify-between text-sm">
-                    <span>0 Ar</span>
+                    <span>{hasMinimumBudget ? `${minimumBudget.toLocaleString()} Ar` : "A calculer"}</span>
                     <span>{maxBudget.toLocaleString()} Ar</span>
                 </div>
                 <div className="relative h-2 overflow-hidden rounded-full bg-gray-200">
@@ -42,14 +52,22 @@ export function BudgetSummary({
                         className="absolute inset-y-0 z-10 w-1 rounded-full bg-slate-900"
                         style={{ left: `${budgetClientRatio}%` }}
                     />
-                    <div
+
+
+                    
+
+                    {/* <div
                         className={`h-full transition-all ${estDansBudget ? "bg-emerald-500" : "bg-red-500"}`}
                         style={{ width: `${Math.min(100, pourcentage)}%` }}
-                    />
+                    /> */}
+
+
                 </div>
                 <div className="mt-2 flex justify-between text-xs text-muted-foreground">
-                    <span>Budget client: {budgetClient.toLocaleString()} Ar</span>
-                    <span>Budget admin: {maxBudget.toLocaleString()} Ar</span>
+                    <span>
+                        Budget minimum accepte: {hasMinimumBudget ? `${minimumBudget.toLocaleString()} Ar` : "A calculer"}
+                    </span>
+                    <span>Budget maximal admin: {maxBudget.toLocaleString()} Ar</span>
                 </div>
             </div>
 

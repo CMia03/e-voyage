@@ -19,6 +19,7 @@ export default function SimulationPage() {
         loading,
         error,
         result,
+        minimumBudget,
         selectedDestinationId,
         setSelectedDestinationId,
         selectedPlanificationId,
@@ -44,6 +45,7 @@ export default function SimulationPage() {
         [planifications, selectedPlanificationId]
     );
     const adminBudget = selectedPlanification?.budgetTotal ?? null;
+    const seuilMinimum = minimumBudget?.seuilMinimum ?? result?.recap?.seuilMinimum ?? 0;
 
     const handleLancerSimulation = async () => {
         await lancerSimulation();
@@ -72,6 +74,7 @@ export default function SimulationPage() {
             <BudgetInput
                 value={budgetClient}
                 onChange={setBudgetClient}
+                minBudget={seuilMinimum}
                 adminBudget={adminBudget}
                 disabled={loading}
             />
