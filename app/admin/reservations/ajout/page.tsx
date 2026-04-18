@@ -96,7 +96,7 @@ export default function AjoutReservationPage() {
                   value={formData.destination}
                   onValueChange={(value) => handleInputChange("destination", value)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Sélectionner une destination" />
                   </SelectTrigger>
                   <SelectContent>
@@ -148,7 +148,7 @@ export default function AjoutReservationPage() {
                 className="flex items-center gap-2"
               >
                 <Save className="h-4 w-4" />
-                {isSubmitting ? "Enregistrement..." : "Enregistrer"}
+                {isSubmitting ? "Reservation..." : "Reserver"}
               </Button>
             </div>
           </form>
