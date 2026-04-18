@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Home, MapPin, Building, Play, ChevronDown, Users, Calendar, Bell, Star, Briefcase, MessageCircle } from "lucide-react";
+import { Home, MapPin, Building, Play, ChevronDown, Users, Calendar, Bell, Star, Briefcase, MessageCircle, ClipboardList } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { getAllCommentairesAdmin } from "@/lib/api/commentaires";
 import { useAuth } from "@/hooks/useAuth";
@@ -23,6 +23,8 @@ export type AdminSection =
   | "activites-categories"
   | "utilisateurs"
   | "reservations"
+  | "reservations-liste"
+  | "reservations-ajout"
   | "avis"
   | "commentaires"
   | "notifications"
@@ -286,6 +288,52 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
                     </Badge>
                   )}
                 </div>
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-1">
+          <button
+            type="button"
+            onClick={() => toggleSection("reservations")}
+            className="flex w-full cursor-pointer items-center justify-between rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
+          >
+            <div className="flex items-center">
+              <ClipboardList className="mr-3 h-4 w-4" />
+              Réservations
+            </div>
+            <ChevronDown
+              className={`h-4 w-4 transition-all duration-300 ease-in-out transform ${
+                expandedSections.includes("reservations") ? "rotate-180" : "rotate-0"
+              }`}
+            />
+          </button>
+
+          {expandedSections.includes("reservations") && (
+            <div className="ml-4 space-y-1 pl-4 border-l-2 border-emerald-200 dark:border-emerald-800">
+              <button
+                type="button"
+                onClick={() => onSelect("reservations-liste")}
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${active === "reservations-liste"
+                    ? "bg-emerald-500/10 font-medium text-emerald-600"
+                    : "text-muted-foreground hover:bg-primary/10"
+                  }`}
+              >
+                <span className="mr-2"></span>
+                Liste réservations
+              </button>
+              <button
+                type="button"
+                onClick={() => onSelect("reservations-ajout")}
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
+                  active === "reservations-ajout"
+                    ? "bg-emerald-500/10 font-medium text-emerald-600"
+                    : "text-muted-foreground hover:bg-primary/10"
+                }`}
+              >
+                <span className="mr-2"></span>
+                Ajout réservation
               </button>
             </div>
           )}

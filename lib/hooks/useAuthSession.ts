@@ -1,6 +1,7 @@
 import { useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { loadAuth, clearAuth } from '@/lib/auth';
+import { setLogoutCallback } from '@/lib/session-manager';
 
 export function useAuthSession() {
   const router = useRouter();
@@ -11,21 +12,17 @@ export function useAuthSession() {
   }, [router]);
 
   useEffect(() => {
-    const isProtectedRoute = () => {
-      const path = window.location.pathname;
-      return path.startsWith('/admin') || path.startsWith('/dashboard');
-    };
+    // Enregistrer le callback de déconnexion global
+    setLogoutCallback(logout);
 
     const checkSession = () => {
-      // Only check authentication on protected routes
-      if (!isProtectedRoute()) {
-        return;
-      }
-
       const auth = loadAuth();
       
       if (!auth || !auth.accessToken) {
-        logout();
+        // Ne déconnecter que si on n'est pas déjà sur la page de login
+        if (window.location.pathname !== '/login') {
+          logout();
+        }
         return;
       }
 
@@ -62,6 +59,8 @@ export function useAuthSession() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleFocus);
       window.removeEventListener('beforeunload', handleBeforeUnload);
+      // Nettoyer le callback de déconnexion
+      setLogoutCallback(() => {});
     };
   }, [logout]);
 

@@ -142,6 +142,20 @@ export function AdminBreadcrumbs() {
           { label: "Réservations", isActive: true }
         ];
 
+      case "reservations-liste":
+        return [
+          ...baseBreadcrumbs,
+          { label: "Réservations", href: "/admin?section=reservations" },
+          { label: "Liste des réservations", isActive: true }
+        ];
+
+      case "reservations-ajout":
+        return [
+          ...baseBreadcrumbs,
+          { label: "Réservations", href: "/admin?section=reservations" },
+          { label: "Ajouter une réservation", isActive: true }
+        ];
+
       case "avis":
         return [
           ...baseBreadcrumbs,

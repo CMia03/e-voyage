@@ -5,6 +5,7 @@ const TOKEN_LIFETIME = 15 * 60;
 const REFRESH_MARGIN = 5 * 60;
 
 let refreshPromise: Promise<AuthSession> | null = null;
+let logoutCallback: (() => void) | null = null;
 
 function getTokenExpiration(token: string): number | null {
   try {
@@ -55,6 +56,10 @@ async function refreshSession(): Promise<AuthSession> {
       return newSession;
     } catch (error) {
       clearAuth();
+      // Déclencher la déconnexion globale si un callback est enregistré
+      if (logoutCallback) {
+        logoutCallback();
+      }
       throw error;
     } finally {
       refreshPromise = null;
@@ -62,6 +67,10 @@ async function refreshSession(): Promise<AuthSession> {
   })();
 
   return refreshPromise;
+}
+
+export function setLogoutCallback(callback: () => void) {
+  logoutCallback = callback;
 }
 
 export async function getValidToken(): Promise<string | null> {
@@ -79,6 +88,10 @@ export async function getValidToken(): Promise<string | null> {
     const newSession = await refreshSession();
     return newSession.accessToken;
   } catch {
+    // Si le refresh échoue, déclencher la déconnexion globale
+    if (logoutCallback) {
+      logoutCallback();
+    }
     return null;
   }
 }

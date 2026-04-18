@@ -28,6 +28,8 @@ function isValidAdminSection(section: string): section is AdminSection {
     "activites-categories",
     "utilisateurs",
     "reservations",
+    "reservations-liste",
+    "reservations-ajout",
     "avis",
     "commentaires",
     "notifications",
@@ -46,6 +48,8 @@ import { AdminAvis } from "@/app/admin/avis/page";
 import { AdminCommentaires } from "@/app/admin/commentaires/page";
 import { AdminEntrepriseInfo } from "@/app/admin/entreprise-info-next";
 import { AdminUsers } from "@/app/admin/users/page";
+import ListeReservationsPage from "@/app/admin/reservations/liste/page";
+import AjoutReservationPage from "@/app/admin/reservations/ajout/page";
 import { useAuth } from "@/hooks/useAuth";
 import { loadAuth, clearAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -469,6 +473,10 @@ function AdminPageContent({
             <AdminCommentaires />
           ) : active === "utilisateurs" ? (
             <AdminUsers />
+          ) : active === "reservations-liste" ? (
+            <ListeReservationsPage />
+          ) : active === "reservations-ajout" ? (
+            <AjoutReservationPage />
           ) : active === "entreprise-info" ? (
             <AdminEntrepriseInfo accessToken={accessToken ?? ""} />
           ) : active === "planification" ? (

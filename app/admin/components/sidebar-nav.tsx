@@ -19,6 +19,8 @@ type AdminSection =
   | "activites-categories"
   | "utilisateurs"
   | "reservations"
+  | "reservations-liste"
+  | "reservations-ajout"
   | "avis"
   | "notifications"
   | "statistiques"
@@ -202,6 +204,47 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
           ) : null}
         </div>
 
+        <div className="space-y-1">
+          <button
+            type="button"
+            onClick={() => toggleSection("reservations")}
+            className="flex w-full cursor-pointer items-center justify-between rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-primary/10"
+          >
+            <span>Réservations</span>
+            <span className={expandedSections.includes("reservations") ? "rotate-180" : ""}>
+              25
+            </span>
+          </button>
+          {expandedSections.includes("reservations") ? (
+            <div className="ml-4 space-y-1 border-l-2 border-emerald-200 pl-4 dark:border-emerald-800">
+              <button
+                type="button"
+                onClick={() => onSelect("reservations-liste")}
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
+                  active === "reservations-liste"
+                    ? "bg-emerald-500/10 font-medium text-emerald-600"
+                    : "text-muted-foreground hover:bg-primary/10"
+                }`}
+              >
+                <span className="mr-2"></span>
+                Liste réservations
+              </button>
+              <button
+                type="button"
+                onClick={() => onSelect("reservations-ajout")}
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
+                  active === "reservations-ajout"
+                    ? "bg-emerald-500/10 font-medium text-emerald-600"
+                    : "text-muted-foreground hover:bg-primary/10"
+                }`}
+              >
+                <span className="mr-2">+</span>
+                Ajout réservation
+              </button>
+            </div>
+          ) : null}
+        </div>
+
         <button
           type="button"
           onClick={() => onSelect("entreprise-info")}
@@ -211,8 +254,8 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
               : "text-muted-foreground hover:bg-primary/10"
           }`}
         >
-          <span className="mr-2">🏢</span>
-          Info d'entreprise
+          <span className="mr-2"></span>
+          Info d entreprise
         </button>
       </nav>
     </aside>
