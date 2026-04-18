@@ -26,7 +26,7 @@ export function HomeCommentaires() {
         setLoading(true);
         
         const destinationsData = await listDestinations();
-        setDestinations(destinationsData.map(dest => ({ id: dest.id, nom: dest.nom })));
+        setDestinations(destinationsData.map(dest => ({ id: dest.id, nom: dest.title })));
         
         const response = await getPublicCommentaires();
         
@@ -36,7 +36,7 @@ export function HomeCommentaires() {
           
           const commentairesWithDestinations = commentairesValidés.map(commentaire => ({
             ...commentaire,
-            destinationName: destinationsData.find(dest => dest.id === commentaire.idDestination)?.nom || `Destination ${commentaire.idDestination}`
+            destinationName: destinationsData.find(dest => dest.id === commentaire.idDestination)?.title || `Destination ${commentaire.idDestination}`
           }));
           
           setCommentaires(commentairesWithDestinations.sort((a, b) => 
@@ -189,7 +189,7 @@ export function HomeCommentaires() {
                         <div className="absolute -top-2 left-8 w-4 h-4 bg-gradient-to-br from-muted/50 to-muted/30 transform rotate-45 border-l-4 border-t-4 border-border"></div>
                         <div className="bg-gradient-to-br from-muted/50 to-muted/30 rounded-2xl p-6 sm:p-8 border-4 border-border">
                           <p className="text-base sm:text-lg text-foreground leading-relaxed italic">
-                            "{commentaire.contenu}"
+                            {commentaire.contenu}
                           </p>
                         </div>
                       </div>
@@ -204,7 +204,7 @@ export function HomeCommentaires() {
                         <div className="bg-gradient-to-br from-muted/50 to-muted/30 rounded-2xl p-8 sm:p-12 border-4 border-border">
                           <MessageCircle className="mx-auto h-16 w-16 text-muted-foreground mb-6" />
                           <p className="text-lg sm:text-xl text-foreground leading-relaxed mb-4">
-                            "Soyez le premier à partager votre expérience !"
+                            Soyez le premier à partager votre expérience !
                           </p>
                           <p className="text-base text-muted-foreground">
                             Les témoignages de nos clients apparaîtront ici une fois validés.
