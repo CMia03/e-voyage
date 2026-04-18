@@ -3,10 +3,10 @@ import { NotationsService } from '@/lib/data/notations-service';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { destinationId: string; utilisateurId: string } }
+  { params }: { params: Promise<{ destinationId: string; utilisateurId: string }> }
 ) {
   try {
-    const { destinationId, utilisateurId } = params;
+    const { destinationId, utilisateurId } = await params;
 
     console.log(`Fetching user rating for destination ${destinationId} by user ${utilisateurId}`);
     
@@ -40,10 +40,10 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { destinationId: string; utilisateurId: string } }
+  { params }: { params: Promise<{ destinationId: string; utilisateurId: string }> }
 ) {
   try {
-    const { destinationId, utilisateurId } = params;
+    const { destinationId, utilisateurId } = await params;
     const { searchParams } = new URL(request.url);
     const nombreEtoiles = searchParams.get('nombreEtoiles');
     const body = await request.json().catch(() => ({}));

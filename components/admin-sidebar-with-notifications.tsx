@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Home, MapPin, Building, Play, ChevronDown, Users, Calendar, Bell, Star, Briefcase, MessageCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { getNotificationsNonLues } from "@/lib/api/notifications";
+import { getAllCommentairesAdmin } from "@/lib/api/commentaires";
 import { useAuth } from "@/hooks/useAuth";
 
 export type AdminSection =
@@ -40,25 +40,25 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
   const [commentairesNonLus, setCommentairesNonLus] = useState(0);
   const { session } = useAuth();
 
-  // Charger le nombre de commentaires non lus
+  // Charger le nombre de commentaires en attente
   useEffect(() => {
-    const loadCommentairesNonLus = async () => {
+    const loadCommentairesEnAttente = async () => {
       if (!session?.accessToken) return;
 
       try {
-        const response = await getNotificationsNonLues(session.accessToken);
+        const response = await getAllCommentairesAdmin(session.accessToken);
         if (response.success) {
-          const commentairesCount = response.data?.filter(n => n.type === "commentaire").length || 0;
+          const commentairesCount = response.data?.filter(c => c.status === false).length || 0;
           setCommentairesNonLus(commentairesCount);
         }
       } catch (error) {
-        console.error("Erreur lors du chargement des notifications:", error);
+        console.error("Erreur lors du chargement des commentaires:", error);
       }
     };
 
-    loadCommentairesNonLus();
+    loadCommentairesEnAttente();
     // Rafraîchir toutes les 30 secondes
-    const interval = setInterval(loadCommentairesNonLus, 30000);
+    const interval = setInterval(loadCommentairesEnAttente, 30000);
     return () => clearInterval(interval);
   }, [session?.accessToken]);
 
