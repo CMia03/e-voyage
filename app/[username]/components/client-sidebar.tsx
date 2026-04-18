@@ -1,8 +1,8 @@
 "use client";
 
-import { CalendarDays, Compass, CreditCard, UserRound } from "lucide-react";
+import { CalendarDays, Compass, CreditCard, UserRound, TrendingUp } from "lucide-react";
 
-export type ClientSection = "destinations" | "planifications" | "reservations" | "profile";
+export type ClientSection = "simulation" | "destinations" | "planifications" | "reservations" | "profile";
 
 export function ClientSidebar({
   active,
@@ -13,12 +13,42 @@ export function ClientSidebar({
 }) {
   return (
     <aside className="hidden w-72 border-r border-border/50 bg-card/50 p-5 md:block">
-      {/* <p className="mb-3 text-xs uppercase tracking-wide text-muted-foreground">Navigation client</p> */}
       <nav className="space-y-2">
-        <SidebarButton active={active === "destinations"} icon={<Compass className="size-4" />} label="Liste destinations" onClick={() => onSelect("destinations")} />
-        <SidebarButton active={active === "planifications"} icon={<CalendarDays className="size-4" />} label="Planifications destination" onClick={() => onSelect("planifications")} />
-        <SidebarButton active={active === "reservations"} icon={<CreditCard className="size-4" />} label="Reservations" onClick={() => onSelect("reservations")} />
-        <SidebarButton active={active === "profile"} icon={<UserRound className="size-4" />} label="Profil" onClick={() => onSelect("profile")} />
+        {/* Simulation - en premier */}
+        <SidebarButton 
+          active={active === "simulation"} 
+          icon={<TrendingUp className="size-4" />} 
+          label="Simulation budget" 
+          onClick={() => onSelect("simulation")} 
+        />
+        
+        <SidebarButton 
+          active={active === "destinations"} 
+          icon={<Compass className="size-4" />} 
+          label="Liste destinations" 
+          onClick={() => onSelect("destinations")} 
+        />
+        
+        <SidebarButton 
+          active={active === "planifications"} 
+          icon={<CalendarDays className="size-4" />} 
+          label="Planifications" 
+          onClick={() => onSelect("planifications")} 
+        />
+        
+        <SidebarButton 
+          active={active === "reservations"} 
+          icon={<CreditCard className="size-4" />} 
+          label="Réservations" 
+          onClick={() => onSelect("reservations")} 
+        />
+        
+        <SidebarButton 
+          active={active === "profile"} 
+          icon={<UserRound className="size-4" />} 
+          label="Profil" 
+          onClick={() => onSelect("profile")} 
+        />
       </nav>
     </aside>
   );

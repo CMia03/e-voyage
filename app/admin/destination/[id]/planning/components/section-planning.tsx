@@ -22,6 +22,7 @@ type Props = {
   onDeleteElement: (elementId: string) => void;
   onElementDetails: (jour: JourPlanificationVoyage, element: ElementJourPlanification) => void;
   onOpenLinkedDetails: (element: ElementJourPlanification) => void;
+  onToggleElementObligatoire: (element: ElementJourPlanification) => void;
   formatDate: (value?: string | null) => string;
   formatDateTime: (value?: string | null) => string;
   getElementDisplayTitle: (element: ElementJourPlanification) => string;
@@ -43,6 +44,7 @@ export function SectionPlanning({
   onDeleteElement,
   onElementDetails,
   onOpenLinkedDetails,
+  onToggleElementObligatoire,
   formatDate,
   formatDateTime,
   getElementDisplayTitle,
@@ -177,7 +179,21 @@ export function SectionPlanning({
                                     ) : (
                                       <Badge variant="outline" className="text-[10px]">Inactif</Badge>
                                     )}
+                                    {element.estObligatoire ? (
+                                      <Badge variant="secondary" className="text-[10px]">Obligatoire</Badge>
+                                    ) : (
+                                      <Badge variant="outline" className="text-[10px]">Optionnel</Badge>
+                                    )}
                                   </div>
+                                  <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                                    <input
+                                      type="checkbox"
+                                      checked={element.estObligatoire}
+                                      onChange={() => onToggleElementObligatoire(element)}
+                                      className="size-4 rounded border-input"
+                                    />
+                                    Bloc obligatoire
+                                  </label>
                                   <h4 className="font-medium text-sm line-clamp-2">{getElementDisplayTitle(element)}</h4>
                                   {element.description ? (
                                     <p className="text-xs text-muted-foreground line-clamp-2">{element.description}</p>

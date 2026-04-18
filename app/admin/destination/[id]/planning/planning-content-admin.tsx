@@ -121,6 +121,7 @@ type ElementFormState = {
   budgetPrevu: string;
   devise: string;
   estActif: boolean;
+  estObligatoire: boolean;
   idTypeElementJour: string;
   idTransport: string;
   idActivite: string;
@@ -218,6 +219,7 @@ const initialElementForm: ElementFormState = {
   budgetPrevu: "",
   devise: "MGA",
   estActif: true,
+  estObligatoire: false,
   idTypeElementJour: "",
   idTransport: "",
   idActivite: "",
@@ -341,6 +343,7 @@ function mapElementToForm(element: ElementJourPlanification): ElementFormState {
     budgetPrevu: element.budgetPrevu !== null && element.budgetPrevu !== undefined ? String(element.budgetPrevu) : "",
     devise: element.devise ?? "MGA",
     estActif: element.estActif,
+    estObligatoire: element.estObligatoire,
     idTypeElementJour: element.idTypeElementJour,
     idTransport: element.idTransport ?? "",
     idActivite: element.idActivite ?? "",
@@ -1058,6 +1061,7 @@ const [editingBudget, setEditingBudget] = useState<any>(null);
       budgetPrevu: elementForm.budgetPrevu ? Number(elementForm.budgetPrevu) : null,
       devise: elementForm.devise.trim() || "MGA",
       estActif: elementForm.estActif,
+      estObligatoire: elementForm.estObligatoire,
       idJourPlanificationVoyage: targetJourIdForElement,
       idTypeElementJour: elementForm.idTypeElementJour,
       idTransport: elementForm.idTransport || null,
@@ -1079,6 +1083,7 @@ const [editingBudget, setEditingBudget] = useState<any>(null);
       budgetPrevu: element.budgetPrevu ?? null,
       devise: element.devise ?? "MGA",
       estActif: element.estActif,
+      estObligatoire: element.estObligatoire,
       idJourPlanificationVoyage: element.idJourPlanificationVoyage,
       idTypeElementJour: element.idTypeElementJour,
       idTransport: element.idTransport ?? null,
@@ -1256,6 +1261,28 @@ const [editingBudget, setEditingBudget] = useState<any>(null);
     }
   }
 
+  async function handleToggleElementObligatoire(element: ElementJourPlanification) {
+    setIsSavingElement(true);
+    setError("");
+    setSuccessMessage("");
+    try {
+      await updateElementJourPlanification(
+        element.id,
+        {
+          ...buildExistingElementPayload(element, element.ordreAffichage ?? 0),
+          estObligatoire: !element.estObligatoire,
+        },
+        accessToken
+      );
+      setSuccessMessage("Statut obligatoire du bloc mis a jour avec succes.");
+      await refreshPlanifications();
+    } catch (saveError) {
+      setError(getErrorMessage(saveError, "Impossible de modifier le statut obligatoire du bloc"));
+    } finally {
+      setIsSavingElement(false);
+    }
+  }
+
   async function handleDeletePlanification(id: string) {
     if (!window.confirm("Supprimer cette planification ?")) return;
     setIsDeletingId(id);
@@ -1413,6 +1440,7 @@ const [editingBudget, setEditingBudget] = useState<any>(null);
                   onDeleteElement={(elementId) => void handleDeleteElement(elementId)}
                   onElementDetails={openElementDetailsDialog}
                   onOpenLinkedDetails={openLinkedDetailsDialog}
+                  onToggleElementObligatoire={(element) => void handleToggleElementObligatoire(element)}
                   formatDate={formatDate}
                   formatDateTime={formatDateTime}
                   getElementDisplayTitle={getElementDisplayTitle}
@@ -1873,6 +1901,10 @@ const [editingBudget, setEditingBudget] = useState<any>(null);
                 <input id="element-actif" type="checkbox" checked={elementForm.estActif} onChange={(event) => updateElementForm("estActif", event.target.checked)} className="size-4 rounded border-input" />
                 <label htmlFor="element-actif" className="text-sm font-medium">Bloc actif</label>
               </div>
+              <div className="flex items-center gap-3 pt-7">
+                <input id="element-obligatoire" type="checkbox" checked={elementForm.estObligatoire} onChange={(event) => updateElementForm("estObligatoire", event.target.checked)} className="size-4 rounded border-input" />
+                <label htmlFor="element-obligatoire" className="text-sm font-medium">Bloc obligatoire</label>
+              </div>
             </div>
 
             {selectedTypeElementJour?.code === "TRANSPORT" || selectedTypeElementJour?.code === "TRANSPORT_PRE_REMPLI" ? (
@@ -1988,6 +2020,7 @@ const [editingBudget, setEditingBudget] = useState<any>(null);
               <p><span className="font-medium">Heure fin:</span> {formatDateTime(detailTarget.element.heureFin)}</p>
               <p><span className="font-medium">Budget:</span> {detailTarget.element.budgetPrevu ?? "-"} {detailTarget.element.devise || "MGA"}</p>
               <p><span className="font-medium">Statut:</span> {detailTarget.element.estActif ? "Actif" : "Inactif"}</p>
+              <p><span className="font-medium">Obligatoire:</span> {detailTarget.element.estObligatoire ? "Oui" : "Non"}</p>
               <p><span className="font-medium">Lien:</span> {getLinkedLabel(detailTarget.element) || "-"}</p>
             </div>
           ) : null}
@@ -2118,4 +2151,3 @@ const [editingBudget, setEditingBudget] = useState<any>(null);
     </div>
   );
 }
-

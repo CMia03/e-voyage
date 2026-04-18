@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
+import { AdminParametrageMargeBrute } from "@/app/admin/parametrage-marge-brute/page";
 
 const locales = {
   fr: fr,
@@ -410,6 +411,7 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
             <AdminUsers />
           ) : active === "entreprise-info" ? (
             <AdminEntrepriseInfo accessToken={accessToken ?? ""} />
+
           ) : active === "planification" ? (
             <div className="space-y-8">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -498,11 +500,16 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
                 </CardContent>
               </Card>
             </div>
+          ) : active === "parametrage-marge-brute" ? (
+
+            <AdminParametrageMargeBrute accessToken={accessToken ?? ""} />
+            
           ) : (
             <AdminDestinations accessToken={accessToken ?? ""} initialView="liste" />
           )}
-      
+    
       {/* Modale pour créer un événement */}
+
       {showEventModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-md">

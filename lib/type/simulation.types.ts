@@ -1,0 +1,100 @@
+
+
+export type SimulationRequest = {
+    destinationId: string;
+    planificationId: string;
+    budgetClient: number;
+    idCategorieClient: string;
+    gamme: string;
+    nombrePersonnes: number;
+    elementsSelectionnes?: string[];
+};
+
+export type DestinationType = {
+    id: string;
+    title: string;
+    image: string;
+    description: string;
+    price: string;
+};
+
+export type PlanificationType = {
+    id: string;
+    nomPlanification: string;
+    budgetTotal: number | null;
+    jours?: unknown[];
+};
+
+export type CategorieType = {
+    id: string;
+    nom: string;
+};
+
+export type ElementDetail = {
+    capacite?: number;
+    prixParNuit?: number;
+    prixParPersonne?: number;
+    nombreEtoiles?: number;
+    adresse?: string;
+    telephone?: string;
+    duree?: string;
+    difficulte?: string;
+    participantMin?: number;
+    participantsMax?: number;
+    depart?: string;
+    arrivee?: string;
+    distance?: string;
+};
+
+export type ElementSimulation = {
+    id: string;
+    titre: string;
+    type: string;
+    prix: number;
+    obligatoire: boolean;
+    coche: boolean;
+    details: ElementDetail;
+};
+
+export type JourSimulation = {
+    numeroJour: number;
+    titre: string;
+    totalJour: number;
+    elements: ElementSimulation[];
+};
+
+export type Recap = {
+    budgetClient: number;
+    coutObligatoire: number;
+    margeMinimale: number;
+    seuilMinimum: number;
+    restePourOptionnels: number;
+};
+
+export type Resume = {
+    totalObligatoire: number;
+    totalOptionnel: number;
+    totalCoche: number;
+    budgetClient: number;
+    reste: number;
+    obligatoiresCoches: number;
+    optionnelsCoches: number;
+};
+
+export type SuggestionItem = {
+    type: string;
+    message: string;
+    valeur: number | string | boolean | null;
+};
+
+export type SimulationResponse = {
+    success: boolean;
+    message: string;
+    error?: string;
+    recap?: Recap;
+    jours?: JourSimulation[];
+    resume?: Resume;
+    suggestions?: {
+        suggestions: SuggestionItem[];
+    };
+};

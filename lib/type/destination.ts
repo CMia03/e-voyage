@@ -154,6 +154,7 @@ export type ElementJourPlanification = {
   maximumTarifParPersonne: number | null;
   devise: string | null;
   estActif: boolean;
+  estObligatoire: boolean;
   dateCreation?: string;
   dateModification?: string;
   idJourPlanificationVoyage: string;
@@ -280,6 +281,7 @@ export type SaveElementJourPlanificationPayload = {
   budgetPrevu?: number | null;
   devise?: string | null;
   estActif?: boolean;
+  estObligatoire?: boolean;
   idJourPlanificationVoyage: string;
   idTypeElementJour: string;
   idTransport?: string | null;
