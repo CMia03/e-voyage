@@ -1,7 +1,7 @@
 "use client";
 
-import { AdminHeader } from "./components/header";
-import { AdminSidebar } from "./components/sidebar";
+import { AdminHeaderWithNotifications } from "@/components/admin-header-with-notifications";
+import { AdminSidebarWithNotifications } from "@/components/admin-sidebar-with-notifications";
 import { AdminFooter } from "./components/footer";
 import { AdminBreadcrumbs } from "./components/breadcrumbs";
 import { AdminNavigationProvider, useAdminNavigation } from "./contexts/admin-navigation-context";
@@ -16,9 +16,9 @@ function AdminLayoutContent({
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-muted/30 to-background text-foreground flex flex-col">
-      <AdminHeader />
+      <AdminHeaderWithNotifications />
       <div className="mx-auto flex w-full max-w-[1400px] flex-1">
-        <AdminSidebar active={active} onSelect={setActive} />
+        <AdminSidebarWithNotifications active={active} onSelect={setActive} />
         <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8 overflow-auto min-h-0">
           <AdminBreadcrumbs />
           {children}

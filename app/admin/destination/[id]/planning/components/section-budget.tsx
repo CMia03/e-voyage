@@ -475,17 +475,23 @@ interface RecapTableProps {
   tarifsActivites: TarifActivite[];
   tarifsHebergements: TarifHebergement[];
   devise: string;
+  planification: PlanificationVoyage;
 }
 
-function RecapTable({ sortedDays, tarifsActivites, tarifsHebergements, devise }: RecapTableProps) {
+function RecapTable({ sortedDays, tarifsActivites, tarifsHebergements, devise, planification }: RecapTableProps) {
   const calculateTotals = () => {
     const totals: Record<string, Record<string, number>> = {
       moyenne: {},
       luxe: {},
     };
 
+    const transportsById = new Map(
+      (planification.transports ?? []).map((transport) => [transport.id, transport] as const)
+    );
+
     for (const day of sortedDays) {
       const categoriesDuJour = new Set<string>();
+      let totalCommunDuJour = 0;
 
       for (const element of day.elements ?? []) {
         if (element.codeTypeElementJour === "ACTIVITE" && element.idActivite) {
@@ -495,6 +501,13 @@ function RecapTable({ sortedDays, tarifsActivites, tarifsHebergements, devise }:
               categoriesDuJour.add(tarif.categorieClient);
             }
           });
+        }
+
+        const categorie = getElementCategory(element);
+        if (categorie === "transport") {
+          totalCommunDuJour += getTransportAmount(element.idTransport, transportsById) ?? 0;
+        } else if (categorie === "autre") {
+          totalCommunDuJour += element.budgetPrevu ?? 0;
         }
       }
 
@@ -540,15 +553,17 @@ function RecapTable({ sortedDays, tarifsActivites, tarifsHebergements, devise }:
         const activites = activitesParCategorie[cat] || { moyenne: 0, luxe: 0 };
 
         if (aDesHebergements && hebergementMoyenneParPers > 0) {
-          totals.moyenne[cat] = (totals.moyenne[cat] || 0) + hebergementMoyenneParPers + activites.moyenne;
+          totals.moyenne[cat] =
+            (totals.moyenne[cat] || 0) + totalCommunDuJour + hebergementMoyenneParPers + activites.moyenne;
         } else {
-          totals.moyenne[cat] = (totals.moyenne[cat] || 0) + activites.moyenne;
+          totals.moyenne[cat] = (totals.moyenne[cat] || 0) + totalCommunDuJour + activites.moyenne;
         }
 
         if (aDesHebergements && hebergementLuxeParPers > 0) {
-          totals.luxe[cat] = (totals.luxe[cat] || 0) + hebergementLuxeParPers + activites.luxe;
+          totals.luxe[cat] =
+            (totals.luxe[cat] || 0) + totalCommunDuJour + hebergementLuxeParPers + activites.luxe;
         } else {
-          totals.luxe[cat] = (totals.luxe[cat] || 0) + activites.luxe;
+          totals.luxe[cat] = (totals.luxe[cat] || 0) + totalCommunDuJour + activites.luxe;
         }
       }
     }
@@ -889,6 +904,7 @@ export function SectionBudget({
         />
 
         <RecapTable
+          planification={planification}
           sortedDays={sortedDays}
           tarifsActivites={tarifsActivites}
           tarifsHebergements={tarifsHebergements}

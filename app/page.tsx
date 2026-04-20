@@ -4,6 +4,7 @@ import { DestinationCard } from "@/components/destination-card";
 import { FooterDynamic } from "@/components/footer-dynamic";
 import { SmoothScrollButtons } from "@/components/smooth-scroll-buttons";
 import { HomeGallery } from "@/components/home-gallery";
+import { HomeCommentaires } from "@/components/home-commentaires";
 import { listDestinations } from "@/lib/api/destinations";
 import { destinationsData as fallbackDestinations } from "@/lib/destinations";
 
@@ -158,6 +159,8 @@ export default async function Home() {
             </div>
           </div>
         </section>
+
+        <HomeCommentaires />
 
         <section className="py-16 sm:py-24 bg-gradient-to-b from-muted/30 via-background to-background relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_50%,rgba(16,185,129,0.05),transparent_50%)]" />

@@ -561,3 +561,5 @@ export function AdminUsers() {
     </SessionGuard>
   );
 }
+
+export default AdminUsers;

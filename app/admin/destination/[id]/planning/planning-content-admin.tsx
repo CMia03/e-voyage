@@ -6,8 +6,6 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Pencil, Plus, Trash2, X } from "lucide-react";
 
-import { AdminFooter } from "@/app/admin/components/footer";
-import { AdminHeader } from "@/app/admin/components/header";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -509,6 +507,7 @@ const [editingBudget, setEditingBudget] = useState<any>(null);
       await loadBudgetsForPlanification(selectedPlanificationId);
     } catch (err) {
       setError(getErrorMessage(err, "Impossible d'enregistrer le budget"));
+      throw err instanceof Error ? err : new Error(getErrorMessage(err, "Impossible d'enregistrer le budget"));
     }
   }
 
@@ -1376,8 +1375,7 @@ const [editingBudget, setEditingBudget] = useState<any>(null);
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <AdminHeader />
+    <div className="bg-background text-foreground">
       <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <div className="space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -2147,7 +2145,6 @@ const [editingBudget, setEditingBudget] = useState<any>(null);
         categoriesClient={categoriesClient}
       />
 
-      <AdminFooter />
     </div>
   );
 }

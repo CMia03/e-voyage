@@ -18,10 +18,11 @@ export interface DashboardData {
     count: number;
     newThisMonth: number;
   };
-  avisEnAttente: {
-    count: number;
+  notations: {
+    totalCount: number;
     status: string;
   };
+
   monthlyActivity?: ActivityData[];
 }
 

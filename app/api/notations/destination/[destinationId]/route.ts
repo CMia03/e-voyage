@@ -3,10 +3,10 @@ import { NotationsService } from '@/lib/data/notations-service';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { destinationId: string } }
+  { params }: { params: Promise<{ destinationId: string }> }
 ) {
   try {
-    const { destinationId } = params;    
+    const { destinationId } = await params;    
     const notations = await NotationsService.getNotationsByDestination(destinationId);
 
     return NextResponse.json({

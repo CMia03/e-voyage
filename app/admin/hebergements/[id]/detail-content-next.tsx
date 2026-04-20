@@ -412,7 +412,6 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
         <div className="space-y-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-3">
-              <Button asChild variant="outline" size="sm"><Link href="/admin">Retour aux hebergements</Link></Button>
               <div>
                 <h1 className="text-3xl font-semibold tracking-tight">{hebergement?.nom ?? "Detail hebergement"}</h1>
                 <p className="text-sm text-muted-foreground">Gestion des tarifs, types de chambre et photos de salles.</p>

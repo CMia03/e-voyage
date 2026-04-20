@@ -4,8 +4,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { AdminFooter } from "@/app/admin/components/footer";
-import { AdminHeader } from "@/app/admin/components/header";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -314,8 +312,7 @@ export function AdminDestinationDetailContent({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-muted/30 to-background text-foreground">
-      <AdminHeader />
+    <div className="bg-gradient-to-b from-background via-muted/30 to-background text-foreground">
       <main className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6 sm:py-8">
         <div className="space-y-8">
           {/* En-tÃªte avec actions rapides */}
@@ -717,7 +714,7 @@ export function AdminDestinationDetailContent({
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Ordre d'affichage</label>
+                <label className="text-sm font-medium">Ordre d&apos;affichage</label>
                 <input
                   type="number"
                   min={0}
@@ -760,7 +757,6 @@ export function AdminDestinationDetailContent({
         </DialogContent>
       </Dialog>
 
-      <AdminFooter />
     </div>
   );
 }

@@ -1,118 +1,53 @@
-import axios from 'axios';
+import { apiRequest, ApiEnvelope } from "@/lib/api/client";
+import axios from "axios";
+import { AllNotationsResponse, NotationData, NotationResponse } from "../type/notation";
 
-export interface NotationData {
-  idDestination: string;
-  idAvis: string;
-  idUser: string;
-  nomUser: string;
-  nomDestination: string;
-  dateCreation: string;
-  dateModification: string;
-  status: string;
-  nombreEtoiles: number;
-}
-
-export interface NotationResponse {
-  success: boolean;
-  message: string;
-  data: NotationData | null;
-  timestamp: string;
-}
-
-export interface AllNotationsResponse {
-  success: boolean;
-  message: string;
-  data: NotationData[];
-  timestamp: string;
-}
-
-// Récupérer la notation d'un utilisateur pour une destination
 export async function getUserRating(destinationId: string, userId: string): Promise<NotationResponse> {
-  try {
-    const response = await axios.get(`http://localhost:8080/api/notations/destination/${destinationId}/utilisateur/${userId}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching user rating:', error);
-    throw error;
-  }
+  return apiRequest<NotationResponse>(
+    `/api/notations/destination/${destinationId}/utilisateur/${userId}`
+  );
 }
 
 export async function saveUserRating(destinationId: string, userId: string, rating: number, token?: string, nomUser?: string, nomDestination?: string): Promise<{success: boolean, message: string, data?: NotationData, timestamp?: string}> {
-  try {
-    const headers: Record<string, string> = {};
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+  const requestBody = {
+    nomUser,
+    nomDestination
+  };
+
+  return apiRequest<{success: boolean, message: string, data?: NotationData, timestamp?: string}>(
+    `/api/notations/destination/${destinationId}/utilisateur/${userId}?nombreEtoiles=${rating}`,
+    {
+      method: "POST",
+      token,
+      body: requestBody,
     }
-
-    const requestBody = {
-      nomUser,
-      nomDestination
-    };
-
-    const response = await axios.post(
-      `http://localhost:8080/api/notations/destination/${destinationId}/utilisateur/${userId}?nombreEtoiles=${rating}`,
-      requestBody,
-      { headers }
-    );
-    console.log("tokken", token)
-    console.log("destination", destinationId)
-    console.log("userId", userId)
-    console.log("rating", rating)
-    console.log("valinyyyyyy", response.data)
-    return response.data;
-  } catch (error) {
-    console.error('Error saving user rating:', error);
-    throw error;
-  }
+  );
 }
 
-// Récupérer toutes les notations pour une destination
 export async function getDestinationNotations(destinationId: string): Promise<AllNotationsResponse> {
-  try {
-    const response = await axios.get(`http://localhost:8080/api/notations/destination/${destinationId}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching destination notations:', error);
-    throw error;
-  }
+  return apiRequest<AllNotationsResponse>(
+    `/api/notations/destination/${destinationId}`
+  );
 }
 
-// Récupérer toutes les notations (toutes destinations confondues)
 export async function getAllNotations(): Promise<AllNotationsResponse> {
-  try {
-    const response = await axios.get('http://localhost:8080/api/notations');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching all notations:', error);
-    throw error;
-  }
+  return apiRequest<AllNotationsResponse>(
+    '/api/notations'
+  );
 }
 
-// Supprimer la notation d'un utilisateur pour une destination
 export async function deleteUserRating(destinationId: string, userId: string, token: string): Promise<{ success: boolean, message: string }> {
-  try {
-    const headers: Record<string, string> = {};
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+  return apiRequest<{ success: boolean, message: string }>(
+    `/api/notations/destination/${destinationId}/utilisateur/${userId}`,
+    {
+      method: "DELETE",
+      token,
     }
-    const response = await axios.delete(
-      `http://localhost:8080/api/notations/destination/${destinationId}/utilisateur/${userId}`,
-      { headers }
-    );
-    return response.data;
-  } catch (error) {
-    console.error('Error deleting user rating:', error);
-    throw error;
-  }
+  );
 }
 
-// Récupérer toutes les notations depuis l'API /all
 export async function getAllNotationsFromApi(): Promise<AllNotationsResponse> {
-  try {
-    const response = await axios.get('http://localhost:8080/api/notations/all');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching all notations from /all:', error);
-    throw error;
-  }
+  return apiRequest<AllNotationsResponse>(
+    '/api/notations/all'
+  );
 }

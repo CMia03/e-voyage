@@ -152,7 +152,6 @@ export async function apiRequest<T = ApiEnvelope>(
         throw new ApiError(message, error.response.status, payload);
       }
       
-      // Gérer les erreurs réseau ou autres
       throw new ApiError(
         error instanceof Error ? error.message : "Request failed",
         500,

@@ -64,7 +64,6 @@ export function UserHomeClient({ username }: { username: string }) {
               <Link href="/galerie">Voir la galerie</Link>
             </Button>
           </div>
-        </div>
       </main>
     </>
   );

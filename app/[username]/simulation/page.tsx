@@ -10,6 +10,42 @@ import { CategoryGammeSelector } from "./components/CategoryGammeSelector";
 import { PlanningJournalier } from "./components/PlanningJournalier";
 import { BudgetSummary } from "./components/BudgetSummary";
 import { ActionButtons } from "./components/ActionButtons";
+import { ElementSimulation } from "@/lib/type/simulation.types";
+
+type SuggestedElement = {
+    id: string;
+    titre: string;
+    prix: number;
+    type: string;
+};
+
+function getOptionalSuggestions(
+    jours: typeof import("@/lib/type/simulation.types").JourSimulation[] | undefined,
+    deficit: number
+): SuggestedElement[] {
+    if (!jours || deficit <= 0) return [];
+
+    const optionnels = jours
+        .flatMap((jour) => jour.elements)
+        .filter((element: ElementSimulation) => !element.obligatoire && element.coche)
+        .sort((a, b) => b.prix - a.prix);
+
+    const suggestions: SuggestedElement[] = [];
+    let montantCouvre = 0;
+
+    for (const element of optionnels) {
+        if (montantCouvre >= deficit) break;
+        suggestions.push({
+            id: element.id,
+            titre: element.titre,
+            prix: element.prix,
+            type: element.type,
+        });
+        montantCouvre += element.prix;
+    }
+
+    return suggestions;
+}
 
 export default function SimulationPage() {
     const {
@@ -46,6 +82,12 @@ export default function SimulationPage() {
     );
     const adminBudget = selectedPlanification?.budgetTotal ?? null;
     const seuilMinimum = minimumBudget?.seuilMinimum ?? result?.recap?.seuilMinimum ?? 0;
+    const depassement = Math.max(0, -(result?.resume?.reste ?? 0));
+    const suggestionsOptionnelles = useMemo(
+        () => getOptionalSuggestions(result?.jours, depassement),
+        [result?.jours, depassement]
+    );
+    const totalSuggestions = suggestionsOptionnelles.reduce((total, element) => total + element.prix, 0);
 
     const handleLancerSimulation = async () => {
         await lancerSimulation();
@@ -71,14 +113,6 @@ export default function SimulationPage() {
                 loading={loading}
             />
 
-            <BudgetInput
-                value={budgetClient}
-                onChange={setBudgetClient}
-                minBudget={seuilMinimum}
-                adminBudget={adminBudget}
-                disabled={loading}
-            />
-
             <CategoryGammeSelector
                 categories={categories}
                 selectedCategorieId={selectedCategorieId}
@@ -87,6 +121,14 @@ export default function SimulationPage() {
                 onGammeChange={setSelectedGamme}
                 nombrePersonnes={nombrePersonnes}
                 onNombrePersonnesChange={setNombrePersonnes}
+                disabled={loading}
+            />
+
+            <BudgetInput
+                value={budgetClient}
+                onChange={setBudgetClient}
+                minBudget={seuilMinimum}
+                adminBudget={adminBudget}
                 disabled={loading}
             />
 
@@ -127,6 +169,34 @@ export default function SimulationPage() {
 
                     {result.success && (
                         <>
+                            {depassement > 0 && suggestionsOptionnelles.length > 0 && (
+                                <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-800">
+                                    <p className="font-semibold">
+                                        Votre budget ne couvre pas encore tous les blocs selectionnes.
+                                    </p>
+                                    <p className="mt-1 text-sm">
+                                        Il manque <span className="font-medium">{depassement.toLocaleString()} Ar</span>.
+                                        Vous pouvez decocher quelques activites ou options pour revenir dans le budget.
+                                    </p>
+                                    <div className="mt-3 space-y-2">
+                                        {suggestionsOptionnelles.map((element) => (
+                                            <div
+                                                key={element.id}
+                                                className="flex items-center justify-between rounded-md border border-amber-200 bg-white/80 px-3 py-2 text-sm"
+                                            >
+                                                <span>
+                                                    {element.titre} <span className="text-amber-600">({element.type})</span>
+                                                </span>
+                                                <span className="font-medium">{element.prix.toLocaleString()} Ar</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <p className="mt-3 text-sm">
+                                        Total suggere a decocher: <span className="font-medium">{totalSuggestions.toLocaleString()} Ar</span>
+                                    </p>
+                                </div>
+                            )}
+
                             <ActionButtons
                                 onToutCocher={toutCocher}
                                 onToutDecocher={toutDecocher}

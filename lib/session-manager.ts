@@ -1,27 +1,24 @@
 import { AuthSession, saveAuth, clearAuth, loadAuth } from "@/lib/auth";
 import { refreshToken } from "@/lib/api/auth";
 
-// Durée de vie du token en secondes (généralement 15 minutes)
-const TOKEN_LIFETIME = 15 * 60; // 15 minutes
-// Marge de sécurité pour rafraîchir le token avant expiration (5 minutes)
-const REFRESH_MARGIN = 5 * 60; // 5 minutes
+const TOKEN_LIFETIME = 15 * 60;
+const REFRESH_MARGIN = 5 * 60;
 
 let refreshPromise: Promise<AuthSession> | null = null;
+let logoutCallback: (() => void) | null = null;
 
-// Decode JWT token pour obtenir la date d'expiration
 function getTokenExpiration(token: string): number | null {
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
-    return payload.exp ? payload.exp * 1000 : null; // Convertir en millisecondes
+    return payload.exp ? payload.exp * 1000 : null;
   } catch {
     return null;
   }
 }
 
-// Vérifier si le token est expiré ou va expirer bientôt
 function isTokenExpired(token: string): boolean {
   const expiration = getTokenExpiration(token);
-  if (!expiration) return true; // Si on ne peut pas décoder, on considère comme expiré
+  if (!expiration) return true;
   
   const now = Date.now();
   const refreshTime = expiration - (REFRESH_MARGIN * 1000);
@@ -29,7 +26,6 @@ function isTokenExpired(token: string): boolean {
   return now >= refreshTime;
 }
 
-// Rafraîchir le token avec gestion de concurrence
 async function refreshSession(): Promise<AuthSession> {
   const currentSession = loadAuth();
   
@@ -37,7 +33,6 @@ async function refreshSession(): Promise<AuthSession> {
     throw new Error('No refresh token available');
   }
 
-  // Si un rafraîchissement est déjà en cours, retourner la même promesse
   if (refreshPromise) {
     return refreshPromise;
   }
@@ -56,16 +51,17 @@ async function refreshSession(): Promise<AuthSession> {
         prenom: response.prenom,
       };
 
-      // Sauvegarder la nouvelle session
       saveAuth(newSession);
       
       return newSession;
     } catch (error) {
-      // En cas d'échec du refresh, nettoyer la session
       clearAuth();
+      // Déclencher la déconnexion globale si un callback est enregistré
+      if (logoutCallback) {
+        logoutCallback();
+      }
       throw error;
     } finally {
-      // Réinitialiser la promesse après traitement
       refreshPromise = null;
     }
   })();
@@ -73,7 +69,10 @@ async function refreshSession(): Promise<AuthSession> {
   return refreshPromise;
 }
 
-// Obtenir un token valide (rafraîchit si nécessaire)
+export function setLogoutCallback(callback: () => void) {
+  logoutCallback = callback;
+}
+
 export async function getValidToken(): Promise<string | null> {
   const session = loadAuth();
   
@@ -81,21 +80,22 @@ export async function getValidToken(): Promise<string | null> {
     return null;
   }
 
-  // Si le token est encore valide, le retourner
   if (!isTokenExpired(session.accessToken)) {
     return session.accessToken;
   }
 
-  // Sinon, rafraîchir la session
   try {
     const newSession = await refreshSession();
     return newSession.accessToken;
   } catch {
+    // Si le refresh échoue, déclencher la déconnexion globale
+    if (logoutCallback) {
+      logoutCallback();
+    }
     return null;
   }
 }
 
-// Vérifier si l'utilisateur est authentifié avec un token valide
 export function isAuthenticated(): boolean {
   const session = loadAuth();
   if (!session) return false;
@@ -103,7 +103,6 @@ export function isAuthenticated(): boolean {
   return !isTokenExpired(session.accessToken);
 }
 
-// Forcer le rafraîchissement du token
 export async function forceRefreshToken(): Promise<AuthSession | null> {
   try {
     return await refreshSession();
@@ -112,28 +111,23 @@ export async function forceRefreshToken(): Promise<AuthSession | null> {
   }
 }
 
-// Initialiser le gestionnaire de session
 export function initializeSessionManager() {
-  // Vérifier périodiquement si le token doit être rafraîchi
   setInterval(async () => {
     if (isAuthenticated()) {
-      await getValidToken(); // Déclenche le refresh si nécessaire
+      await getValidToken();
     }
-  }, 60000); // Vérifier chaque minute
+  }, 60000);
 }
 
-// Intercepteur pour les requêtes API
 export async function withTokenRefresh<T>(
   apiCall: () => Promise<T>
 ): Promise<T> {
   try {
     return await apiCall();
   } catch (error: unknown) {
-    // Si l'erreur est 401 (Unauthorized), essayer de rafraîchir le token
     if (error && typeof error === 'object' && 'status' in error && error.status === 401) {
       const newToken = await getValidToken();
       if (newToken) {
-        // Réessayer l'appel API avec le nouveau token
         return await apiCall();
       }
     }

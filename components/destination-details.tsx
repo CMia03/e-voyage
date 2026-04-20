@@ -1,11 +1,13 @@
 "use client";
 
+import React from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DestinationDetails } from "@/lib/type/destination";
 import { Check, X, Phone, Calendar, MapPin, Clock } from "lucide-react";
 import { ImageLightbox } from "@/components/image-lightbox";
+import { DestinationSidebar } from "@/components/destination-sidebar";
 import { useEffect, useState } from "react";
 import { getEntrepriseInfoPublic } from "@/lib/api/entreprise-info";
 
@@ -48,7 +50,10 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
 
   return (
     <div className="container mx-auto px-4 py-6 sm:py-12">
-      <div className="mx-auto max-w-6xl">
+      <div className="mx-auto max-w-7xl">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Contenu principal */}
+          <div className="flex-1">
         {/* Header avec image */}
         <div className="relative mb-6 sm:mb-8 h-64 sm:h-80 md:h-96 w-full overflow-hidden rounded-lg">
           <Image
@@ -250,6 +255,15 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
         onClose={() => setLightboxOpen(false)}
         title={destination.title}
       />
+
+          {/* Barre latérale droite */}
+          <DestinationSidebar
+            destinationId={destination.id}
+            destinationName={destination.title}
+            averageRating={destination.rating || 0}
+          />
+        </div>
+      </div>
     </div>
   );
 }

@@ -2,20 +2,56 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Calendar, dateFnsLocalizer } from "react-big-calendar";
+import { Calendar, dateFnsLocalizer, View, Views } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import { fr } from "date-fns/locale/fr";
 import "react-big-calendar/lib/css/react-big-calendar.css";
+
 import { useAdminNavigation } from "@/app/admin/contexts/admin-navigation-context";
-import { type AdminSection } from "@/app/admin/components/sidebar";
+import { AdminSection } from "./components/sidebar";
+
+// Fonction de validation pour les sections admin
+function isValidAdminSection(section: string): section is AdminSection {
+  const validSections: AdminSection[] = [
+    "dashboard",
+    "destinations",
+    "destinations-create", 
+    "destinations-edit",
+    "hebergements",
+    "hebergements-create",
+    "hebergements-edit",
+    "hebergements-tarifs",
+    "hebergements-types", 
+    "hebergements-equipements",
+    "activites",
+    "activites-create",
+    "activites-edit",
+    "activites-categories",
+    "utilisateurs",
+    "reservations",
+    "reservations-liste",
+    "reservations-ajout",
+    "avis",
+    "commentaires",
+    "notifications",
+    "statistiques",
+    "entreprise-info",
+    "planification"
+  ];
+  return validSections.includes(section as AdminSection);
+}
 import { AdminDashboard } from "@/app/admin/dashboard";
 import { AdminDestinations } from "@/app/admin/destinations";
 import { AdminActivites } from "@/app/admin/activites/page";
 import { AdminHebergements } from "@/app/admin/hebergements/page";
 import { AdminNotifications } from "@/app/admin/notifications/page";
 import { AdminAvis } from "@/app/admin/avis/page";
+import { AdminCommentaires } from "@/app/admin/commentaires/page";
 import { AdminEntrepriseInfo } from "@/app/admin/entreprise-info-next";
+import { AdminPlanificationCalendar } from "@/app/admin/planification/components/admin-planification-calendar";
 import { AdminUsers } from "@/app/admin/users/page";
+import ListeReservationsPage from "@/app/admin/reservations/liste/page";
+import AjoutReservationPage from "@/app/admin/reservations/ajout/page";
 import { useAuth } from "@/hooks/useAuth";
 import { loadAuth, clearAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -24,7 +60,6 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
-import { AdminParametrageMargeBrute } from "@/app/admin/parametrage-marge-brute/page";
 
 const locales = {
   fr: fr,
@@ -41,69 +76,114 @@ const localizer = dateFnsLocalizer({
 function AdminPageWithSearchParams() {
   const searchParams = useSearchParams();
   const section = searchParams.get("section");
+  const destinationId = searchParams.get("destinationId");
+  const activiteId = searchParams.get("activiteId");
+  const hebergementId = searchParams.get("id"); // Pour hébergements
   
-  return <AdminPageContent initialSection={section as AdminSection} />;
+  return <AdminPageContent 
+    initialSection={section as AdminSection} 
+    initialDestinationId={destinationId}
+    initialActiviteId={activiteId}
+    initialHebergementId={hebergementId}
+  />;
 }
 
-function AdminPageContent({ initialSection }: { initialSection?: AdminSection }) {
+function AdminPageContent({ 
+  initialSection, 
+  initialDestinationId, 
+  initialActiviteId, 
+  initialHebergementId 
+}: { 
+  initialSection?: AdminSection;
+  initialDestinationId?: string | null;
+  initialActiviteId?: string | null;
+  initialHebergementId?: string | null;
+}) {
   const { session, isLoading, isAuthenticated, getValidToken } = useAuth();
   const { active, setActive } = useAdminNavigation();
-  const [selectedDestinationId, setSelectedDestinationId] = useState<string | null>(null);
-  const [selectedActiviteId, setSelectedActiviteId] = useState<string | null>(null);
-  const [selectedHebergementId, setSelectedHebergementId] = useState<string | null>(null);
+  const [selectedDestinationId, setSelectedDestinationId] = useState<string | null>(initialDestinationId || null);
+  const [selectedActiviteId, setSelectedActiviteId] = useState<string | null>(initialActiviteId || null);
+  const [selectedHebergementId, setSelectedHebergementId] = useState<string | null>(initialHebergementId || null);
 
-  // Set initial section from URL params
+  // Synchroniser l'état avec l'URL au chargement et au changement
   useEffect(() => {
     if (initialSection) {
       setActive(initialSection);
     }
   }, [initialSection, setActive]);
+
+  // Mettre à jour les IDs quand ils changent
+  useEffect(() => {
+    if (initialDestinationId !== undefined) setSelectedDestinationId(initialDestinationId);
+    if (initialActiviteId !== undefined) setSelectedActiviteId(initialActiviteId);
+    if (initialHebergementId !== undefined) setSelectedHebergementId(initialHebergementId);
+  }, [initialDestinationId, initialActiviteId, initialHebergementId]);
+
+  // Synchroniser l'URL quand l'état change
+  useEffect(() => {
+    if (active !== "dashboard") {
+      const url = new URL(window.location.href);
+      url.searchParams.set('section', active);
+      window.history.replaceState({}, '', url.toString());
+    } else {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('section');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, [active]);
+
+  // Écouter les changements d'URL (navigation boutons précédent/suivant)
+  useEffect(() => {
+    const handlePopState = () => {
+      const url = new URL(window.location.href);
+      const section = url.searchParams.get('section');
+      if (section && isValidAdminSection(section)) {
+        setActive(section as AdminSection);
+      } else {
+        setActive('dashboard');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [setActive]);
   
   const accessToken = session?.accessToken ?? null;
   const role = session?.role ?? null;
 
-  // Vérifier automatiquement l'expiration de la session et déconnecter
   useEffect(() => {
     const checkSessionExpiration = () => {
       const currentSession = loadAuth();
       if (!currentSession) {
-        // Pas de session, rediriger vers login
         clearAuth();
         window.location.href = '/login';
         return;
       }
 
-      // Vérifier si le token est expiré
       try {
         const tokenPayload = JSON.parse(atob(currentSession.accessToken.split('.')[1]));
-        const currentTime = Date.now() / 1000; // Convertir en secondes
+        const currentTime = Date.now() / 1000;
         
         if (tokenPayload.exp && tokenPayload.exp < currentTime) {
-          // Token expiré, déconnecter automatiquement
           console.log("Session expirée, déconnexion automatique");
           clearAuth();
           window.location.href = '/login';
           return;
         }
       } catch (error) {
-        // Erreur lors du décodage du token, déconnecter
         console.error("Erreur lors de la vérification du token:", error);
         clearAuth();
         window.location.href = '/login';
       }
     };
 
-    // Vérifier immédiatement
     checkSessionExpiration();
 
-    // Vérifier toutes les 30 secondes
     const interval = setInterval(checkSessionExpiration, 30000);
 
-    // Nettoyer l'intervalle au démontage
     return () => clearInterval(interval);
   }, []);
 
-  // Vérifier quand la fenêtre reprend le focus
   useEffect(() => {
     const handleFocus = () => {
       const currentSession = loadAuth();
@@ -118,12 +198,10 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
         const currentTime = Date.now() / 1000;
         
         if (tokenPayload.exp && tokenPayload.exp < currentTime) {
-          console.log("Session expirée lors du focus, déconnexion automatique");
-          clearAuth();
+            clearAuth();
           window.location.href = '/login';
         }
       } catch (error) {
-        console.error("Erreur lors de la vérification du token au focus:", error);
         clearAuth();
         window.location.href = '/login';
       }
@@ -143,6 +221,7 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [calendarDate, setCalendarDate] = useState(new Date());
+  const [calendarView, setCalendarView] = useState<View>(Views.MONTH);
   const [showEventModal, setShowEventModal] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ start: Date; end: Date } | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<{
@@ -160,35 +239,29 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
     end: new Date(),
   });
 
-  // Générer les années (année actuelle à +10 ans)
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 11 }, (_, i) => currentYear + i);
 
-  // Mettre à jour la date du calendrier quand l'année ou la date change
   useEffect(() => {
     const newDate = new Date(selectedDate);
     newDate.setFullYear(selectedYear);
     setCalendarDate(newDate);
   }, [selectedYear, selectedDate]);
 
-  // Mettre à jour la section active quand le paramètre d'URL change
   useEffect(() => {
     if (initialSection) {
       setActive(initialSection);
     }
   }, [initialSection]);
 
-  // Charger les destinations depuis l'API
   const loadDestinations = async () => {
     try {
-      // Importer la fonction API ici pour éviter les dépendances circulaires
       const { listAdminDestinations } = await import("@/lib/api/destinations");
       const response = await listAdminDestinations(accessToken || "");
       if (response.data) {
         setDestinations(response.data.map(dest => ({ id: dest.id, nom: dest.nom })));
       }
     } catch {
-      // Erreur silencieuse lors du chargement des destinations
     }
   };
 
@@ -199,7 +272,6 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessToken]);
 
-  // Gérer le clic sur une date du calendrier
   const handleSelectSlot = ({ start, end }: { start: Date; end: Date }) => {
     setSelectedSlot({ start, end });
     setSelectedEvent(null);
@@ -213,7 +285,6 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
     setShowEventModal(true);
   };
 
-  // Gérer le clic sur un événement existant
   const handleSelectEvent = (event: { id: number; title: string; start: Date; end: Date }) => {
     setSelectedEvent(event);
     setSelectedSlot(null);
@@ -227,7 +298,6 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
     setShowEventModal(true);
   };
 
-  // Enregistrer un nouvel événement ou modifier un existant
   const handleSaveEvent = () => {
     if (newEvent.title && newEvent.destinationId) {
       const destination = destinations.find(d => d.id === newEvent.destinationId);
@@ -238,14 +308,12 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
       };
 
       if (isEditMode && selectedEvent) {
-        // Modifier l'événement existant
         setEvents(events.map(event => 
           event.id === selectedEvent.id 
             ? { ...event, ...eventData }
             : event
         ));
       } else {
-        // Créer un nouvel événement
         const event = {
           id: Date.now(),
           ...eventData,
@@ -258,7 +326,6 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
     }
   };
 
-  // Supprimer un événement
   const handleDeleteEvent = () => {
     if (selectedEvent) {
       setEvents(events.filter(event => event.id !== selectedEvent.id));
@@ -267,13 +334,11 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
     }
   };
 
-  // Annuler la création/modification d'événement
   const handleCancelEvent = () => {
     setShowEventModal(false);
     resetEventForm();
   };
 
-  // Réinitialiser le formulaire
   const resetEventForm = () => {
     setSelectedEvent(null);
     setSelectedSlot(null);
@@ -334,6 +399,11 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
       </div>
     );
   }
+
+  if (active === "planification") {
+    return <AdminPlanificationCalendar accessToken={accessToken ?? ""} />;
+  }
+
   return (
     <div className="w-full">
       {active === "dashboard" ? (
@@ -407,8 +477,14 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
             <AdminNotifications />
           ) : active === "avis" ? (
             <AdminAvis />
+          ) : active === "commentaires" ? (
+            <AdminCommentaires />
           ) : active === "utilisateurs" ? (
             <AdminUsers />
+          ) : active === "reservations-liste" ? (
+            <ListeReservationsPage />
+          ) : active === "reservations-ajout" ? (
+            <AjoutReservationPage />
           ) : active === "entreprise-info" ? (
             <AdminEntrepriseInfo accessToken={accessToken ?? ""} />
 
@@ -466,6 +542,9 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
                       events={events}
                       startAccessor="start"
                       endAccessor="end"
+                      view={calendarView}
+                      onView={(nextView) => setCalendarView(nextView)}
+                      views={[Views.MONTH, Views.WEEK, Views.DAY, Views.AGENDA]}
                       date={calendarDate}
                       onNavigate={(date) => setCalendarDate(date)}
                       onSelectSlot={handleSelectSlot}
@@ -500,16 +579,11 @@ function AdminPageContent({ initialSection }: { initialSection?: AdminSection })
                 </CardContent>
               </Card>
             </div>
-          ) : active === "parametrage-marge-brute" ? (
-
-            <AdminParametrageMargeBrute accessToken={accessToken ?? ""} />
-            
           ) : (
             <AdminDestinations accessToken={accessToken ?? ""} initialView="liste" />
           )}
-    
-      {/* Modale pour créer un événement */}
-
+      
+      {/* Event Modal */}
       {showEventModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-md">
