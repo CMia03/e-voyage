@@ -1,14 +1,15 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Pencil, Plus, Trash2, X } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -371,7 +372,6 @@ export function AdminDestinationPlanningContentNext({ destinationId }: Props) {
   // Dans les states (vers ligne 200-250)
   const [budgetsPlanification, setBudgetsPlanification] = useState<BudgetisationPlanificationVoyage[]>([]);
   const [selectedPlanificationId, setSelectedPlanificationId] = useState("");
-  const [selectedTransportId, setSelectedTransportId] = useState<string | null>(null);
   const [selectedSection, setSelectedSection] = useState<PlanningSection>("planning");
   const [editingPlanificationId, setEditingPlanificationId] = useState<string | null>(null);
   const [editingTransportId, setEditingTransportId] = useState<string | null>(null);
@@ -417,7 +417,7 @@ export function AdminDestinationPlanningContentNext({ destinationId }: Props) {
 
   
 const [showBudgetModal, setShowBudgetModal] = useState(false);
-const [editingBudget, setEditingBudget] = useState<any>(null);
+const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoyage | null>(null);
 
   const selectedPlanification = useMemo(() => planifications.find((item) => item.id === selectedPlanificationId) ?? null, [planifications, selectedPlanificationId]);
   const availableJourDateRange = useMemo(() => {
@@ -625,7 +625,7 @@ const [editingBudget, setEditingBudget] = useState<any>(null);
   if (selectedPlanificationId && accessToken) {
     loadBudgetsForPlanification(selectedPlanificationId);
   }
-}, [selectedPlanificationId, accessToken]);
+}, [selectedPlanificationId, accessToken, loadBudgetsForPlanification]);
 
   async function loadPage() {
     setIsLoading(true);
@@ -780,22 +780,8 @@ const [editingBudget, setEditingBudget] = useState<any>(null);
     setIsPlanificationDialogOpen(true);
   }
 
-  function openCreateTransportDialog() {
-    if (!selectedPlanification) {
-      setError("Choisis d'abord une planification.");
-      return;
-    }
-    setOpenElementDialogAfterTransportSave(false);
-    setEditingTransportId(null);
-    setTransportForm(initialTransportForm);
-    setShowTypeTransportCreator(false);
-    setNewTypeTransportName("");
-    setIsTransportDialogOpen(true);
-  }
-
   function openEditTransportDialog(transport: Transport) {
     setOpenElementDialogAfterTransportSave(false);
-    setSelectedTransportId(transport.id);
     setEditingTransportId(transport.id);
     setTransportForm(mapTransportToForm(transport));
     setShowTypeTransportCreator(false);
@@ -1347,7 +1333,6 @@ const [editingBudget, setEditingBudget] = useState<any>(null);
   }
 
   async function handleCalculateTransportRoute(transport: Transport) {
-    setSelectedTransportId(transport.id);
     setIsCalculatingTransportId(transport.id);
     setError("");
     setSuccessMessage("");
@@ -1405,7 +1390,6 @@ const [editingBudget, setEditingBudget] = useState<any>(null);
             isDeletingId={isDeletingId}
             onSelect={(planification) => {
               setSelectedPlanificationId(planification.id);
-              setSelectedTransportId(planification.transports[0]?.id ?? null);
             }}
             onEdit={openEditPlanificationDialog}
             onDelete={(planificationId) => void handleDeletePlanification(planificationId)}
@@ -2036,9 +2020,11 @@ const [editingBudget, setEditingBudget] = useState<any>(null);
               <div className="grid gap-4 sm:grid-cols-[180px_minmax(0,1fr)]">
                 <div className="overflow-hidden rounded-xl border border-border/60 bg-muted/20">
                   {linkedDetailTarget.image ? (
-                    <img
+                    <Image
                       src={linkedDetailTarget.image}
                       alt={linkedDetailTarget.title}
+                      width={320}
+                      height={160}
                       className="h-40 w-full object-cover"
                     />
                   ) : (

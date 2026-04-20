@@ -10,6 +10,10 @@ export const sectionOptions: Array<{ id: PlanningSection; label: string; icon: t
   { id: "reservation", label: "Reservation", icon: CheckCircle2 },
 ];
 
+export function isPlanningSection(value: string | null | undefined): value is PlanningSection {
+  return sectionOptions.some((section) => section.id === value);
+}
+
 export function getSectionDescription(section: PlanningSection) {
   if (section === "planning") {
     return "Organisation jour par jour du voyage avec trajets, activites, hebergements et notes.";
