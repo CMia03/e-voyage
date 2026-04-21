@@ -1,36 +1,54 @@
-// app/[username]/simulation/components/PlanificationSelector.tsx
 "use client";
 
 import { PlanificationType } from "@/lib/type/simulation.types";
 
 type PlanificationSelectorProps = {
-    planifications: PlanificationType[];
-    value: string;
-    onChange: (id: string) => void;
-    disabled?: boolean;
-    loading?: boolean;
+  planifications: PlanificationType[];
+  value: string;
+  onChange: (id: string) => void;
+  disabled?: boolean;
+  loading?: boolean;
 };
 
-export function PlanificationSelector({ planifications, value, onChange, disabled, loading }: PlanificationSelectorProps) {
-    return (
-        <div className="space-y-2">
-            <label className="text-sm font-medium">📋 Forfait</label>
-            <select
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                disabled={disabled || loading || planifications.length === 0}
-                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-gray-100"
-            >
-                {planifications.length === 0 ? (
-                    <option value="">Aucune planification disponible</option>
-                ) : (
-                    planifications.map((planif) => (
-                        <option key={planif.id} value={planif.id}>
-                            {planif.nomPlanification} - {planif.budgetTotal?.toLocaleString()} Ar
-                        </option>
-                    ))
-                )}
-            </select>
-        </div>
-    );
+export function PlanificationSelector({
+  planifications,
+  value,
+  onChange,
+  disabled,
+  loading,
+}: PlanificationSelectorProps) {
+  const isDisabled = disabled || loading || planifications.length === 0;
+
+  return (
+    <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-4">
+      <div className="mb-3 space-y-1">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">
+          Forfait
+        </p>
+        <h3 className="text-base font-semibold text-slate-900">
+          Selectionnez le voyage a personnaliser
+        </h3>
+        <p className="text-sm text-slate-600">
+          Le budget admin et le planning journalier dependront du forfait choisi.
+        </p>
+      </div>
+
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        disabled={isDisabled}
+        className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 disabled:bg-slate-100"
+      >
+        {planifications.length === 0 ? (
+          <option value="">Aucune planification disponible</option>
+        ) : (
+          planifications.map((planification) => (
+            <option key={planification.id} value={planification.id}>
+              {planification.nomPlanification} - {planification.budgetTotal?.toLocaleString()} Ar
+            </option>
+          ))
+        )}
+      </select>
+    </div>
+  );
 }

@@ -1,100 +1,166 @@
-// app/[username]/simulation/components/BudgetSummary.tsx
 "use client";
 
 type BudgetSummaryProps = {
-    totalCoche: number;
-    budgetClient: number;
-    adminBudget?: number | null;
-    reste: number;
-    totalObligatoire: number;
-    totalOptionnel: number;
-    seuilMinimum: number;
+  totalCoche: number;
+  budgetClient: number;
+  adminBudget?: number | null;
+  reste: number;
+  totalObligatoire: number;
+  totalOptionnel: number;
+  seuilMinimum: number;
 };
 
+function formatAr(value: number) {
+  return `${value.toLocaleString()} Ar`;
+}
+
 export function BudgetSummary({
-    totalCoche,
-    budgetClient,
-    adminBudget,
-    reste,
-    totalObligatoire,
-    totalOptionnel,
-    seuilMinimum,
+  totalCoche,
+  budgetClient,
+  adminBudget,
+  reste,
+  totalObligatoire,
+  totalOptionnel,
+  seuilMinimum,
 }: BudgetSummaryProps) {
-    const pourcentage = budgetClient > 0 ? (totalCoche / budgetClient) * 100 : 0;
-    const estDansBudget = reste >= 0;
-    const hasMinimumBudget = seuilMinimum > 0;
-    const minimumBudget = hasMinimumBudget ? seuilMinimum : 0;
-    const maxBudget =
-        adminBudget && adminBudget > 0
-            ? adminBudget
-            : Math.max(budgetClient, totalCoche, minimumBudget, 1);
-    const budgetRange = Math.max(maxBudget - minimumBudget, 1);
-    const clampedBudgetClient = Math.min(Math.max(budgetClient, minimumBudget), maxBudget);
-    // const budgetClientRatio = ((clampedBudgetClient - minimumBudget) / budgetRange) * 100;
+  const estDansBudget = reste >= 0;
+  const hasMinimumBudget = seuilMinimum > 0;
+  const minimumBudget = hasMinimumBudget ? seuilMinimum : 0;
+  const maxBudget =
+    adminBudget && adminBudget > 0
+      ? adminBudget
+      : Math.max(budgetClient, totalCoche, minimumBudget, 1);
+  const budgetRange = Math.max(maxBudget - minimumBudget, 1);
+  const clampedBudgetClient = Math.min(Math.max(budgetClient, minimumBudget), maxBudget);
+  const clampedSelection = Math.min(Math.max(totalCoche, minimumBudget), maxBudget);
+  const budgetClientRatio = ((clampedBudgetClient - minimumBudget) / budgetRange) * 100;
+  const selectionRatio = ((clampedSelection - minimumBudget) / budgetRange) * 100;
 
-    const  budgetClientRatio = ((Math.max(totalCoche, minimumBudget) - minimumBudget) / budgetRange) * 100;
-
-    console.log("///////////////////////////Reste est dans le Budgé ///////////////////////////////////")
-    console.log(reste);
-
-
-    return (
-        <div className="space-y-3 rounded-lg border bg-white p-4">
-            <h3 className="font-semibold">Recapitulatif du budget</h3>
-
-            <div>
-                <div className="mb-1 flex justify-between text-sm">
-                    <span>{hasMinimumBudget ? `${minimumBudget.toLocaleString()} Ar` : "A calculer"}</span>
-                    <span>{maxBudget.toLocaleString()} Ar</span>
-                </div>
-                <div className="relative h-2 overflow-hidden rounded-full bg-gray-200">
-                    <div
-                        className="absolute inset-y-0 z-10 w-1 rounded-full bg-slate-900"
-                        style={{ left: `${budgetClientRatio}%` }}
-                    />
-
-
-                    
-
-                    {/* <div
-                        className={`h-full transition-all ${estDansBudget ? "bg-emerald-500" : "bg-red-500"}`}
-                        style={{ width: `${Math.min(100, pourcentage)}%` }}
-                    /> */}
-
-
-                </div>
-                <div className="mt-2 flex justify-between text-xs text-muted-foreground">
-                    <span>
-                        Budget minimum accepte: {hasMinimumBudget ? `${minimumBudget.toLocaleString()} Ar` : "A calculer"}
-                    </span>
-                    <span>Budget maximal admin: {maxBudget.toLocaleString()} Ar</span>
-                </div>
-            </div>
-
-            <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                    <span className="text-gray-600">Total selectionne :</span>
-                    <span className="font-medium">{totalCoche.toLocaleString()} Ar</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-gray-600">Dont obligatoire :</span>
-                    <span>{totalObligatoire.toLocaleString()} Ar</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-gray-600">Dont optionnel :</span>
-                    <span>{totalOptionnel.toLocaleString()} Ar</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-gray-600">Budget minimum :</span>
-                    <span>{seuilMinimum.toLocaleString()} Ar</span>
-                </div>
-                <div className="flex justify-between border-t pt-2">
-                    <span className="text-gray-600">Reste :</span>
-                    <span className={`font-bold ${estDansBudget ? "text-emerald-600" : "text-red-600"}`}>
-                        {reste.toLocaleString()} Ar
-                    </span>
-                </div>
-            </div>
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">
+            Recapitulatif budget
+          </p>
+          <h3 className="mt-2 text-xl font-semibold text-slate-900">
+            Une lecture simple de votre equilibre budgetaire
+          </h3>
+          <p className="mt-1 text-sm text-slate-600">
+            La barre ci-dessous compare le minimum accepte, votre budget et le total
+            actuellement selectionne.
+          </p>
         </div>
-    );
+
+        <div
+          className={`rounded-2xl border px-4 py-3 text-right ${
+            estDansBudget
+              ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+              : "border-red-200 bg-red-50 text-red-900"
+          }`}
+        >
+          <p className="text-xs uppercase tracking-[0.18em]">
+            Statut
+          </p>
+          <p className="mt-2 text-lg font-semibold">
+            {estDansBudget ? "Dans le budget" : "Au-dessus du budget"}
+          </p>
+        </div>
+      </div>
+
+      <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-5">
+        <div className="mb-3 flex justify-between text-sm font-semibold text-slate-700">
+          <span>{hasMinimumBudget ? formatAr(minimumBudget) : "A calculer"}</span>
+          <span>{formatAr(maxBudget)}</span>
+        </div>
+
+        <div className="relative h-3 overflow-hidden rounded-full bg-slate-200">
+          <div
+            className={`h-full rounded-full transition-all ${
+              estDansBudget
+                ? "bg-gradient-to-r from-emerald-500 to-teal-500"
+                : "bg-gradient-to-r from-amber-400 to-red-500"
+            }`}
+            style={{ width: `${Math.min(100, Math.max(0, selectionRatio))}%` }}
+          />
+          <div
+            className="absolute inset-y-[-3px] z-10 w-2 rounded-full bg-slate-950 shadow-[0_0_0_3px_rgba(255,255,255,0.85)]"
+            style={{ left: `calc(${Math.min(100, Math.max(0, budgetClientRatio))}% - 4px)` }}
+          />
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-slate-500">
+          <div className="flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500" />
+            <span>Total selectionne</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-slate-950" />
+            <span>Budget client</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+          <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
+            Total selectionne
+          </p>
+          <p className="mt-2 text-lg font-semibold text-slate-900">
+            {formatAr(totalCoche)}
+          </p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+          <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
+            Obligatoire
+          </p>
+          <p className="mt-2 text-lg font-semibold text-slate-900">
+            {formatAr(totalObligatoire)}
+          </p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+          <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
+            Optionnel
+          </p>
+          <p className="mt-2 text-lg font-semibold text-slate-900">
+            {formatAr(totalOptionnel)}
+          </p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+          <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
+            Budget minimum
+          </p>
+          <p className="mt-2 text-lg font-semibold text-slate-900">
+            {formatAr(seuilMinimum)}
+          </p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+          <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
+            Budget client
+          </p>
+          <p className="mt-2 text-lg font-semibold text-slate-900">
+            {formatAr(budgetClient)}
+          </p>
+        </div>
+        <div
+          className={`rounded-2xl border p-4 ${
+            estDansBudget
+              ? "border-emerald-200 bg-emerald-50/70"
+              : "border-red-200 bg-red-50/70"
+          }`}
+        >
+          <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
+            Reste
+          </p>
+          <p
+            className={`mt-2 text-lg font-semibold ${
+              estDansBudget ? "text-emerald-700" : "text-red-700"
+            }`}
+          >
+            {formatAr(reste)}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
 }
