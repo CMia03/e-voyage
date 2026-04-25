@@ -8,7 +8,11 @@ export function useAuthSession() {
 
   const logout = useCallback(() => {
     clearAuth();
-    router.push('/login');
+    // Ne rediriger vers login que si on est sur une route protégée
+    const path = window.location.pathname;
+    if (path.startsWith('/admin') || path.startsWith('/dashboard')) {
+      router.push('/login');
+    }
   }, [router]);
 
   useEffect(() => {
@@ -19,8 +23,9 @@ export function useAuthSession() {
       const auth = loadAuth();
       
       if (!auth || !auth.accessToken) {
-        // Ne déconnecter que si on n'est pas déjà sur la page de login
-        if (window.location.pathname !== '/login') {
+        // Ne déconnecter que si on est sur une route protégée
+        const path = window.location.pathname;
+        if (path.startsWith('/admin') || path.startsWith('/dashboard')) {
           logout();
         }
         return;
@@ -28,7 +33,11 @@ export function useAuthSession() {
 
       if (auth.expiresAt && Date.now() > auth.expiresAt) {
         console.log('Session expired - logging out');
-        logout();
+        // Ne déconnecter que si on est sur une route protégée
+        const path = window.location.pathname;
+        if (path.startsWith('/admin') || path.startsWith('/dashboard')) {
+          logout();
+        }
         return;
       }
     };

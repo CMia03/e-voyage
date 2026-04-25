@@ -89,10 +89,7 @@ export function useAuth(): UseAuthReturn {
         clearAuth();
         setSession(null);
         
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login';
-        }
-      }
+              }
     }, 2000);
 
     return () => clearInterval(checkSessionInterval);
