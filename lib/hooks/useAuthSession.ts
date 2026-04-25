@@ -9,8 +9,12 @@ export function useAuthSession() {
   const logout = useCallback(() => {
     clearAuth();
     // Ne rediriger vers login que si on est sur une route protégée
+    // La page d'accueil (/) reste accessible même sans connexion
     const path = window.location.pathname;
-    if (path.startsWith('/admin') || path.startsWith('/dashboard')) {
+    const isProtectedRoute = path.startsWith('/admin') || path.startsWith('/dashboard');
+    const isHomePage = path === '/';
+    
+    if (isProtectedRoute && !isHomePage) {
       router.push('/login');
     }
   }, [router]);
@@ -24,8 +28,12 @@ export function useAuthSession() {
       
       if (!auth || !auth.accessToken) {
         // Ne déconnecter que si on est sur une route protégée
+        // La page d'accueil (/) reste accessible même sans connexion
         const path = window.location.pathname;
-        if (path.startsWith('/admin') || path.startsWith('/dashboard')) {
+        const isProtectedRoute = path.startsWith('/admin') || path.startsWith('/dashboard');
+        const isHomePage = path === '/';
+        
+        if (isProtectedRoute && !isHomePage) {
           logout();
         }
         return;
@@ -34,8 +42,12 @@ export function useAuthSession() {
       if (auth.expiresAt && Date.now() > auth.expiresAt) {
         console.log('Session expired - logging out');
         // Ne déconnecter que si on est sur une route protégée
+        // La page d'accueil (/) reste accessible même sans connexion
         const path = window.location.pathname;
-        if (path.startsWith('/admin') || path.startsWith('/dashboard')) {
+        const isProtectedRoute = path.startsWith('/admin') || path.startsWith('/dashboard');
+        const isHomePage = path === '/';
+        
+        if (isProtectedRoute && !isHomePage) {
           logout();
         }
         return;

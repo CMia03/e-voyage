@@ -19,8 +19,7 @@ function LoginContent() {
   const [loginError, setLoginError] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
-
+  
   useEffect(() => {
     const googleLogin = searchParams.get('google_login');
     const email = searchParams.get('email');
@@ -158,18 +157,6 @@ function LoginContent() {
                     className="w-full h-12 rounded-md bg-white/20 border border-white/30 px-3 py-2 text-sm text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all duration-200 backdrop-blur-sm"
                     required
                   />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="remember"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 rounded bg-white/20 border-white/30 text-emerald-500 focus:ring-emerald-400 focus:ring-offset-0"
-                  />
-                  <label htmlFor="remember" className="text-sm text-white/80 drop-shadow-md">
-                    Se souvenir de moi
-                  </label>
                 </div>
               </div>
 
