@@ -1,4 +1,4 @@
-﻿export interface DestinationDetails {
+export interface DestinationDetails {
   id: string;
   title: string;
   description: string;
@@ -196,6 +196,7 @@ export type PlanificationVoyage = {
   dateModification?: string;
   idDestination: string;
   nomDestination: string;
+  description?: string | null;
   transports: Transport[];
   jours: JourPlanificationVoyage[];
 };
@@ -288,5 +289,7 @@ export type SaveElementJourPlanificationPayload = {
   idActivite?: string | null;
   idHebergement?: string | null;
 };
+
+
 
 

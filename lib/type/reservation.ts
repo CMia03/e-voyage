@@ -1,24 +1,68 @@
+export type ReservationStatus =
+  | "EN_ATTENTE"
+  | "A_REVOIR"
+  | "EN_ATTENTE_DISPONIBILITE"
+  | "VALIDEE"
+  | "ANNULEE";
+
+export type ReservationSource = "PRIX_DIRECT" | "SIMULATION";
+
+export interface ReservationDetail {
+  id: string;
+  destinationId: string;
+  nomDestination: string;
+  planificationVoyageId: string;
+  nomPlanification: string;
+  categorieClientId: string;
+  nomCategorieClient: string;
+  gamme: string;
+  nombrePersonnes: number;
+  prixUnitaire: number;
+  prixTotal: number;
+  elementsSelectionnes: string[];
+  resumeSimulation: string | null;
+  dateCreation: string;
+}
+
 export interface Reservation {
   id: string;
-  nomPrenom: string;
-  destination: string;
-  budget: number;
-  nombrePersonnes: number;
-  status: 'validé' | 'en cours' | 'rejeté';
-  createdAt: Date;
+  reference: string;
+  status: ReservationStatus;
+  source: ReservationSource;
+  montantTotal: number;
+  devise: string;
+  commentaireClient: string | null;
+  commentaireAdmin: string | null;
+  dateReservation: string;
+  dateModification: string | null;
+  utilisateurId: string;
+  nomUtilisateur: string;
+  prenomUtilisateur: string;
+  emailUtilisateur: string;
+  details: ReservationDetail[];
 }
 
-export interface CreateReservationPayload {
-  nomPrenom: string;
-  destination: string;
-  budget: number;
-  nombrePersonnes: number;
+export interface ReservationQuote {
+  devise: string;
+  prixUnitaire: number;
+  prixTotal: number;
+  dureeJours: number;
 }
 
-export interface UpdateReservationPayload {
-  nomPrenom?: string;
-  destination?: string;
-  budget?: number;
-  nombrePersonnes?: number;
-  status?: 'validé' | 'en cours' | 'rejeté';
+export interface ReservationCreatePayload {
+  utilisateurId?: string;
+  source?: ReservationSource;
+  destinationId: string;
+  planificationVoyageId: string;
+  categorieClientId: string;
+  gamme: string;
+  nombrePersonnes: number;
+  commentaireClient?: string;
+  elementsSelectionnes?: string[];
+  resumeSimulation?: string;
+}
+
+export interface ReservationStatusUpdatePayload {
+  status: ReservationStatus;
+  commentaireAdmin?: string;
 }

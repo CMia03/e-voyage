@@ -1,4 +1,4 @@
-import { ClientHome } from "./client-home";
+import { redirect } from "next/navigation";
 
 type Props = {
   params: Promise<{ username: string }>;
@@ -6,5 +6,5 @@ type Props = {
 
 export default async function UserHomePage({ params }: Props) {
   const { username } = await params;
-  return <ClientHome username={username} />;
+  redirect(`/${username}/simulation`);
 }

@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { BellRing } from "lucide-react";
 
 import { useSimulation } from "@/lib/hooks/useSimulation";
-import { ElementSimulation } from "@/lib/type/simulation.types";
+import { ElementSimulation, JourSimulation } from "@/lib/type/simulation.types";
 import { DestinationSelector } from "./components/DestinationSelector";
 import { PlanificationSelector } from "./components/PlanificationSelector";
 import { BudgetInput } from "./components/BudgetInput";
@@ -12,6 +14,7 @@ import { CategoryGammeSelector } from "./components/CategoryGammeSelector";
 import { PlanningJournalier } from "./components/PlanningJournalier";
 import { BudgetSummary } from "./components/BudgetSummary";
 import { ActionButtons } from "./components/ActionButtons";
+import { Button } from "@/components/ui/button";
 
 type SuggestedElement = {
   id: string;
@@ -21,7 +24,7 @@ type SuggestedElement = {
 };
 
 function getOptionalSuggestions(
-  jours: typeof import("@/lib/type/simulation.types").JourSimulation[] | undefined,
+  jours: JourSimulation[] | undefined,
   deficit: number
 ): SuggestedElement[] {
   if (!jours || deficit <= 0) return [];
@@ -54,7 +57,29 @@ function formatAr(value?: number | null) {
   return `${(value ?? 0).toLocaleString()} Ar`;
 }
 
+function buildSimulationSummary(
+  destinationTitle: string | undefined,
+  planificationTitle: string | undefined,
+  nombrePersonnes: number,
+  totalCoche: number | undefined,
+  reste: number | undefined
+) {
+  return [
+    destinationTitle ? `Destination: ${destinationTitle}` : null,
+    planificationTitle ? `Planification: ${planificationTitle}` : null,
+    `Nombre de personnes: ${nombrePersonnes}`,
+    totalCoche !== undefined ? `Total selectionne: ${formatAr(totalCoche)}` : null,
+    reste !== undefined ? `Reste budgetaire: ${formatAr(reste)}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
 export default function SimulationPage() {
+  const params = useParams<{ username: string }>();
+  const username = typeof params?.username === "string" ? params.username : "client";
+  const router = useRouter();
+  const query = useSearchParams();
   const {
     destinations,
     planifications,
@@ -135,8 +160,64 @@ export default function SimulationPage() {
     !!selectedCategorieId &&
     budgetClient > 0;
 
+  const canReserveSimulation =
+    !!result?.success &&
+    !!selectedDestinationId &&
+    !!selectedPlanificationId &&
+    !!selectedCategorieId;
+
+  const simulationElements = useMemo(() => {
+    if (elementsSelectionnes.length > 0) {
+      return elementsSelectionnes;
+    }
+    if (!result?.jours) {
+      return [];
+    }
+    return result.jours.flatMap((jour) =>
+      jour.elements.filter((element) => element.coche).map((element) => element.id)
+    );
+  }, [elementsSelectionnes, result?.jours]);
+
+  const simulationSummary = useMemo(
+    () =>
+      buildSimulationSummary(
+        selectedDestination?.title,
+        selectedPlanification?.nomPlanification,
+        nombrePersonnes,
+        result?.resume?.totalCoche,
+        result?.resume?.reste
+      ),
+    [
+      selectedDestination?.title,
+      selectedPlanification?.nomPlanification,
+      nombrePersonnes,
+      result?.resume?.totalCoche,
+      result?.resume?.reste,
+    ]
+  );
+
   const handleLancerSimulation = async () => {
     await lancerSimulation();
+  };
+
+  const handleReserveSimulation = () => {
+    if (!canReserveSimulation) return;
+
+    const params = new URLSearchParams();
+    params.set("source", "SIMULATION");
+    params.set("destinationId", selectedDestinationId);
+    params.set("planificationId", selectedPlanificationId);
+    params.set("categorieId", selectedCategorieId);
+    params.set("gamme", selectedGamme);
+    params.set("nombrePersonnes", String(nombrePersonnes));
+    if (simulationElements.length > 0) {
+      params.set("elementsSelectionnes", simulationElements.join(","));
+    }
+    if (simulationSummary) {
+      params.set("resumeSimulation", simulationSummary);
+    }
+
+    router.push(`/${username}/reservations?${params.toString()}`);
   };
 
   return (
@@ -289,7 +370,6 @@ export default function SimulationPage() {
                 optionnel et ce qu&apos;il faut ajuster pour rester dans votre budget,
                 sans perdre la qualite du voyage.
               </p>
-
             </div>
           </div>
         </section>
@@ -407,6 +487,9 @@ export default function SimulationPage() {
                             Cochez ou decochez les elements optionnels selon vos priorites.
                           </p>
                         </div>
+                        <Button onClick={handleReserveSimulation} disabled={!canReserveSimulation}>
+                          Reserver cette simulation
+                        </Button>
                       </div>
 
                       <ActionButtons
@@ -417,17 +500,22 @@ export default function SimulationPage() {
 
                     {result.jours ? (
                       <section className="rounded-[28px] border border-slate-200/80 bg-white/90 p-5 shadow-[0_16px_60px_-40px_rgba(15,23,42,0.45)] sm:p-6">
-                        <div className="mb-4">
-                          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-700">
-                            Etape 3
-                          </p>
-                          <h3 className="mt-2 text-xl font-semibold text-slate-900">
-                            Planning journalier recommande
-                          </h3>
-                          <p className="mt-1 text-sm text-slate-600">
-                            Visualisez votre voyage jour par jour, avec les blocs
-                            obligatoires et optionnels.
-                          </p>
+                        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-700">
+                              Etape 3
+                            </p>
+                            <h3 className="mt-2 text-xl font-semibold text-slate-900">
+                              Planning journalier recommande
+                            </h3>
+                            <p className="mt-1 text-sm text-slate-600">
+                              Visualisez votre voyage jour par jour, avec les blocs
+                              obligatoires et optionnels.
+                            </p>
+                          </div>
+                          <Button asChild variant="outline">
+                            <Link href={`/${username}/reservations`}>Voir mes reservations</Link>
+                          </Button>
                         </div>
 
                         <PlanningJournalier
@@ -484,6 +572,12 @@ export default function SimulationPage() {
                     </p>
                   </div>
                 </div>
+
+                {query?.get("planificationId") ? (
+                  <p className="mt-4 text-sm text-emerald-700">
+                    Une planification a ete preselectionnee depuis votre parcours precedent.
+                  </p>
+                ) : null}
               </section>
             )}
           </div>

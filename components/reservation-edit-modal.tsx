@@ -1,81 +1,75 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { X, Save } from "lucide-react";
-import { Reservation, UpdateReservationPayload } from "@/lib/type/reservation";
-import { mockDestinations } from "@/lib/data/mock-reservations";
+import {
+  Reservation,
+  ReservationStatus,
+  ReservationStatusUpdatePayload,
+} from "@/lib/type/reservation";
 
 interface ReservationEditModalProps {
   reservation: Reservation | null;
   open: boolean;
   onClose: () => void;
-  onSave: (id: string, data: UpdateReservationPayload) => void;
+  onSave: (id: string, data: ReservationStatusUpdatePayload) => Promise<void>;
+}
+
+const statuses: ReservationStatus[] = [
+  "EN_ATTENTE",
+  "A_REVOIR",
+  "EN_ATTENTE_DISPONIBILITE",
+  "VALIDEE",
+  "ANNULEE",
+];
+
+function formatStatus(status: ReservationStatus) {
+  return status.replaceAll("_", " ");
 }
 
 export function ReservationEditModal({ reservation, open, onClose, onSave }: ReservationEditModalProps) {
-  const [formData, setFormData] = useState<UpdateReservationPayload>({
-    nomPrenom: "",
-    destination: "",
-    budget: 0,
-    nombrePersonnes: 1,
-    status: "en cours"
+  const [formData, setFormData] = useState<ReservationStatusUpdatePayload>({
+    status: "EN_ATTENTE",
+    commentaireAdmin: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (reservation) {
       setFormData({
-        nomPrenom: reservation.nomPrenom,
-        destination: reservation.destination,
-        budget: reservation.budget,
-        nombrePersonnes: reservation.nombrePersonnes,
-        status: reservation.status
+        status: reservation.status,
+        commentaireAdmin: reservation.commentaireAdmin ?? "",
       });
     }
   }, [reservation]);
 
-  const handleInputChange = (field: keyof UpdateReservationPayload, value: string | number) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
+  if (!reservation) return null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!reservation) return;
-
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     setIsSubmitting(true);
     try {
       await onSave(reservation.id, formData);
       onClose();
-    } catch (error) {
-      console.error("Erreur lors de la mise à jour:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const isFormValid = formData.nomPrenom?.trim() !== "" && 
-                     formData.destination !== "" && 
-                     (formData.budget ?? 0) > 0 && 
-                     (formData.nombrePersonnes ?? 1) > 0;
-
-  if (!reservation) return null;
-
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-xl">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl">Modifier la réservation</DialogTitle>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <DialogTitle>Mettre a jour la reservation</DialogTitle>
+              <p className="mt-1 text-sm text-muted-foreground">{reservation.reference}</p>
+            </div>
             <Button variant="ghost" size="sm" onClick={onClose}>
               <X className="h-4 w-4" />
             </Button>
@@ -83,103 +77,55 @@ export function ReservationEditModal({ reservation, open, onClose, onSave }: Res
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="nomPrenom">Nom et Prénom *</Label>
-              <Input
-                id="nomPrenom"
-                value={formData.nomPrenom}
-                onChange={(e) => handleInputChange("nomPrenom", e.target.value)}
-                placeholder="Ex: Jean Dupont"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="destination">Destination *</Label>
-              <Select
-                value={formData.destination}
-                onValueChange={(value) => handleInputChange("destination", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner une destination" />
-                </SelectTrigger>
-                <SelectContent>
-                  {mockDestinations.map((destination) => (
-                    <SelectItem key={destination} value={destination}>
-                      {destination}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="budget">Budget (Ar) *</Label>
-              <Input
-                id="budget"
-                type="number"
-                value={formData.budget || 0}
-                onChange={(e) => handleInputChange("budget", parseInt(e.target.value) || 0)}
-                placeholder="Ex: 1500000"
-                min="0"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="nombrePersonnes">Nombre de personnes *</Label>
-              <Input
-                id="nombrePersonnes"
-                type="number"
-                value={formData.nombrePersonnes || 1}
-                onChange={(e) => handleInputChange("nombrePersonnes", parseInt(e.target.value) || 1)}
-                placeholder="Ex: 4"
-                min="1"
-                required
-              />
-            </div>
+          <div className="rounded-xl border p-4 text-sm text-muted-foreground">
+            {reservation.prenomUtilisateur} {reservation.nomUtilisateur} - {reservation.montantTotal.toLocaleString("fr-MG")} {reservation.devise}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="status">Statut</Label>
             <Select
               value={formData.status}
-              onValueChange={(value) => handleInputChange("status", value as Reservation['status'])}
+              onValueChange={(value) =>
+                setFormData((current) => ({
+                  ...current,
+                  status: value as ReservationStatus,
+                }))
+              }
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner un statut" />
+              <SelectTrigger id="status">
+                <SelectValue placeholder="Selectionner un statut" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="en cours">
-                  <div className="flex items-center gap-2">
-                    <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">En cours</Badge>
-                  </div>
-                </SelectItem>
-                <SelectItem value="validé">
-                  <div className="flex items-center gap-2">
-                    <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Validé</Badge>
-                  </div>
-                </SelectItem>
-                <SelectItem value="rejeté">
-                  <div className="flex items-center gap-2">
-                    <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Rejeté</Badge>
-                  </div>
-                </SelectItem>
+                {statuses.map((status) => (
+                  <SelectItem key={status} value={status}>
+                    {formatStatus(status)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="commentaireAdmin">Commentaire admin</Label>
+            <Textarea
+              id="commentaireAdmin"
+              value={formData.commentaireAdmin ?? ""}
+              onChange={(event) =>
+                setFormData((current) => ({
+                  ...current,
+                  commentaireAdmin: event.target.value,
+                }))
+              }
+              placeholder="Ajoutez une note interne si necessaire"
+              rows={5}
+            />
+          </div>
 
-          <div className="flex justify-end gap-4 pt-4 border-t">
+          <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={onClose}>
               Annuler
             </Button>
-            <Button
-              type="submit"
-              disabled={!isFormValid || isSubmitting}
-              className="flex items-center gap-2"
-            >
+            <Button type="submit" disabled={isSubmitting} className="gap-2">
               <Save className="h-4 w-4" />
               {isSubmitting ? "Enregistrement..." : "Enregistrer"}
             </Button>

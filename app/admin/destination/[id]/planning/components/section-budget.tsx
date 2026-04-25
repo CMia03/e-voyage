@@ -1,8 +1,8 @@
 "use client";
 
 // COMPOSANT SECTION BUDGET
-// Affiche un tableau détaillé de budgétisation pour un voyage planifié
-// + Budgets enregistrés (CRUD admin / lecture publique)
+// Affiche un tableau dÃ©taillÃ© de budgÃ©tisation pour un voyage planifiÃ©
+// + Budgets enregistrÃ©s (CRUD admin / lecture publique)
 
 import { useMemo, useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
@@ -71,8 +71,8 @@ function formatMoneySafe(value: number | null | undefined, devise: string): stri
 }
 
 const CATEGORY_LABELS: Record<BudgetCategory, string> = {
-  activite: "Activité",
-  hebergement: "Hébergement",
+  activite: "ActivitÃ©",
+  hebergement: "HÃ©bergement",
   transport: "Transport",
   autre: "Autre",
 };
@@ -81,7 +81,7 @@ function getCategoryLabel(category: BudgetCategory): string {
   return CATEGORY_LABELS[category];
 }
 
-// ====== FONCTIONS D'EXTRACTION DES CATÉGORIES UNIQUES ======
+// ====== FONCTIONS D'EXTRACTION DES CATÃ‰GORIES UNIQUES ======
 
 function getUniqueClientCategories(
   sortedDays: JourPlanificationVoyage[],
@@ -131,7 +131,7 @@ function getUniqueGammes(
   return Array.from(gammes).sort();
 }
 
-// ====== FONCTIONS D'EXTRACTION DE DONNÉES ======
+// ====== FONCTIONS D'EXTRACTION DE DONNÃ‰ES ======
 
 function getLineTitle(element: JourPlanificationVoyage["elements"][number]): string {
   return (
@@ -176,7 +176,7 @@ function getActivityTarifsForElement(
       const montant = item.prixParPersonne ?? item.prixParHeur;
       if (montant === null || montant === undefined) return null;
       return {
-        categorieClient: item.nomCategorieClient || "Sans catégorie",
+        categorieClient: item.nomCategorieClient || "Sans catÃ©gorie",
         montant,
         devise: item.devise || "MGA",
       };
@@ -250,7 +250,7 @@ function buildActivityCell(
 
   for (const tarif of filteredTarifs) {
     const details = formatMoney(tarif.montant, tarif.devise);
-    parts.push(`${tarif.categorieClient || "Sans catégorie"}: ${details}`);
+    parts.push(`${tarif.categorieClient || "Sans catÃ©gorie"}: ${details}`);
     totalMoyenne += tarif.montant;
   }
 
@@ -273,11 +273,7 @@ function buildHebergementCell(
 ): TarificationCell {
   const filteredTarifs =
     selectedGamme && selectedGamme.trim() !== ""
-      ? tarifs.filter((item) => {
-          const gamme = item.gamme ?? "";
-          if (gamme === "") return false;
-          return gamme.toLowerCase() === selectedGamme.toLowerCase();
-        })
+      ? tarifs.filter((item) => item.gamme.toLowerCase() === selectedGamme.toLowerCase())
       : tarifs;
 
   const display = filteredTarifs
@@ -366,7 +362,7 @@ function buildBudgetLine(
   };
 }
 
-// ====== COMPOSANT BADGES BUDGETS ENREGISTRÉS ======
+// ====== COMPOSANT BADGES BUDGETS ENREGISTRÃ‰S ======
 
 type BudgetBadgeListProps = {
   budgetsPlanification: BudgetisationPlanificationVoyage[];
@@ -389,9 +385,9 @@ function BudgetBadgeList({
     <div className="rounded-2xl border border-border/50 bg-background/80 overflow-hidden">
       <div className="flex flex-col gap-3 border-b border-border/50 bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="font-semibold">Budgets enregistrés</h3>
+          <h3 className="font-semibold">Budgets enregistrÃ©s</h3>
           <p className="text-xs text-muted-foreground">
-            Budgets saisis par l’administrateur pour cette planification.
+            Budgets saisis par lâ€™administrateur pour cette planification.
           </p>
         </div>
 
@@ -408,7 +404,7 @@ function BudgetBadgeList({
       <div className="p-4">
         {budgetsPlanification.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border/60 px-4 py-8 text-center text-sm text-muted-foreground">
-            Aucun budget enregistré pour cette planification.
+            Aucun budget enregistrÃ© pour cette planification.
           </div>
         ) : (
           <div className="flex flex-wrap gap-3">
@@ -468,7 +464,7 @@ function BudgetBadgeList({
   );
 }
 
-// ====== COMPOSANT TABLEAU RÉCAPITULATIF ======
+// ====== COMPOSANT TABLEAU RÃ‰CAPITULATIF ======
 
 interface RecapTableProps {
   sortedDays: JourPlanificationVoyage[];
@@ -497,7 +493,7 @@ function RecapTable({ sortedDays, tarifsActivites, tarifsHebergements, devise, p
         if (element.codeTypeElementJour === "ACTIVITE" && element.idActivite) {
           const tarifs = getActivityTarifsForElement(element.idActivite, tarifsActivites);
           tarifs.forEach((tarif) => {
-            if (tarif.categorieClient && tarif.categorieClient !== "Sans catégorie") {
+            if (tarif.categorieClient && tarif.categorieClient !== "Sans catÃ©gorie") {
               categoriesDuJour.add(tarif.categorieClient);
             }
           });
@@ -538,7 +534,7 @@ function RecapTable({ sortedDays, tarifsActivites, tarifsHebergements, devise, p
           const tarifs = getActivityTarifsForElement(element.idActivite, tarifsActivites);
           for (const tarif of tarifs) {
             const categorieClient = tarif.categorieClient;
-            if (categorieClient && categorieClient !== "Sans catégorie") {
+            if (categorieClient && categorieClient !== "Sans catÃ©gorie") {
               if (!activitesParCategorie[categorieClient]) {
                 activitesParCategorie[categorieClient] = { moyenne: 0, luxe: 0 };
               }
@@ -579,7 +575,7 @@ function RecapTable({ sortedDays, tarifsActivites, tarifsHebergements, devise, p
       if (element.codeTypeElementJour === "ACTIVITE" && element.idActivite) {
         const tarifs = getActivityTarifsForElement(element.idActivite, tarifsActivites);
         tarifs.forEach((tarif) => {
-          if (tarif.categorieClient && tarif.categorieClient !== "Sans catégorie") {
+          if (tarif.categorieClient && tarif.categorieClient !== "Sans catÃ©gorie") {
             allCategories.add(tarif.categorieClient);
           }
         });
@@ -596,9 +592,9 @@ function RecapTable({ sortedDays, tarifsActivites, tarifsHebergements, devise, p
   return (
     <div className="rounded-2xl border border-border/50 bg-background/80 overflow-hidden mb-6">
       <div className="bg-muted/20 px-4 py-3 border-b border-border/50">
-        <h3 className="font-semibold">Récapitulatif des tarifs</h3>
+        <h3 className="font-semibold">RÃ©capitulatif des tarifs</h3>
         <p className="text-xs text-muted-foreground">
-          Gammes vs Catégories client (prix par personne)
+          Gammes vs CatÃ©gories client (prix par personne)
         </p>
       </div>
       <div className="overflow-x-auto">
@@ -724,11 +720,11 @@ function DayBudgetTable({
           <thead className={TABLE_HEADER_CLASS}>
             <tr>
               <th className={`${TABLE_HEADER_CELL_CLASS} text-left`}>Bloc</th>
-              <th className={`${TABLE_HEADER_CELL_CLASS} text-left`}>Catégorie</th>
+              <th className={`${TABLE_HEADER_CELL_CLASS} text-left`}>CatÃ©gorie</th>
               <th className={`${TABLE_HEADER_CELL_CLASS} text-left`}>Tarifs</th>
               <th className={`${TABLE_HEADER_CELL_CLASS} text-left`}>
                 <div className="space-y-2">
-                  <div className="font-semibold">Budget calculé</div>
+                  <div className="font-semibold">Budget calculÃ©</div>
                   <div className="flex gap-2 text-xs">
                     {availableGammes.length > 0 && (
                       <select
@@ -736,7 +732,7 @@ function DayBudgetTable({
                         value={globalSelections.gamme}
                         onChange={(e) => updateGlobalSelection("gamme", e.target.value)}
                       >
-                        <option value="">Sélectionner une gamme</option>
+                        <option value="">SÃ©lectionner une gamme</option>
                         {availableGammes.map((gamme) => (
                           <option key={gamme} value={gamme}>
                             {gamme === "moyenne" ? "Moyenne" : gamme === "luxe" ? "Luxe" : gamme}
@@ -751,7 +747,7 @@ function DayBudgetTable({
                         value={globalSelections.categorieClient}
                         onChange={(e) => updateGlobalSelection("categorieClient", e.target.value)}
                       >
-                        <option value="">Sélectionner une catégorie</option>
+                        <option value="">SÃ©lectionner une catÃ©gorie</option>
                         {availableCategories.map((categorie) => (
                           <option key={categorie} value={categorie}>
                             {categorie}
@@ -801,7 +797,7 @@ function DayBudgetTable({
           <tfoot className="border-t-2 border-border bg-muted/20">
             <tr>
               <td colSpan={3} className={`${TABLE_CELL_CLASS} font-semibold`}>
-                Total sélectionné
+                Total sÃ©lectionnÃ©
               </td>
               <td className={`${TABLE_CELL_CLASS} text-xs font-medium text-foreground`}>
                 {globalSelections.gamme || globalSelections.categorieClient ? (
@@ -813,7 +809,7 @@ function DayBudgetTable({
                     devise
                   )
                 ) : (
-                  <span className="text-muted-foreground">Sélectionnez une option</span>
+                  <span className="text-muted-foreground">SÃ©lectionnez une option</span>
                 )}
               </td>
             </tr>
@@ -887,9 +883,9 @@ export function SectionBudget({
   return (
     <Card className="overflow-hidden border-border/60 bg-gradient-to-br from-background via-background to-muted/20">
       <CardHeader className="border-b border-border/50 bg-muted/20">
-        <CardTitle>Budgétisation</CardTitle>
+        <CardTitle>BudgÃ©tisation</CardTitle>
         <CardDescription>
-          Vue d&apos;ensemble et détails journaliers de la budgétisation du voyage.
+          Vue d&apos;ensemble et dÃ©tails journaliers de la budgÃ©tisation du voyage.
         </CardDescription>
       </CardHeader>
 
@@ -912,11 +908,11 @@ export function SectionBudget({
         />
 
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold">Détails par jour</h2>
+          <h2 className="text-xl font-semibold">DÃ©tails par jour</h2>
 
           {dayBudgets.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border/60 px-4 py-10 text-center text-sm text-muted-foreground">
-              Aucun jour disponible pour la budgétisation.
+              Aucun jour disponible pour la budgÃ©tisation.
             </div>
           ) : (
             dayBudgets.map(({ day, lines }) => (

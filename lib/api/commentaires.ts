@@ -1,5 +1,5 @@
 import { apiRequest } from "@/lib/api/client";
-import { AllCommentairesResponse, CommentaireResponse } from "../type/commentaire";
+import { AllCommentairesResponse, CommentaireData, CommentaireResponse } from "../type/commentaire";
 
 export async function addCommentaire(
   destinationId: string, 
@@ -68,3 +68,6 @@ export async function getDestinationPublicCommentaires(destinationId: string): P
     `/api/commentaires/destination/${destinationId}`
   );
 }
+
+export type { CommentaireData };
+
