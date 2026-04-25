@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Bell, MessageCircle, Check, Trash2, ExternalLink, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,7 @@ export function AdminNotifications() {
   const [commentaires, setCommentaires] = useState<CommentaireData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
+  const notificationRef = useRef<HTMLDivElement>(null);
 
   // Charger les commentaires en attente
   const loadCommentaires = async () => {
@@ -43,6 +44,22 @@ export function AdminNotifications() {
     const interval = setInterval(loadCommentaires, 30000);
     return () => clearInterval(interval);
   }, [session?.accessToken]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
 
   // Approuver un commentaire
   const handleApprouver = async (commentaire: CommentaireData) => {
@@ -113,15 +130,10 @@ export function AdminNotifications() {
       </Button>
 
       {isOpen && (
-        <>
-          {/* Overlay */}
-          <div 
-            className="fixed inset-0 z-30" 
-            onClick={() => setIsOpen(false)}
-          />
-          
-          {/* Panel des notifications */}
-          <Card className="absolute right-0 top-12 w-96 max-h-96 z-40 shadow-lg">
+        <Card 
+          ref={notificationRef}
+          className="absolute right-0 top-12 w-96 max-h-96 z-50 shadow-lg"
+        >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
               <CardTitle className="text-lg">Commentaires en attente</CardTitle>
               <Button
@@ -213,7 +225,6 @@ export function AdminNotifications() {
               )}
             </CardContent>
           </Card>
-        </>
       )}
     </div>
   );
