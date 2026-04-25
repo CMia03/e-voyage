@@ -65,7 +65,7 @@ type RequestOptions = {
   headers?: Record<string, string>;
   token?: string;
   body?: unknown;
-  autoRefresh?: boolean; // Nouvelle option pour activer le refresh automatique
+  autoRefresh?: boolean; 
 };
 
 function buildHeaders(options?: RequestOptions) {
@@ -78,13 +78,11 @@ function buildHeaders(options?: RequestOptions) {
   return headers;
 }
 
-// Construire les headers avec token automatique
 async function buildHeadersWithAuth(options?: RequestOptions): Promise<Record<string, string>> {
   const headers: Record<string, string> = {
     ...(options?.headers ?? {}),
   };
   
-  // Si autoRefresh est activé et aucun token n'est fourni, obtenir un token valide
   if (options?.autoRefresh && !options?.token) {
     const validToken = await getValidToken();
     if (validToken) {
@@ -160,7 +158,6 @@ export async function apiRequest<T = ApiEnvelope>(
     }
   };
 
-  // Si autoRefresh est activé, utiliser l'intercepteur
   if (autoRefresh) {
     return await makeRequestWithRefresh(makeRequest);
   }
