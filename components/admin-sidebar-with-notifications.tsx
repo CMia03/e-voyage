@@ -341,19 +341,6 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
 
         <button
           type="button"
-          onClick={() => onSelect("utilisateurs")}
-          className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
-            active === "utilisateurs"
-              ? "bg-emerald-500/10 font-medium text-emerald-600"
-              : "text-muted-foreground hover:bg-primary/10"
-          }`}
-        >
-          <Users className="mr-3 h-4 w-4" />
-          Gestion des utilisateurs
-        </button>
-
-        <button
-          type="button"
           onClick={() => onSelect("planification")}
           className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${active === "planification"
               ? "bg-emerald-500/10 font-medium text-emerald-600"
@@ -383,6 +370,18 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
 
           {expandedSections.includes("parametrage") && (
             <div className="ml-4 space-y-1 border-l-2 border-emerald-200 pl-4 dark:border-emerald-800">
+              <button
+                type="button"
+                onClick={() => onSelect("utilisateurs")}
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${
+                  active === "utilisateurs"
+                    ? "bg-emerald-500/10 font-medium text-emerald-600"
+                    : "text-muted-foreground hover:bg-primary/10"
+                }`}
+              >
+                <Users className="mr-3 h-4 w-4" />
+                Gestion des utilisateurs
+              </button>
               <button
                 type="button"
                 onClick={() => onSelect("entreprise-info")}
