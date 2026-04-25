@@ -418,14 +418,14 @@ export function AdminHeaderWithNotifications() {
                     className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Liste des hebergements
+                    Liste des hébergements
                   </Link>
                   <Link
                     href="/admin?section=hebergements-create"
                     className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Ajouter hebergement
+                    Ajouter hébergement
                   </Link>
                 </div>
               )}
@@ -451,14 +451,14 @@ export function AdminHeaderWithNotifications() {
                     className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Liste des activites
+                    Liste des activités
                   </Link>
                   <Link
                     href="/admin?section=activites-create"
                     className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Ajouter activite
+                    Ajouter activité
                   </Link>
                 </div>
               )}
@@ -525,14 +525,14 @@ export function AdminHeaderWithNotifications() {
                     className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Liste reservations
+                    Liste réservations
                   </Link>
                   <Link
                     href="/admin?section=reservations-ajout"
                     className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Ajout reservation
+                    Ajout réservation
                   </Link>
                 </div>
               )}

@@ -564,8 +564,8 @@ export default function ReservationsPage() {
               </div>
               <div className="rounded-xl border border-dashed border-border/70 p-3 text-sm text-muted-foreground">
                 {quote
-                  ? `Estimation basee sur ${quote.dureeJours} jour(s) et ${form.nombrePersonnes} voyageur(s).`
-                  : quoteError || "Selectionnez une planification, une categorie et une gamme pour obtenir un devis."}
+                  ? `Estimation basée sur ${quote.dureeJours} jour(s) et ${form.nombrePersonnes} voyageur(s).`
+                  : quoteError || "Sélectionnez une planification, une catégorie et une gamme pour obtenir un devis."}
               </div>
             </CardContent>
           </Card>
@@ -573,13 +573,13 @@ export default function ReservationsPage() {
           <Card className="border-border/50">
             <CardHeader>
               <CardTitle>Historique</CardTitle>
-              <CardDescription>Vos reservations les plus recentes.</CardDescription>
+              <CardDescription>Vos réservations les plus récentes.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {loadingReservations ? (
-                <p className="text-sm text-muted-foreground">Chargement des reservations...</p>
+                <p className="text-sm text-muted-foreground">Chargement des réservations...</p>
               ) : reservations.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Aucune reservation pour le moment.</p>
+                <p className="text-sm text-muted-foreground">Aucune réservation pour le moment.</p>
               ) : (
                 reservations.map((reservation) => {
                   const detail = reservation.details[0];

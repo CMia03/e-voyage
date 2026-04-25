@@ -608,7 +608,7 @@ export function AdminDestinationAssociationsContent({ destinationId }: Props) {
                   Hebergements et activites
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  Selectionnez ce que les voyageurs pourront faire et ou ils pourront se loger pour cette destination.
+                  Sélectionnez ce que les voyageurs pourront faire et où ils pourront se loger pour cette destination.
                 </p>
               </div>
             </div>
@@ -616,11 +616,11 @@ export function AdminDestinationAssociationsContent({ destinationId }: Props) {
             <div className="flex flex-wrap gap-2">
               <Button type="button" onClick={() => scrollToSection("hebergements")}>
                 <BedDouble className="size-4" />
-                Ajouter hebergement
+                Ajouter hébergement
               </Button>
               <Button type="button" variant="outline" onClick={() => scrollToSection("activites")}>
                 <Compass className="size-4" />
-                Ajouter Activiter
+                Ajouter activité
               </Button>
               <Button type="button" variant="outline" onClick={() => scrollToSection("prestations")}>
                 <Gift className="size-4" />
