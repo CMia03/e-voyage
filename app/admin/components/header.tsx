@@ -204,7 +204,10 @@ export function AdminHeader() {
                     onClick={() => setIsMenuOpen(false)}
                   />
                   
-                  <div className="absolute right-0 mt-2 w-80 z-40 rounded-lg border border-border/50 bg-white shadow-xl dark:bg-gray-900">
+                  <div 
+                    className="absolute right-0 mt-2 w-80 z-40 rounded-lg border border-border/50 bg-white shadow-xl dark:bg-gray-900"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     {/* En-tête du profil */}
                     <div className="p-4 border-b border-border/50">
                       <div className="flex items-center gap-3">
