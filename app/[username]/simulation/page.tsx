@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { BellRing } from "lucide-react";
 
@@ -22,6 +22,47 @@ type SuggestedElement = {
   prix: number;
   type: string;
 };
+
+type ReservationElementPreview = {
+  id: string;
+  titre: string;
+  prix: number;
+  type: string;
+  jourNumero?: number;
+  jourTitre?: string;
+};
+
+function parsePositiveInteger(value: string | null, fallback: number) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function normalizeGamme(value: string | null | undefined) {
+  const normalized = (value ?? "").trim().toUpperCase();
+  return normalized === "LUXE" ? "LUXE" : "MOYENNE";
+}
+
+function parseSimulationElementCards(value: string | null): ReservationElementPreview[] {
+  if (!value) return [];
+
+  try {
+    const parsed = JSON.parse(value);
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed
+      .map((item) => ({
+        id: typeof item?.id === "string" ? item.id : "",
+        titre: typeof item?.titre === "string" ? item.titre : "",
+        prix: typeof item?.prix === "number" ? item.prix : 0,
+        type: typeof item?.type === "string" ? item.type : "",
+        jourNumero: typeof item?.jourNumero === "number" ? item.jourNumero : undefined,
+        jourTitre: typeof item?.jourTitre === "string" ? item.jourTitre : undefined,
+      }))
+      .filter((item) => item.id);
+  } catch {
+    return [];
+  }
+}
 
 function getOptionalSuggestions(
   jours: JourSimulation[] | undefined,
@@ -53,6 +94,27 @@ function getOptionalSuggestions(
   return suggestions;
 }
 
+function getAffordableOptionalSuggestions(
+  jours: JourSimulation[] | undefined,
+  resteBudget: number
+): SuggestedElement[] {
+  if (!jours || resteBudget <= 0) return [];
+
+  return jours
+    .flatMap((jour) => jour.elements)
+    .filter(
+      (element: ElementSimulation) =>
+        !element.obligatoire && !element.coche && element.prix > 0 && element.prix <= resteBudget
+    )
+    .sort((a, b) => a.prix - b.prix)
+    .map((element) => ({
+      id: element.id,
+      titre: element.titre,
+      prix: element.prix,
+      type: element.type,
+    }));
+}
+
 function formatAr(value?: number | null) {
   return `${(value ?? 0).toLocaleString()} Ar`;
 }
@@ -61,14 +123,16 @@ function buildSimulationSummary(
   destinationTitle: string | undefined,
   planificationTitle: string | undefined,
   nombrePersonnes: number,
-  totalCoche: number | undefined,
+  budgetClient: number | undefined,
+  totalAvecMarge: number | undefined,
   reste: number | undefined
 ) {
   return [
     destinationTitle ? `Destination: ${destinationTitle}` : null,
     planificationTitle ? `Planification: ${planificationTitle}` : null,
     `Nombre de personnes: ${nombrePersonnes}`,
-    totalCoche !== undefined ? `Total selectionne: ${formatAr(totalCoche)}` : null,
+    budgetClient !== undefined && budgetClient > 0 ? `Budget client: ${formatAr(budgetClient)}` : null,
+    totalAvecMarge !== undefined ? `Total selectionne: ${formatAr(totalAvecMarge)}` : null,
     reste !== undefined ? `Reste budgetaire: ${formatAr(reste)}` : null,
   ]
     .filter(Boolean)
@@ -80,6 +144,8 @@ export default function SimulationPage() {
   const username = typeof params?.username === "string" ? params.username : "client";
   const router = useRouter();
   const query = useSearchParams();
+  const prefillAppliedRef = useRef(false);
+  const autoSimulationLaunchedRef = useRef(false);
   const {
     destinations,
     planifications,
@@ -88,6 +154,8 @@ export default function SimulationPage() {
     error,
     result,
     minimumBudget,
+    budgetByPlanification,
+    budgetisationsByPlanification,
     selectedDestinationId,
     setSelectedDestinationId,
     selectedPlanificationId,
@@ -101,12 +169,92 @@ export default function SimulationPage() {
     nombrePersonnes,
     setNombrePersonnes,
     elementsSelectionnes,
+    setElementsSelectionnes,
     lancerSimulation,
     toggleElement,
     toutCocher,
     toutDecocher,
     resetSimulation,
   } = useSimulation();
+
+  const reservationEditPrefill = useMemo(
+    () => ({
+      editReservationId: query?.get("editReservationId") || null,
+      commentaireClient: query?.get("commentaireClient") || null,
+      budgetClient: parsePositiveInteger(query?.get("budgetClient"), 0),
+      destinationId: query?.get("destinationId") || null,
+      planificationId: query?.get("planificationId") || null,
+      categorieId: query?.get("categorieId") || null,
+      gamme: normalizeGamme(query?.get("gamme")),
+      nombrePersonnes: parsePositiveInteger(query?.get("nombrePersonnes"), 1),
+      elementsSelectionnes: (query?.get("elementsSelectionnes") || "")
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean),
+      elementsDetails: parseSimulationElementCards(query?.get("elementsDetails")),
+    }),
+    [query]
+  );
+
+  useEffect(() => {
+    if (!query || prefillAppliedRef.current) return;
+    if (!reservationEditPrefill.destinationId && !reservationEditPrefill.planificationId) return;
+
+    prefillAppliedRef.current = true;
+
+    if (reservationEditPrefill.destinationId) {
+      setSelectedDestinationId(reservationEditPrefill.destinationId);
+    }
+    if (reservationEditPrefill.categorieId) {
+      setSelectedCategorieId(reservationEditPrefill.categorieId);
+    }
+    setSelectedGamme(reservationEditPrefill.gamme);
+    setNombrePersonnes(reservationEditPrefill.nombrePersonnes);
+    if (reservationEditPrefill.budgetClient > 0) {
+      setBudgetClient(reservationEditPrefill.budgetClient);
+    }
+    if (reservationEditPrefill.elementsSelectionnes.length > 0) {
+      setElementsSelectionnes(reservationEditPrefill.elementsSelectionnes);
+    }
+  }, [
+    query,
+    reservationEditPrefill,
+    setBudgetClient,
+    setElementsSelectionnes,
+    setNombrePersonnes,
+    setSelectedCategorieId,
+    setSelectedDestinationId,
+    setSelectedGamme,
+  ]);
+
+  useEffect(() => {
+    if (!reservationEditPrefill.planificationId || planifications.length === 0) return;
+    if (!planifications.some((planification) => planification.id === reservationEditPrefill.planificationId)) return;
+
+    setSelectedPlanificationId(reservationEditPrefill.planificationId);
+  }, [planifications, reservationEditPrefill.planificationId, setSelectedPlanificationId]);
+
+  useEffect(() => {
+    if (autoSimulationLaunchedRef.current) return;
+    if (!reservationEditPrefill.editReservationId) return;
+    if (!selectedDestinationId || !selectedPlanificationId || !selectedCategorieId) return;
+    if (budgetClient <= 0) return;
+
+    autoSimulationLaunchedRef.current = true;
+    void lancerSimulation(
+      reservationEditPrefill.elementsSelectionnes.length > 0
+        ? reservationEditPrefill.elementsSelectionnes
+        : undefined
+    );
+  }, [
+    budgetClient,
+    lancerSimulation,
+    reservationEditPrefill.editReservationId,
+    reservationEditPrefill.elementsSelectionnes,
+    selectedCategorieId,
+    selectedDestinationId,
+    selectedPlanificationId,
+  ]);
 
   const selectedDestination = useMemo(
     () => destinations.find((destination) => destination.id === selectedDestinationId) ?? null,
@@ -118,13 +266,20 @@ export default function SimulationPage() {
     [planifications, selectedPlanificationId]
   );
 
-  const adminBudget = selectedPlanification?.budgetTotal ?? null;
+  const budgetCategorieSelectionnee = selectedPlanificationId
+    ? budgetByPlanification[selectedPlanificationId] ?? null
+    : null;
   const seuilMinimum = minimumBudget?.seuilMinimum ?? result?.recap?.seuilMinimum ?? 0;
   const depassement = Math.max(0, -(result?.resume?.reste ?? 0));
+  const resteDisponible = Math.max(0, result?.resume?.reste ?? 0);
 
   const suggestionsOptionnelles = useMemo(
     () => getOptionalSuggestions(result?.jours, depassement),
     [result?.jours, depassement]
+  );
+  const suggestionsDisponibles = useMemo(
+    () => getAffordableOptionalSuggestions(result?.jours, resteDisponible),
+    [result?.jours, resteDisponible]
   );
 
   const totalSuggestions = suggestionsOptionnelles.reduce(
@@ -132,6 +287,7 @@ export default function SimulationPage() {
     0
   );
   const [dismissedBudgetAlertKey, setDismissedBudgetAlertKey] = useState<string | null>(null);
+  const [dismissedPositiveBudgetKey, setDismissedPositiveBudgetKey] = useState<string | null>(null);
   const budgetAlertKey = useMemo(
     () =>
       result?.success && depassement > 0 && suggestionsOptionnelles.length > 0
@@ -149,10 +305,31 @@ export default function SimulationPage() {
       nombrePersonnes,
     ]
   );
+  const positiveBudgetKey = useMemo(
+    () =>
+      result?.success && resteDisponible > 0 && suggestionsDisponibles.length > 0
+        ? `${selectedPlanificationId}-${selectedCategorieId}-${selectedGamme}-${nombrePersonnes}-${resteDisponible}-${suggestionsDisponibles
+            .map((element) => element.id)
+            .join(",")}`
+        : null,
+    [
+      result?.success,
+      resteDisponible,
+      suggestionsDisponibles,
+      selectedPlanificationId,
+      selectedCategorieId,
+      selectedGamme,
+      nombrePersonnes,
+    ]
+  );
   const showBudgetAlertModal =
     budgetAlertKey !== null && dismissedBudgetAlertKey !== budgetAlertKey;
   const showBudgetAlertIndicator =
     budgetAlertKey !== null && dismissedBudgetAlertKey === budgetAlertKey;
+  const showPositiveBudgetModal =
+    positiveBudgetKey !== null && dismissedPositiveBudgetKey !== positiveBudgetKey;
+  const showPositiveBudgetIndicator =
+    positiveBudgetKey !== null && dismissedPositiveBudgetKey === positiveBudgetKey;
 
   const canSimulate =
     !loading &&
@@ -177,6 +354,24 @@ export default function SimulationPage() {
       jour.elements.filter((element) => element.coche).map((element) => element.id)
     );
   }, [elementsSelectionnes, result?.jours]);
+  const simulationElementDetails = useMemo<ReservationElementPreview[]>(() => {
+    if (!result?.jours) {
+      return [];
+    }
+
+    return result.jours.flatMap((jour) =>
+      jour.elements
+        .filter((element) => element.coche)
+        .map((element) => ({
+          id: element.id,
+          titre: element.titre,
+          prix: element.prix,
+          type: element.type,
+          jourNumero: jour.numeroJour,
+          jourTitre: jour.titre,
+        }))
+    );
+  }, [result?.jours]);
 
   const simulationSummary = useMemo(
     () =>
@@ -184,13 +379,16 @@ export default function SimulationPage() {
         selectedDestination?.title,
         selectedPlanification?.nomPlanification,
         nombrePersonnes,
-        result?.resume?.totalCoche,
+        budgetClient,
+        result?.resume?.totalAvecMarge ?? result?.resume?.totalCoche,
         result?.resume?.reste
       ),
     [
       selectedDestination?.title,
       selectedPlanification?.nomPlanification,
       nombrePersonnes,
+      budgetClient,
+      result?.resume?.totalAvecMarge,
       result?.resume?.totalCoche,
       result?.resume?.reste,
     ]
@@ -210,8 +408,30 @@ export default function SimulationPage() {
     params.set("categorieId", selectedCategorieId);
     params.set("gamme", selectedGamme);
     params.set("nombrePersonnes", String(nombrePersonnes));
+    if (budgetClient > 0) {
+      params.set("budgetClient", String(budgetClient));
+    }
+    if (reservationEditPrefill.editReservationId) {
+      params.set("editReservationId", reservationEditPrefill.editReservationId);
+    }
+    if (reservationEditPrefill.commentaireClient) {
+      params.set("commentaireClient", reservationEditPrefill.commentaireClient);
+    }
+    if (selectedDestination?.title) {
+      params.set("destinationTitle", selectedDestination.title);
+    }
+    if (selectedPlanification?.nomPlanification) {
+      params.set("planificationTitle", selectedPlanification.nomPlanification);
+    }
+    const selectedCategorie = categories.find((categorie) => categorie.id === selectedCategorieId);
+    if (selectedCategorie?.nom) {
+      params.set("categorieTitle", selectedCategorie.nom);
+    }
     if (simulationElements.length > 0) {
       params.set("elementsSelectionnes", simulationElements.join(","));
+    }
+    if (simulationElementDetails.length > 0) {
+      params.set("elementsDetails", JSON.stringify(simulationElementDetails));
     }
     if (simulationSummary) {
       params.set("resumeSimulation", simulationSummary);
@@ -238,6 +458,27 @@ export default function SimulationPage() {
             </span>
             <span className="mt-1 block text-sm font-medium text-slate-900">
               Voir l&apos;ajustement recommande
+            </span>
+          </span>
+        </button>
+      ) : null}
+
+      {showPositiveBudgetIndicator ? (
+        <button
+          type="button"
+          onClick={() => setDismissedPositiveBudgetKey(null)}
+          className="fixed right-4 top-28 z-40 inline-flex items-center gap-3 rounded-full border border-emerald-300 bg-white/95 px-4 py-3 text-left shadow-[0_16px_45px_-24px_rgba(16,185,129,0.75)] backdrop-blur transition hover:-translate-y-0.5 hover:bg-emerald-50 sm:right-6"
+        >
+          <span className="relative flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300/70" />
+            <BellRing className="relative z-10 h-5 w-5" />
+          </span>
+          <span className="hidden sm:block">
+            <span className="block text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
+              Suggestion
+            </span>
+            <span className="mt-1 block text-sm font-medium text-slate-900">
+              Voir les blocs encore disponibles
             </span>
           </span>
         </button>
@@ -311,6 +552,72 @@ export default function SimulationPage() {
         </section>
       ) : null}
 
+      {showPositiveBudgetModal ? (
+        <section className="fixed right-4 top-44 z-40 w-[min(360px,calc(100vw-2rem))] rounded-[24px] border border-emerald-200 bg-[linear-gradient(180deg,_rgba(236,253,245,0.99),_rgba(220,252,231,0.97))] p-4 shadow-[0_24px_80px_-38px_rgba(16,185,129,0.55)] sm:right-6">
+          <div className="absolute -top-2 right-7 h-4 w-4 rotate-45 border-l border-t border-emerald-200 bg-emerald-50" />
+
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-700">
+                Suggestions budget
+              </p>
+              <h3 className="mt-2 text-base font-semibold leading-6 text-emerald-950">
+                Vous pouvez encore enrichir votre voyage
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-emerald-900/85">
+                Il vous reste <span className="font-semibold">{formatAr(resteDisponible)}</span>. Voici les blocs optionnels que vous pouvez encore cocher sans depasser votre budget.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (positiveBudgetKey) {
+                  setDismissedPositiveBudgetKey(positiveBudgetKey);
+                }
+              }}
+              className="shrink-0 rounded-full border border-emerald-300 bg-white/80 px-2.5 py-1 text-xs font-semibold text-emerald-900 transition hover:bg-emerald-50"
+            >
+              Fermer
+            </button>
+          </div>
+
+          <div className="mt-4 space-y-2.5">
+            {suggestionsDisponibles.slice(0, 4).map((element) => (
+              <div
+                key={element.id}
+                className="rounded-2xl border border-emerald-200 bg-white/88 px-4 py-3"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-slate-900">{element.titre}</p>
+                    <p className="mt-1 text-xs text-emerald-700">
+                      {element.type}
+                    </p>
+                  </div>
+                  <p className="shrink-0 text-sm font-semibold text-slate-900">
+                    {formatAr(element.prix)}
+                  </p>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="mt-3 w-full border-emerald-200 text-emerald-800 hover:bg-emerald-100"
+                  onClick={() => void toggleElement(element.id)}
+                >
+                  Cocher ce bloc
+                </Button>
+              </div>
+            ))}
+          </div>
+
+          <p className="mt-4 text-xs leading-5 text-emerald-900/80">
+            Vous pouvez cocher directement un bloc propose ou continuer a ajuster votre simulation.
+          </p>
+        </section>
+      ) : null}
+
       <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
         <section className="overflow-hidden rounded-[28px] border border-emerald-100 bg-white/90 shadow-[0_20px_70px_-35px_rgba(15,118,110,0.45)] backdrop-blur">
           <div className="grid gap-8 px-6 py-8 lg:grid-cols-[minmax(0,1.2fr)_320px] lg:px-8 lg:py-10">
@@ -330,7 +637,7 @@ export default function SimulationPage() {
                 </p>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-3">
+              {/* <div className="grid gap-3 sm:grid-cols-3">
                 <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
                   <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
                     Destination
@@ -355,7 +662,8 @@ export default function SimulationPage() {
                     {seuilMinimum > 0 ? formatAr(seuilMinimum) : "A calculer"}
                   </p>
                 </div>
-              </div>
+              </div> */}
+              
             </div>
 
             <div className="rounded-[24px] border border-slate-200 bg-slate-950 p-6 text-white shadow-[0_18px_40px_-30px_rgba(15,23,42,0.9)]">
@@ -407,6 +715,7 @@ export default function SimulationPage() {
                   value={selectedPlanificationId}
                   onChange={setSelectedPlanificationId}
                   loading={loading}
+                  budgetisationsByPlanification={budgetisationsByPlanification}
                 />
 
                 <CategoryGammeSelector
@@ -424,7 +733,7 @@ export default function SimulationPage() {
                   value={budgetClient}
                   onChange={setBudgetClient}
                   minBudget={seuilMinimum}
-                  adminBudget={adminBudget}
+                  adminBudget={budgetCategorieSelectionnee}
                   disabled={loading}
                 />
               </div>
@@ -463,10 +772,10 @@ export default function SimulationPage() {
                 <section className="rounded-[28px] border border-slate-200/80 bg-white/90 p-5 shadow-[0_16px_60px_-40px_rgba(15,23,42,0.45)] sm:p-6">
                   <BudgetSummary
                     totalCoche={result.resume?.totalCoche || 0}
+                    totalAvecMarge={result.resume?.totalAvecMarge || result.resume?.totalCoche || 0}
                     budgetClient={result.recap?.budgetClient || budgetClient}
-                    adminBudget={adminBudget}
+                    adminBudget={budgetCategorieSelectionnee}
                     reste={result.resume?.reste || 0}
-                    totalObligatoire={result.resume?.totalObligatoire || 0}
                     totalOptionnel={result.resume?.totalOptionnel || 0}
                     seuilMinimum={result.recap?.seuilMinimum || 0}
                   />
@@ -487,9 +796,18 @@ export default function SimulationPage() {
                             Cochez ou decochez les elements optionnels selon vos priorites.
                           </p>
                         </div>
-                        <Button onClick={handleReserveSimulation} disabled={!canReserveSimulation}>
-                          Reserver cette simulation
-                        </Button>
+                        <div className="flex flex-wrap items-center gap-3">
+                          {reservationEditPrefill.editReservationId ? (
+                            <div className="rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-medium text-emerald-700">
+                              Mode modification de reservation
+                            </div>
+                          ) : null}
+                          <Button onClick={handleReserveSimulation} disabled={!canReserveSimulation}>
+                            {reservationEditPrefill.editReservationId
+                              ? "Mettre a jour depuis cette simulation"
+                              : "Reserver cette simulation"}
+                          </Button>
+                        </div>
                       </div>
 
                       <ActionButtons
@@ -598,7 +916,7 @@ export default function SimulationPage() {
               <div className="mt-5 space-y-3">
                 <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
                   <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
-                    Minimum accepte
+                    Budget min
                   </p>
                   <p className="mt-2 text-lg font-semibold text-slate-900">
                     {seuilMinimum > 0 ? formatAr(seuilMinimum) : "A calculer"}
@@ -606,10 +924,10 @@ export default function SimulationPage() {
                 </div>
                 <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
                   <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
-                    Budget admin
+                    Budget max
                   </p>
                   <p className="mt-2 text-lg font-semibold text-slate-900">
-                    {adminBudget ? formatAr(adminBudget) : "A choisir"}
+                    {budgetCategorieSelectionnee ? formatAr(budgetCategorieSelectionnee) : "A choisir"}
                   </p>
                 </div>
                 <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
@@ -618,6 +936,30 @@ export default function SimulationPage() {
                   </p>
                   <p className="mt-2 text-lg font-semibold text-slate-900">
                     {budgetClient > 0 ? formatAr(budgetClient) : "Non renseigne"}
+                  </p>
+                </div>
+                <div
+                  className={`rounded-2xl border p-4 ${
+                    result
+                      ? (result.resume?.reste ?? 0) >= 0
+                        ? "border-emerald-200 bg-emerald-50/80"
+                        : "border-amber-200 bg-amber-50/80"
+                      : "border-slate-200 bg-slate-50/80"
+                  }`}
+                >
+                  <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
+                    Reste budgetaire
+                  </p>
+                  <p
+                    className={`mt-2 text-lg font-semibold ${
+                      result
+                        ? (result.resume?.reste ?? 0) >= 0
+                          ? "text-emerald-800"
+                          : "text-amber-800"
+                        : "text-slate-900"
+                    }`}
+                  >
+                    {result ? formatAr(result.resume?.reste ?? 0) : "A calculer"}
                   </p>
                 </div>
               </div>

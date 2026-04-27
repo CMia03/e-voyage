@@ -50,7 +50,7 @@ const items: Array<{ key: ClientSection; label: string; href: string; icon: Reac
 
 export function ClientSidebar(props: ClientSidebarProps) {
   return (
-    <aside className="hidden w-72 border-r border-border/50 bg-card/50 p-5 md:block">
+    <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-72 self-start overflow-y-auto border-r border-border/50 bg-card/50 p-5 md:block">
       <nav className="space-y-2">
         {items.map((item) => {
           const isActive = props.active === item.key;

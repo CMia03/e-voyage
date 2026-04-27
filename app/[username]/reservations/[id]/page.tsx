@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { loadAuth } from "@/lib/auth";
 import { getErrorMessage } from "@/lib/api/client";
-import { getReservationById } from "@/lib/api/reservations";
+import { deleteMyReservation, getReservationById } from "@/lib/api/reservations";
 import { Reservation, ReservationStatus } from "@/lib/type/reservation";
 
 const statusStyles: Record<ReservationStatus, string> = {
@@ -38,8 +38,24 @@ function formatDate(value: string | null | undefined) {
   return date.toLocaleString("fr-FR");
 }
 
+function extractBudgetClientFromSummary(summary: string | null | undefined): number {
+  if (!summary) return 0;
+
+  const line = summary
+    .split("\n")
+    .map((item) => item.trim())
+    .find((item) => item.toLowerCase().startsWith("budget client:"));
+
+  if (!line) return 0;
+
+  const numericPart = line.replace(/[^0-9]/g, "");
+  const parsed = Number(numericPart);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+}
+
 export default function ReservationDetailPage() {
   const params = useParams<{ username: string; id: string }>();
+  const router = useRouter();
   const username = typeof params?.username === "string" ? params.username : "client";
   const reservationId = typeof params?.id === "string" ? params.id : "";
   const session = useMemo(() => loadAuth(), []);
@@ -48,6 +64,7 @@ export default function ReservationDetailPage() {
   const [reservation, setReservation] = useState<Reservation | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const detail = reservation?.details[0] ?? null;
 
   useEffect(() => {
     const loadReservation = async () => {
@@ -76,6 +93,86 @@ export default function ReservationDetailPage() {
     void loadReservation();
   }, [reservationId, token]);
 
+  const editHref = useMemo(() => {
+    if (!reservation || !detail) return null;
+
+    const params = new URLSearchParams();
+    params.set("editReservationId", reservation.id);
+    params.set("source", reservation.source);
+    params.set("destinationId", detail.destinationId);
+    params.set("destinationTitle", detail.nomDestination);
+    params.set("planificationId", detail.planificationVoyageId);
+    params.set("planificationTitle", detail.nomPlanification);
+    params.set("categorieId", detail.categorieClientId);
+    params.set("categorieTitle", detail.nomCategorieClient);
+    params.set("gamme", detail.gamme);
+    params.set("nombrePersonnes", String(detail.nombrePersonnes));
+    if (detail.elementsSelectionnes.length > 0) {
+      params.set("elementsSelectionnes", detail.elementsSelectionnes.join(","));
+    }
+    if (detail.resumeSimulation) {
+      params.set("resumeSimulation", detail.resumeSimulation);
+    }
+    if (reservation.commentaireClient) {
+      params.set("commentaireClient", reservation.commentaireClient);
+    }
+
+    return `/${username}/reservations?${params.toString()}`;
+  }, [detail, reservation, username]);
+
+  const handleDeleteReservation = async () => {
+    if (!token || !reservation) return;
+
+    const confirmed = window.confirm(
+      "Voulez-vous vraiment supprimer cette reservation ? Cette action est definitive."
+    );
+
+    if (!confirmed) return;
+
+    setError(null);
+
+    try {
+      const response = await deleteMyReservation(reservation.id, token);
+      router.push(
+        `/${username}/reservations?deleted=${encodeURIComponent(
+          response.message ?? "Reservation supprimee avec succes."
+        )}`
+      );
+    } catch (requestError) {
+      setError(getErrorMessage(requestError, "Impossible de supprimer la reservation."));
+    }
+  };
+
+  const simulationEditHref = useMemo(() => {
+    if (!reservation || !detail || reservation.source !== "SIMULATION") return null;
+
+    const params = new URLSearchParams();
+    params.set("editReservationId", reservation.id);
+    params.set("destinationId", detail.destinationId);
+    params.set("destinationTitle", detail.nomDestination);
+    params.set("planificationId", detail.planificationVoyageId);
+    params.set("planificationTitle", detail.nomPlanification);
+    params.set("categorieId", detail.categorieClientId);
+    params.set("categorieTitle", detail.nomCategorieClient);
+    params.set("gamme", detail.gamme);
+    params.set("nombrePersonnes", String(detail.nombrePersonnes));
+    const budgetClient = extractBudgetClientFromSummary(detail.resumeSimulation);
+    if (budgetClient > 0) {
+      params.set("budgetClient", String(budgetClient));
+    }
+    if (detail.elementsSelectionnes.length > 0) {
+      params.set("elementsSelectionnes", detail.elementsSelectionnes.join(","));
+    }
+    if (detail.resumeSimulation) {
+      params.set("resumeSimulation", detail.resumeSimulation);
+    }
+    if (reservation.commentaireClient) {
+      params.set("commentaireClient", reservation.commentaireClient);
+    }
+
+    return `/${username}/simulation?${params.toString()}`;
+  }, [detail, reservation, username]);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -85,9 +182,26 @@ export default function ReservationDetailPage() {
             Consultez le statut de votre demande et tous les details du voyage reserve.
           </p>
         </div>
-        <Button asChild variant="outline">
-          <Link href={`/${username}/reservations`}>Retour a mes reservations</Link>
-        </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          {reservation?.status === "EN_ATTENTE" ? (
+            <Button type="button" variant="destructive" onClick={() => void handleDeleteReservation()}>
+              Supprimer la reservation
+            </Button>
+          ) : null}
+          {reservation?.status === "EN_ATTENTE" && simulationEditHref ? (
+            <Button asChild variant="outline">
+              <Link href={simulationEditHref}>Modifier via simulation</Link>
+            </Button>
+          ) : null}
+          {reservation?.status === "EN_ATTENTE" && editHref ? (
+            <Button asChild>
+              <Link href={editHref}>Modifier la reservation</Link>
+            </Button>
+          ) : null}
+          <Button asChild variant="outline">
+            <Link href={`/${username}/reservations`}>Retour a mes reservations</Link>
+          </Button>
+        </div>
       </div>
 
       {loading ? (

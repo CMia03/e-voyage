@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,6 +55,7 @@ const statusOptions: Array<ReservationStatus | typeof ALL_STATUSES> = [
 
 export default function ListeReservationsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { setBreadcrumbs } = useBreadcrumbs();
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -98,6 +99,17 @@ export default function ListeReservationsPage() {
   useEffect(() => {
     void loadReservations();
   }, [loadReservations]);
+
+  useEffect(() => {
+    const reservationId = searchParams?.get("reservationId");
+    if (!reservationId || reservations.length === 0) return;
+
+    const targetReservation = reservations.find((reservation) => reservation.id === reservationId);
+    if (!targetReservation) return;
+
+    setSelectedReservation(targetReservation);
+    setIsViewModalOpen(true);
+  }, [reservations, searchParams]);
 
   const filteredReservations = reservations.filter((reservation) => {
     const detail = reservation.details[0];

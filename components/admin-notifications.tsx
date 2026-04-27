@@ -1,80 +1,51 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Bell, MessageCircle, Check, Trash2, ExternalLink, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Bell, ExternalLink, Eye, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useAuth } from "@/hooks/useAuth";
-import { getAllCommentairesAdmin, validateCommentaire, deleteCommentaire } from "@/lib/api/commentaires";
+import { loadAuth } from "@/lib/auth";
 import { useRouter } from "next/navigation";
-import { CommentaireData } from "@/lib/type/commentaire";
+import {
+  deleteAdminNotification,
+  listAdminNotifications,
+  markAdminNotificationAsRead,
+} from "@/lib/api/admin-notifications";
+import { AdminNotification } from "@/lib/type/admin-notification";
 
 export function AdminNotifications() {
-  const { session } = useAuth();
   const router = useRouter();
-  const [commentaires, setCommentaires] = useState<CommentaireData[]>([]);
+  const session = loadAuth();
+  const token = session?.accessToken;
+  const [notifications, setNotifications] = useState<AdminNotification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
 
-  // Charger les commentaires en attente
-  const loadCommentaires = async () => {
-    if (!session?.accessToken) return;
+  const loadNotifications = async () => {
+    if (!token) return;
 
     try {
       setIsLoading(true);
-      const response = await getAllCommentairesAdmin(session.accessToken);
-      
-      if (response.success) {
-        // Filtrer uniquement les commentaires en attente (status = false)
-        const commentairesEnAttente = response.data?.filter(c => c.status === false) || [];
-        setCommentaires(commentairesEnAttente);
-      }
+      const response = await listAdminNotifications(token);
+      setNotifications(response.data?.notifications ?? []);
     } catch (error) {
-      console.error("Erreur lors du chargement des commentaires:", error);
+      console.error("Erreur lors du chargement des notifications admin:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadCommentaires();
-    // Rafraîchir toutes les 30 secondes
-    const interval = setInterval(loadCommentaires, 30000);
+    void loadNotifications();
+    const interval = setInterval(() => {
+      void loadNotifications();
+    }, 30000);
     return () => clearInterval(interval);
-  }, [session?.accessToken]);
+  }, [token]);
 
-  // Approuver un commentaire
-  const handleApprouver = async (commentaire: CommentaireData) => {
-    if (!session?.accessToken) return;
+  const unreadCount = notifications.filter((notification) => !notification.read).length;
 
-    try {
-      await validateCommentaire(commentaire.idDestination, commentaire.idUser, session.accessToken);
-      setCommentaires(prev => prev.filter(c => !(c.idDestination === commentaire.idDestination && c.idUser === commentaire.idUser)));
-    } catch (error) {
-      console.error("Erreur lors de l'approbation du commentaire:", error);
-    }
-  };
-
-  // Supprimer un commentaire
-  const handleSupprimer = async (commentaire: CommentaireData) => {
-    if (!session?.accessToken) return;
-
-    try {
-      await deleteCommentaire(commentaire.idDestination, commentaire.idUser, session.accessToken);
-      setCommentaires(prev => prev.filter(c => !(c.idDestination === commentaire.idDestination && c.idUser === commentaire.idUser)));
-    } catch (error) {
-      console.error("Erreur lors de la suppression du commentaire:", error);
-    }
-  };
-
-  // Voir la destination
-  const handleVoirDestination = (destinationId: string) => {
-    router.push(`/destinations/${destinationId}`);
-    setIsOpen(false);
-  };
-
-  // Formater la date
   const formatRelativeTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -83,124 +54,139 @@ export function AdminNotifications() {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return "À l'instant";
+    if (diffMins < 1) return "A l'instant";
     if (diffMins < 60) return `Il y a ${diffMins} min`;
     if (diffHours < 24) return `Il y a ${diffHours} h`;
     if (diffDays < 7) return `Il y a ${diffDays} j`;
-    return date.toLocaleDateString('fr-FR');
+    return date.toLocaleDateString("fr-FR");
   };
 
-  const commentairesCount = commentaires.length;
+  const handleOpenReservation = async (notification: AdminNotification) => {
+    if (!token) return;
+
+    try {
+      if (!notification.read) {
+        await markAdminNotificationAsRead(notification.id, token);
+        setNotifications((current) =>
+          current.map((item) => (item.id === notification.id ? { ...item, read: true } : item))
+        );
+      }
+    } catch (error) {
+      console.error("Erreur lecture notification:", error);
+    }
+
+    if (notification.reservationId) {
+      router.push(`/admin/reservations/liste?reservationId=${encodeURIComponent(notification.reservationId)}`);
+    } else if (notification.actionUrl) {
+      router.push(notification.actionUrl);
+    } else {
+      router.push("/admin?section=notifications");
+    }
+    setIsOpen(false);
+  };
+
+  const handleDeleteNotification = async (notificationId: string) => {
+    if (!token) return;
+
+    try {
+      await deleteAdminNotification(notificationId, token);
+      setNotifications((current) => current.filter((item) => item.id !== notificationId));
+    } catch (error) {
+      console.error("Erreur suppression notification:", error);
+    }
+  };
 
   return (
     <div className="relative">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="relative"
-        onClick={() => setIsOpen(!isOpen)}
-      >
+      <Button variant="ghost" size="icon" className="relative" onClick={() => setIsOpen(!isOpen)}>
         <Bell className="h-5 w-5" />
-        {commentairesCount > 0 && (
-          <Badge 
-            variant="destructive" 
-            className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+        {unreadCount > 0 ? (
+          <Badge
+            variant="destructive"
+            className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center p-0 text-xs"
           >
-            {commentairesCount > 99 ? "99+" : commentairesCount}
+            {unreadCount > 99 ? "99+" : unreadCount}
           </Badge>
-        )}
-        <span className="sr-only">Commentaires en attente</span>
+        ) : null}
+        <span className="sr-only">Notifications de reservations</span>
       </Button>
 
-      {isOpen && (
+      {isOpen ? (
         <>
-          {/* Overlay */}
-          <div 
-            className="fixed inset-0 z-30" 
-            onClick={() => setIsOpen(false)}
-          />
-          
-          {/* Panel des notifications */}
-          <Card className="absolute right-0 top-12 w-96 max-h-96 z-40 shadow-lg">
+          <div className="fixed inset-0 z-30" onClick={() => setIsOpen(false)} />
+
+          <Card className="absolute right-0 top-12 z-40 max-h-96 w-96 shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-lg">Commentaires en attente</CardTitle>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6"
-                onClick={() => setIsOpen(false)}
-              >
+              <CardTitle className="text-lg">Notifications reservations</CardTitle>
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsOpen(false)}>
                 <X className="h-4 w-4" />
               </Button>
             </CardHeader>
-            
+
             <CardContent className="p-0">
               {isLoading ? (
+                <div className="p-4 text-center text-sm text-muted-foreground">Chargement...</div>
+              ) : notifications.length === 0 ? (
                 <div className="p-4 text-center text-sm text-muted-foreground">
-                  Chargement...
-                </div>
-              ) : commentaires.length === 0 ? (
-                <div className="p-4 text-center text-sm text-muted-foreground">
-                  <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  Aucun commentaire en attente
+                  <Bell className="mx-auto mb-2 h-8 w-8 opacity-50" />
+                  Aucune notification de reservation
                 </div>
               ) : (
                 <div className="max-h-80 overflow-y-auto">
-                  {commentaires.map((commentaire, index) => (
-                    <div
-                      key={`${commentaire.idDestination}-${commentaire.idUser}-${index}`}
-                      className="p-4 border-b last:border-b-0"
-                    >
+                  {notifications.slice(0, 8).map((notification) => (
+                    <div key={notification.id} className="border-b p-4 last:border-b-0">
                       <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 mt-0.5">
-                          <MessageCircle className="h-4 w-4 text-blue-500" />
+                        <div className="mt-0.5 flex-shrink-0">
+                          <Bell className="h-4 w-4 text-emerald-600" />
                         </div>
-                        
-                        <div className="flex-1 min-w-0">
+
+                        <div className="min-w-0 flex-1">
                           <div className="flex items-start justify-between gap-2">
-                            <p className="text-sm font-medium text-foreground">
-                              {commentaire.nomUser || `Utilisateur ${commentaire.idUser}`}
-                            </p>
-                            <Badge variant="secondary" className="text-xs">
-                              En attente
-                            </Badge>
+                            <p className="text-sm font-medium text-foreground">{notification.title}</p>
+                            {!notification.read ? (
+                              <Badge variant="secondary" className="text-xs">
+                                Nouveau
+                              </Badge>
+                            ) : null}
                           </div>
-                          
-                          <p className="text-sm text-muted-foreground line-clamp-3 mt-1">
-                            {commentaire.contenu}
+
+                          <p className="mt-1 line-clamp-3 text-sm text-muted-foreground">
+                            {notification.message}
                           </p>
-                          
-                          <div className="flex items-center justify-between mt-2">
+
+                          <div className="mt-2 flex items-center justify-between">
                             <p className="text-xs text-muted-foreground">
-                              {formatRelativeTime(commentaire.dateCreation)}
+                              {formatRelativeTime(notification.createdAt)}
                             </p>
-                            
+
                             <div className="flex items-center gap-1">
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleVoirDestination(commentaire.idDestination)}
+                                onClick={() => void handleOpenReservation(notification)}
                                 className="h-6 px-2 text-xs"
                               >
-                                <ExternalLink className="h-3 w-3 mr-1" />
+                                <ExternalLink className="mr-1 h-3 w-3" />
                                 Voir
                               </Button>
+                              {!notification.read ? (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => void handleOpenReservation(notification)}
+                                  className="h-6 px-2 text-xs text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+                                >
+                                  <Eye className="mr-1 h-3 w-3" />
+                                  Lire
+                                </Button>
+                              ) : null}
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleApprouver(commentaire)}
-                                className="h-6 px-2 text-xs text-green-600 hover:text-green-700 hover:bg-green-50"
+                                onClick={() => void handleDeleteNotification(notification.id)}
+                                className="h-6 px-2 text-xs text-red-600 hover:bg-red-50 hover:text-red-700"
                               >
-                                <Check className="h-3 w-3 mr-1" />
-                                Approuver
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleSupprimer(commentaire)}
-                                className="h-6 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
-                              >
-                                <Trash2 className="h-3 w-3 mr-1" />
+                                <Trash2 className="mr-1 h-3 w-3" />
                                 Supprimer
                               </Button>
                             </div>
@@ -214,7 +200,7 @@ export function AdminNotifications() {
             </CardContent>
           </Card>
         </>
-      )}
+      ) : null}
     </div>
   );
 }

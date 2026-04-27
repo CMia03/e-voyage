@@ -92,7 +92,7 @@ export function BudgetInput({
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
               <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
-                Minimum accepte
+                Budget min
               </p>
               <p className="mt-2 text-sm font-semibold text-slate-900">
                 {hasMinimumBudget ? formatAr(minimumBudget) : "A calculer"}
@@ -100,7 +100,7 @@ export function BudgetInput({
             </div>
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
               <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
-                Maximum admin
+                Budget max
               </p>
               <p className="mt-2 text-sm font-semibold text-slate-900">
                 {formatAr(maxBudget)}

@@ -1,5 +1,4 @@
 
-
 export type SimulationRequest = {
     destinationId: string;
     planificationId: string;
@@ -37,6 +36,11 @@ export type PlanificationType = {
     nomPlanification: string;
     budgetTotal: number | null;
     jours?: unknown[];
+    dateHeureDebut?: string | null;
+    dateHeureFin?: string | null;
+    depart?: string | null;
+    arriver?: string | null;
+    description?: string | null;
 };
 
 export type CategorieType = {
@@ -89,6 +93,8 @@ export type Resume = {
     totalObligatoire: number;
     totalOptionnel: number;
     totalCoche: number;
+    margeBrute?: number;
+    totalAvecMarge?: number;
     budgetClient: number;
     reste: number;
     obligatoiresCoches: number;

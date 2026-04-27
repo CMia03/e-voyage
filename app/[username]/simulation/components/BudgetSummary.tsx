@@ -2,10 +2,10 @@
 
 type BudgetSummaryProps = {
   totalCoche: number;
+  totalAvecMarge?: number;
   budgetClient: number;
   adminBudget?: number | null;
   reste: number;
-  totalObligatoire: number;
   totalOptionnel: number;
   seuilMinimum: number;
 };
@@ -16,23 +16,24 @@ function formatAr(value: number) {
 
 export function BudgetSummary({
   totalCoche,
+  totalAvecMarge,
   budgetClient,
   adminBudget,
   reste,
-  totalObligatoire,
   totalOptionnel,
   seuilMinimum,
 }: BudgetSummaryProps) {
+  const totalFacture = totalAvecMarge ?? totalCoche;
   const estDansBudget = reste >= 0;
   const hasMinimumBudget = seuilMinimum > 0;
   const minimumBudget = hasMinimumBudget ? seuilMinimum : 0;
   const maxBudget =
     adminBudget && adminBudget > 0
-      ? adminBudget
-      : Math.max(budgetClient, totalCoche, minimumBudget, 1);
+      ? Math.max(adminBudget, totalFacture, minimumBudget, 1)
+      : Math.max(budgetClient, totalFacture, minimumBudget, 1);
   const budgetRange = Math.max(maxBudget - minimumBudget, 1);
   const clampedBudgetClient = Math.min(Math.max(budgetClient, minimumBudget), maxBudget);
-  const clampedSelection = Math.min(Math.max(totalCoche, minimumBudget), maxBudget);
+  const clampedSelection = Math.min(Math.max(totalFacture, minimumBudget), maxBudget);
   const budgetClientRatio = ((clampedBudgetClient - minimumBudget) / budgetRange) * 100;
   const selectionRatio = ((clampedSelection - minimumBudget) / budgetRange) * 100;
 
@@ -47,7 +48,7 @@ export function BudgetSummary({
             Une lecture simple de votre equilibre budgetaire
           </h3>
           <p className="mt-1 text-sm text-slate-600">
-            La barre ci-dessous compare le minimum accepte, votre budget et le total
+            La barre ci-dessous compare le budget min, votre budget et le total
             actuellement selectionne.
           </p>
         </div>
@@ -104,18 +105,18 @@ export function BudgetSummary({
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
           <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
-            Total selectionne
+            Total obligatoire
           </p>
           <p className="mt-2 text-lg font-semibold text-slate-900">
-            {formatAr(totalCoche)}
+            {formatAr(seuilMinimum)}
           </p>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
           <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
-            Obligatoire
+            Total selectionne
           </p>
           <p className="mt-2 text-lg font-semibold text-slate-900">
-            {formatAr(totalObligatoire)}
+            {formatAr(totalFacture)}
           </p>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
@@ -128,10 +129,18 @@ export function BudgetSummary({
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
           <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
-            Budget minimum
+            Budget min
           </p>
           <p className="mt-2 text-lg font-semibold text-slate-900">
             {formatAr(seuilMinimum)}
+          </p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+          <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
+            Budget max
+          </p>
+          <p className="mt-2 text-lg font-semibold text-slate-900">
+            {formatAr(maxBudget)}
           </p>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
@@ -140,24 +149,6 @@ export function BudgetSummary({
           </p>
           <p className="mt-2 text-lg font-semibold text-slate-900">
             {formatAr(budgetClient)}
-          </p>
-        </div>
-        <div
-          className={`rounded-2xl border p-4 ${
-            estDansBudget
-              ? "border-emerald-200 bg-emerald-50/70"
-              : "border-red-200 bg-red-50/70"
-          }`}
-        >
-          <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
-            Reste
-          </p>
-          <p
-            className={`mt-2 text-lg font-semibold ${
-              estDansBudget ? "text-emerald-700" : "text-red-700"
-            }`}
-          >
-            {formatAr(reste)}
           </p>
         </div>
       </div>

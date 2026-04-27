@@ -50,6 +50,25 @@ export function createReservationFromSimulation(payload: ReservationCreatePayloa
   });
 }
 
+export function updateMyReservation(
+  id: string,
+  payload: ReservationCreatePayload,
+  token?: string
+) {
+  return apiRequest<ApiEnvelope<Reservation>>(`/api/reservations/${id}/client`, {
+    method: "PUT",
+    token,
+    body: payload,
+  });
+}
+
+export function deleteMyReservation(id: string, token?: string) {
+  return apiRequest<ApiEnvelope<null>>(`/api/reservations/${id}/client`, {
+    method: "DELETE",
+    token,
+  });
+}
+
 export function updateReservationStatus(
   id: string,
   payload: ReservationStatusUpdatePayload,

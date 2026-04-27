@@ -1,15 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { useParams, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { loadAuth } from "@/lib/auth";
 import { getErrorMessage } from "@/lib/api/client";
 import { listDestinations, listPlanificationsByDestination } from "@/lib/api/destinations";
@@ -18,7 +19,9 @@ import {
   calculateReservationQuote,
   createReservationFromPrice,
   createReservationFromSimulation,
+  deleteMyReservation,
   listMyReservations,
+  updateMyReservation,
 } from "@/lib/api/reservations";
 import {
   Reservation,
@@ -32,6 +35,15 @@ import type { DestinationDetails, PlanificationVoyage } from "@/lib/type/destina
 type CategorieClient = {
   id: string;
   nom: string;
+};
+
+type SimulationElementCard = {
+  id: string;
+  titre: string;
+  prix?: number;
+  type?: string;
+  jourNumero?: number;
+  jourTitre?: string;
 };
 
 type ReservationFormState = {
@@ -74,6 +86,10 @@ function formatStatus(status: ReservationStatus) {
   return status.replaceAll("_", " ");
 }
 
+function formatSource(source: ReservationSource) {
+  return source === "SIMULATION" ? "Simulation" : "Prix direct";
+}
+
 function formatDate(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
@@ -83,6 +99,48 @@ function formatDate(value: string) {
 function parsePositiveInteger(value: string | null, fallback: number) {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function normalizeGamme(value: string | null | undefined) {
+  const normalized = (value ?? "").trim().toUpperCase();
+  return normalized === "LUXE" ? "LUXE" : "MOYENNE";
+}
+
+function extractBudgetClientFromSummary(summary: string | null | undefined): number {
+  if (!summary) return 0;
+
+  const line = summary
+    .split("\n")
+    .map((item) => item.trim())
+    .find((item) => item.toLowerCase().startsWith("budget client:"));
+
+  if (!line) return 0;
+
+  const numericPart = line.replace(/[^0-9]/g, "");
+  const parsed = Number(numericPart);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+}
+
+function parseSimulationElementCards(value: string | null): SimulationElementCard[] {
+  if (!value) return [];
+
+  try {
+    const parsed = JSON.parse(value);
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed
+      .map((item) => ({
+        id: typeof item?.id === "string" ? item.id : "",
+        titre: typeof item?.titre === "string" ? item.titre : "",
+        prix: typeof item?.prix === "number" ? item.prix : undefined,
+        type: typeof item?.type === "string" ? item.type : undefined,
+        jourNumero: typeof item?.jourNumero === "number" ? item.jourNumero : undefined,
+        jourTitre: typeof item?.jourTitre === "string" ? item.jourTitre : undefined,
+      }))
+      .filter((item) => item.id);
+  } catch {
+    return [];
+  }
 }
 
 function buildPayload(form: ReservationFormState): ReservationCreatePayload {
@@ -108,9 +166,14 @@ function buildPayload(form: ReservationFormState): ReservationCreatePayload {
   };
 }
 
+function getSelectLabel(value: string, selectedLabel: string | null | undefined, placeholder: string) {
+  return value ? (selectedLabel || value) : placeholder;
+}
+
 export default function ReservationsPage() {
   const params = useParams<{ username: string }>();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const username = typeof params?.username === "string" ? params.username : "client";
 
   const [reservations, setReservations] = useState<Reservation[]>([]);
@@ -125,21 +188,49 @@ export default function ReservationsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [activeSection, setActiveSection] = useState<"create" | "list">("create");
+  const [statusFilter, setStatusFilter] = useState<ReservationStatus | "ALL">("ALL");
+  const selectedElementsScrollRef = useRef<HTMLDivElement | null>(null);
 
   const session = useMemo(() => loadAuth(), []);
   const token = session?.accessToken;
 
   const prefill = useMemo(() => ({
-    source: searchParams?.get("source") === "SIMULATION" ? "SIMULATION" as ReservationSource : null,
+    editReservationId: searchParams?.get("editReservationId") || null,
+    source: searchParams?.get("source") === "SIMULATION"
+      ? "SIMULATION" as ReservationSource
+      : searchParams?.get("source") === "PRIX_DIRECT"
+        ? "PRIX_DIRECT" as ReservationSource
+        : null,
+    budgetClient: Math.max(
+      parsePositiveInteger(searchParams?.get("budgetClient") ?? null, 0),
+      extractBudgetClientFromSummary(searchParams?.get("resumeSimulation"))
+    ),
     destinationId: searchParams?.get("destinationId") || null,
+    destinationTitle: searchParams?.get("destinationTitle") || null,
     planificationVoyageId: searchParams?.get("planificationId") || null,
+    planificationTitle: searchParams?.get("planificationTitle") || null,
     categorieClientId: searchParams?.get("categorieId") || null,
-    gamme: searchParams?.get("gamme") || null,
+    categorieTitle: searchParams?.get("categorieTitle") || null,
+    gamme: normalizeGamme(searchParams?.get("gamme")),
     nombrePersonnes: parsePositiveInteger(searchParams?.get("nombrePersonnes") ?? null, initialForm.nombrePersonnes),
     elementsSelectionnes: searchParams?.get("elementsSelectionnes") || null,
+    elementsDetails: parseSimulationElementCards(searchParams?.get("elementsDetails")),
     resumeSimulation: searchParams?.get("resumeSimulation") || null,
     commentaireClient: searchParams?.get("commentaireClient") || null,
   }), [searchParams]);
+  const hasNavigationPrefill = !!(
+    prefill.destinationId ||
+    prefill.planificationVoyageId ||
+    prefill.categorieClientId
+  );
+
+  useEffect(() => {
+    const deletedMessage = searchParams?.get("deleted");
+    if (deletedMessage) {
+      setSuccess(deletedMessage);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -165,10 +256,30 @@ export default function ReservationsPage() {
         setCategories(loadedCategories);
         setForm((current) => ({
           ...current,
-          destinationId: current.destinationId || prefill.destinationId || loadedDestinations[0]?.id || "",
-          categorieClientId: current.categorieClientId || prefill.categorieClientId || loadedCategories[0]?.id || "",
-          gamme: current.gamme || prefill.gamme || initialForm.gamme,
-          nombrePersonnes: current.nombrePersonnes || prefill.nombrePersonnes || initialForm.nombrePersonnes,
+          destinationId:
+            hasNavigationPrefill && prefill.destinationId
+              ? prefill.destinationId
+              : loadedDestinations.some((item) => item.id === prefill.destinationId)
+                ? prefill.destinationId || ""
+                : ((current.destinationId && loadedDestinations.some((item) => item.id === current.destinationId))
+                  ? current.destinationId
+                  : ""),
+          categorieClientId:
+            hasNavigationPrefill && prefill.categorieClientId
+              ? prefill.categorieClientId
+              : loadedCategories.some((item) => item.id === prefill.categorieClientId)
+                ? prefill.categorieClientId || ""
+                : ((current.categorieClientId && loadedCategories.some((item) => item.id === current.categorieClientId))
+                  ? current.categorieClientId
+                  : ""),
+          gamme:
+            hasNavigationPrefill
+              ? normalizeGamme(prefill.gamme ?? current.gamme ?? initialForm.gamme)
+              : current.gamme,
+          nombrePersonnes:
+            hasNavigationPrefill
+              ? prefill.nombrePersonnes ?? current.nombrePersonnes ?? initialForm.nombrePersonnes
+              : current.nombrePersonnes,
         }));
       } catch (requestError) {
         setError(getErrorMessage(requestError, "Impossible de charger les donnees de reservation."));
@@ -178,7 +289,7 @@ export default function ReservationsPage() {
     };
 
     void loadInitialData();
-  }, [prefill.categorieClientId, prefill.destinationId, prefill.gamme, prefill.nombrePersonnes, token]);
+  }, [hasNavigationPrefill, prefill.categorieClientId, prefill.destinationId, prefill.gamme, prefill.nombrePersonnes, token]);
 
   useEffect(() => {
     if (!searchParams) return;
@@ -189,13 +300,19 @@ export default function ReservationsPage() {
       destinationId: prefill.destinationId ?? current.destinationId,
       planificationVoyageId: prefill.planificationVoyageId ?? current.planificationVoyageId,
       categorieClientId: prefill.categorieClientId ?? current.categorieClientId,
-      gamme: prefill.gamme ?? current.gamme,
-      nombrePersonnes: prefill.nombrePersonnes || current.nombrePersonnes,
+      gamme:
+        hasNavigationPrefill
+          ? normalizeGamme(prefill.gamme ?? current.gamme)
+          : current.gamme,
+      nombrePersonnes:
+        hasNavigationPrefill
+          ? prefill.nombrePersonnes || current.nombrePersonnes
+          : current.nombrePersonnes,
       elementsSelectionnes: prefill.elementsSelectionnes ?? current.elementsSelectionnes,
       resumeSimulation: prefill.resumeSimulation ?? current.resumeSimulation,
       commentaireClient: prefill.commentaireClient ?? current.commentaireClient,
     }));
-  }, [prefill, searchParams]);
+  }, [hasNavigationPrefill, prefill, searchParams]);
 
   useEffect(() => {
     const loadPlanifications = async () => {
@@ -212,11 +329,13 @@ export default function ReservationsPage() {
         setForm((current) => ({
           ...current,
           planificationVoyageId:
-            loadedPlanifications.some((item) => item.id === current.planificationVoyageId)
+            hasNavigationPrefill && prefill.planificationVoyageId
+              ? prefill.planificationVoyageId
+              : loadedPlanifications.some((item) => item.id === current.planificationVoyageId)
               ? current.planificationVoyageId
               : loadedPlanifications.some((item) => item.id === prefill.planificationVoyageId)
                 ? prefill.planificationVoyageId || ""
-                : loadedPlanifications[0]?.id || "",
+                : "",
         }));
       } catch (requestError) {
         setError(getErrorMessage(requestError, "Impossible de charger les planifications."));
@@ -225,7 +344,7 @@ export default function ReservationsPage() {
     };
 
     void loadPlanifications();
-  }, [form.destinationId, prefill.planificationVoyageId, token]);
+  }, [form.destinationId, hasNavigationPrefill, prefill.planificationVoyageId, token]);
 
   useEffect(() => {
     const canQuote =
@@ -280,7 +399,134 @@ export default function ReservationsPage() {
 
   const selectedDestination = destinations.find((item) => item.id === form.destinationId) ?? null;
   const selectedPlanification = planifications.find((item) => item.id === form.planificationVoyageId) ?? null;
+  const selectedCategorie = categories.find((item) => item.id === form.categorieClientId) ?? null;
+  const destinationLabel = getSelectLabel(
+    form.destinationId,
+    selectedDestination?.title ?? prefill.destinationTitle,
+    "Selectionner une destination"
+  );
+  const planificationLabel = getSelectLabel(
+    form.planificationVoyageId,
+    selectedPlanification?.nomPlanification ?? prefill.planificationTitle,
+    "Selectionner une planification"
+  );
+  const categorieLabel = getSelectLabel(
+    form.categorieClientId,
+    selectedCategorie?.nom ?? prefill.categorieTitle,
+    "Selectionner une categorie"
+  );
+  const gammeLabel = getSelectLabel(
+    form.gamme,
+    normalizeGamme(form.gamme),
+    "Selectionner une gamme"
+  );
+  const isSimulationPrefill = form.source === "SIMULATION";
+  const isLockedPrefill = isSimulationPrefill || hasNavigationPrefill;
+  const isEditMode = !!prefill.editReservationId;
+  const simulationElementCards = useMemo<SimulationElementCard[]>(() => {
+    if (prefill.elementsDetails.length > 0) {
+      return prefill.elementsDetails;
+    }
+
+    return form.elementsSelectionnes
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .map((id) => ({
+        id,
+        titre: id,
+      }));
+  }, [form.elementsSelectionnes, prefill.elementsDetails]);
+  const simulationElementGroups = useMemo(() => {
+    const groups = new Map<
+      string,
+      { key: string; label: string; elements: SimulationElementCard[] }
+    >();
+
+    simulationElementCards.forEach((element) => {
+      const key = element.jourNumero
+        ? `jour-${element.jourNumero}`
+        : element.jourTitre
+          ? `jour-${element.jourTitre}`
+          : "jour-autre";
+      const label = element.jourNumero
+        ? `Jour ${element.jourNumero}${element.jourTitre ? ` - ${element.jourTitre}` : ""}`
+        : element.jourTitre || "Autres elements";
+
+      const existing = groups.get(key);
+      if (existing) {
+        existing.elements.push(element);
+      } else {
+        groups.set(key, { key, label, elements: [element] });
+      }
+    });
+
+    return Array.from(groups.values());
+  }, [simulationElementCards]);
+  const destinationOptions = useMemo(() => {
+    if (
+      form.destinationId &&
+      prefill.destinationTitle &&
+      !destinations.some((item) => item.id === form.destinationId)
+    ) {
+      return [{ id: form.destinationId, title: prefill.destinationTitle }, ...destinations];
+    }
+
+    return destinations;
+  }, [destinations, form.destinationId, prefill.destinationTitle]);
+  const categoryOptions = useMemo(() => {
+    if (
+      form.categorieClientId &&
+      prefill.categorieTitle &&
+      !categories.some((item) => item.id === form.categorieClientId)
+    ) {
+      return [{ id: form.categorieClientId, nom: prefill.categorieTitle }, ...categories];
+    }
+
+    return categories;
+  }, [categories, form.categorieClientId, prefill.categorieTitle]);
+  const planificationOptions = useMemo(() => {
+    if (
+      form.planificationVoyageId &&
+      prefill.planificationTitle &&
+      !planifications.some((item) => item.id === form.planificationVoyageId)
+    ) {
+      return [
+        {
+          id: form.planificationVoyageId,
+          nomPlanification: prefill.planificationTitle,
+        } as PlanificationVoyage,
+        ...planifications,
+      ];
+    }
+
+    return planifications;
+  }, [form.planificationVoyageId, planifications, prefill.planificationTitle]);
   const canSubmitReservation = !!token && !!form.destinationId && !!form.planificationVoyageId && !!form.categorieClientId && !!form.gamme && form.nombrePersonnes > 0 && !isSubmitting;
+  const reservationStats = useMemo(() => {
+    const total = reservations.length;
+    const enCours = reservations.filter(
+      (reservation) =>
+        reservation.status === "EN_ATTENTE" ||
+        reservation.status === "A_REVOIR" ||
+        reservation.status === "EN_ATTENTE_DISPONIBILITE"
+    ).length;
+    const confirmees = reservations.filter((reservation) => reservation.status === "VALIDEE").length;
+    const montantTotal = reservations.reduce(
+      (sum, reservation) => sum + (reservation.montantTotal ?? 0),
+      0
+    );
+
+    return { total, enCours, confirmees, montantTotal };
+  }, [reservations]);
+  const recentReservations = useMemo(() => reservations.slice(0, 3), [reservations]);
+  const filteredReservations = useMemo(
+    () =>
+      statusFilter === "ALL"
+        ? reservations
+        : reservations.filter((reservation) => reservation.status === statusFilter),
+    [reservations, statusFilter]
+  );
 
   const handleCreateReservation = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -296,20 +542,27 @@ export default function ReservationsPage() {
 
     try {
       const payload = buildPayload(form);
-      const response =
-        form.source === "SIMULATION"
+      const response = isEditMode && prefill.editReservationId
+        ? await updateMyReservation(prefill.editReservationId, payload, token)
+        : form.source === "SIMULATION"
           ? await createReservationFromSimulation(payload, token)
           : await createReservationFromPrice(payload, token);
 
       const created = response.data;
       if (created) {
-        setReservations((current) => [created, ...current]);
+        setReservations((current) =>
+          isEditMode
+            ? current.map((reservation) => (reservation.id === created.id ? created : reservation))
+            : [created, ...current]
+        );
       }
-      setSuccess(response.message ?? "Reservation creee avec succes.");
+      setSuccess(
+        response.message ??
+          (isEditMode ? "Reservation modifiee avec succes." : "Reservation creee avec succes.")
+      );
       setForm((current) => ({
-        ...initialForm,
-        destinationId: current.destinationId,
-        categorieClientId: current.categorieClientId,
+        ...current,
+        commentaireClient: "",
       }));
       setQuote(null);
     } catch (requestError) {
@@ -319,13 +572,154 @@ export default function ReservationsPage() {
     }
   };
 
+  const handleGoToSimulation = () => {
+    if (form.source !== "SIMULATION") {
+      router.push(`/${username}/simulation`);
+      return;
+    }
+
+    const params = new URLSearchParams();
+    if (prefill.editReservationId) {
+      params.set("editReservationId", prefill.editReservationId);
+    }
+    if (prefill.budgetClient > 0) {
+      params.set("budgetClient", String(prefill.budgetClient));
+    }
+    if (form.destinationId) {
+      params.set("destinationId", form.destinationId);
+    }
+    if (selectedDestination?.title) {
+      params.set("destinationTitle", selectedDestination.title);
+    }
+    if (form.planificationVoyageId) {
+      params.set("planificationId", form.planificationVoyageId);
+    }
+    if (selectedPlanification?.nomPlanification) {
+      params.set("planificationTitle", selectedPlanification.nomPlanification);
+    }
+    if (form.categorieClientId) {
+      params.set("categorieId", form.categorieClientId);
+    }
+    if (selectedCategorie?.nom) {
+      params.set("categorieTitle", selectedCategorie.nom);
+    }
+    if (form.gamme) {
+      params.set("gamme", form.gamme);
+    }
+    if (form.nombrePersonnes > 0) {
+      params.set("nombrePersonnes", String(form.nombrePersonnes));
+    }
+    if (form.elementsSelectionnes.trim()) {
+      params.set("elementsSelectionnes", form.elementsSelectionnes.trim());
+    }
+    if (prefill.elementsDetails.length > 0) {
+      params.set("elementsDetails", JSON.stringify(prefill.elementsDetails));
+    }
+    if (form.resumeSimulation.trim()) {
+      params.set("resumeSimulation", form.resumeSimulation.trim());
+    }
+    if (form.commentaireClient.trim()) {
+      params.set("commentaireClient", form.commentaireClient.trim());
+    }
+
+    const queryString = params.toString();
+    router.push(`/${username}/simulation${queryString ? `?${queryString}` : ""}`);
+  };
+
+  const handleDeleteReservation = async (reservationId: string) => {
+    if (!token) return;
+
+    const confirmed = window.confirm(
+      "Voulez-vous vraiment supprimer cette reservation ? Cette action est definitive."
+    );
+
+    if (!confirmed) return;
+
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const response = await deleteMyReservation(reservationId, token);
+      setReservations((current) =>
+        current.filter((reservation) => reservation.id !== reservationId)
+      );
+      setSuccess(response.message ?? "Reservation supprimee avec succes.");
+    } catch (requestError) {
+      setError(getErrorMessage(requestError, "Impossible de supprimer la reservation."));
+    }
+  };
+
+  const scrollSelectedElements = (direction: "left" | "right") => {
+    const container = selectedElementsScrollRef.current;
+    if (!container) return;
+
+    container.scrollBy({
+      left: direction === "right" ? 260 : -260,
+      behavior: "smooth",
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold">Mes reservations</h1>
         <p className="text-sm text-muted-foreground">
-          Creez une reservation depuis un prix direct ou en vous appuyant sur votre simulation.
+          Suivez vos demandes et creez une reservation depuis un prix direct ou votre simulation.
         </p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <Button
+          type="button"
+          variant={activeSection === "create" ? "default" : "outline"}
+          onClick={() => setActiveSection("create")}
+        >
+          Creation d&apos;une reservation
+        </Button>
+        <Button
+          type="button"
+          variant={activeSection === "list" ? "default" : "outline"}
+          onClick={() => setActiveSection("list")}
+        >
+          Liste reservation
+        </Button>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <Card className="border-border/50 bg-white/90">
+          <CardContent className="p-5">
+            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+              Total reservations
+            </p>
+            <p className="mt-3 text-2xl font-semibold">{reservationStats.total}</p>
+          </CardContent>
+        </Card>
+        <Card className="border-border/50 bg-white/90">
+          <CardContent className="p-5">
+            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+              En cours
+            </p>
+            <p className="mt-3 text-2xl font-semibold">{reservationStats.enCours}</p>
+          </CardContent>
+        </Card>
+        <Card className="border-border/50 bg-white/90">
+          <CardContent className="p-5">
+            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+              Confirmees
+            </p>
+            <p className="mt-3 text-2xl font-semibold">{reservationStats.confirmees}</p>
+          </CardContent>
+        </Card>
+        <Card className="border-border/50 bg-white/90">
+          <CardContent className="p-5">
+            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+              Montant cumule
+            </p>
+            <p className="mt-3 text-2xl font-semibold">
+              {formatCurrency(reservationStats.montantTotal)}
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       {error ? (
@@ -340,12 +734,15 @@ export default function ReservationsPage() {
         </div>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_360px]">
-        <Card className="border-border/50">
+      {activeSection === "create" ? (
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_360px]">
+        <Card className="min-w-0 border-border/50">
           <CardHeader>
-            <CardTitle>Nouvelle reservation</CardTitle>
+            <CardTitle>{isEditMode ? "Modifier ma reservation" : "Nouvelle reservation"}</CardTitle>
             <CardDescription>
-              Choisissez votre mode de reservation puis confirmez votre demande.
+              {isEditMode
+                ? "Mettez a jour votre reservation tant qu'elle est encore en attente."
+                : "Choisissez votre mode de reservation puis confirmez votre demande."}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -372,119 +769,235 @@ export default function ReservationsPage() {
                       ? "border-emerald-400 bg-emerald-50"
                       : "border-border/70 hover:border-emerald-200"
                   }`}
-                  onClick={() => setForm((current) => ({ ...current, source: "SIMULATION" }))}
+                  onClick={handleGoToSimulation}
                 >
                   <p className="font-medium">Depuis une simulation</p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Conservez les choix d'une simulation pour lancer votre demande.
+                    {isEditMode && form.source === "SIMULATION"
+                      ? "Reprenez votre simulation pour ajuster le voyage avant de mettre a jour la reservation."
+                      : "Conservez les choix d'une simulation pour lancer votre demande."}
                   </p>
                 </button>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Destination</Label>
-                  <Select
-                    value={form.destinationId}
-                    onValueChange={(value) => setForm((current) => ({ ...current, destinationId: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selectionner une destination" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {destinations.map((destination) => (
-                        <SelectItem key={destination.id} value={destination.id}>
-                          {destination.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {isLockedPrefill ? (
+                  <>
+                    <div className="space-y-2">
+                      <Label>Destination</Label>
+                      <Input value={destinationLabel} readOnly />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Planification</Label>
+                      <Input value={planificationLabel} readOnly />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Categorie client</Label>
+                      <Input value={categorieLabel} readOnly />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Gamme</Label>
+                      <Input value={gammeLabel} readOnly />
+                    </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <Label>Nombre de personnes</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={form.nombrePersonnes}
+                        onChange={(event) =>
+                          setForm((current) => ({
+                            ...current,
+                            nombrePersonnes: Number(event.target.value) || 1,
+                          }))
+                        }
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <Label>Destination</Label>
+                      <Select
+                        value={form.destinationId}
+                        onValueChange={(value) => setForm((current) => ({ ...current, destinationId: value }))}
+                      >
+                        <SelectTrigger>
+                          <span className={form.destinationId ? "truncate" : "truncate text-muted-foreground"}>
+                            {destinationLabel}
+                          </span>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {destinationOptions.map((destination) => (
+                            <SelectItem key={destination.id} value={destination.id}>
+                              {destination.title}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                <div className="space-y-2">
-                  <Label>Planification</Label>
-                  <Select
-                    value={form.planificationVoyageId}
-                    onValueChange={(value) =>
-                      setForm((current) => ({ ...current, planificationVoyageId: value }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selectionner une planification" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {planifications.map((planification) => (
-                        <SelectItem key={planification.id} value={planification.id}>
-                          {planification.nomPlanification}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                    <div className="space-y-2">
+                      <Label>Planification</Label>
+                      <Select
+                        value={form.planificationVoyageId}
+                        onValueChange={(value) =>
+                          setForm((current) => ({ ...current, planificationVoyageId: value }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <span className={form.planificationVoyageId ? "truncate" : "truncate text-muted-foreground"}>
+                            {planificationLabel}
+                          </span>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {planificationOptions.map((planification) => (
+                            <SelectItem key={planification.id} value={planification.id}>
+                              {planification.nomPlanification}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                <div className="space-y-2">
-                  <Label>Categorie client</Label>
-                  <Select
-                    value={form.categorieClientId}
-                    onValueChange={(value) => setForm((current) => ({ ...current, categorieClientId: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selectionner une categorie" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((categorie) => (
-                        <SelectItem key={categorie.id} value={categorie.id}>
-                          {categorie.nom}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                    <div className="space-y-2">
+                      <Label>Categorie client</Label>
+                      <Select
+                        value={form.categorieClientId}
+                        onValueChange={(value) => setForm((current) => ({ ...current, categorieClientId: value }))}
+                      >
+                        <SelectTrigger>
+                          <span className={form.categorieClientId ? "truncate" : "truncate text-muted-foreground"}>
+                            {categorieLabel}
+                          </span>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categoryOptions.map((categorie) => (
+                            <SelectItem key={categorie.id} value={categorie.id}>
+                              {categorie.nom}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                <div className="space-y-2">
-                  <Label>Gamme</Label>
-                  <Select
-                    value={form.gamme}
-                    onValueChange={(value) => setForm((current) => ({ ...current, gamme: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selectionner une gamme" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="MOYENNE">MOYENNE</SelectItem>
-                      <SelectItem value="LUXE">LUXE</SelectItem>
-                      
-                    </SelectContent>
-                  </Select>
-                </div>
+                    <div className="space-y-2">
+                      <Label>Gamme</Label>
+                      <Select
+                        value={normalizeGamme(form.gamme)}
+                        onValueChange={(value) => setForm((current) => ({ ...current, gamme: normalizeGamme(value) }))}
+                      >
+                        <SelectTrigger>
+                          <span className={form.gamme ? "truncate" : "truncate text-muted-foreground"}>
+                            {gammeLabel}
+                          </span>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="MOYENNE">MOYENNE</SelectItem>
+                          <SelectItem value="LUXE">LUXE</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                <div className="space-y-2 md:col-span-2">
-                  <Label>Nombre de personnes</Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    value={form.nombrePersonnes}
-                    onChange={(event) =>
-                      setForm((current) => ({
-                        ...current,
-                        nombrePersonnes: Number(event.target.value) || 1,
-                      }))
-                    }
-                  />
-                </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <Label>Nombre de personnes</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={form.nombrePersonnes}
+                        onChange={(event) =>
+                          setForm((current) => ({
+                            ...current,
+                            nombrePersonnes: Number(event.target.value) || 1,
+                          }))
+                        }
+                      />
+                    </div>
+                  </>
+                )}
               </div>
 
               {form.source === "SIMULATION" ? (
                 <div className="grid gap-4">
-                  <div className="space-y-2">
+                  <div className="min-w-0 space-y-2">
                     <Label>Elements selectionnes</Label>
-                    <Input
-                      value={form.elementsSelectionnes}
-                      onChange={(event) =>
-                        setForm((current) => ({ ...current, elementsSelectionnes: event.target.value }))
-                      }
-                      placeholder="Ex: ACT-01, HEB-02, TRANS-03"
-                    />
+                    {simulationElementCards.length > 0 ? (
+                      <div className="w-full min-w-0 space-y-2">
+                        <div className="w-full min-w-0 overflow-hidden">
+                          <div
+                            ref={selectedElementsScrollRef}
+                            className="w-full min-w-0 overflow-x-auto pb-2"
+                          >
+                            <div className="inline-flex min-w-full snap-x snap-mandatory gap-4 pr-2">
+                            {simulationElementGroups.map((group) => (
+                              <div
+                                key={group.key}
+                                className="w-[min(720px,100%)] min-w-[320px] shrink-0 snap-start rounded-2xl border border-emerald-200 bg-white p-4"
+                              >
+                                <div className="mb-3 flex items-center justify-between gap-3">
+                                  <div>
+                                    <p className="text-sm font-semibold text-slate-900">{group.label}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {group.elements.length} element(s) selectionne(s)
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Button
+                                      type="button"
+                                      size="icon"
+                                      variant="outline"
+                                      className="h-8 w-8 shrink-0"
+                                      onClick={() => scrollSelectedElements("left")}
+                                    >
+                                      <ChevronLeft className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      size="icon"
+                                      variant="outline"
+                                      className="h-8 w-8 shrink-0"
+                                      onClick={() => scrollSelectedElements("right")}
+                                    >
+                                      <ChevronRight className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+
+                                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                                  {group.elements.map((element) => (
+                                    <div
+                                      key={element.id}
+                                      className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4"
+                                    >
+                                      <p className="font-medium text-slate-900">{element.titre || element.id}</p>
+                                      <div className="mt-2 space-y-1 text-sm text-slate-600">
+                                        <p>{element.type ?? "Element de voyage"}</p>
+                                        <p className="text-xs text-slate-500">{element.id}</p>
+                                        {typeof element.prix === "number" ? (
+                                          <p className="font-semibold text-emerald-800">
+                                            {formatCurrency(element.prix, "Ar")}
+                                          </p>
+                                        ) : null}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-xs text-muted-foreground">
+                            Faites glisser horizontalement ou utilisez les fleches.
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-dashed border-border/70 px-4 py-3 text-sm text-muted-foreground">
+                        Aucun element de simulation n&apos;a ete transmis pour le moment.
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label>Resume simulation</Label>
@@ -523,7 +1036,9 @@ export default function ReservationsPage() {
                     type="submit"
                     disabled={!canSubmitReservation}
                   >
-                    {isSubmitting ? "Reservation en cours..." : "Confirmer la reservation"}
+                    {isSubmitting
+                      ? (isEditMode ? "Modification en cours..." : "Reservation en cours...")
+                      : (isEditMode ? "Enregistrer les modifications" : "Confirmer la reservation")}
                   </Button>
                 </div>
               </div>
@@ -535,7 +1050,9 @@ export default function ReservationsPage() {
           <Card className="border-border/50">
             <CardHeader>
               <CardTitle>Resume rapide</CardTitle>
-              <CardDescription>Un devis est calcule automatiquement selon vos choix.</CardDescription>
+              <CardDescription>
+                Un devis est calcule automatiquement selon vos choix.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -569,19 +1086,20 @@ export default function ReservationsPage() {
               </div>
             </CardContent>
           </Card>
+          
 
-          <Card className="border-border/50">
+          {/* <Card className="border-border/50">
             <CardHeader>
-              <CardTitle>Historique</CardTitle>
-              <CardDescription>Vos reservations les plus recentes.</CardDescription>
+              <CardTitle>Vos dernieres demandes</CardTitle>
+              <CardDescription>Les reservations les plus recentes dans votre espace.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {loadingReservations ? (
                 <p className="text-sm text-muted-foreground">Chargement des reservations...</p>
-              ) : reservations.length === 0 ? (
+              ) : recentReservations.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Aucune reservation pour le moment.</p>
               ) : (
-                reservations.map((reservation) => {
+                recentReservations.map((reservation) => {
                   const detail = reservation.details[0];
                   return (
                     <div key={reservation.id} className="rounded-xl border border-border/60 p-4">
@@ -608,9 +1126,158 @@ export default function ReservationsPage() {
                 })
               )}
             </CardContent>
-          </Card>
+          </Card> */}
+
+
         </div>
       </div>
+      ) : null}
+
+      {activeSection === "list" ? (
+      <>
+      <Card className="border-border/50">
+        <CardHeader>
+          <CardTitle>Liste de mes reservations</CardTitle>
+          <CardDescription>
+            Retrouvez toutes les reservations deja creees dans votre espace client.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <Label htmlFor="status-filter">Trier par statut</Label>
+            <Select
+              value={statusFilter}
+              onValueChange={(value) => setStatusFilter(value as ReservationStatus | "ALL")}
+            >
+              <SelectTrigger id="status-filter" className="w-[240px]">
+                <span className="truncate">
+                  {statusFilter === "ALL" ? "Tous les statuts" : formatStatus(statusFilter)}
+                </span>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">Tous les statuts</SelectItem>
+                <SelectItem value="EN_ATTENTE">EN ATTENTE</SelectItem>
+                <SelectItem value="A_REVOIR">A REVOIR</SelectItem>
+                <SelectItem value="EN_ATTENTE_DISPONIBILITE">EN ATTENTE DISPONIBILITE</SelectItem>
+                <SelectItem value="VALIDEE">VALIDEE</SelectItem>
+                <SelectItem value="ANNULEE">ANNULEE</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {loadingReservations ? (
+            <p className="text-sm text-muted-foreground">Chargement des reservations...</p>
+          ) : filteredReservations.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border/70 p-6 text-sm text-muted-foreground">
+              Aucune reservation n&apos;a encore ete enregistree.
+            </div>
+          ) : (
+            filteredReservations.map((reservation) => {
+              const detail = reservation.details[0];
+              const totalElements = reservation.details.reduce(
+                (sum, item) => sum + item.elementsSelectionnes.length,
+                0
+              );
+              const showElementsCount = reservation.source === "SIMULATION";
+
+              return (
+                <div
+                  key={reservation.id}
+                  className="rounded-2xl border border-border/60 bg-white p-5 shadow-sm"
+                >
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-lg font-semibold">{reservation.reference}</p>
+                        <Badge className={statusStyles[reservation.status]}>
+                          {formatStatus(reservation.status)}
+                        </Badge>
+                        <Badge variant="outline">{formatSource(reservation.source)}</Badge>
+                      </div>
+
+                      <div>
+                        <p className="font-medium text-foreground">
+                          {detail?.nomDestination ?? "-"} - {detail?.nomPlanification ?? "-"}
+                        </p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {detail?.nomCategorieClient ?? "-"} · {detail?.gamme ?? "-"} ·{" "}
+                          {detail?.nombrePersonnes ?? 0} voyageur(s)
+                        </p>
+                      </div>
+
+                      <div className={`grid gap-3 sm:grid-cols-2 ${showElementsCount ? "xl:grid-cols-4" : "xl:grid-cols-3"}`}>
+                        <div className="rounded-xl bg-muted/40 p-3">
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                            Montant
+                          </p>
+                          <p className="mt-1 font-medium">
+                            {formatCurrency(reservation.montantTotal, reservation.devise)}
+                          </p>
+                        </div>
+                        <div className="rounded-xl bg-muted/40 p-3">
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                            Creee le
+                          </p>
+                          <p className="mt-1 font-medium">{formatDate(reservation.dateReservation)}</p>
+                        </div>
+                        {showElementsCount ? (
+                          <div className="rounded-xl bg-muted/40 p-3">
+                            <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                              Elements
+                            </p>
+                            <p className="mt-1 font-medium">{totalElements}</p>
+                          </div>
+                        ) : null}
+                        <div className="rounded-xl bg-muted/40 p-3">
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                            Commentaire
+                          </p>
+                          <p className="mt-1 line-clamp-2 text-sm text-foreground">
+                            {reservation.commentaireClient?.trim() || "Aucun commentaire"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {detail?.resumeSimulation ? (
+                        <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 text-sm text-emerald-900">
+                          <p className="font-medium">Resume de simulation conserve</p>
+                          <p className="mt-2 line-clamp-3 whitespace-pre-wrap">
+                            {detail.resumeSimulation}
+                          </p>
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <div className="flex shrink-0 flex-col gap-3 lg:w-44">
+                      <Button asChild className="w-full">
+                        <Link href={`/${username}/reservations/${reservation.id}`}>Voir detail</Link>
+                      </Button>
+                      {reservation.status === "EN_ATTENTE" ? (
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          className="w-full"
+                          onClick={() => void handleDeleteReservation(reservation.id)}
+                        >
+                          Supprimer
+                        </Button>
+                      ) : null}
+                      <div className="rounded-xl border border-dashed border-border/70 px-4 py-3 text-sm text-muted-foreground">
+                        Derniere mise a jour
+                        <p className="mt-2 font-medium text-foreground">
+                          {formatDate(reservation.dateModification ?? reservation.dateReservation)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </CardContent>
+      </Card>
+      </>
+      ) : null}
     </div>
   );
 }

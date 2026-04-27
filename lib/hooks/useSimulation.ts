@@ -1,13 +1,11 @@
-// lib/api/hooks/useSimulation.ts
-
 import { useState, useEffect, useCallback } from "react";
 import { calculerSeuilMinimum, simulerPlanification } from "@/lib/api/simulationService";
-import { 
+import {
     SeuilMinimumResponse,
-    SimulationRequest, 
-    SimulationResponse, 
-    DestinationType, 
-    PlanificationType, 
+    SimulationRequest,
+    SimulationResponse,
+    DestinationType,
+    PlanificationType,
     CategorieType,
     JourSimulation,
     ElementSimulation
@@ -15,8 +13,65 @@ import {
 import { listDestinations } from "@/lib/api/destinations";
 import { listPlanificationsByDestination } from "@/lib/api/destinations";
 import { listCategorieClientActivites } from "@/lib/api/activites";
+import { listBudgetisationsByPlanification } from "@/lib/api/budgetisation-planification";
+import { BudgetisationPlanificationVoyage } from "@/lib/type/budgetisation-planification";
 import { loadAuth } from "@/lib/auth";
 import { ApiError } from "@/lib/api/client";
+
+function normalizeValue(value: string | number | null | undefined): string {
+    return String(value ?? "").trim().toUpperCase();
+}
+
+function resolveBudgetForPlanification(
+    budgetisations: BudgetisationPlanificationVoyage[],
+    gamme: string,
+    nombrePersonnes: number
+): number | null {
+    const gammeNormalisee = normalizeValue(gamme);
+    const nombreAttendu = Number(nombrePersonnes);
+
+    const budgetisationsFiltrees = budgetisations.filter(
+        (item) => normalizeValue(item.gamme) === gammeNormalisee
+    );
+
+    if (budgetisationsFiltrees.length === 0) {
+        return null;
+    }
+
+    const exacte = budgetisationsFiltrees.find(
+        (item) => Number(item.nombrePersonnes) === nombreAttendu
+    );
+
+    if (exacte) {
+        return Number(exacte.prixAvecReduction);
+    }
+
+    const plusProche = [...budgetisationsFiltrees].sort(
+        (a, b) => Math.abs(Number(a.nombrePersonnes) - nombreAttendu) - Math.abs(Number(b.nombrePersonnes) - nombreAttendu)
+    )[0];
+
+    return plusProche ? Number(plusProche.prixAvecReduction) : null;
+}
+
+function hasMatchingBudgetisation(
+    budgetisations: BudgetisationPlanificationVoyage[],
+    categorieClientId: string,
+    gamme: string,
+    nombrePersonnes: number
+): boolean {
+    const categorieNormalisee = normalizeValue(categorieClientId);
+    const gammeNormalisee = normalizeValue(gamme);
+    const nombreAttendu = Number(nombrePersonnes);
+
+    return budgetisations.some((item) => {
+        const memeCategorie =
+            normalizeValue(item.idCategorieClient) === categorieNormalisee;
+        const memeGamme = normalizeValue(item.gamme) === gammeNormalisee;
+        const memeNombre = Number(item.nombrePersonnes) === nombreAttendu;
+
+        return memeCategorie && memeGamme && memeNombre;
+    });
+}
 
 export function useSimulation() {
     const [destinations, setDestinations] = useState<DestinationType[]>([]);
@@ -26,6 +81,8 @@ export function useSimulation() {
     const [error, setError] = useState<string | null>(null);
     const [result, setResult] = useState<SimulationResponse | null>(null);
     const [minimumBudget, setMinimumBudget] = useState<SeuilMinimumResponse | null>(null);
+    const [budgetByPlanification, setBudgetByPlanification] = useState<Record<string, number | null>>({});
+    const [budgetisationsByPlanification, setBudgetisationsByPlanification] = useState<Record<string, BudgetisationPlanificationVoyage[]>>({});
 
     const [selectedDestinationId, setSelectedDestinationId] = useState("");
     const [selectedPlanificationId, setSelectedPlanificationId] = useState("");
@@ -51,15 +108,17 @@ export function useSimulation() {
         );
     }, []);
 
-    // Charger les destinations
     useEffect(() => {
         const loadDestinations = async () => {
             try {
                 const data = await listDestinations();
                 setDestinations(data);
-                if (data.length > 0) {
-                    setSelectedDestinationId(data[0].id);
-                }
+                setSelectedDestinationId((current) => {
+                    if (current && data.some((destination) => destination.id === current)) {
+                        return current;
+                    }
+                    return data.length > 0 ? data[0].id : "";
+                });
             } catch (err) {
                 console.error("Erreur chargement destinations:", err);
                 setError("Impossible de charger les destinations");
@@ -68,7 +127,6 @@ export function useSimulation() {
         loadDestinations();
     }, []);
 
-    // Charger les catégories client
     useEffect(() => {
         const loadCategories = async () => {
             try {
@@ -78,16 +136,20 @@ export function useSimulation() {
                 const data = response.data;
                 if (data && data.length > 0) {
                     setCategories(data);
-                    setSelectedCategorieId(data[0].id);
+                    setSelectedCategorieId((current) => {
+                        if (current && data.some((categorie) => categorie.id === current)) {
+                            return current;
+                        }
+                        return data[0].id;
+                    });
                 }
             } catch (err) {
-                console.error("Erreur chargement catégories:", err);
+                console.error("Erreur chargement categories:", err);
             }
         };
         loadCategories();
     }, []);
 
-    // Charger les planifications quand la destination change
     useEffect(() => {
         if (!selectedDestinationId) return;
 
@@ -100,12 +162,19 @@ export function useSimulation() {
                 const data = response.data;
                 if (data && data.length > 0) {
                     setPlanifications(data);
-                    setSelectedPlanificationId(data[0].id);
+                    setSelectedPlanificationId((current) => {
+                        if (current && data.some((planification) => planification.id === current)) {
+                            return current;
+                        }
+                        return data[0].id;
+                    });
                 } else {
                     setPlanifications([]);
                     setSelectedPlanificationId("");
                     setResult(null);
                     setMinimumBudget(null);
+                    setBudgetByPlanification({});
+                    setBudgetisationsByPlanification({});
                     setElementsSelectionnes([]);
                 }
             } catch (err) {
@@ -119,7 +188,86 @@ export function useSimulation() {
     }, [selectedDestinationId]);
 
     useEffect(() => {
+        if (planifications.length === 0) {
+            setBudgetisationsByPlanification({});
+            return;
+        }
+
+        let active = true;
+
+        const loadBudgets = async () => {
+            try {
+                const session = loadAuth();
+                const token = session?.accessToken;
+                const budgets = await Promise.all(
+                    planifications.map(async (planification) => {
+                        const response = await listBudgetisationsByPlanification(
+                            planification.id,
+                            token
+                        );
+
+                        return [planification.id, response.data ?? []] as const;
+                    })
+                );
+
+                if (active) {
+                    setBudgetisationsByPlanification(Object.fromEntries(budgets));
+                }
+            } catch (err) {
+                console.error("Erreur chargement budgetisation planification:", err);
+                if (active) {
+                    setBudgetisationsByPlanification({});
+                }
+            }
+        };
+
+        void loadBudgets();
+
+        return () => {
+            active = false;
+        };
+    }, [planifications]);
+
+    useEffect(() => {
+        if (!selectedCategorieId || !selectedGamme || nombrePersonnes <= 0) {
+            setBudgetByPlanification({});
+            return;
+        }
+
+        const budgetsSelectionnes = Object.fromEntries(
+            Object.entries(budgetisationsByPlanification).map(([planificationId, budgetisations]) => {
+                const budgetisationsFiltrees = budgetisations.filter(
+                    (item) => normalizeValue(item.idCategorieClient) === normalizeValue(selectedCategorieId)
+                );
+
+                return [
+                    planificationId,
+                    resolveBudgetForPlanification(budgetisationsFiltrees, selectedGamme, nombrePersonnes),
+                ];
+            })
+        );
+
+        setBudgetByPlanification(budgetsSelectionnes);
+    }, [budgetisationsByPlanification, selectedCategorieId, selectedGamme, nombrePersonnes]);
+
+    useEffect(() => {
         if (!selectedPlanificationId || !selectedCategorieId || !selectedGamme || nombrePersonnes <= 0) {
+            setMinimumBudget(null);
+            return;
+        }
+
+        const budgetisationsSelectionnees =
+            budgetisationsByPlanification[selectedPlanificationId] ?? [];
+
+        if (
+            budgetisationsSelectionnees.length > 0 &&
+            !hasMatchingBudgetisation(
+                budgetisationsSelectionnees,
+                selectedCategorieId,
+                selectedGamme,
+                nombrePersonnes
+            )
+        ) {
             setMinimumBudget(null);
             return;
         }
@@ -145,10 +293,19 @@ export function useSimulation() {
                     setMinimumBudget(response);
                 }
             } catch (err) {
-                console.error("Erreur calcul seuil minimum:", err);
                 if (active) {
                     setMinimumBudget(null);
                 }
+
+                if (
+                    err instanceof ApiError &&
+                    err.status === 400 &&
+                    err.message.includes("Aucune budgetisation")
+                ) {
+                    return;
+                }
+
+                console.error("Erreur calcul seuil minimum:", err);
             }
         };
 
@@ -163,9 +320,9 @@ export function useSimulation() {
         selectedCategorieId,
         selectedGamme,
         nombrePersonnes,
+        budgetisationsByPlanification,
     ]);
 
-    // Lancer la simulation
     const lancerSimulation = useCallback(async (selection?: string[]) => {
         if (!selectedPlanificationId || !selectedCategorieId || budgetClient <= 0) {
             setError("Veuillez remplir tous les champs");
@@ -261,6 +418,8 @@ export function useSimulation() {
         error,
         result,
         minimumBudget,
+        budgetByPlanification,
+        budgetisationsByPlanification,
         selectedDestinationId,
         setSelectedDestinationId,
         selectedPlanificationId,
@@ -274,6 +433,7 @@ export function useSimulation() {
         nombrePersonnes,
         setNombrePersonnes,
         elementsSelectionnes,
+        setElementsSelectionnes,
         lancerSimulation,
         toggleElement,
         toutCocher,

@@ -33,7 +33,11 @@ export default function DestinationsPage() {
         {destinations.map((destination) => (
           <article key={destination.id} className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
             <div className="relative h-40 w-full">
-              <Image src={destination.image} alt={destination.title} fill className="object-cover" />
+              {destination.image?.trim() ? (
+                <Image src={destination.image} alt={destination.title} fill className="object-cover" />
+              ) : (
+                <div className="absolute inset-0 bg-[linear-gradient(135deg,_rgba(16,185,129,0.2),_rgba(15,23,42,0.12))]" />
+              )}
             </div>
             <div className="space-y-2 p-4">
               <h3 className="text-base font-semibold">{destination.title}</h3>

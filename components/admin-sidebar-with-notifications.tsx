@@ -59,7 +59,7 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
     };
 
     loadCommentairesEnAttente();
-    // Rafraîchir toutes les 30 secondes
+    // RafraÃ®chir toutes les 30 secondes
     const interval = setInterval(loadCommentairesEnAttente, 30000);
     return () => clearInterval(interval);
   }, [session?.accessToken]);
@@ -73,7 +73,7 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
   };
 
   return (
-    <aside className="hidden w-64 border-r border-border/50 bg-card/50 backdrop-blur-sm px-4 py-6 sm:block overflow-y-auto">
+    <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 self-start overflow-y-auto border-r border-border/50 bg-card/50 px-4 py-6 backdrop-blur-sm sm:block">
       <nav className="space-y-1">
         <button
           type="button"
@@ -141,7 +141,7 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
           >
             <div className="flex items-center">
               <Building className="mr-3 h-4 w-4" />
-              Hébergements
+              HÃ©bergements
             </div>
             <ChevronDown
               className={`h-4 w-4 transition-all duration-300 ease-in-out transform ${
@@ -161,7 +161,7 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
                   }`}
               >
                 <span className="mr-2"></span>
-                Liste des hébergements
+                Liste des hÃ©bergements
               </button>
               <button
                 type="button"
@@ -173,7 +173,7 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
                 }`}
               >
                 <span className="mr-2"></span>
-                Ajouter hébergement
+                Ajouter hÃ©bergement
               </button>
             </div>
           )}
@@ -187,7 +187,7 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
           >
             <div className="flex items-center">
               <Play className="mr-3 h-4 w-4" />
-              Activités
+              ActivitÃ©s
             </div>
             <ChevronDown
               className={`h-4 w-4 transition-all duration-300 ease-in-out transform ${
@@ -207,7 +207,7 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
                   }`}
               >
                 <span className="mr-2"></span>
-                Liste des activités
+                Liste des activitÃ©s
               </button>
               <button
                 type="button"
@@ -219,7 +219,7 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
                 }`}
               >
                 <span className="mr-2"></span>
-                Ajouter activité
+                Ajouter activitÃ©
               </button>
             </div>
           )}
@@ -252,7 +252,7 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
                     : "text-muted-foreground hover:bg-primary/10"
                   }`}
               >
-                <span className="mr-2">·</span>
+                <span className="mr-2">Â·</span>
                 Notifications
               </button>
               <button
@@ -264,7 +264,7 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
                     : "text-muted-foreground hover:bg-primary/10"
                 }`}
               >
-                <span className="mr-2">·</span>
+                <span className="mr-2">Â·</span>
                 Avis
               </button>
               <button
@@ -276,7 +276,7 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
                     : "text-muted-foreground hover:bg-primary/10"
                 }`}
               >
-                <span className="mr-2">·</span>
+                <span className="mr-2">Â·</span>
                 <div className="flex items-center gap-2">
                   Commentaires
                   {commentairesNonLus > 0 && (
@@ -301,7 +301,7 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
           >
             <div className="flex items-center">
               <ClipboardList className="mr-3 h-4 w-4" />
-              Réservations
+              RÃ©servations
             </div>
             <ChevronDown
               className={`h-4 w-4 transition-all duration-300 ease-in-out transform ${
@@ -321,7 +321,7 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
                   }`}
               >
                 <span className="mr-2"></span>
-                Liste réservations
+                Liste rÃ©servations
               </button>
               <button
                 type="button"
@@ -333,7 +333,7 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
                 }`}
               >
                 <span className="mr-2"></span>
-                Ajout réservation
+                Ajout rÃ©servation
               </button>
             </div>
           )}

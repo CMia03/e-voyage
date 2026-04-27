@@ -504,6 +504,7 @@ export function AdminDestinationAssociationsContent({ destinationId }: Props) {
         <div className="flex items-center justify-start gap-3">
           {pending ? <Loader2 className="size-4 animate-spin text-muted-foreground" /> : null}
           <div className="flex items-center gap-2" onClick={(event) => event.stopPropagation()}>
+
             <Checkbox
               checked={item.estSelectionne}
               disabled={pending}
@@ -514,6 +515,7 @@ export function AdminDestinationAssociationsContent({ destinationId }: Props) {
               }
               aria-label={`Associer ${item.nom}`}
             />
+
             <span className="whitespace-nowrap text-sm font-medium">
               {item.estSelectionne ? "Actif pour la destination" : "Non associe"}
             </span>
@@ -763,7 +765,7 @@ export function AdminDestinationAssociationsContent({ destinationId }: Props) {
                       <span>Hebergement</span>
                       <span>Adresse</span>
                       <span>Type</span>
-                      <span>Etoiles</span>
+                      {/* <span>Etoiles</span> */}
                       <span>Statut</span>
                     </div>
 
