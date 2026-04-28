@@ -372,6 +372,7 @@ export function AdminDestinationPlanningContentNext({ destinationId }: Props) {
   // Dans les states (vers ligne 200-250)
   const [budgetsPlanification, setBudgetsPlanification] = useState<BudgetisationPlanificationVoyage[]>([]);
   const [selectedPlanificationId, setSelectedPlanificationId] = useState("");
+  const [selectedTransportId, setSelectedTransportId] = useState<string | null>(null);
   const [selectedSection, setSelectedSection] = useState<PlanningSection>("planning");
   const [editingPlanificationId, setEditingPlanificationId] = useState<string | null>(null);
   const [editingTransportId, setEditingTransportId] = useState<string | null>(null);

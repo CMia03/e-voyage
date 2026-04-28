@@ -24,7 +24,7 @@ export function AdminHeader() {
         
         <div className="flex items-center gap-4">
           <span className="text-sm text-muted-foreground">
-            {session?.user?.email || 'Admin'}
+            {session?.login || 'Admin'}
           </span>
           <Button variant="outline" size="sm" onClick={handleLogout}>
             Déconnexion

@@ -47,6 +47,7 @@ type TarifFormState = {
   prixReservation: string;
   prixParNuit: string;
   devise: string;
+  gamme: "MOYENNE" | "LUXE";
   capacite: string;
   petitDejeunerInclus: boolean;
   estActif: boolean;
@@ -64,6 +65,7 @@ const initialTarifForm: TarifFormState = {
   prixReservation: "",
   prixParNuit: "",
   devise: "MGA",
+  gamme: "MOYENNE",
   capacite: "2",
   petitDejeunerInclus: false,
   estActif: true,
@@ -235,6 +237,7 @@ export function AdminHebergementDetailContent({
           : null,
         prixParNuit: Number(tarifForm.prixParNuit),
         devise: tarifForm.devise.trim() || "MGA",
+        gamme: tarifForm.gamme,
         capacite: Number(tarifForm.capacite),
         petitDejeunerInclus: tarifForm.petitDejeunerInclus,
         estActif: tarifForm.estActif,

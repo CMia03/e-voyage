@@ -1,4 +1,4 @@
-import { NotationData } from '@/lib/api/notations';
+import { NotationData } from '@/lib/type/notation';
 import { promises as fs } from 'fs';
 import path from 'path';
 

@@ -192,6 +192,7 @@ export type PlanificationVoyage = {
   depart: string;
   dateHeureFin: string | null;
   arriver: string;
+  estVisibleClient: boolean;
   dateCreation?: string;
   dateModification?: string;
   idDestination: string;
@@ -246,6 +247,7 @@ export type SavePlanificationVoyagePayload = {
   depart: string;
   dateHeureFin?: string;
   arriver: string;
+  estVisibleClient?: boolean;
   idDestination: string;
 };
 
