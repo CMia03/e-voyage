@@ -89,6 +89,7 @@ type PlanificationFormState = {
   depart: string;
   dateHeureFin: string;
   arriver: string;
+  estVisibleClient: boolean;
 };
 
 type TransportFormState = {
@@ -187,6 +188,7 @@ const initialPlanificationForm: PlanificationFormState = {
   depart: "",
   dateHeureFin: "",
   arriver: "",
+  estVisibleClient: true,
 };
 
 const initialTransportForm: TransportFormState = {
@@ -305,6 +307,7 @@ function mapPlanificationToForm(planification: PlanificationVoyage): Planificati
     depart: planification.depart ?? "",
     dateHeureFin: planification.dateHeureFin ? planification.dateHeureFin.slice(0, 16) : "",
     arriver: planification.arriver ?? "",
+    estVisibleClient: Boolean(planification.estVisibleClient),
   };
 }
 
@@ -405,6 +408,7 @@ export function AdminDestinationPlanningContentNext({ destinationId }: Props) {
   const [isSavingJour, setIsSavingJour] = useState(false);
   const [isSavingElement, setIsSavingElement] = useState(false);
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
+  const [togglingVisibilityId, setTogglingVisibilityId] = useState<string | null>(null);
   const [isCalculatingTransportId, setIsCalculatingTransportId] = useState<string | null>(null);
   const [showExtraElementTypes, setShowExtraElementTypes] = useState(false);
   const [showTypeElementCreator, setShowTypeElementCreator] = useState(false);
@@ -998,7 +1002,25 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
       depart: planificationForm.depart.trim(),
       dateHeureFin: planificationForm.dateHeureFin || undefined,
       arriver: planificationForm.arriver.trim(),
+      estVisibleClient: planificationForm.estVisibleClient,
       idDestination: destinationId,
+    };
+  }
+
+  function buildPlanificationUpdatePayload(
+    planification: PlanificationVoyage,
+    estVisibleClient: boolean
+  ): SavePlanificationVoyagePayload {
+    return {
+      nomPlanification: planification.nomPlanification?.trim() || "",
+      budgetTotal: planification.budgetTotal ?? null,
+      deviseBudget: planification.deviseBudget?.trim() || "MGA",
+      dateHeureDebut: planification.dateHeureDebut || undefined,
+      depart: planification.depart?.trim() || "",
+      dateHeureFin: planification.dateHeureFin || undefined,
+      arriver: planification.arriver?.trim() || "",
+      estVisibleClient,
+      idDestination: planification.idDestination || destinationId,
     };
   }
 
@@ -1120,6 +1142,41 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
       setError(getErrorMessage(saveError, "Impossible d'enregistrer la planification"));
     } finally {
       setIsSavingPlanification(false);
+    }
+  }
+
+  async function handleTogglePlanificationVisibility(
+    planification: PlanificationVoyage,
+    nextValue: boolean
+  ) {
+    setTogglingVisibilityId(planification.id);
+    setError("");
+    setSuccessMessage("");
+    try {
+      await updatePlanificationVoyage(
+        planification.id,
+        buildPlanificationUpdatePayload(planification, nextValue),
+        accessToken
+      );
+      setPlanifications((current) =>
+        current.map((item) =>
+          item.id === planification.id ? { ...item, estVisibleClient: nextValue } : item
+        )
+      );
+      if (selectedPlanificationId === planification.id) {
+        setPlanificationForm((current) => ({ ...current, estVisibleClient: nextValue }));
+      }
+      setSuccessMessage(
+        nextValue
+          ? "Planification activee avec succes."
+          : "Planification desactivee avec succes."
+      );
+      setShowSuccessAlert(true);
+    } catch (toggleError) {
+      setError(getErrorMessage(toggleError, "Impossible de mettre a jour le statut de la planification"));
+      setShowErrorAlert(true);
+    } finally {
+      setTogglingVisibilityId(null);
     }
   }
 
@@ -1389,11 +1446,15 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
             planifications={planifications}
             selectedPlanificationId={selectedPlanificationId}
             isDeletingId={isDeletingId}
+            togglingVisibilityId={togglingVisibilityId}
             onSelect={(planification) => {
               setSelectedPlanificationId(planification.id);
             }}
             onEdit={openEditPlanificationDialog}
             onDelete={(planificationId) => void handleDeletePlanification(planificationId)}
+            onToggleActive={(planification, nextValue) =>
+              void handleTogglePlanificationVisibility(planification, nextValue)
+            }
           />
 
           <Card className="border-border/50">
