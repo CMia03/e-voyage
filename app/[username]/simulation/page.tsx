@@ -6,7 +6,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { BellRing } from "lucide-react";
 
 import { useSimulation } from "@/lib/hooks/useSimulation";
-import { ElementSimulation, JourSimulation } from "@/lib/type/simulation.types";
+import { ElementSimulation, JourSimulation, VoyageurProfile } from "@/lib/type/simulation.types";
 import { DestinationSelector } from "./components/DestinationSelector";
 import { PlanificationSelector } from "./components/PlanificationSelector";
 import { BudgetInput } from "./components/BudgetInput";
@@ -40,6 +40,49 @@ function parsePositiveInteger(value: string | null, fallback: number) {
 function normalizeGamme(value: string | null | undefined) {
   const normalized = (value ?? "").trim().toUpperCase();
   return normalized === "LUXE" ? "LUXE" : "MOYENNE";
+}
+
+function parseVoyageurProfiles(
+  value: string | null,
+  fallbackCategorieId: string | null,
+  fallbackGamme: string,
+  fallbackNombrePersonnes: number
+): VoyageurProfile[] {
+  if (value) {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        const profiles = parsed
+          .map((item) => ({
+            categorieClientId:
+              typeof item?.categorieClientId === "string" ? item.categorieClientId : "",
+            gamme:
+              typeof item?.gamme === "string" && item.gamme.trim()
+                ? item.gamme.trim().toUpperCase()
+                : fallbackGamme,
+            nombrePersonnes:
+              typeof item?.nombrePersonnes === "number" && item.nombrePersonnes > 0
+                ? item.nombrePersonnes
+                : 1,
+          }))
+          .filter((item) => !!item.categorieClientId);
+
+        if (profiles.length > 0) {
+          return profiles;
+        }
+      }
+    } catch {
+      return [];
+    }
+  }
+
+  return fallbackCategorieId
+    ? [{ categorieClientId: fallbackCategorieId, gamme: fallbackGamme, nombrePersonnes: fallbackNombrePersonnes }]
+    : [];
+}
+
+function totalVoyageurs(profiles: VoyageurProfile[]): number {
+  return profiles.reduce((sum, profile) => sum + Math.max(profile.nombrePersonnes || 0, 0), 0);
 }
 
 function parseSimulationElementCards(value: string | null): ReservationElementPreview[] {
@@ -162,12 +205,10 @@ export default function SimulationPage() {
     setSelectedPlanificationId,
     budgetClient,
     setBudgetClient,
-    selectedCategorieId,
-    setSelectedCategorieId,
     selectedGamme,
     setSelectedGamme,
-    nombrePersonnes,
-    setNombrePersonnes,
+    voyageurProfiles,
+    setVoyageurProfiles,
     elementsSelectionnes,
     setElementsSelectionnes,
     lancerSimulation,
@@ -187,6 +228,12 @@ export default function SimulationPage() {
       categorieId: query?.get("categorieId") || null,
       gamme: normalizeGamme(query?.get("gamme")),
       nombrePersonnes: parsePositiveInteger(query?.get("nombrePersonnes"), 1),
+      voyageurProfiles: parseVoyageurProfiles(
+        query?.get("voyageurProfiles"),
+        query?.get("categorieId"),
+        normalizeGamme(query?.get("gamme")),
+        parsePositiveInteger(query?.get("nombrePersonnes"), 1)
+      ),
       elementsSelectionnes: (query?.get("elementsSelectionnes") || "")
         .split(",")
         .map((item) => item.trim())
@@ -205,11 +252,9 @@ export default function SimulationPage() {
     if (reservationEditPrefill.destinationId) {
       setSelectedDestinationId(reservationEditPrefill.destinationId);
     }
-    if (reservationEditPrefill.categorieId) {
-      setSelectedCategorieId(reservationEditPrefill.categorieId);
+    if (reservationEditPrefill.voyageurProfiles.length > 0) {
+      setVoyageurProfiles(reservationEditPrefill.voyageurProfiles);
     }
-    setSelectedGamme(reservationEditPrefill.gamme);
-    setNombrePersonnes(reservationEditPrefill.nombrePersonnes);
     if (reservationEditPrefill.budgetClient > 0) {
       setBudgetClient(reservationEditPrefill.budgetClient);
     }
@@ -221,10 +266,8 @@ export default function SimulationPage() {
     reservationEditPrefill,
     setBudgetClient,
     setElementsSelectionnes,
-    setNombrePersonnes,
-    setSelectedCategorieId,
     setSelectedDestinationId,
-    setSelectedGamme,
+    setVoyageurProfiles,
   ]);
 
   useEffect(() => {
@@ -237,7 +280,7 @@ export default function SimulationPage() {
   useEffect(() => {
     if (autoSimulationLaunchedRef.current) return;
     if (!reservationEditPrefill.editReservationId) return;
-    if (!selectedDestinationId || !selectedPlanificationId || !selectedCategorieId) return;
+    if (!selectedDestinationId || !selectedPlanificationId || voyageurProfiles.length === 0) return;
     if (budgetClient <= 0) return;
 
     autoSimulationLaunchedRef.current = true;
@@ -251,9 +294,9 @@ export default function SimulationPage() {
     lancerSimulation,
     reservationEditPrefill.editReservationId,
     reservationEditPrefill.elementsSelectionnes,
-    selectedCategorieId,
     selectedDestinationId,
     selectedPlanificationId,
+    voyageurProfiles,
   ]);
 
   const selectedDestination = useMemo(
@@ -291,7 +334,7 @@ export default function SimulationPage() {
   const budgetAlertKey = useMemo(
     () =>
       result?.success && depassement > 0 && suggestionsOptionnelles.length > 0
-        ? `${selectedPlanificationId}-${selectedCategorieId}-${selectedGamme}-${nombrePersonnes}-${depassement}-${suggestionsOptionnelles
+        ? `${selectedPlanificationId}-${JSON.stringify(voyageurProfiles)}-${depassement}-${suggestionsOptionnelles
             .map((element) => element.id)
             .join(",")}`
         : null,
@@ -300,15 +343,13 @@ export default function SimulationPage() {
       depassement,
       suggestionsOptionnelles,
       selectedPlanificationId,
-      selectedCategorieId,
-      selectedGamme,
-      nombrePersonnes,
+      voyageurProfiles,
     ]
   );
   const positiveBudgetKey = useMemo(
     () =>
       result?.success && resteDisponible > 0 && suggestionsDisponibles.length > 0
-        ? `${selectedPlanificationId}-${selectedCategorieId}-${selectedGamme}-${nombrePersonnes}-${resteDisponible}-${suggestionsDisponibles
+        ? `${selectedPlanificationId}-${JSON.stringify(voyageurProfiles)}-${resteDisponible}-${suggestionsDisponibles
             .map((element) => element.id)
             .join(",")}`
         : null,
@@ -317,9 +358,7 @@ export default function SimulationPage() {
       resteDisponible,
       suggestionsDisponibles,
       selectedPlanificationId,
-      selectedCategorieId,
-      selectedGamme,
-      nombrePersonnes,
+      voyageurProfiles,
     ]
   );
   const showBudgetAlertModal =
@@ -334,14 +373,14 @@ export default function SimulationPage() {
   const canSimulate =
     !loading &&
     !!selectedPlanificationId &&
-    !!selectedCategorieId &&
+    voyageurProfiles.length > 0 &&
     budgetClient > 0;
 
   const canReserveSimulation =
     !!result?.success &&
     !!selectedDestinationId &&
     !!selectedPlanificationId &&
-    !!selectedCategorieId;
+    voyageurProfiles.length > 0;
 
   const simulationElements = useMemo(() => {
     if (elementsSelectionnes.length > 0) {
@@ -378,7 +417,7 @@ export default function SimulationPage() {
       buildSimulationSummary(
         selectedDestination?.title,
         selectedPlanification?.nomPlanification,
-        nombrePersonnes,
+        totalVoyageurs(voyageurProfiles),
         budgetClient,
         result?.resume?.totalAvecMarge ?? result?.resume?.totalCoche,
         result?.resume?.reste
@@ -386,7 +425,7 @@ export default function SimulationPage() {
     [
       selectedDestination?.title,
       selectedPlanification?.nomPlanification,
-      nombrePersonnes,
+      voyageurProfiles,
       budgetClient,
       result?.resume?.totalAvecMarge,
       result?.resume?.totalCoche,
@@ -405,9 +444,12 @@ export default function SimulationPage() {
     params.set("source", "SIMULATION");
     params.set("destinationId", selectedDestinationId);
     params.set("planificationId", selectedPlanificationId);
-    params.set("categorieId", selectedCategorieId);
     params.set("gamme", selectedGamme);
-    params.set("nombrePersonnes", String(nombrePersonnes));
+    params.set("nombrePersonnes", String(totalVoyageurs(voyageurProfiles)));
+    if (voyageurProfiles.length > 0) {
+      params.set("categorieId", voyageurProfiles[0].categorieClientId);
+      params.set("voyageurProfiles", JSON.stringify(voyageurProfiles));
+    }
     if (budgetClient > 0) {
       params.set("budgetClient", String(budgetClient));
     }
@@ -423,7 +465,9 @@ export default function SimulationPage() {
     if (selectedPlanification?.nomPlanification) {
       params.set("planificationTitle", selectedPlanification.nomPlanification);
     }
-    const selectedCategorie = categories.find((categorie) => categorie.id === selectedCategorieId);
+    const selectedCategorie = categories.find(
+      (categorie) => categorie.id === voyageurProfiles[0]?.categorieClientId
+    );
     if (selectedCategorie?.nom) {
       params.set("categorieTitle", selectedCategorie.nom);
     }
@@ -720,12 +764,8 @@ export default function SimulationPage() {
 
                 <CategoryGammeSelector
                   categories={categories}
-                  selectedCategorieId={selectedCategorieId}
-                  onCategorieChange={setSelectedCategorieId}
-                  selectedGamme={selectedGamme}
-                  onGammeChange={setSelectedGamme}
-                  nombrePersonnes={nombrePersonnes}
-                  onNombrePersonnesChange={setNombrePersonnes}
+                  profiles={voyageurProfiles}
+                  onProfilesChange={setVoyageurProfiles}
                   disabled={loading}
                 />
 

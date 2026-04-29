@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
 import { loadAuth } from "@/lib/auth";
 import { getErrorMessage } from "@/lib/api/client";
 import { listDestinations, listPlanificationsByDestination } from "@/lib/api/destinations";
@@ -29,6 +29,7 @@ import {
   ReservationQuote,
   ReservationSource,
   ReservationStatus,
+  VoyageurProfile,
 } from "@/lib/type/reservation";
 import type { DestinationDetails, PlanificationVoyage } from "@/lib/type/destination";
 
@@ -53,6 +54,7 @@ type ReservationFormState = {
   categorieClientId: string;
   gamme: string;
   nombrePersonnes: number;
+  voyageurProfiles: VoyageurProfile[];
   commentaireClient: string;
   elementsSelectionnes: string;
   resumeSimulation: string;
@@ -65,6 +67,7 @@ const initialForm: ReservationFormState = {
   categorieClientId: "",
   gamme: "MOYENNE",
   nombrePersonnes: 1,
+  voyageurProfiles: [],
   commentaireClient: "",
   elementsSelectionnes: "",
   resumeSimulation: "",
@@ -143,14 +146,85 @@ function parseSimulationElementCards(value: string | null): SimulationElementCar
   }
 }
 
+function parseVoyageurProfiles(
+  value: string | null,
+  fallbackCategorieId: string | null,
+  fallbackGamme: string,
+  fallbackNombrePersonnes: number
+): VoyageurProfile[] {
+  if (value) {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        const profiles = parsed
+          .map((item) => ({
+            categorieClientId:
+              typeof item?.categorieClientId === "string" ? item.categorieClientId : "",
+            gamme:
+              typeof item?.gamme === "string" && item.gamme.trim()
+                ? item.gamme.trim().toUpperCase()
+                : fallbackGamme,
+            nombrePersonnes:
+              typeof item?.nombrePersonnes === "number" && item.nombrePersonnes > 0
+                ? item.nombrePersonnes
+                : 1,
+          }))
+          .filter((item) => !!item.categorieClientId);
+
+        if (profiles.length > 0) {
+          return profiles;
+        }
+      }
+    } catch {
+      return [];
+    }
+  }
+
+  return fallbackCategorieId
+    ? [{ categorieClientId: fallbackCategorieId, gamme: fallbackGamme, nombrePersonnes: fallbackNombrePersonnes }]
+    : [];
+}
+
+function ensureValidProfiles(
+  profiles: VoyageurProfile[],
+  categories: CategorieClient[],
+  fallbackCategorieId?: string
+): VoyageurProfile[] {
+  const defaultCategoryId = fallbackCategorieId || categories[0]?.id || "";
+  const normalized = profiles
+    .map((profile) => ({
+      categorieClientId: profile.categorieClientId || defaultCategoryId,
+      gamme: normalizeGamme(profile.gamme),
+      nombrePersonnes: Math.max(Number(profile.nombrePersonnes) || 1, 1),
+    }))
+    .filter((profile) => !!profile.categorieClientId);
+
+  if (normalized.length > 0) {
+    return normalized;
+  }
+
+  return defaultCategoryId
+    ? [{ categorieClientId: defaultCategoryId, gamme: "MOYENNE", nombrePersonnes: 1 }]
+    : [];
+}
+
+function totalVoyageurs(profiles: VoyageurProfile[]): number {
+  return profiles.reduce((sum, profile) => sum + Math.max(profile.nombrePersonnes || 0, 0), 0);
+}
+
 function buildPayload(form: ReservationFormState): ReservationCreatePayload {
+  const validProfiles = form.voyageurProfiles.filter(
+    (profile) => !!profile.categorieClientId && !!profile.gamme && profile.nombrePersonnes > 0
+  );
+  const firstProfile = validProfiles[0];
   return {
     source: form.source,
     destinationId: form.destinationId,
     planificationVoyageId: form.planificationVoyageId,
-    categorieClientId: form.categorieClientId,
-    gamme: form.gamme,
-    nombrePersonnes: form.nombrePersonnes,
+    categorieClientId: firstProfile?.categorieClientId ?? form.categorieClientId,
+    gamme: firstProfile?.gamme ?? form.gamme,
+    nombrePersonnes: totalVoyageurs(validProfiles) || form.nombrePersonnes,
+    profilsVoyageurs: validProfiles,
     commentaireClient: form.commentaireClient || undefined,
     elementsSelectionnes:
       form.source === "SIMULATION"
@@ -214,6 +288,12 @@ export default function ReservationsPage() {
     categorieTitle: searchParams?.get("categorieTitle") || null,
     gamme: normalizeGamme(searchParams?.get("gamme")),
     nombrePersonnes: parsePositiveInteger(searchParams?.get("nombrePersonnes") ?? null, initialForm.nombrePersonnes),
+    voyageurProfiles: parseVoyageurProfiles(
+      searchParams?.get("voyageurProfiles"),
+      searchParams?.get("categorieId"),
+      normalizeGamme(searchParams?.get("gamme")),
+      parsePositiveInteger(searchParams?.get("nombrePersonnes") ?? null, initialForm.nombrePersonnes)
+    ),
     elementsSelectionnes: searchParams?.get("elementsSelectionnes") || null,
     elementsDetails: parseSimulationElementCards(searchParams?.get("elementsDetails")),
     resumeSimulation: searchParams?.get("resumeSimulation") || null,
@@ -222,7 +302,8 @@ export default function ReservationsPage() {
   const hasNavigationPrefill = !!(
     prefill.destinationId ||
     prefill.planificationVoyageId ||
-    prefill.categorieClientId
+    prefill.categorieClientId ||
+    prefill.voyageurProfiles.length > 0
   );
 
   useEffect(() => {
@@ -254,33 +335,38 @@ export default function ReservationsPage() {
         setReservations(loadedReservations);
         setDestinations(loadedDestinations);
         setCategories(loadedCategories);
-        setForm((current) => ({
-          ...current,
-          destinationId:
-            hasNavigationPrefill && prefill.destinationId
-              ? prefill.destinationId
-              : loadedDestinations.some((item) => item.id === prefill.destinationId)
-                ? prefill.destinationId || ""
-                : ((current.destinationId && loadedDestinations.some((item) => item.id === current.destinationId))
-                  ? current.destinationId
-                  : ""),
-          categorieClientId:
-            hasNavigationPrefill && prefill.categorieClientId
-              ? prefill.categorieClientId
-              : loadedCategories.some((item) => item.id === prefill.categorieClientId)
-                ? prefill.categorieClientId || ""
-                : ((current.categorieClientId && loadedCategories.some((item) => item.id === current.categorieClientId))
-                  ? current.categorieClientId
-                  : ""),
-          gamme:
-            hasNavigationPrefill
-              ? normalizeGamme(prefill.gamme ?? current.gamme ?? initialForm.gamme)
-              : current.gamme,
-          nombrePersonnes:
-            hasNavigationPrefill
-              ? prefill.nombrePersonnes ?? current.nombrePersonnes ?? initialForm.nombrePersonnes
-              : current.nombrePersonnes,
-        }));
+        setForm((current) => {
+          const normalizedProfiles = ensureValidProfiles(
+            hasNavigationPrefill ? prefill.voyageurProfiles : current.voyageurProfiles,
+            loadedCategories,
+            prefill.categorieClientId ?? undefined
+          );
+          return {
+            ...current,
+            destinationId:
+              hasNavigationPrefill && prefill.destinationId
+                ? prefill.destinationId
+                : loadedDestinations.some((item) => item.id === prefill.destinationId)
+                  ? prefill.destinationId || ""
+                  : ((current.destinationId && loadedDestinations.some((item) => item.id === current.destinationId))
+                    ? current.destinationId
+                    : ""),
+            categorieClientId:
+              normalizedProfiles[0]?.categorieClientId ||
+              (current.categorieClientId && loadedCategories.some((item) => item.id === current.categorieClientId)
+                ? current.categorieClientId
+                : ""),
+            gamme:
+              hasNavigationPrefill
+                ? normalizeGamme(prefill.gamme ?? current.gamme ?? initialForm.gamme)
+                : current.gamme,
+            nombrePersonnes:
+              hasNavigationPrefill
+                ? totalVoyageurs(normalizedProfiles) || current.nombrePersonnes || initialForm.nombrePersonnes
+                : current.nombrePersonnes,
+            voyageurProfiles: normalizedProfiles,
+          };
+        });
       } catch (requestError) {
         setError(getErrorMessage(requestError, "Impossible de charger les donnees de reservation."));
       } finally {
@@ -299,15 +385,24 @@ export default function ReservationsPage() {
       source: prefill.source ?? current.source,
       destinationId: prefill.destinationId ?? current.destinationId,
       planificationVoyageId: prefill.planificationVoyageId ?? current.planificationVoyageId,
-      categorieClientId: prefill.categorieClientId ?? current.categorieClientId,
+      categorieClientId:
+        prefill.voyageurProfiles[0]?.categorieClientId ??
+        prefill.categorieClientId ??
+        current.categorieClientId,
       gamme:
         hasNavigationPrefill
           ? normalizeGamme(prefill.gamme ?? current.gamme)
           : current.gamme,
       nombrePersonnes:
         hasNavigationPrefill
-          ? prefill.nombrePersonnes || current.nombrePersonnes
+          ? totalVoyageurs(prefill.voyageurProfiles) || prefill.nombrePersonnes || current.nombrePersonnes
           : current.nombrePersonnes,
+      voyageurProfiles:
+        hasNavigationPrefill
+          ? prefill.voyageurProfiles.length > 0
+            ? prefill.voyageurProfiles
+            : current.voyageurProfiles
+          : current.voyageurProfiles,
       elementsSelectionnes: prefill.elementsSelectionnes ?? current.elementsSelectionnes,
       resumeSimulation: prefill.resumeSimulation ?? current.resumeSimulation,
       commentaireClient: prefill.commentaireClient ?? current.commentaireClient,
@@ -345,6 +440,29 @@ export default function ReservationsPage() {
 
     void loadPlanifications();
   }, [form.destinationId, hasNavigationPrefill, prefill.planificationVoyageId, token]);
+
+  useEffect(() => {
+    const normalizedProfiles = ensureValidProfiles(
+      form.voyageurProfiles,
+      categories,
+      form.categorieClientId || prefill.categorieClientId || undefined
+    );
+    const nextCategorieId = normalizedProfiles[0]?.categorieClientId || "";
+    const nextNombrePersonnes = totalVoyageurs(normalizedProfiles) || 1;
+
+    if (
+      JSON.stringify(normalizedProfiles) !== JSON.stringify(form.voyageurProfiles) ||
+      form.categorieClientId !== nextCategorieId ||
+      form.nombrePersonnes !== nextNombrePersonnes
+    ) {
+      setForm((current) => ({
+        ...current,
+        categorieClientId: nextCategorieId,
+        nombrePersonnes: nextNombrePersonnes,
+        voyageurProfiles: normalizedProfiles,
+      }));
+    }
+  }, [categories, form.categorieClientId, form.nombrePersonnes, form.voyageurProfiles, prefill.categorieClientId]);
 
   useEffect(() => {
     const canQuote =
@@ -394,6 +512,7 @@ export default function ReservationsPage() {
     form.categorieClientId,
     form.gamme,
     form.nombrePersonnes,
+    form.voyageurProfiles,
     token,
   ]);
 
@@ -502,7 +621,13 @@ export default function ReservationsPage() {
 
     return planifications;
   }, [form.planificationVoyageId, planifications, prefill.planificationTitle]);
-  const canSubmitReservation = !!token && !!form.destinationId && !!form.planificationVoyageId && !!form.categorieClientId && !!form.gamme && form.nombrePersonnes > 0 && !isSubmitting;
+  const canSubmitReservation =
+    !!token &&
+    !!form.destinationId &&
+    !!form.planificationVoyageId &&
+    !!form.gamme &&
+    totalVoyageurs(form.voyageurProfiles) > 0 &&
+    !isSubmitting;
   const reservationStats = useMemo(() => {
     const total = reservations.length;
     const enCours = reservations.filter(
@@ -531,7 +656,14 @@ export default function ReservationsPage() {
   const handleCreateReservation = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!token) return;
-    if (!form.destinationId || !form.planificationVoyageId || !form.categorieClientId || !form.gamme || form.nombrePersonnes <= 0) {
+    const validProfiles = ensureValidProfiles(form.voyageurProfiles, categories, form.categorieClientId || undefined);
+    if (
+      !form.destinationId ||
+      !form.planificationVoyageId ||
+      !form.gamme ||
+      validProfiles.length === 0 ||
+      totalVoyageurs(validProfiles) <= 0
+    ) {
       setError("Veuillez completer les informations obligatoires avant de reserver.");
       return;
     }
@@ -563,6 +695,7 @@ export default function ReservationsPage() {
       setForm((current) => ({
         ...current,
         commentaireClient: "",
+        voyageurProfiles: validProfiles,
       }));
       setQuote(null);
     } catch (requestError) {
@@ -599,6 +732,9 @@ export default function ReservationsPage() {
     }
     if (form.categorieClientId) {
       params.set("categorieId", form.categorieClientId);
+    }
+    if (form.voyageurProfiles.length > 0) {
+      params.set("voyageurProfiles", JSON.stringify(form.voyageurProfiles));
     }
     if (selectedCategorie?.nom) {
       params.set("categorieTitle", selectedCategorie.nom);
@@ -791,31 +927,9 @@ export default function ReservationsPage() {
                       <Label>Planification</Label>
                       <Input value={planificationLabel} readOnly />
                     </div>
-                    <div className="space-y-2">
-                      <Label>Categorie client</Label>
-                      <Input value={categorieLabel} readOnly />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Gamme</Label>
-                      <Input value={gammeLabel} readOnly />
-                    </div>
-                    <div className="space-y-2 md:col-span-2">
-                      <Label>Nombre de personnes</Label>
-                      <Input
-                        type="number"
-                        min={1}
-                        value={form.nombrePersonnes}
-                        onChange={(event) =>
-                          setForm((current) => ({
-                            ...current,
-                            nombrePersonnes: Number(event.target.value) || 1,
-                          }))
-                        }
-                      />
-                    </div>
-                  </>
-                ) : (
-                  <>
+              </>
+            ) : (
+              <>
                     <div className="space-y-2">
                       <Label>Destination</Label>
                       <Select
@@ -860,61 +974,157 @@ export default function ReservationsPage() {
                       </Select>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label>Categorie client</Label>
-                      <Select
-                        value={form.categorieClientId}
-                        onValueChange={(value) => setForm((current) => ({ ...current, categorieClientId: value }))}
-                      >
-                        <SelectTrigger>
-                          <span className={form.categorieClientId ? "truncate" : "truncate text-muted-foreground"}>
-                            {categorieLabel}
-                          </span>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categoryOptions.map((categorie) => (
-                            <SelectItem key={categorie.id} value={categorie.id}>
-                              {categorie.nom}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+              </>
+            )}
+              </div>
 
-                    <div className="space-y-2">
-                      <Label>Gamme</Label>
-                      <Select
-                        value={normalizeGamme(form.gamme)}
-                        onValueChange={(value) => setForm((current) => ({ ...current, gamme: normalizeGamme(value) }))}
-                      >
-                        <SelectTrigger>
-                          <span className={form.gamme ? "truncate" : "truncate text-muted-foreground"}>
-                            {gammeLabel}
-                          </span>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="MOYENNE">MOYENNE</SelectItem>
-                          <SelectItem value="LUXE">LUXE</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+              <div className="space-y-4 rounded-2xl border border-border/60 bg-muted/20 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <Label className="text-base">Profils voyageurs</Label>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Melangez plusieurs categories et plusieurs gammes dans une seule reservation.
+                    </p>
+                  </div>
+                  {!isLockedPrefill ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() =>
+                        setForm((current) => ({
+                          ...current,
+                          voyageurProfiles: [
+                              ...current.voyageurProfiles,
+                              {
+                                categorieClientId: categories[0]?.id ?? "",
+                                gamme: "MOYENNE",
+                                nombrePersonnes: 1,
+                              },
+                          ],
+                        }))
+                      }
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Ajouter un profil
+                    </Button>
+                  ) : null}
+                </div>
 
-                    <div className="space-y-2 md:col-span-2">
-                      <Label>Nombre de personnes</Label>
-                      <Input
-                        type="number"
-                        min={1}
-                        value={form.nombrePersonnes}
-                        onChange={(event) =>
-                          setForm((current) => ({
-                            ...current,
-                            nombrePersonnes: Number(event.target.value) || 1,
-                          }))
-                        }
-                      />
-                    </div>
-                  </>
-                )}
+                <div className="grid gap-3">
+                  {ensureValidProfiles(form.voyageurProfiles, categories, form.categorieClientId || undefined).map((profile, index) => {
+                    const profileCategory = categories.find((categorie) => categorie.id === profile.categorieClientId);
+                    return (
+                      <div key={`${profile.categorieClientId || "profil"}-${index}`} className="rounded-2xl border border-border/60 bg-white p-4">
+                        <div className="flex flex-col gap-4 md:grid md:grid-cols-[minmax(0,1fr)_180px_180px_auto] md:items-end">
+                          <div className="flex-1 space-y-2">
+                            <Label>Categorie client</Label>
+                            {isLockedPrefill ? (
+                              <Input value={profileCategory?.nom ?? `Categorie ${index + 1}`} readOnly />
+                            ) : (
+                              <Select
+                                value={profile.categorieClientId}
+                                onValueChange={(value) =>
+                                  setForm((current) => ({
+                                    ...current,
+                                    voyageurProfiles: current.voyageurProfiles.map((item, currentIndex) =>
+                                      currentIndex === index ? { ...item, categorieClientId: value } : item
+                                    ),
+                                  }))
+                                }
+                              >
+                                <SelectTrigger>
+                                  <span className={profile.categorieClientId ? "truncate" : "truncate text-muted-foreground"}>
+                                    {profileCategory?.nom ?? `Selectionner une categorie`}
+                                  </span>
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {categoryOptions.map((categorie) => (
+                                    <SelectItem key={categorie.id} value={categorie.id}>
+                                      {categorie.nom}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          </div>
+
+                          <div className="w-full md:w-44 space-y-2">
+                            <Label>Gamme</Label>
+                            {isLockedPrefill ? (
+                              <Input value={normalizeGamme(profile.gamme)} readOnly />
+                            ) : (
+                              <Select
+                                value={normalizeGamme(profile.gamme)}
+                                onValueChange={(value) =>
+                                  setForm((current) => ({
+                                    ...current,
+                                    voyageurProfiles: current.voyageurProfiles.map((item, currentIndex) =>
+                                      currentIndex === index
+                                        ? { ...item, gamme: normalizeGamme(value) }
+                                        : item
+                                    ),
+                                  }))
+                                }
+                              >
+                                <SelectTrigger>
+                                  <span>{normalizeGamme(profile.gamme)}</span>
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="MOYENNE">MOYENNE</SelectItem>
+                                  <SelectItem value="LUXE">LUXE</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            )}
+                          </div>
+
+                          <div className="w-full md:w-44 space-y-2">
+                            <Label>Nombre de personnes</Label>
+                            <Input
+                              type="number"
+                              min={1}
+                              readOnly={isLockedPrefill}
+                              value={profile.nombrePersonnes}
+                              onChange={(event) =>
+                                setForm((current) => ({
+                                  ...current,
+                                  voyageurProfiles: current.voyageurProfiles.map((item, currentIndex) =>
+                                    currentIndex === index
+                                      ? { ...item, nombrePersonnes: Number(event.target.value) || 1 }
+                                      : item
+                                  ),
+                                }))
+                              }
+                            />
+                          </div>
+
+                          {!isLockedPrefill ? (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              disabled={form.voyageurProfiles.length <= 1}
+                              onClick={() =>
+                                setForm((current) => ({
+                                  ...current,
+                                  voyageurProfiles:
+                                    current.voyageurProfiles.length <= 1
+                                      ? current.voyageurProfiles
+                                      : current.voyageurProfiles.filter((_, currentIndex) => currentIndex !== index),
+                                }))
+                              }
+                            >
+                              <Trash2 className="h-4 w-4 text-rose-600" />
+                            </Button>
+                          ) : null}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="rounded-xl bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+                  Total voyageurs : <span className="font-medium text-foreground">{totalVoyageurs(form.voyageurProfiles)}</span>
+                </div>
               </div>
 
               {form.source === "SIMULATION" ? (
@@ -1081,7 +1291,7 @@ export default function ReservationsPage() {
               </div>
               <div className="rounded-xl border border-dashed border-border/70 p-3 text-sm text-muted-foreground">
                 {quote
-                  ? `Estimation basee sur ${quote.dureeJours} jour(s) et ${form.nombrePersonnes} voyageur(s).`
+                  ? `Estimation basee sur ${quote.dureeJours} jour(s) et ${totalVoyageurs(form.voyageurProfiles)} voyageur(s).`
                   : quoteError || "Selectionnez une planification, une categorie et une gamme pour obtenir un devis."}
               </div>
             </CardContent>

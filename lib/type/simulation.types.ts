@@ -1,4 +1,10 @@
 
+export type VoyageurProfile = {
+    categorieClientId: string;
+    gamme: string;
+    nombrePersonnes: number;
+};
+
 export type SimulationRequest = {
     destinationId: string;
     planificationId: string;
@@ -6,6 +12,7 @@ export type SimulationRequest = {
     idCategorieClient: string;
     gamme: string;
     nombrePersonnes: number;
+    profilsVoyageurs?: VoyageurProfile[];
     elementsSelectionnes?: string[];
 };
 
@@ -15,6 +22,7 @@ export type SeuilMinimumRequest = {
     idCategorieClient: string;
     gamme: string;
     nombrePersonnes: number;
+    profilsVoyageurs?: VoyageurProfile[];
 };
 
 export type SeuilMinimumResponse = {

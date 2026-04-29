@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { loadAuth } from "@/lib/auth";
 import { getErrorMessage } from "@/lib/api/client";
 import { deleteMyReservation, getReservationById } from "@/lib/api/reservations";
-import { Reservation, ReservationStatus } from "@/lib/type/reservation";
+import { Reservation, ReservationStatus, VoyageurProfile } from "@/lib/type/reservation";
 
 const statusStyles: Record<ReservationStatus, string> = {
   EN_ATTENTE: "bg-amber-100 text-amber-800 hover:bg-amber-100",
@@ -51,6 +51,18 @@ function extractBudgetClientFromSummary(summary: string | null | undefined): num
   const numericPart = line.replace(/[^0-9]/g, "");
   const parsed = Number(numericPart);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+}
+
+function buildVoyageurProfiles(reservation: Reservation): VoyageurProfile[] {
+  return reservation.details.map((detail) => ({
+    categorieClientId: detail.categorieClientId,
+    gamme: detail.gamme,
+    nombrePersonnes: detail.nombrePersonnes,
+  }));
+}
+
+function totalVoyageurs(reservation: Reservation): number {
+  return reservation.details.reduce((sum, detail) => sum + (detail.nombrePersonnes ?? 0), 0);
 }
 
 export default function ReservationDetailPage() {
@@ -95,6 +107,7 @@ export default function ReservationDetailPage() {
 
   const editHref = useMemo(() => {
     if (!reservation || !detail) return null;
+    const voyageurProfiles = buildVoyageurProfiles(reservation);
 
     const params = new URLSearchParams();
     params.set("editReservationId", reservation.id);
@@ -106,7 +119,8 @@ export default function ReservationDetailPage() {
     params.set("categorieId", detail.categorieClientId);
     params.set("categorieTitle", detail.nomCategorieClient);
     params.set("gamme", detail.gamme);
-    params.set("nombrePersonnes", String(detail.nombrePersonnes));
+    params.set("nombrePersonnes", String(totalVoyageurs(reservation)));
+    params.set("voyageurProfiles", JSON.stringify(voyageurProfiles));
     if (detail.elementsSelectionnes.length > 0) {
       params.set("elementsSelectionnes", detail.elementsSelectionnes.join(","));
     }
@@ -145,6 +159,7 @@ export default function ReservationDetailPage() {
 
   const simulationEditHref = useMemo(() => {
     if (!reservation || !detail || reservation.source !== "SIMULATION") return null;
+    const voyageurProfiles = buildVoyageurProfiles(reservation);
 
     const params = new URLSearchParams();
     params.set("editReservationId", reservation.id);
@@ -155,7 +170,8 @@ export default function ReservationDetailPage() {
     params.set("categorieId", detail.categorieClientId);
     params.set("categorieTitle", detail.nomCategorieClient);
     params.set("gamme", detail.gamme);
-    params.set("nombrePersonnes", String(detail.nombrePersonnes));
+    params.set("nombrePersonnes", String(totalVoyageurs(reservation)));
+    params.set("voyageurProfiles", JSON.stringify(voyageurProfiles));
     const budgetClient = extractBudgetClientFromSummary(detail.resumeSimulation);
     if (budgetClient > 0) {
       params.set("budgetClient", String(budgetClient));

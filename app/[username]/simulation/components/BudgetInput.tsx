@@ -21,10 +21,8 @@ export function BudgetInput({
 }: BudgetInputProps) {
   const hasMinimumBudget = typeof minBudget === "number" && minBudget > 0;
   const minimumBudget = hasMinimumBudget ? minBudget : 0;
-  const maxBudget =
-    adminBudget && adminBudget > 0
-      ? adminBudget
-      : Math.max(value, minimumBudget, 100000);
+  const computedAdminBudget = adminBudget && adminBudget > 0 ? adminBudget : 0;
+  const maxBudget = Math.max(computedAdminBudget, value, minimumBudget, 100000);
   const budgetRange = Math.max(maxBudget - minimumBudget, 1);
   const clampedValue = Math.min(Math.max(value, minimumBudget), maxBudget);
   const ratio = ((clampedValue - minimumBudget) / budgetRange) * 100;

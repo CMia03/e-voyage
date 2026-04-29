@@ -7,6 +7,12 @@ export type ReservationStatus =
 
 export type ReservationSource = "PRIX_DIRECT" | "SIMULATION";
 
+export type VoyageurProfile = {
+  categorieClientId: string;
+  gamme: string;
+  nombrePersonnes: number;
+};
+
 export interface ReservationDetail {
   id: string;
   destinationId: string;
@@ -57,6 +63,7 @@ export interface ReservationCreatePayload {
   categorieClientId: string;
   gamme: string;
   nombrePersonnes: number;
+  profilsVoyageurs?: VoyageurProfile[];
   commentaireClient?: string;
   elementsSelectionnes?: string[];
   resumeSimulation?: string;
