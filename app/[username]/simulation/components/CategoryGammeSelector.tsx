@@ -26,7 +26,7 @@ export function CategoryGammeSelector({
   disabled,
 }: CategoryGammeSelectorProps) {
   const inputClassName =
-    "h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 disabled:bg-slate-100";
+    "h-12 w-full max-w-full rounded-2xl border border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 disabled:bg-slate-100";
 
   const updateProfile = (index: number, nextProfile: VoyageurProfile) => {
     onProfilesChange(profiles.map((profile, currentIndex) => (currentIndex === index ? nextProfile : profile)));
@@ -44,7 +44,7 @@ export function CategoryGammeSelector({
   const totalVoyageurs = profiles.reduce((sum, profile) => sum + Math.max(profile.nombrePersonnes || 0, 0), 0);
 
   return (
-    <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-4">
+    <div className="min-w-0 rounded-3xl border border-slate-200 bg-slate-50/80 p-4">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">
@@ -60,7 +60,9 @@ export function CategoryGammeSelector({
 
         <div className="flex items-center gap-3">
           <div className="rounded-full border border-emerald-200 bg-white px-4 py-2 text-xs font-medium text-emerald-800">
-            {profiles.length} profil(s) · {totalVoyageurs} voyageur(s)
+            {totalVoyageurs} voyageur(s)
+
+             {/* {profiles.length} profil(s)  */}
           </div>
           <button
             type="button"
@@ -74,13 +76,16 @@ export function CategoryGammeSelector({
         </div>
       </div>
 
-      <div className="grid gap-4">
+      <div className="grid min-w-0 gap-4">
         {profiles.map((profile, index) => (
-          <div key={`${profile.categorieClientId || "profil"}-${index}`} className="rounded-3xl border border-emerald-100 bg-white p-4 shadow-sm">
+          <div
+            key={`${profile.categorieClientId || "profil"}-${index}`}
+            className="min-w-0 rounded-3xl border border-emerald-100 bg-white p-4 shadow-sm"
+          >
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-slate-900">Profil {index + 1}</p>
-                <p className="text-xs text-slate-500">Categorie + nombre de personnes</p>
+                <p className="text-xs text-slate-500">Categorie, gamme et nombre de personnes</p>
               </div>
               <button
                 type="button"
@@ -92,9 +97,9 @@ export function CategoryGammeSelector({
               </button>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_180px_180px]">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Categorie client</label>
+            <div className="grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-[minmax(180px,1fr)_minmax(135px,160px)_minmax(135px,160px)] xl:items-end">
+              <div className="min-w-0 max-w-[280px] space-y-2">
+                <label className="whitespace-nowrap text-sm font-medium text-slate-700">Categorie client</label>
                 <select
                   value={profile.categorieClientId}
                   onChange={(event) =>
@@ -114,8 +119,8 @@ export function CategoryGammeSelector({
                 </select>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Gamme</label>
+              <div className="min-w-0 max-w-[160px] space-y-2">
+                <label className="whitespace-nowrap text-sm font-medium text-slate-700">Gamme</label>
                 <select
                   value={profile.gamme}
                   onChange={(event) =>
@@ -132,8 +137,8 @@ export function CategoryGammeSelector({
                 </select>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Nombre de personnes</label>
+              <div className="min-w-0 max-w-[160px] space-y-2 md:col-span-2 xl:col-span-1">
+                <label className="whitespace-nowrap text-sm font-medium text-slate-700">Nombre de personnes</label>
                 <input
                   type="number"
                   min="1"

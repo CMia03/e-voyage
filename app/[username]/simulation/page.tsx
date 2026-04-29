@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { BellRing } from "lucide-react";
+import { BellRing, Expand } from "lucide-react";
 
 import { useSimulation } from "@/lib/hooks/useSimulation";
 import { ElementSimulation, JourSimulation, VoyageurProfile } from "@/lib/type/simulation.types";
@@ -15,6 +15,7 @@ import { PlanningJournalier } from "./components/PlanningJournalier";
 import { BudgetSummary } from "./components/BudgetSummary";
 import { ActionButtons } from "./components/ActionButtons";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 type SuggestedElement = {
   id: string;
@@ -187,6 +188,7 @@ export default function SimulationPage() {
   const username = typeof params?.username === "string" ? params.username : "client";
   const router = useRouter();
   const query = useSearchParams();
+  const [isPlanningExpanded, setIsPlanningExpanded] = useState(false);
   const prefillAppliedRef = useRef(false);
   const autoSimulationLaunchedRef = useRef(false);
   const {
@@ -362,13 +364,16 @@ export default function SimulationPage() {
     ]
   );
   const showBudgetAlertModal =
-    budgetAlertKey !== null && dismissedBudgetAlertKey !== budgetAlertKey;
+      budgetAlertKey !== null && dismissedBudgetAlertKey !== budgetAlertKey;
   const showBudgetAlertIndicator =
-    budgetAlertKey !== null && dismissedBudgetAlertKey === budgetAlertKey;
+      budgetAlertKey !== null && dismissedBudgetAlertKey === budgetAlertKey;
   const showPositiveBudgetModal =
-    positiveBudgetKey !== null && dismissedPositiveBudgetKey !== positiveBudgetKey;
+      positiveBudgetKey !== null && dismissedPositiveBudgetKey !== positiveBudgetKey;
   const showPositiveBudgetIndicator =
-    positiveBudgetKey !== null && dismissedPositiveBudgetKey === positiveBudgetKey;
+      positiveBudgetKey !== null && dismissedPositiveBudgetKey === positiveBudgetKey;
+  const handlePlanningExpandedChange = (open: boolean) => {
+    setIsPlanningExpanded(open);
+  };
 
   const canSimulate =
     !loading &&
@@ -487,11 +492,11 @@ export default function SimulationPage() {
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.14),_transparent_38%),linear-gradient(180deg,_#f7faf8_0%,_#ffffff_42%,_#f8fafc_100%)]">
       {showBudgetAlertIndicator ? (
-        <button
-          type="button"
-          onClick={() => setDismissedBudgetAlertKey(null)}
-          className="fixed right-4 top-28 z-40 inline-flex items-center gap-3 rounded-full border border-amber-300 bg-white/95 px-4 py-3 text-left shadow-[0_16px_45px_-24px_rgba(217,119,6,0.75)] backdrop-blur transition hover:-translate-y-0.5 hover:bg-amber-50 sm:right-6"
-        >
+          <button
+            type="button"
+            onClick={() => setDismissedBudgetAlertKey(null)}
+            className="pointer-events-auto fixed right-4 top-28 z-[120] inline-flex items-center gap-3 rounded-full border border-amber-300 bg-white/95 px-4 py-3 text-left shadow-[0_16px_45px_-24px_rgba(217,119,6,0.75)] backdrop-blur transition hover:-translate-y-0.5 hover:bg-amber-50 sm:right-6"
+          >
           <span className="relative flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-700">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-300/70" />
             <BellRing className="relative z-10 h-5 w-5" />
@@ -507,12 +512,12 @@ export default function SimulationPage() {
         </button>
       ) : null}
 
-      {showPositiveBudgetIndicator ? (
-        <button
-          type="button"
-          onClick={() => setDismissedPositiveBudgetKey(null)}
-          className="fixed right-4 top-28 z-40 inline-flex items-center gap-3 rounded-full border border-emerald-300 bg-white/95 px-4 py-3 text-left shadow-[0_16px_45px_-24px_rgba(16,185,129,0.75)] backdrop-blur transition hover:-translate-y-0.5 hover:bg-emerald-50 sm:right-6"
-        >
+        {showPositiveBudgetIndicator ? (
+          <button
+            type="button"
+            onClick={() => setDismissedPositiveBudgetKey(null)}
+            className="pointer-events-auto fixed right-4 top-28 z-[120] inline-flex items-center gap-3 rounded-full border border-emerald-300 bg-white/95 px-4 py-3 text-left shadow-[0_16px_45px_-24px_rgba(16,185,129,0.75)] backdrop-blur transition hover:-translate-y-0.5 hover:bg-emerald-50 sm:right-6"
+          >
           <span className="relative flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300/70" />
             <BellRing className="relative z-10 h-5 w-5" />
@@ -529,7 +534,7 @@ export default function SimulationPage() {
       ) : null}
 
       {showBudgetAlertModal ? (
-        <section className="fixed right-4 top-44 z-40 w-[min(360px,calc(100vw-2rem))] rounded-[24px] border border-amber-200 bg-[linear-gradient(180deg,_rgba(255,251,235,0.99),_rgba(255,247,214,0.97))] p-4 shadow-[0_24px_80px_-38px_rgba(217,119,6,0.65)] sm:right-6">
+        <section className="pointer-events-auto fixed right-4 top-44 z-[120] w-[min(360px,calc(100vw-2rem))] rounded-[24px] border border-amber-200 bg-[linear-gradient(180deg,_rgba(255,251,235,0.99),_rgba(255,247,214,0.97))] p-4 shadow-[0_24px_80px_-38px_rgba(217,119,6,0.65)] sm:right-6">
           <div className="absolute -top-2 right-7 h-4 w-4 rotate-45 border-l border-t border-amber-200 bg-amber-50" />
 
           <div className="flex items-start justify-between gap-3">
@@ -596,8 +601,8 @@ export default function SimulationPage() {
         </section>
       ) : null}
 
-      {showPositiveBudgetModal ? (
-        <section className="fixed right-4 top-44 z-40 w-[min(360px,calc(100vw-2rem))] rounded-[24px] border border-emerald-200 bg-[linear-gradient(180deg,_rgba(236,253,245,0.99),_rgba(220,252,231,0.97))] p-4 shadow-[0_24px_80px_-38px_rgba(16,185,129,0.55)] sm:right-6">
+        {showPositiveBudgetModal ? (
+        <section className="pointer-events-auto fixed right-4 top-44 z-[120] w-[min(360px,calc(100vw-2rem))] rounded-[24px] border border-emerald-200 bg-[linear-gradient(180deg,_rgba(236,253,245,0.99),_rgba(220,252,231,0.97))] p-4 shadow-[0_24px_80px_-38px_rgba(16,185,129,0.55)] sm:right-6">
           <div className="absolute -top-2 right-7 h-4 w-4 rotate-45 border-l border-t border-emerald-200 bg-emerald-50" />
 
           <div className="flex items-start justify-between gap-3">
@@ -726,7 +731,7 @@ export default function SimulationPage() {
           </div>
         </section>
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
           <div className="space-y-6">
             <section className="rounded-[28px] border border-slate-200/80 bg-white/90 p-5 shadow-[0_16px_60px_-40px_rgba(15,23,42,0.45)] sm:p-6">
               <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -856,25 +861,62 @@ export default function SimulationPage() {
                       />
                     </section>
 
-                    {result.jours ? (
-                      <section className="rounded-[28px] border border-slate-200/80 bg-white/90 p-5 shadow-[0_16px_60px_-40px_rgba(15,23,42,0.45)] sm:p-6">
-                        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-                          <div>
-                            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-700">
+                      {result.jours ? (
+                        <section className="rounded-[28px] border border-slate-200/80 bg-white/90 p-5 shadow-[0_16px_60px_-40px_rgba(15,23,42,0.45)] sm:p-6">
+                          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+                            <div>
+                              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-700">
                               Etape 3
                             </p>
                             <h3 className="mt-2 text-xl font-semibold text-slate-900">
                               Planning journalier recommande
                             </h3>
-                            <p className="mt-1 text-sm text-slate-600">
-                              Visualisez votre voyage jour par jour, avec les blocs
-                              obligatoires et optionnels.
-                            </p>
+                              <p className="mt-1 text-sm text-slate-600">
+                                Visualisez votre voyage jour par jour, avec les blocs
+                                obligatoires et optionnels.
+                              </p>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Dialog open={isPlanningExpanded} onOpenChange={handlePlanningExpandedChange}>
+                                <DialogTrigger asChild>
+                                  <Button type="button" variant="outline" size="icon" aria-label="Ouvrir le planning en grand ecran">
+                                    <Expand className="h-4 w-4" />
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent
+                                  className="!h-[92vh] !w-[94vw] !max-w-[1400px] overflow-hidden rounded-[28px] border border-slate-200 bg-white p-0 sm:!max-w-[1400px]"
+                                  onInteractOutside={(event) => {
+                                    event.preventDefault();
+                                  }}
+                                  onEscapeKeyDown={(event) => {
+                                    event.preventDefault();
+                                  }}
+                                >
+                                  <DialogHeader className="border-b border-slate-200 bg-slate-50/90 px-6 py-5">
+                                    <DialogTitle className="text-xl font-semibold text-slate-900">
+                                      Planning journalier recommande
+                                    </DialogTitle>
+                                    <DialogDescription className="text-sm text-slate-600">
+                                      Visualisez votre voyage en grand format et ajustez les blocs obligatoires et optionnels plus confortablement.
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <div className="h-full overflow-auto px-6 py-5">
+                                    <PlanningJournalier
+                                      jours={result.jours}
+                                      elementsSelectionnes={elementsSelectionnes}
+                                      onToggleElement={toggleElement}
+                                    />
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
+
+                              {/* <Button asChild variant="outline">
+                                <Link href={`/${username}/reservations`}>Voir mes reservations</Link>
+                              </Button> */}
+
+                              
+                            </div>
                           </div>
-                          <Button asChild variant="outline">
-                            <Link href={`/${username}/reservations`}>Voir mes reservations</Link>
-                          </Button>
-                        </div>
 
                         <PlanningJournalier
                           jours={result.jours}
@@ -903,8 +945,10 @@ export default function SimulationPage() {
                 </section>
               </>
             ) : (
+
+              
               <section className="rounded-[28px] border border-slate-200/80 bg-white/90 p-5 shadow-[0_16px_60px_-40px_rgba(15,23,42,0.45)] sm:p-6">
-                <div className="grid gap-4 md:grid-cols-3">
+                {/* <div className="grid gap-4 md:grid-cols-3">
                   <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
                       1. Choisissez
@@ -929,7 +973,7 @@ export default function SimulationPage() {
                       Activez les options qui vous donnent le meilleur voyage.
                     </p>
                   </div>
-                </div>
+                </div> */}
 
                 {query?.get("planificationId") ? (
                   <p className="mt-4 text-sm text-emerald-700">
@@ -940,61 +984,62 @@ export default function SimulationPage() {
             )}
           </div>
 
-          <aside className="space-y-6 xl:sticky xl:top-24 xl:self-start">
-            <section className="rounded-[28px] border border-slate-200/80 bg-white/90 p-5 shadow-[0_16px_60px_-40px_rgba(15,23,42,0.45)] sm:p-6">
+          <aside className="space-y-5 xl:sticky xl:top-24 xl:self-start">
+            <section className="rounded-[24px] border border-slate-200/80 bg-white/90 p-4 shadow-[0_16px_60px_-40px_rgba(15,23,42,0.45)] sm:p-5">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-700">
                 Vue rapide
               </p>
-              <h2 className="mt-2 text-xl font-semibold text-slate-900">
+              <h2 className="mt-2 text-lg font-semibold text-slate-900">
                 Votre cap budgetaire
               </h2>
-              <p className="mt-2 text-sm leading-7 text-slate-600">
+
+              {/* <p className="mt-2 text-sm leading-6 text-slate-600">
                 Cette colonne vous aide a garder une vision simple de votre marge de
                 manoeuvre avant et apres simulation.
-              </p>
+              </p> */}
 
-              <div className="mt-5 space-y-3">
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+              <div className="mt-4 space-y-2.5">
+                <div className="rounded-[20px] border border-slate-200 bg-slate-50/80 p-3">
                   <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
                     Budget min
                   </p>
-                  <p className="mt-2 text-lg font-semibold text-slate-900">
+                  <p className="mt-1.5 text-base font-semibold text-slate-900">
                     {seuilMinimum > 0 ? formatAr(seuilMinimum) : "A calculer"}
                   </p>
                 </div>
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+                <div className="rounded-[20px] border border-slate-200 bg-slate-50/80 p-3">
                   <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
                     Budget max
                   </p>
-                  <p className="mt-2 text-lg font-semibold text-slate-900">
+                  <p className="mt-1.5 text-base font-semibold text-slate-900">
                     {budgetCategorieSelectionnee ? formatAr(budgetCategorieSelectionnee) : "A choisir"}
                   </p>
                 </div>
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+                <div className="rounded-[20px] border border-slate-200 bg-slate-50/80 p-3">
                   <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
                     Votre budget
                   </p>
-                  <p className="mt-2 text-lg font-semibold text-slate-900">
+                  <p className="mt-1.5 text-base font-semibold text-slate-900">
                     {budgetClient > 0 ? formatAr(budgetClient) : "Non renseigne"}
                   </p>
                 </div>
-                <div
-                  className={`rounded-2xl border p-4 ${
-                    result
-                      ? (result.resume?.reste ?? 0) >= 0
-                        ? "border-emerald-200 bg-emerald-50/80"
+                  <div
+                    className={`rounded-[20px] border p-3 ${
+                      result
+                        ? (result.resume?.reste ?? 0) >= 0
+                          ? "border-emerald-200 bg-emerald-50/80"
                         : "border-amber-200 bg-amber-50/80"
                       : "border-slate-200 bg-slate-50/80"
                   }`}
                 >
-                  <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
-                    Reste budgetaire
-                  </p>
-                  <p
-                    className={`mt-2 text-lg font-semibold ${
-                      result
-                        ? (result.resume?.reste ?? 0) >= 0
-                          ? "text-emerald-800"
+                    <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
+                      Reste budgetaire
+                    </p>
+                    <p
+                      className={`mt-1.5 text-base font-semibold ${
+                        result
+                          ? (result.resume?.reste ?? 0) >= 0
+                            ? "text-emerald-800"
                           : "text-amber-800"
                         : "text-slate-900"
                     }`}
@@ -1005,17 +1050,17 @@ export default function SimulationPage() {
               </div>
             </section>
 
-            <section className="rounded-[28px] border border-slate-200/80 bg-slate-950 p-6 text-white shadow-[0_20px_65px_-40px_rgba(15,23,42,0.95)]">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-300">
-                Conseil pro
-              </p>
-              <h3 className="mt-3 text-xl font-semibold">
-                Commencez par le coeur du voyage.
-              </h3>
-              <p className="mt-3 text-sm leading-7 text-slate-300">
-                Lancez d&apos;abord une simulation avec les blocs essentiels, puis
-                ajoutez progressivement les options qui augmentent la valeur de
-                l&apos;experience.
+              <section className="rounded-[24px] border border-slate-200/80 bg-slate-950 p-5 text-white shadow-[0_20px_65px_-40px_rgba(15,23,42,0.95)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-300">
+                  Conseil pro
+                </p>
+                <h3 className="mt-3 text-lg font-semibold">
+                  Commencez par le coeur du voyage.
+                </h3>
+                <p className="mt-3 text-sm leading-6 text-slate-300">
+                  Lancez d&apos;abord une simulation avec les blocs essentiels, puis
+                  ajoutez progressivement les options qui augmentent la valeur de
+                  l&apos;experience.
               </p>
             </section>
           </aside>

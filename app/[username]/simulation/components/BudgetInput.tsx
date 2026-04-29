@@ -42,14 +42,17 @@ export function BudgetInput({
           </p>
         </div>
 
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-right">
+
+        {/* <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-right">
           <p className="text-xs uppercase tracking-[0.18em] text-emerald-700">
             Budget saisi
           </p>
           <p className="mt-2 text-lg font-semibold text-emerald-950">
             {value > 0 ? formatAr(value) : "Non renseigne"}
           </p>
-        </div>
+        </div> */}
+
+
       </div>
 
       <div className="mt-5 space-y-4">
