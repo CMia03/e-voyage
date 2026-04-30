@@ -9,6 +9,7 @@ import {
   CategorieType,
   JourSimulation,
   ElementSimulation,
+  ElementSelection,
   VoyageurProfile,
 } from "@/lib/type/simulation.types";
 import { listDestinations, listPlanificationsByDestination } from "@/lib/api/destinations";
@@ -123,6 +124,18 @@ function totalVoyageurs(profiles: VoyageurProfile[]): number {
   return profiles.reduce((sum, profile) => sum + Math.max(profile.nombrePersonnes || 0, 0), 0);
 }
 
+function normalizeElementSelections(
+  selections: ElementSelection[],
+  maxQuantite: number
+): ElementSelection[] {
+  return selections
+    .map((selection) => ({
+      elementId: selection.elementId,
+      quantite: Math.max(0, Math.min(Number(selection.quantite) || 0, Math.max(maxQuantite, 0))),
+    }))
+    .filter((selection) => !!selection.elementId && selection.quantite > 0);
+}
+
 export function useSimulation() {
   const [destinations, setDestinations] = useState<DestinationType[]>([]);
   const [planifications, setPlanifications] = useState<PlanificationType[]>([]);
@@ -138,21 +151,33 @@ export function useSimulation() {
   const [selectedPlanificationId, setSelectedPlanificationId] = useState("");
   const [budgetClient, setBudgetClient] = useState(0);
   const [voyageurProfiles, setVoyageurProfiles] = useState<VoyageurProfile[]>([]);
-  const [elementsSelectionnes, setElementsSelectionnes] = useState<string[]>([]);
+  const [elementsSelectionnes, setElementsSelectionnes] = useState<ElementSelection[]>([]);
 
-  const collectElementIds = useCallback((jours: JourSimulation[] | undefined): string[] => {
+  const collectElementIds = useCallback((jours: JourSimulation[] | undefined, quantiteParBloc: number): ElementSelection[] => {
     if (!jours) return [];
     return jours.flatMap((jour: JourSimulation) =>
-      jour.elements.map((el: ElementSimulation) => el.id)
+      jour.elements.map((el: ElementSimulation) => ({ elementId: el.id, quantite: Math.max(quantiteParBloc, 0) }))
     );
   }, []);
 
-  const collectObligatoiresIds = useCallback((jours: JourSimulation[] | undefined): string[] => {
+  const collectObligatoiresIds = useCallback((jours: JourSimulation[] | undefined, quantiteParBloc: number): ElementSelection[] => {
     if (!jours) return [];
     return jours.flatMap((jour: JourSimulation) =>
       jour.elements
         .filter((el: ElementSimulation) => el.obligatoire)
-        .map((el: ElementSimulation) => el.id)
+        .map((el: ElementSimulation) => ({ elementId: el.id, quantite: Math.max(quantiteParBloc, 0) }))
+    );
+  }, []);
+
+  const collectSelectionsFromResponse = useCallback((jours: JourSimulation[] | undefined): ElementSelection[] => {
+    if (!jours) return [];
+    return jours.flatMap((jour) =>
+      jour.elements
+        .map((element) => ({
+          elementId: element.id,
+          quantite: Math.max(Number(element.quantiteSelectionnee) || 0, 0),
+        }))
+        .filter((selection) => selection.quantite > 0)
     );
   }, []);
 
@@ -349,7 +374,7 @@ export function useSimulation() {
     voyageurProfiles,
   ]);
 
-  const lancerSimulation = useCallback(async (selection?: string[]) => {
+  const lancerSimulation = useCallback(async (selection?: ElementSelection[]) => {
     const validProfiles = ensureValidProfiles(voyageurProfiles, categories);
     if (!selectedPlanificationId || validProfiles.length === 0 || budgetClient <= 0) {
       setError("Veuillez remplir tous les champs");
@@ -359,7 +384,15 @@ export function useSimulation() {
     setLoading(true);
     setError(null);
 
-    const selectionCourante = selection ?? elementsSelectionnes;
+    const previousSelection = elementsSelectionnes;
+    const selectionCourante = normalizeElementSelections(
+      selection ?? elementsSelectionnes,
+      totalVoyageurs(validProfiles)
+    );
+
+    if (selection !== undefined) {
+      setElementsSelectionnes(selectionCourante);
+    }
 
     const request: SimulationRequest = {
       destinationId: selectedDestinationId,
@@ -382,7 +415,7 @@ export function useSimulation() {
         if (selection !== undefined) {
           setElementsSelectionnes(selectionCourante);
         } else if (response.jours && elementsSelectionnes.length === 0) {
-          setElementsSelectionnes(collectElementIds(response.jours));
+          setElementsSelectionnes(collectSelectionsFromResponse(response.jours));
         }
       }
 
@@ -390,6 +423,9 @@ export function useSimulation() {
     } catch (err) {
       console.error("Erreur simulation:", err);
       setResult(null);
+      if (selection !== undefined) {
+        setElementsSelectionnes(previousSelection);
+      }
       if (err instanceof ApiError) {
         setError(err.message);
       } else if (err instanceof Error) {
@@ -404,7 +440,7 @@ export function useSimulation() {
   }, [
     budgetClient,
     categories,
-    collectElementIds,
+    collectSelectionsFromResponse,
     elementsSelectionnes,
     selectedDestinationId,
     selectedPlanificationId,
@@ -420,25 +456,32 @@ export function useSimulation() {
     );
   };
 
-  const toggleElement = useCallback(async (elementId: string) => {
+  const updateElementQuantity = useCallback(async (elementId: string, quantite: number) => {
     if (!result?.jours) return;
 
-    const prochaineSelection = elementsSelectionnes.includes(elementId)
-      ? elementsSelectionnes.filter((id) => id !== elementId)
-      : [...elementsSelectionnes, elementId];
+    const totalGroup = totalVoyageurs(ensureValidProfiles(voyageurProfiles, categories));
+    const prochaineSelection = normalizeElementSelections(
+      [
+        ...elementsSelectionnes.filter((item) => item.elementId !== elementId),
+        { elementId, quantite },
+      ],
+      totalGroup
+    );
 
     await lancerSimulation(prochaineSelection);
-  }, [elementsSelectionnes, lancerSimulation, result?.jours]);
+  }, [categories, elementsSelectionnes, lancerSimulation, result?.jours, voyageurProfiles]);
 
   const toutCocher = useCallback(async () => {
     if (!result?.jours) return;
-    await lancerSimulation(collectElementIds(result.jours));
-  }, [collectElementIds, lancerSimulation, result?.jours]);
+    const totalGroup = totalVoyageurs(ensureValidProfiles(voyageurProfiles, categories));
+    await lancerSimulation(collectElementIds(result.jours, totalGroup));
+  }, [categories, collectElementIds, lancerSimulation, result?.jours, voyageurProfiles]);
 
   const toutDecocher = useCallback(async () => {
     if (!result?.jours) return;
-    await lancerSimulation(collectObligatoiresIds(result.jours));
-  }, [collectObligatoiresIds, lancerSimulation, result?.jours]);
+    const totalGroup = totalVoyageurs(ensureValidProfiles(voyageurProfiles, categories));
+    await lancerSimulation(collectObligatoiresIds(result.jours, totalGroup));
+  }, [categories, collectObligatoiresIds, lancerSimulation, result?.jours, voyageurProfiles]);
 
   const resetSimulation = () => {
     setResult(null);
@@ -469,7 +512,7 @@ export function useSimulation() {
     elementsSelectionnes,
     setElementsSelectionnes,
     lancerSimulation,
-    toggleElement,
+    updateElementQuantity,
     toutCocher,
     toutDecocher,
     resetSimulation,

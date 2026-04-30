@@ -21,6 +21,7 @@ export function BudgetInput({
 }: BudgetInputProps) {
   const hasMinimumBudget = typeof minBudget === "number" && minBudget > 0;
   const minimumBudget = hasMinimumBudget ? minBudget : 0;
+  const budgetPlaceholder = hasMinimumBudget ? formatAr(minimumBudget) : "Ex: 500000";
   const computedAdminBudget = adminBudget && adminBudget > 0 ? adminBudget : 0;
   const maxBudget = Math.max(computedAdminBudget, value, minimumBudget, 100000);
   const budgetRange = Math.max(maxBudget - minimumBudget, 1);
@@ -60,7 +61,7 @@ export function BudgetInput({
           type="number"
           value={value || ""}
           onChange={(event) => onChange(parseInt(event.target.value, 10) || 0)}
-          placeholder="Ex: 500000"
+          placeholder={budgetPlaceholder}
           disabled={disabled}
           className="h-13 w-full rounded-2xl border border-slate-300 bg-white px-4 text-base font-medium text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 disabled:bg-slate-100"
         />

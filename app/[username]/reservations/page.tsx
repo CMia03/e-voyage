@@ -29,6 +29,7 @@ import {
   ReservationQuote,
   ReservationSource,
   ReservationStatus,
+  ElementSelection,
   VoyageurProfile,
 } from "@/lib/type/reservation";
 import type { DestinationDetails, PlanificationVoyage } from "@/lib/type/destination";
@@ -43,6 +44,7 @@ type SimulationElementCard = {
   titre: string;
   prix?: number;
   type?: string;
+  quantite?: number;
   jourNumero?: number;
   jourTitre?: string;
 };
@@ -137,6 +139,7 @@ function parseSimulationElementCards(value: string | null): SimulationElementCar
         titre: typeof item?.titre === "string" ? item.titre : "",
         prix: typeof item?.prix === "number" ? item.prix : undefined,
         type: typeof item?.type === "string" ? item.type : undefined,
+        quantite: typeof item?.quantite === "number" ? item.quantite : undefined,
         jourNumero: typeof item?.jourNumero === "number" ? item.jourNumero : undefined,
         jourTitre: typeof item?.jourTitre === "string" ? item.jourTitre : undefined,
       }))
@@ -144,6 +147,46 @@ function parseSimulationElementCards(value: string | null): SimulationElementCar
   } catch {
     return [];
   }
+}
+
+function parseElementSelections(value: string | null | undefined): ElementSelection[] {
+  if (!value) return [];
+
+  try {
+    const parsed = JSON.parse(value);
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed
+      .map((item) => ({
+        elementId: typeof item?.elementId === "string" ? item.elementId : "",
+        quantite: typeof item?.quantite === "number" ? item.quantite : 0,
+      }))
+      .filter((item) => !!item.elementId && item.quantite > 0);
+  } catch {
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .map((elementId) => ({ elementId, quantite: 1 }));
+  }
+}
+
+function parseSummaryLines(summary: string) {
+  return summary
+    .split("\n")
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .map((item) => {
+      const separatorIndex = item.indexOf(":");
+      if (separatorIndex === -1) {
+        return { label: "", value: item };
+      }
+
+      return {
+        label: item.slice(0, separatorIndex).trim(),
+        value: item.slice(separatorIndex + 1).trim(),
+      };
+    });
 }
 
 function parseVoyageurProfiles(
@@ -212,6 +255,31 @@ function totalVoyageurs(profiles: VoyageurProfile[]): number {
   return profiles.reduce((sum, profile) => sum + Math.max(profile.nombrePersonnes || 0, 0), 0);
 }
 
+function totalVoyageursFromDetails(reservation: Reservation): number {
+  return reservation.details.reduce((sum, detail) => sum + Math.max(detail.nombrePersonnes || 0, 0), 0);
+}
+
+function getReservationProfilesSummary(reservation: Reservation) {
+  if (reservation.details.length === 0) {
+    return "Aucun profil";
+  }
+
+  if (reservation.details.length === 1) {
+    const detail = reservation.details[0];
+    return `${detail.nomCategorieClient ?? "-"} - ${detail.gamme ?? "-"} - ${detail.nombrePersonnes ?? 0} voyageur(s)`;
+  }
+
+  return `${reservation.details.length} profil(s) - ${totalVoyageursFromDetails(reservation)} voyageur(s)`;
+}
+
+function countUniqueSelectedElements(reservation: Reservation) {
+  return new Set(
+    reservation.details
+      .flatMap((detail) => detail.elementsSelectionnes)
+      .map((element) => element.elementId)
+  ).size;
+}
+
 function buildPayload(form: ReservationFormState): ReservationCreatePayload {
   const validProfiles = form.voyageurProfiles.filter(
     (profile) => !!profile.categorieClientId && !!profile.gamme && profile.nombrePersonnes > 0
@@ -228,10 +296,7 @@ function buildPayload(form: ReservationFormState): ReservationCreatePayload {
     commentaireClient: form.commentaireClient || undefined,
     elementsSelectionnes:
       form.source === "SIMULATION"
-        ? form.elementsSelectionnes
-            .split(",")
-            .map((item) => item.trim())
-            .filter(Boolean)
+        ? parseElementSelections(form.elementsSelectionnes)
         : undefined,
     resumeSimulation:
       form.source === "SIMULATION" && form.resumeSimulation.trim()
@@ -519,6 +584,10 @@ export default function ReservationsPage() {
   const selectedDestination = destinations.find((item) => item.id === form.destinationId) ?? null;
   const selectedPlanification = planifications.find((item) => item.id === form.planificationVoyageId) ?? null;
   const selectedCategorie = categories.find((item) => item.id === form.categorieClientId) ?? null;
+  const simulationSummaryItems = useMemo(
+    () => parseSummaryLines(form.resumeSimulation),
+    [form.resumeSimulation]
+  );
   const destinationLabel = getSelectLabel(
     form.destinationId,
     selectedDestination?.title ?? prefill.destinationTitle,
@@ -543,18 +612,26 @@ export default function ReservationsPage() {
   const isLockedPrefill = isSimulationPrefill || hasNavigationPrefill;
   const isEditMode = !!prefill.editReservationId;
   const simulationElementCards = useMemo<SimulationElementCard[]>(() => {
+    const quantitiesByElement = new Map(
+      parseElementSelections(form.elementsSelectionnes).map((item) => [item.elementId, item.quantite])
+    );
+
     if (prefill.elementsDetails.length > 0) {
-      return prefill.elementsDetails;
+      return prefill.elementsDetails.map((item) => ({
+        ...item,
+        quantite: quantitiesByElement.get(item.id) ?? item.quantite,
+      }));
     }
 
-    return form.elementsSelectionnes
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean)
-      .map((id) => ({
-        id,
-        titre: id,
-      }));
+    if (!form.elementsSelectionnes.trim()) {
+      return [];
+    }
+
+    return parseElementSelections(form.elementsSelectionnes).map((item) => ({
+      id: item.elementId,
+      titre: item.elementId,
+      quantite: item.quantite,
+    }));
   }, [form.elementsSelectionnes, prefill.elementsDetails]);
   const simulationElementGroups = useMemo(() => {
     const groups = new Map<
@@ -871,7 +948,7 @@ export default function ReservationsPage() {
       ) : null}
 
       {activeSection === "create" ? (
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_360px]">
+      <div className="mx-auto w-full max-w-6xl px-6 py-8">
         <Card className="min-w-0 border-border/50">
           <CardHeader>
             <CardTitle>{isEditMode ? "Modifier ma reservation" : "Nouvelle reservation"}</CardTitle>
@@ -1182,6 +1259,9 @@ export default function ReservationsPage() {
                                       <p className="font-medium text-slate-900">{element.titre || element.id}</p>
                                       <div className="mt-2 space-y-1 text-sm text-slate-600">
                                         <p>{element.type ?? "Element de voyage"}</p>
+                                        {typeof element.quantite === "number" ? (
+                                          <p>{element.quantite} personne(s)</p>
+                                        ) : null}
                                         <p className="text-xs text-slate-500">{element.id}</p>
                                         {typeof element.prix === "number" ? (
                                           <p className="font-semibold text-emerald-800">
@@ -1208,20 +1288,37 @@ export default function ReservationsPage() {
                         Aucun element de simulation n&apos;a ete transmis pour le moment.
                       </div>
                     )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Resume simulation</Label>
+                      <div className="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-4">
+                        {simulationSummaryItems.length > 0 ? (
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            {simulationSummaryItems.map((item, index) => (
+                              <div
+                                key={`${item.label || "summary"}-${index}`}
+                                className="rounded-xl border border-emerald-100 bg-white/90 p-3"
+                              >
+                                {item.label ? (
+                                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                                    {item.label}
+                                  </p>
+                                ) : null}
+                                <p className={`text-sm font-medium text-slate-900 ${item.label ? "mt-1.5" : ""}`}>
+                                  {item.value}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">
+                            Aucun resume de simulation n&apos;a ete transmis pour le moment.
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Resume simulation</Label>
-                    <Textarea
-                      value={form.resumeSimulation}
-                      onChange={(event) =>
-                        setForm((current) => ({ ...current, resumeSimulation: event.target.value }))
-                      }
-                      placeholder="Resume rapide du scenario simule"
-                      rows={4}
-                    />
-                  </div>
-                </div>
-              ) : null}
+                ) : null}
 
               <div className="space-y-2">
                 <Label>Commentaire</Label>
@@ -1255,91 +1352,6 @@ export default function ReservationsPage() {
             </form>
           </CardContent>
         </Card>
-
-        <div className="space-y-6">
-          <Card className="border-border/50">
-            <CardHeader>
-              <CardTitle>Resume rapide</CardTitle>
-              <CardDescription>
-                Un devis est calcule automatiquement selon vos choix.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Destination</p>
-                <p className="mt-1 font-medium">{selectedDestination?.title ?? "A choisir"}</p>
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Planification</p>
-                <p className="mt-1 font-medium">
-                  {selectedPlanification?.nomPlanification ?? "A choisir"}
-                </p>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-                <div className="rounded-xl bg-muted/40 p-3">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Prix unitaire</p>
-                  <p className="mt-1 font-medium">
-                    {loadingQuote ? "Calcul..." : quote ? formatCurrency(quote.prixUnitaire) : "-"}
-                  </p>
-                </div>
-                <div className="rounded-xl bg-muted/40 p-3">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Prix total</p>
-                  <p className="mt-1 font-medium">
-                    {loadingQuote ? "Calcul..." : quote ? formatCurrency(quote.prixTotal) : "-"}
-                  </p>
-                </div>
-              </div>
-              <div className="rounded-xl border border-dashed border-border/70 p-3 text-sm text-muted-foreground">
-                {quote
-                  ? `Estimation basee sur ${quote.dureeJours} jour(s) et ${totalVoyageurs(form.voyageurProfiles)} voyageur(s).`
-                  : quoteError || "Selectionnez une planification, une categorie et une gamme pour obtenir un devis."}
-              </div>
-            </CardContent>
-          </Card>
-          
-
-          {/* <Card className="border-border/50">
-            <CardHeader>
-              <CardTitle>Vos dernieres demandes</CardTitle>
-              <CardDescription>Les reservations les plus recentes dans votre espace.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {loadingReservations ? (
-                <p className="text-sm text-muted-foreground">Chargement des reservations...</p>
-              ) : recentReservations.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Aucune reservation pour le moment.</p>
-              ) : (
-                recentReservations.map((reservation) => {
-                  const detail = reservation.details[0];
-                  return (
-                    <div key={reservation.id} className="rounded-xl border border-border/60 p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="font-medium">{reservation.reference}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {detail?.nomDestination ?? "-"} - {detail?.nomPlanification ?? "-"}
-                          </p>
-                        </div>
-                        <Badge className={statusStyles[reservation.status]}>
-                          {formatStatus(reservation.status)}
-                        </Badge>
-                      </div>
-                      <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
-                        <span>{formatCurrency(reservation.montantTotal, reservation.devise)}</span>
-                        <span>{formatDate(reservation.dateReservation)}</span>
-                        <Button asChild size="sm" variant="outline">
-                          <Link href={`/${username}/reservations/${reservation.id}`}>Voir detail</Link>
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </CardContent>
-          </Card> */}
-
-
-        </div>
       </div>
       ) : null}
 
@@ -1384,10 +1396,7 @@ export default function ReservationsPage() {
           ) : (
             filteredReservations.map((reservation) => {
               const detail = reservation.details[0];
-              const totalElements = reservation.details.reduce(
-                (sum, item) => sum + item.elementsSelectionnes.length,
-                0
-              );
+              const totalElements = countUniqueSelectedElements(reservation);
               const showElementsCount = reservation.source === "SIMULATION";
 
               return (
@@ -1410,8 +1419,7 @@ export default function ReservationsPage() {
                           {detail?.nomDestination ?? "-"} - {detail?.nomPlanification ?? "-"}
                         </p>
                         <p className="mt-1 text-sm text-muted-foreground">
-                          {detail?.nomCategorieClient ?? "-"} · {detail?.gamme ?? "-"} ·{" "}
-                          {detail?.nombrePersonnes ?? 0} voyageur(s)
+                          {getReservationProfilesSummary(reservation)}
                         </p>
                       </div>
 

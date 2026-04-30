@@ -20,7 +20,12 @@ import {
   createReservationFromPrice,
   createReservationFromSimulation,
 } from "@/lib/api/reservations";
-import { ReservationCreatePayload, ReservationQuote, ReservationSource } from "@/lib/type/reservation";
+import {
+  ElementSelection,
+  ReservationCreatePayload,
+  ReservationQuote,
+  ReservationSource,
+} from "@/lib/type/reservation";
 import type { DestinationDetails, PlanificationVoyage } from "@/lib/type/destination";
 
 type UserSummary = {
@@ -73,16 +78,39 @@ function buildPayload(form: FormState): ReservationCreatePayload {
     commentaireClient: form.commentaireClient || undefined,
     elementsSelectionnes:
       form.source === "SIMULATION"
-        ? form.elementsSelectionnes
-            .split(",")
-            .map((value) => value.trim())
-            .filter(Boolean)
+        ? parseElementSelections(form.elementsSelectionnes)
         : undefined,
     resumeSimulation:
       form.source === "SIMULATION" && form.resumeSimulation.trim()
         ? form.resumeSimulation.trim()
         : undefined,
   };
+}
+
+function parseElementSelections(value: string): ElementSelection[] {
+  if (!value.trim()) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(value);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed
+      .map((item) => ({
+        elementId: typeof item?.elementId === "string" ? item.elementId : "",
+        quantite: typeof item?.quantite === "number" ? item.quantite : 0,
+      }))
+      .filter((item) => !!item.elementId && item.quantite > 0);
+  } catch {
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .map((elementId) => ({ elementId, quantite: 1 }));
+  }
 }
 
 function formatCurrency(amount: number | undefined, devise = "MGA") {

@@ -65,6 +65,87 @@ function totalVoyageurs(reservation: Reservation): number {
   return reservation.details.reduce((sum, detail) => sum + (detail.nombrePersonnes ?? 0), 0);
 }
 
+function getUniqueSelectedElements(reservation: Reservation) {
+  const byId = new Map<string, { elementId: string; quantite: number }>();
+
+  reservation.details
+    .flatMap((detail) => detail.elementsSelectionnes)
+    .forEach((element) => {
+      if (!byId.has(element.elementId)) {
+        byId.set(element.elementId, element);
+      }
+    });
+
+  return Array.from(byId.values());
+}
+
+function mergeReservationDetails(reservation: Reservation) {
+  const groups = new Map<
+    string,
+    {
+      id: string;
+      nomDestination: string;
+      nomPlanification: string;
+      nomCategorieClient: string;
+      gamme: string;
+      nombrePersonnes: number;
+      prixTotal: number;
+      dateCreation: string;
+    }
+  >();
+
+  reservation.details.forEach((detail) => {
+    const key = [
+      detail.destinationId,
+      detail.planificationVoyageId,
+      detail.categorieClientId,
+      detail.gamme,
+    ].join("::");
+
+    const existing = groups.get(key);
+    if (existing) {
+      existing.nombrePersonnes += detail.nombrePersonnes ?? 0;
+      existing.prixTotal += detail.prixTotal ?? 0;
+      return;
+    }
+
+    groups.set(key, {
+      id: detail.id,
+      nomDestination: detail.nomDestination,
+      nomPlanification: detail.nomPlanification,
+      nomCategorieClient: detail.nomCategorieClient,
+      gamme: detail.gamme,
+      nombrePersonnes: detail.nombrePersonnes ?? 0,
+      prixTotal: detail.prixTotal ?? 0,
+      dateCreation: detail.dateCreation,
+    });
+  });
+
+  return Array.from(groups.values());
+}
+
+function parseSummaryLines(summary: string | null | undefined) {
+  if (!summary) {
+    return [];
+  }
+
+  return summary
+    .split("\n")
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .map((item) => {
+      const separatorIndex = item.indexOf(":");
+      if (separatorIndex === -1) {
+        return { label: "", value: item };
+      }
+
+      return {
+        label: item.slice(0, separatorIndex).trim(),
+        value: item.slice(separatorIndex + 1).trim(),
+      };
+    });
+}
+
 export default function ReservationDetailPage() {
   const params = useParams<{ username: string; id: string }>();
   const router = useRouter();
@@ -77,6 +158,19 @@ export default function ReservationDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const detail = reservation?.details[0] ?? null;
+  const reservationElements = useMemo(
+    () => (reservation ? getUniqueSelectedElements(reservation) : []),
+    [reservation]
+  );
+  const mergedDetails = useMemo(
+    () => (reservation ? mergeReservationDetails(reservation) : []),
+    [reservation]
+  );
+  const reservationSummary = detail?.resumeSimulation ?? null;
+  const reservationSummaryItems = useMemo(
+    () => parseSummaryLines(reservationSummary),
+    [reservationSummary]
+  );
 
   useEffect(() => {
     const loadReservation = async () => {
@@ -122,7 +216,7 @@ export default function ReservationDetailPage() {
     params.set("nombrePersonnes", String(totalVoyageurs(reservation)));
     params.set("voyageurProfiles", JSON.stringify(voyageurProfiles));
     if (detail.elementsSelectionnes.length > 0) {
-      params.set("elementsSelectionnes", detail.elementsSelectionnes.join(","));
+      params.set("elementsSelectionnes", JSON.stringify(detail.elementsSelectionnes));
     }
     if (detail.resumeSimulation) {
       params.set("resumeSimulation", detail.resumeSimulation);
@@ -177,7 +271,7 @@ export default function ReservationDetailPage() {
       params.set("budgetClient", String(budgetClient));
     }
     if (detail.elementsSelectionnes.length > 0) {
-      params.set("elementsSelectionnes", detail.elementsSelectionnes.join(","));
+      params.set("elementsSelectionnes", JSON.stringify(detail.elementsSelectionnes));
     }
     if (detail.resumeSimulation) {
       params.set("resumeSimulation", detail.resumeSimulation);
@@ -276,11 +370,11 @@ export default function ReservationDetailPage() {
               </CardContent>
             </Card>
 
-            {reservation.details.map((detail, index) => (
+            {mergedDetails.map((detail, index) => (
               <Card key={detail.id} className="border-border/50">
                 <CardHeader>
                   <CardTitle>
-                    Detail voyage {reservation.details.length > 1 ? index + 1 : ""}
+                    Detail voyage {mergedDetails.length > 1 ? index + 1 : ""}
                   </CardTitle>
                   <CardDescription>
                     {detail.nomDestination} - {detail.nomPlanification}
@@ -301,12 +395,6 @@ export default function ReservationDetailPage() {
                       <p className="mt-2 font-medium">{detail.nombrePersonnes}</p>
                     </div>
                     <div className="rounded-xl border border-border/60 p-4">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Prix unitaire</p>
-                      <p className="mt-2 font-medium">
-                        {formatCurrency(detail.prixUnitaire, reservation.devise)}
-                      </p>
-                    </div>
-                    <div className="rounded-xl border border-border/60 p-4">
                       <p className="text-xs uppercase tracking-wide text-muted-foreground">Prix total</p>
                       <p className="mt-2 font-medium">
                         {formatCurrency(detail.prixTotal, reservation.devise)}
@@ -318,30 +406,61 @@ export default function ReservationDetailPage() {
                     </div>
                   </div>
 
-                  {detail.elementsSelectionnes.length > 0 ? (
-                    <div className="space-y-3">
-                      <p className="text-sm font-medium">Elements selectionnes</p>
-                      <div className="flex flex-wrap gap-2">
-                        {detail.elementsSelectionnes.map((element) => (
-                          <Badge key={element} variant="outline">
-                            {element}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {detail.resumeSimulation ? (
-                    <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4">
-                      <p className="text-sm font-medium text-emerald-900">Resume de simulation</p>
-                      <pre className="mt-3 whitespace-pre-wrap text-sm text-emerald-900/85">
-                        {detail.resumeSimulation}
-                      </pre>
-                    </div>
-                  ) : null}
                 </CardContent>
               </Card>
             ))}
+
+            {reservationElements.length > 0 ? (
+              <Card className="border-border/50">
+                <CardHeader>
+                  <CardTitle>Elements selectionnes</CardTitle>
+                  <CardDescription>
+                    Blocs retenus pour l&apos;ensemble de la reservation.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {reservationElements.map((element) => (
+                      <Badge key={`${element.elementId}-${element.quantite}`} variant="outline">
+                        {element.elementId} - {element.quantite} pers
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : null}
+
+            {reservationSummary ? (
+              <Card className="border-border/50">
+                <CardHeader>
+                  <CardTitle>Resume de simulation</CardTitle>
+                  <CardDescription>
+                    Resume global conserve pour cette reservation.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {reservationSummaryItems.map((item, index) => (
+                        <div
+                          key={`${item.label || "summary"}-${index}`}
+                          className="rounded-xl border border-emerald-100 bg-white/90 p-3"
+                        >
+                          {item.label ? (
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                              {item.label}
+                            </p>
+                          ) : null}
+                          <p className={`text-sm font-medium text-slate-900 ${item.label ? "mt-1.5" : ""}`}>
+                            {item.value}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : null}
           </div>
 
           <div className="space-y-6">

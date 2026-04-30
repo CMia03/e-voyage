@@ -5,6 +5,11 @@ export type VoyageurProfile = {
     nombrePersonnes: number;
 };
 
+export type ElementSelection = {
+    elementId: string;
+    quantite: number;
+};
+
 export type SimulationRequest = {
     destinationId: string;
     planificationId: string;
@@ -13,7 +18,7 @@ export type SimulationRequest = {
     gamme: string;
     nombrePersonnes: number;
     profilsVoyageurs?: VoyageurProfile[];
-    elementsSelectionnes?: string[];
+    elementsSelectionnes?: ElementSelection[];
 };
 
 export type SeuilMinimumRequest = {
@@ -70,6 +75,7 @@ export type ElementDetail = {
     depart?: string;
     arrivee?: string;
     distance?: string;
+    images?: string[];
 };
 
 export type ElementSimulation = {
@@ -79,6 +85,8 @@ export type ElementSimulation = {
     prix: number;
     obligatoire: boolean;
     coche: boolean;
+    quantiteSelectionnee?: number;
+    quantiteMax?: number;
     details: ElementDetail;
 };
 

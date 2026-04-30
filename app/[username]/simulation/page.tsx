@@ -6,7 +6,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { BellRing, Expand } from "lucide-react";
 
 import { useSimulation } from "@/lib/hooks/useSimulation";
-import { ElementSimulation, JourSimulation, VoyageurProfile } from "@/lib/type/simulation.types";
+import { ElementSelection, ElementSimulation, JourSimulation, VoyageurProfile } from "@/lib/type/simulation.types";
 import { DestinationSelector } from "./components/DestinationSelector";
 import { PlanificationSelector } from "./components/PlanificationSelector";
 import { BudgetInput } from "./components/BudgetInput";
@@ -22,6 +22,11 @@ type SuggestedElement = {
   titre: string;
   prix: number;
   type: string;
+  quantiteSelectionnee: number;
+  prixParPersonne: number;
+  quantiteSuggeree: number;
+  quantiteRetiree: number;
+  economieSuggeree: number;
 };
 
 type ReservationElementPreview = {
@@ -29,6 +34,7 @@ type ReservationElementPreview = {
   titre: string;
   prix: number;
   type: string;
+  quantite?: number;
   jourNumero?: number;
   jourTitre?: string;
 };
@@ -86,6 +92,28 @@ function totalVoyageurs(profiles: VoyageurProfile[]): number {
   return profiles.reduce((sum, profile) => sum + Math.max(profile.nombrePersonnes || 0, 0), 0);
 }
 
+function parseElementSelections(value: string | null): ElementSelection[] {
+  if (!value) return [];
+
+  try {
+    const parsed = JSON.parse(value);
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed
+      .map((item) => ({
+        elementId: typeof item?.elementId === "string" ? item.elementId : "",
+        quantite: typeof item?.quantite === "number" ? item.quantite : 0,
+      }))
+      .filter((item) => !!item.elementId && item.quantite > 0);
+  } catch {
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .map((elementId) => ({ elementId, quantite: 1 }));
+  }
+}
+
 function parseSimulationElementCards(value: string | null): ReservationElementPreview[] {
   if (!value) return [];
 
@@ -99,6 +127,7 @@ function parseSimulationElementCards(value: string | null): ReservationElementPr
         titre: typeof item?.titre === "string" ? item.titre : "",
         prix: typeof item?.prix === "number" ? item.prix : 0,
         type: typeof item?.type === "string" ? item.type : "",
+        quantite: typeof item?.quantite === "number" ? item.quantite : undefined,
         jourNumero: typeof item?.jourNumero === "number" ? item.jourNumero : undefined,
         jourTitre: typeof item?.jourTitre === "string" ? item.jourTitre : undefined,
       }))
@@ -116,26 +145,56 @@ function getOptionalSuggestions(
 
   const optionnels = jours
     .flatMap((jour) => jour.elements)
-    .filter((element: ElementSimulation) => !element.obligatoire && element.coche)
-    .sort((a, b) => b.prix - a.prix);
-
-  const suggestions: SuggestedElement[] = [];
-  let montantCouvre = 0;
-
-  for (const element of optionnels) {
-    if (montantCouvre >= deficit) break;
-
-    suggestions.push({
-      id: element.id,
-      titre: element.titre,
-      prix: element.prix,
-      type: element.type,
+    .filter(
+      (element: ElementSimulation) =>
+        !element.obligatoire && element.coche && (element.quantiteSelectionnee ?? 0) > 0 && element.prix > 0
+    )
+    .sort((a, b) => {
+      const unitA = a.quantiteSelectionnee ? a.prix / a.quantiteSelectionnee : a.prix;
+      const unitB = b.quantiteSelectionnee ? b.prix / b.quantiteSelectionnee : b.prix;
+      return unitB - unitA;
     });
 
-    montantCouvre += element.prix;
+  const suggestions = optionnels
+    .map((element) => {
+      const quantiteSelectionnee = Math.max(element.quantiteSelectionnee ?? 0, 0);
+      const prixParPersonne = quantiteSelectionnee > 0 ? element.prix / quantiteSelectionnee : 0;
+
+      return {
+        id: element.id,
+        titre: element.titre,
+        prix: Math.round(element.prix),
+        type: element.type,
+        quantiteSelectionnee,
+        prixParPersonne: Math.round(prixParPersonne),
+        quantiteSuggeree: quantiteSelectionnee,
+        quantiteRetiree: 0,
+        economieSuggeree: 0,
+      };
+    })
+    .filter((element) => element.quantiteSelectionnee > 0 && element.prixParPersonne > 0);
+
+  if (suggestions.length === 0) return [];
+
+  let economieCumulee = 0;
+  while (economieCumulee < deficit) {
+    let progress = false;
+
+    for (const suggestion of suggestions) {
+      if (economieCumulee >= deficit) break;
+      if (suggestion.quantiteSuggeree <= 0) continue;
+
+      suggestion.quantiteSuggeree -= 1;
+      suggestion.quantiteRetiree += 1;
+      suggestion.economieSuggeree += suggestion.prixParPersonne;
+      economieCumulee += suggestion.prixParPersonne;
+      progress = true;
+    }
+
+    if (!progress) break;
   }
 
-  return suggestions;
+  return suggestions.filter((element) => element.quantiteRetiree > 0);
 }
 
 function getAffordableOptionalSuggestions(
@@ -191,6 +250,7 @@ export default function SimulationPage() {
   const [isPlanningExpanded, setIsPlanningExpanded] = useState(false);
   const prefillAppliedRef = useRef(false);
   const autoSimulationLaunchedRef = useRef(false);
+  const previousAutoBudgetRef = useRef<number | null>(null);
   const {
     destinations,
     planifications,
@@ -207,14 +267,12 @@ export default function SimulationPage() {
     setSelectedPlanificationId,
     budgetClient,
     setBudgetClient,
-    selectedGamme,
-    setSelectedGamme,
     voyageurProfiles,
     setVoyageurProfiles,
     elementsSelectionnes,
     setElementsSelectionnes,
     lancerSimulation,
-    toggleElement,
+    updateElementQuantity,
     toutCocher,
     toutDecocher,
     resetSimulation,
@@ -236,10 +294,7 @@ export default function SimulationPage() {
         normalizeGamme(query?.get("gamme")),
         parsePositiveInteger(query?.get("nombrePersonnes"), 1)
       ),
-      elementsSelectionnes: (query?.get("elementsSelectionnes") || "")
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean),
+      elementsSelectionnes: parseElementSelections(query?.get("elementsSelectionnes")),
       elementsDetails: parseSimulationElementCards(query?.get("elementsDetails")),
     }),
     [query]
@@ -328,7 +383,7 @@ export default function SimulationPage() {
   );
 
   const totalSuggestions = suggestionsOptionnelles.reduce(
-    (total, element) => total + element.prix,
+    (total, element) => total + element.economieSuggeree,
     0
   );
   const [dismissedBudgetAlertKey, setDismissedBudgetAlertKey] = useState<string | null>(null);
@@ -375,6 +430,18 @@ export default function SimulationPage() {
     setIsPlanningExpanded(open);
   };
 
+  useEffect(() => {
+    if (seuilMinimum <= 0) return;
+    const shouldSyncWithMinimum =
+      budgetClient <= 0 ||
+      (previousAutoBudgetRef.current !== null && budgetClient === previousAutoBudgetRef.current);
+
+    if (!shouldSyncWithMinimum) return;
+
+    setBudgetClient(seuilMinimum);
+    previousAutoBudgetRef.current = seuilMinimum;
+  }, [budgetClient, seuilMinimum, setBudgetClient]);
+
   const canSimulate =
     !loading &&
     !!selectedPlanificationId &&
@@ -395,7 +462,9 @@ export default function SimulationPage() {
       return [];
     }
     return result.jours.flatMap((jour) =>
-      jour.elements.filter((element) => element.coche).map((element) => element.id)
+      jour.elements
+        .filter((element) => (element.quantiteSelectionnee ?? 0) > 0)
+        .map((element) => ({ elementId: element.id, quantite: element.quantiteSelectionnee ?? 0 }))
     );
   }, [elementsSelectionnes, result?.jours]);
   const simulationElementDetails = useMemo<ReservationElementPreview[]>(() => {
@@ -411,6 +480,7 @@ export default function SimulationPage() {
           titre: element.titre,
           prix: element.prix,
           type: element.type,
+          quantite: element.quantiteSelectionnee ?? 0,
           jourNumero: jour.numeroJour,
           jourTitre: jour.titre,
         }))
@@ -449,7 +519,7 @@ export default function SimulationPage() {
     params.set("source", "SIMULATION");
     params.set("destinationId", selectedDestinationId);
     params.set("planificationId", selectedPlanificationId);
-    params.set("gamme", selectedGamme);
+      params.set("gamme", voyageurProfiles[0]?.gamme ?? "MOYENNE");
     params.set("nombrePersonnes", String(totalVoyageurs(voyageurProfiles)));
     if (voyageurProfiles.length > 0) {
       params.set("categorieId", voyageurProfiles[0].categorieClientId);
@@ -476,9 +546,9 @@ export default function SimulationPage() {
     if (selectedCategorie?.nom) {
       params.set("categorieTitle", selectedCategorie.nom);
     }
-    if (simulationElements.length > 0) {
-      params.set("elementsSelectionnes", simulationElements.join(","));
-    }
+      if (simulationElements.length > 0) {
+        params.set("elementsSelectionnes", JSON.stringify(simulationElements));
+      }
     if (simulationElementDetails.length > 0) {
       params.set("elementsDetails", JSON.stringify(simulationElementDetails));
     }
@@ -534,9 +604,10 @@ export default function SimulationPage() {
       ) : null}
 
       {showBudgetAlertModal ? (
-        <section className="pointer-events-auto fixed right-4 top-44 z-[120] w-[min(360px,calc(100vw-2rem))] rounded-[24px] border border-amber-200 bg-[linear-gradient(180deg,_rgba(255,251,235,0.99),_rgba(255,247,214,0.97))] p-4 shadow-[0_24px_80px_-38px_rgba(217,119,6,0.65)] sm:right-6">
+        <section className="pointer-events-auto fixed right-4 top-44 z-[120] max-h-[calc(100vh-12rem)] w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-[24px] border border-amber-200 bg-[linear-gradient(180deg,_rgba(255,251,235,0.99),_rgba(255,247,214,0.97))] p-4 shadow-[0_24px_80px_-38px_rgba(217,119,6,0.65)] sm:right-6">
           <div className="absolute -top-2 right-7 h-4 w-4 rotate-45 border-l border-t border-amber-200 bg-amber-50" />
 
+          <div className="flex max-h-[calc(100vh-14rem)] flex-col overflow-y-auto pr-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-700">
@@ -585,19 +656,46 @@ export default function SimulationPage() {
                     <p className="mt-1 text-xs text-amber-700">
                       Option {element.type.toLowerCase()}
                     </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Actuellement {element.quantiteSelectionnee} personne(s)
+                    </p>
                   </div>
                   <p className="shrink-0 text-sm font-semibold text-slate-900">
-                    {formatAr(element.prix)}
+                    - {formatAr(element.economieSuggeree)}
                   </p>
+                </div>
+
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-100 bg-amber-50/70 px-3 py-2">
+                  <div className="text-xs leading-5 text-amber-900/90">
+                    <p>
+                      Prix par personne : <span className="font-semibold">{formatAr(element.prixParPersonne)}</span>
+                    </p>
+                    <p>
+                      Reduction suggeree : <span className="font-semibold">{element.quantiteRetiree}</span> personne(s)
+                    </p>
+                    <p>
+                      Suggestion : passer a <span className="font-semibold">{element.quantiteSuggeree}</span> personne(s)
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void updateElementQuantity(element.id, element.quantiteSuggeree)}
+                    className="rounded-full border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 transition hover:bg-amber-100"
+                  >
+                    {element.quantiteSuggeree > 0
+                      ? `Passer a ${element.quantiteSuggeree} pers`
+                      : "Retirer ce bloc"}
+                  </button>
                 </div>
               </div>
             ))}
           </div>
 
           <p className="mt-4 text-xs leading-5 text-amber-900/80">
-            Vous pouvez continuer a modifier le budget, decocher des options et relancer
-            la simulation sans fermer ce panneau.
+            Vous pouvez continuer a modifier le budget, reduire le nombre de personnes
+            sur un bloc ou retirer une option sans fermer ce panneau.
           </p>
+          </div>
         </section>
       ) : null}
 
@@ -653,7 +751,7 @@ export default function SimulationPage() {
                   type="button"
                   variant="outline"
                   className="mt-3 w-full border-emerald-200 text-emerald-800 hover:bg-emerald-100"
-                  onClick={() => void toggleElement(element.id)}
+                  onClick={() => void updateElementQuantity(element.id, 1)}
                 >
                   Cocher ce bloc
                 </Button>
@@ -904,7 +1002,8 @@ export default function SimulationPage() {
                                     <PlanningJournalier
                                       jours={result.jours}
                                       elementsSelectionnes={elementsSelectionnes}
-                                      onToggleElement={toggleElement}
+                                      onChangeElementQuantity={updateElementQuantity}
+                                      totalVoyageurs={totalVoyageurs(voyageurProfiles)}
                                     />
                                   </div>
                                 </DialogContent>
@@ -921,7 +1020,8 @@ export default function SimulationPage() {
                         <PlanningJournalier
                           jours={result.jours}
                           elementsSelectionnes={elementsSelectionnes}
-                          onToggleElement={toggleElement}
+                          onChangeElementQuantity={updateElementQuantity}
+                          totalVoyageurs={totalVoyageurs(voyageurProfiles)}
                         />
                       </section>
                     ) : null}

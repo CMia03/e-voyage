@@ -13,6 +13,11 @@ export type VoyageurProfile = {
   nombrePersonnes: number;
 };
 
+export type ElementSelection = {
+  elementId: string;
+  quantite: number;
+};
+
 export interface ReservationDetail {
   id: string;
   destinationId: string;
@@ -25,7 +30,7 @@ export interface ReservationDetail {
   nombrePersonnes: number;
   prixUnitaire: number;
   prixTotal: number;
-  elementsSelectionnes: string[];
+  elementsSelectionnes: ElementSelection[];
   resumeSimulation: string | null;
   dateCreation: string;
 }
@@ -65,7 +70,7 @@ export interface ReservationCreatePayload {
   nombrePersonnes: number;
   profilsVoyageurs?: VoyageurProfile[];
   commentaireClient?: string;
-  elementsSelectionnes?: string[];
+  elementsSelectionnes?: ElementSelection[];
   resumeSimulation?: string;
 }
 

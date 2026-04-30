@@ -103,7 +103,7 @@ export function BudgetSummary({
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+        {/* <div className="rounded-2xl border border-slate-200 bg-white p-4">
           <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
             Total obligatoire
           </p>
@@ -126,8 +126,9 @@ export function BudgetSummary({
           <p className="mt-2 text-lg font-semibold text-slate-900">
             {formatAr(totalOptionnel)}
           </p>
-        </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+        </div> */}
+
+        {/* <div className="rounded-2xl border border-slate-200 bg-white p-4">
           <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
             Budget min
           </p>
@@ -150,7 +151,8 @@ export function BudgetSummary({
           <p className="mt-2 text-lg font-semibold text-slate-900">
             {formatAr(budgetClient)}
           </p>
-        </div>
+        </div> */}
+
       </div>
     </div>
   );
