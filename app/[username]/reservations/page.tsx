@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
 import { loadAuth } from "@/lib/auth";
@@ -274,8 +274,7 @@ function getReservationProfilesSummary(reservation: Reservation) {
 
 function countUniqueSelectedElements(reservation: Reservation) {
   return new Set(
-    reservation.details
-      .flatMap((detail) => detail.elementsSelectionnes)
+    reservation.elementsSelectionnes
       .map((element) => element.elementId)
   ).size;
 }
@@ -609,7 +608,7 @@ export default function ReservationsPage() {
     "Selectionner une gamme"
   );
   const isSimulationPrefill = form.source === "SIMULATION";
-  const isLockedPrefill = isSimulationPrefill || hasNavigationPrefill;
+  const isLockedPrefill = isSimulationPrefill;
   const isEditMode = !!prefill.editReservationId;
   const simulationElementCards = useMemo<SimulationElementCard[]>(() => {
     const quantitiesByElement = new Map(
@@ -1014,9 +1013,9 @@ export default function ReservationsPage() {
                         onValueChange={(value) => setForm((current) => ({ ...current, destinationId: value }))}
                       >
                         <SelectTrigger>
-                          <span className={form.destinationId ? "truncate" : "truncate text-muted-foreground"}>
+                          <SelectValue placeholder="Selectionner une destination">
                             {destinationLabel}
-                          </span>
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           {destinationOptions.map((destination) => (
@@ -1037,9 +1036,9 @@ export default function ReservationsPage() {
                         }
                       >
                         <SelectTrigger>
-                          <span className={form.planificationVoyageId ? "truncate" : "truncate text-muted-foreground"}>
+                          <SelectValue placeholder="Selectionner une planification">
                             {planificationLabel}
-                          </span>
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           {planificationOptions.map((planification) => (
@@ -1090,10 +1089,11 @@ export default function ReservationsPage() {
                 <div className="grid gap-3">
                   {ensureValidProfiles(form.voyageurProfiles, categories, form.categorieClientId || undefined).map((profile, index) => {
                     const profileCategory = categories.find((categorie) => categorie.id === profile.categorieClientId);
+                    const quoteLine = form.source === "PRIX_DIRECT" ? quote?.lignes?.[index] : null;
                     return (
                       <div key={`${profile.categorieClientId || "profil"}-${index}`} className="rounded-2xl border border-border/60 bg-white p-4">
-                        <div className="flex flex-col gap-4 md:grid md:grid-cols-[minmax(0,1fr)_180px_180px_auto] md:items-end">
-                          <div className="flex-1 space-y-2">
+                        <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(220px,1fr)_180px_180px_170px_170px_auto] lg:items-end">
+                          <div className="min-w-0 space-y-2">
                             <Label>Categorie client</Label>
                             {isLockedPrefill ? (
                               <Input value={profileCategory?.nom ?? `Categorie ${index + 1}`} readOnly />
@@ -1109,10 +1109,10 @@ export default function ReservationsPage() {
                                   }))
                                 }
                               >
-                                <SelectTrigger>
-                                  <span className={profile.categorieClientId ? "truncate" : "truncate text-muted-foreground"}>
-                                    {profileCategory?.nom ?? `Selectionner une categorie`}
-                                  </span>
+                                <SelectTrigger className="w-full">
+                                  <SelectValue placeholder="Selectionner une categorie">
+                                    {profileCategory?.nom ?? "Selectionner une categorie"}
+                                  </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
                                   {categoryOptions.map((categorie) => (
@@ -1125,7 +1125,7 @@ export default function ReservationsPage() {
                             )}
                           </div>
 
-                          <div className="w-full md:w-44 space-y-2">
+                          <div className="w-full lg:w-44 space-y-2">
                             <Label>Gamme</Label>
                             {isLockedPrefill ? (
                               <Input value={normalizeGamme(profile.gamme)} readOnly />
@@ -1143,8 +1143,10 @@ export default function ReservationsPage() {
                                   }))
                                 }
                               >
-                                <SelectTrigger>
-                                  <span>{normalizeGamme(profile.gamme)}</span>
+                                <SelectTrigger className="w-full">
+                                  <SelectValue placeholder="Selectionner une gamme">
+                                    {normalizeGamme(profile.gamme)}
+                                  </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="MOYENNE">MOYENNE</SelectItem>
@@ -1154,7 +1156,7 @@ export default function ReservationsPage() {
                             )}
                           </div>
 
-                          <div className="w-full md:w-44 space-y-2">
+                          <div className="w-full lg:w-44 space-y-2">
                             <Label>Nombre de personnes</Label>
                             <Input
                               type="number"
@@ -1173,6 +1175,23 @@ export default function ReservationsPage() {
                               }
                             />
                           </div>
+
+                          {form.source === "PRIX_DIRECT" ? (
+                            <>
+                              <div className="w-full space-y-2">
+                                <Label>Prix unitaire</Label>
+                                <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 px-4 py-3 text-sm font-semibold text-slate-900">
+                                  {quoteLine ? formatCurrency(quoteLine.prixUnitaire, quote?.devise ?? "MGA") : "-"}
+                                </div>
+                              </div>
+                              <div className="w-full space-y-2">
+                                <Label>Prix total</Label>
+                                <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 px-4 py-3 text-sm font-semibold text-slate-900">
+                                  {quoteLine ? formatCurrency(quoteLine.prixTotal, quote?.devise ?? "MGA") : "-"}
+                                </div>
+                              </div>
+                            </>
+                          ) : null}
 
                           {!isLockedPrefill ? (
                             <Button
@@ -1202,6 +1221,17 @@ export default function ReservationsPage() {
                 <div className="rounded-xl bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
                   Total voyageurs : <span className="font-medium text-foreground">{totalVoyageurs(form.voyageurProfiles)}</span>
                 </div>
+
+                {form.source === "PRIX_DIRECT" && quote ? (
+                  <div className="rounded-xl border border-emerald-200 bg-emerald-100/70 px-4 py-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">
+                      Grand total
+                    </p>
+                    <p className="mt-2 text-2xl font-semibold text-slate-900">
+                      {formatCurrency(quote.prixTotal, quote.devise)}
+                    </p>
+                  </div>
+                ) : null}
               </div>
 
               {form.source === "SIMULATION" ? (
@@ -1456,11 +1486,11 @@ export default function ReservationsPage() {
                         </div>
                       </div>
 
-                      {detail?.resumeSimulation ? (
+                      {reservation.resumeSimulation ? (
                         <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 text-sm text-emerald-900">
                           <p className="font-medium">Resume de simulation conserve</p>
                           <p className="mt-2 line-clamp-3 whitespace-pre-wrap">
-                            {detail.resumeSimulation}
+                            {reservation.resumeSimulation}
                           </p>
                         </div>
                       ) : null}

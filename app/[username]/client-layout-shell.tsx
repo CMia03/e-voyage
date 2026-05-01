@@ -12,10 +12,11 @@ import { ClientSidebar, type ClientSection } from "./components/client-sidebar";
 
 function resolveSection(pathname: string): ClientSection {
   if (pathname.includes("/destinations")) return "destinations";
-  if (pathname.includes("/planifications")) return "planifications";
+  if (pathname.includes("/planifications")) return "destinations";
   if (pathname.includes("/reservations")) return "reservations";
   if (pathname.includes("/profile")) return "profile";
-  return "simulation";
+  if (pathname.includes("/simulation")) return "simulation";
+  return "home";
 }
 
 export function ClientLayoutShell({

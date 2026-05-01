@@ -44,6 +44,8 @@ export interface Reservation {
   devise: string;
   commentaireClient: string | null;
   commentaireAdmin: string | null;
+  elementsSelectionnes: ElementSelection[];
+  resumeSimulation: string | null;
   dateReservation: string;
   dateModification: string | null;
   utilisateurId: string;
@@ -54,11 +56,19 @@ export interface Reservation {
 }
 
 export interface ReservationQuote {
-  devise: string;
-  prixUnitaire: number;
-  prixTotal: number;
-  dureeJours: number;
-}
+    devise: string;
+    prixUnitaire: number;
+    prixTotal: number;
+    dureeJours: number;
+    lignes?: Array<{
+      categorieClientId: string;
+      categorieClientNom: string;
+      gamme: string;
+      nombrePersonnes: number;
+      prixUnitaire: number;
+      prixTotal: number;
+    }>;
+  }
 
 export interface ReservationCreatePayload {
   utilisateurId?: string;

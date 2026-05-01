@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { CalendarDays, Compass, CreditCard, TrendingUp, UserRound } from "lucide-react";
+import { Compass, CreditCard, Home, TrendingUp, UserRound } from "lucide-react";
 
-export type ClientSection = "simulation" | "destinations" | "planifications" | "reservations" | "profile";
+export type ClientSection = "home" | "simulation" | "destinations" | "reservations" | "profile";
 
 type ClientSidebarProps =
   | {
@@ -17,6 +17,12 @@ type ClientSidebarProps =
 
 const items: Array<{ key: ClientSection; label: string; href: string; icon: React.ReactNode }> = [
   {
+    key: "home",
+    label: "Accueil",
+    href: "",
+    icon: <Home className="size-4" />,
+  },
+  {
     key: "simulation",
     label: "Simulation budget",
     href: "simulation",
@@ -24,15 +30,9 @@ const items: Array<{ key: ClientSection; label: string; href: string; icon: Reac
   },
   {
     key: "destinations",
-    label: "Liste destinations",
+    label: "Destinations",
     href: "destinations",
     icon: <Compass className="size-4" />,
-  },
-  {
-    key: "planifications",
-    label: "Planifications",
-    href: "planifications",
-    icon: <CalendarDays className="size-4" />,
   },
   {
     key: "reservations",

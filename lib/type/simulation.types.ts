@@ -67,6 +67,12 @@ export type ElementDetail = {
     prixParPersonne?: number;
     nombreEtoiles?: number;
     adresse?: string;
+    description?: string;
+    telephone?: string;
+    email?: string;
+    siteWeb?: string;
+    latitude?: number;
+    longitude?: number;
     telephone?: string;
     duree?: string;
     difficulte?: string;
@@ -74,6 +80,10 @@ export type ElementDetail = {
     participantsMax?: number;
     depart?: string;
     arrivee?: string;
+    latitudeDepart?: number;
+    longitudeDepart?: number;
+    latitudeArrivee?: number;
+    longitudeArrivee?: number;
     distance?: string;
     images?: string[];
 };

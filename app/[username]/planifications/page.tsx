@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { loadAuth } from "@/lib/auth";
 import { listDestinations } from "@/lib/api/destinations";
 import { listPlanificationsByDestination } from "@/lib/api/destinations";
@@ -17,6 +17,7 @@ function formatAr(value?: number | null) {
 
 export default function PlanificationsPage() {
   const params = useParams<{ username: string }>();
+  const searchParams = useSearchParams();
   const username = typeof params?.username === "string" ? params.username : "client";
   const [destinations, setDestinations] = useState<DestinationDetails[]>([]);
   const [selectedDestinationId, setSelectedDestinationId] = useState<string>("");
@@ -31,7 +32,11 @@ export default function PlanificationsPage() {
         const data = await listDestinations();
         setDestinations(data);
         if (data.length > 0) {
-          setSelectedDestinationId(data[0].id);
+          const requestedDestinationId = searchParams.get("destinationId");
+          const matchedDestination = requestedDestinationId
+            ? data.find((item) => item.id === requestedDestinationId)
+            : null;
+          setSelectedDestinationId(matchedDestination?.id ?? data[0].id);
         }
       } catch (requestError) {
         console.error("Erreur chargement destinations:", requestError);
@@ -39,7 +44,7 @@ export default function PlanificationsPage() {
       }
     };
     void loadDestinations();
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     if (!selectedDestinationId) return;

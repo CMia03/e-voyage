@@ -6,10 +6,14 @@ import { useParams, useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { loadAuth } from "@/lib/auth";
 import { getErrorMessage } from "@/lib/api/client";
 import { deleteMyReservation, getReservationById } from "@/lib/api/reservations";
+import { simulerPlanification } from "@/lib/api/simulationService";
 import { Reservation, ReservationStatus, VoyageurProfile } from "@/lib/type/reservation";
+import { JourSimulation } from "@/lib/type/simulation.types";
+import { PlanningJournalier } from "@/app/[username]/simulation/components/PlanningJournalier";
 
 const statusStyles: Record<ReservationStatus, string> = {
   EN_ATTENTE: "bg-amber-100 text-amber-800 hover:bg-amber-100",
@@ -66,17 +70,7 @@ function totalVoyageurs(reservation: Reservation): number {
 }
 
 function getUniqueSelectedElements(reservation: Reservation) {
-  const byId = new Map<string, { elementId: string; quantite: number }>();
-
-  reservation.details
-    .flatMap((detail) => detail.elementsSelectionnes)
-    .forEach((element) => {
-      if (!byId.has(element.elementId)) {
-        byId.set(element.elementId, element);
-      }
-    });
-
-  return Array.from(byId.values());
+  return reservation.elementsSelectionnes ?? [];
 }
 
 function mergeReservationDetails(reservation: Reservation) {
@@ -89,6 +83,7 @@ function mergeReservationDetails(reservation: Reservation) {
       nomCategorieClient: string;
       gamme: string;
       nombrePersonnes: number;
+      prixUnitaireCumule: number;
       prixTotal: number;
       dateCreation: string;
     }
@@ -105,6 +100,7 @@ function mergeReservationDetails(reservation: Reservation) {
     const existing = groups.get(key);
     if (existing) {
       existing.nombrePersonnes += detail.nombrePersonnes ?? 0;
+      existing.prixUnitaireCumule += (detail.prixUnitaire ?? 0) * (detail.nombrePersonnes ?? 0);
       existing.prixTotal += detail.prixTotal ?? 0;
       return;
     }
@@ -116,12 +112,17 @@ function mergeReservationDetails(reservation: Reservation) {
       nomCategorieClient: detail.nomCategorieClient,
       gamme: detail.gamme,
       nombrePersonnes: detail.nombrePersonnes ?? 0,
+      prixUnitaireCumule: (detail.prixUnitaire ?? 0) * (detail.nombrePersonnes ?? 0),
       prixTotal: detail.prixTotal ?? 0,
       dateCreation: detail.dateCreation,
     });
   });
 
-  return Array.from(groups.values());
+  return Array.from(groups.values()).map((group) => ({
+    ...group,
+    prixUnitaire:
+      group.nombrePersonnes > 0 ? group.prixUnitaireCumule / group.nombrePersonnes : 0,
+  }));
 }
 
 function parseSummaryLines(summary: string | null | undefined) {
@@ -157,6 +158,10 @@ export default function ReservationDetailPage() {
   const [reservation, setReservation] = useState<Reservation | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [planningPreview, setPlanningPreview] = useState<JourSimulation[]>([]);
+  const [loadingPlanningPreview, setLoadingPlanningPreview] = useState(false);
+  const [planningPreviewError, setPlanningPreviewError] = useState<string | null>(null);
+  const [isPlanningOpen, setIsPlanningOpen] = useState(false);
   const detail = reservation?.details[0] ?? null;
   const reservationElements = useMemo(
     () => (reservation ? getUniqueSelectedElements(reservation) : []),
@@ -166,11 +171,24 @@ export default function ReservationDetailPage() {
     () => (reservation ? mergeReservationDetails(reservation) : []),
     [reservation]
   );
-  const reservationSummary = detail?.resumeSimulation ?? null;
+  const reservationSummary = reservation?.resumeSimulation ?? null;
   const reservationSummaryItems = useMemo(
     () => parseSummaryLines(reservationSummary),
     [reservationSummary]
   );
+  const elementNameMap = useMemo(() => {
+    const names = new Map<string, string>();
+
+    planningPreview.forEach((jour) => {
+      jour.elements.forEach((element) => {
+        if (!names.has(element.id)) {
+          names.set(element.id, element.titre);
+        }
+      });
+    });
+
+    return names;
+  }, [planningPreview]);
 
   useEffect(() => {
     const loadReservation = async () => {
@@ -199,6 +217,48 @@ export default function ReservationDetailPage() {
     void loadReservation();
   }, [reservationId, token]);
 
+  useEffect(() => {
+    const loadPlanningPreview = async () => {
+      if (!token || !reservation || !detail || reservation.source !== "SIMULATION") {
+        setPlanningPreview([]);
+        setPlanningPreviewError(null);
+        return;
+      }
+
+      const budgetClient = extractBudgetClientFromSummary(reservation.resumeSimulation) || reservation.montantTotal;
+
+      setLoadingPlanningPreview(true);
+      setPlanningPreviewError(null);
+
+      try {
+        const response = await simulerPlanification(
+          {
+            destinationId: detail.destinationId,
+            planificationId: detail.planificationVoyageId,
+            budgetClient,
+            idCategorieClient: detail.categorieClientId,
+            gamme: detail.gamme,
+            nombrePersonnes: totalVoyageurs(reservation),
+            profilsVoyageurs: buildVoyageurProfiles(reservation),
+            elementsSelectionnes: reservationElements,
+          },
+          token
+        );
+
+        setPlanningPreview(response.jours ?? []);
+      } catch (requestError) {
+        setPlanningPreview([]);
+        setPlanningPreviewError(
+          getErrorMessage(requestError, "Impossible de reconstruire le planning journalier de cette reservation.")
+        );
+      } finally {
+        setLoadingPlanningPreview(false);
+      }
+    };
+
+    void loadPlanningPreview();
+  }, [detail, reservation, reservationElements, token]);
+
   const editHref = useMemo(() => {
     if (!reservation || !detail) return null;
     const voyageurProfiles = buildVoyageurProfiles(reservation);
@@ -215,11 +275,11 @@ export default function ReservationDetailPage() {
     params.set("gamme", detail.gamme);
     params.set("nombrePersonnes", String(totalVoyageurs(reservation)));
     params.set("voyageurProfiles", JSON.stringify(voyageurProfiles));
-    if (detail.elementsSelectionnes.length > 0) {
-      params.set("elementsSelectionnes", JSON.stringify(detail.elementsSelectionnes));
+    if (reservation.elementsSelectionnes.length > 0) {
+      params.set("elementsSelectionnes", JSON.stringify(reservation.elementsSelectionnes));
     }
-    if (detail.resumeSimulation) {
-      params.set("resumeSimulation", detail.resumeSimulation);
+    if (reservation.resumeSimulation) {
+      params.set("resumeSimulation", reservation.resumeSimulation);
     }
     if (reservation.commentaireClient) {
       params.set("commentaireClient", reservation.commentaireClient);
@@ -266,15 +326,15 @@ export default function ReservationDetailPage() {
     params.set("gamme", detail.gamme);
     params.set("nombrePersonnes", String(totalVoyageurs(reservation)));
     params.set("voyageurProfiles", JSON.stringify(voyageurProfiles));
-    const budgetClient = extractBudgetClientFromSummary(detail.resumeSimulation);
+    const budgetClient = extractBudgetClientFromSummary(reservation.resumeSimulation);
     if (budgetClient > 0) {
       params.set("budgetClient", String(budgetClient));
     }
-    if (detail.elementsSelectionnes.length > 0) {
-      params.set("elementsSelectionnes", JSON.stringify(detail.elementsSelectionnes));
+    if (reservation.elementsSelectionnes.length > 0) {
+      params.set("elementsSelectionnes", JSON.stringify(reservation.elementsSelectionnes));
     }
-    if (detail.resumeSimulation) {
-      params.set("resumeSimulation", detail.resumeSimulation);
+    if (reservation.resumeSimulation) {
+      params.set("resumeSimulation", reservation.resumeSimulation);
     }
     if (reservation.commentaireClient) {
       params.set("commentaireClient", reservation.commentaireClient);
@@ -370,59 +430,93 @@ export default function ReservationDetailPage() {
               </CardContent>
             </Card>
 
-            {mergedDetails.map((detail, index) => (
-              <Card key={detail.id} className="border-border/50">
-                <CardHeader>
-                  <CardTitle>
-                    Detail voyage {mergedDetails.length > 1 ? index + 1 : ""}
-                  </CardTitle>
-                  <CardDescription>
-                    {detail.nomDestination} - {detail.nomPlanification}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-5">
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    <div className="rounded-xl border border-border/60 p-4">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Categorie</p>
-                      <p className="mt-2 font-medium">{detail.nomCategorieClient}</p>
-                    </div>
-                    <div className="rounded-xl border border-border/60 p-4">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Gamme</p>
-                      <p className="mt-2 font-medium">{detail.gamme}</p>
-                    </div>
-                    <div className="rounded-xl border border-border/60 p-4">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Voyageurs</p>
-                      <p className="mt-2 font-medium">{detail.nombrePersonnes}</p>
-                    </div>
-                    <div className="rounded-xl border border-border/60 p-4">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Prix total</p>
-                      <p className="mt-2 font-medium">
-                        {formatCurrency(detail.prixTotal, reservation.devise)}
-                      </p>
-                    </div>
-                    <div className="rounded-xl border border-border/60 p-4">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Cree le</p>
-                      <p className="mt-2 font-medium">{formatDate(detail.dateCreation)}</p>
-                    </div>
-                  </div>
+            <Card className="border-border/50">
+              <CardHeader>
+                <CardTitle>Profils voyageurs reserves</CardTitle>
+                <CardDescription>
+                  {detail?.nomDestination ?? "-"} - {detail?.nomPlanification ?? "-"}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-3">
+                  {mergedDetails.map((detail, index) => (
+                    <div key={detail.id} className="overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+                      <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="text-base font-semibold text-slate-900">Profil {index + 1}</p>
+                        <p className="text-xs text-slate-500">
+                          Cree le {formatDate(detail.dateCreation)}
+                        </p>
+                      </div>
 
-                </CardContent>
-              </Card>
-            ))}
+                      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-[minmax(220px,1fr)_180px_180px_170px_170px] 2xl:items-end">
+                        <div className="min-w-0 space-y-2 md:col-span-2 xl:col-span-2 2xl:col-span-1">
+                          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Categorie client</p>
+                          <div className="rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-sm font-medium text-slate-900">
+                            {detail.nomCategorieClient}
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Gamme</p>
+                          <div className="rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-sm font-medium text-slate-900">
+                            {detail.gamme}
+                          </div>
+                        </div>
+                        <div className="min-w-0 space-y-2">
+                          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Nombre de personnes</p>
+                          <div className="rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-sm font-medium text-slate-900">
+                            {detail.nombrePersonnes}
+                          </div>
+                        </div>
+                        <div className="min-w-0 space-y-2">
+                          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">Prix unitaire</p>
+                          <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 px-4 py-3 text-sm font-semibold text-slate-900">
+                            {formatCurrency(detail.prixUnitaire, reservation.devise)}
+                          </div>
+                        </div>
+                        <div className="min-w-0 space-y-2">
+                          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">Prix total</p>
+                          <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 px-4 py-3 text-sm font-semibold text-slate-900">
+                            {formatCurrency(detail.prixTotal, reservation.devise)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="rounded-xl border border-emerald-200 bg-emerald-100/70 px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">
+                    Grand total
+                  </p>
+                  <p className="mt-2 text-2xl font-semibold text-slate-900">
+                    {formatCurrency(reservation.montantTotal, reservation.devise)}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
 
             {reservationElements.length > 0 ? (
               <Card className="border-border/50">
                 <CardHeader>
-                  <CardTitle>Elements selectionnes</CardTitle>
-                  <CardDescription>
-                    Blocs retenus pour l&apos;ensemble de la reservation.
-                  </CardDescription>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <CardTitle>Elements selectionnes</CardTitle>
+                      <CardDescription>
+                        Blocs retenus pour l&apos;ensemble de la reservation.
+                      </CardDescription>
+                    </div>
+                    {reservation.source === "SIMULATION" ? (
+                      <Button type="button" variant="outline" onClick={() => setIsPlanningOpen(true)}>
+                        Voir le planning journalier
+                      </Button>
+                    ) : null}
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
                     {reservationElements.map((element) => (
                       <Badge key={`${element.elementId}-${element.quantite}`} variant="outline">
-                        {element.elementId} - {element.quantite} pers
+                        {elementNameMap.get(element.elementId) ?? element.elementId} - {element.quantite} pers
                       </Badge>
                     ))}
                   </div>
@@ -516,6 +610,38 @@ export default function ReservationDetailPage() {
           </div>
         </div>
       ) : null}
+
+      <Dialog open={isPlanningOpen} onOpenChange={setIsPlanningOpen}>
+        <DialogContent className="!h-[92vh] !w-[94vw] !max-w-[1400px] overflow-hidden rounded-[28px] border border-slate-200 bg-white p-0 sm:!max-w-[1400px]">
+          <DialogHeader className="border-b border-slate-200 bg-slate-50/90 px-6 py-5">
+            <DialogTitle className="text-xl font-semibold text-slate-900">
+              Planning journalier de la reservation
+            </DialogTitle>
+            <DialogDescription className="text-sm text-slate-600">
+              Retrouvez le detail jour par jour des blocs retenus dans cette simulation.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="h-full overflow-auto px-6 py-5">
+            {loadingPlanningPreview ? (
+              <p className="text-sm text-muted-foreground">Chargement du planning journalier...</p>
+            ) : planningPreviewError ? (
+              <p className="text-sm text-rose-600">{planningPreviewError}</p>
+            ) : planningPreview.length > 0 ? (
+              <PlanningJournalier
+                jours={planningPreview}
+                elementsSelectionnes={reservationElements}
+                onChangeElementQuantity={() => undefined}
+                totalVoyageurs={reservation ? totalVoyageurs(reservation) : 0}
+                readOnly
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Aucun planning journalier detaille n&apos;a pu etre reconstruit pour cette reservation.
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
