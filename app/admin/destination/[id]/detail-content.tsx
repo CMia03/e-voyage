@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Trash } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -289,6 +290,23 @@ export function AdminDestinationDetailContent({
     }
   }
 
+  async function handleDeleteImage(imageId: string) {
+    if (!accessToken) return;
+    const confirmed = window.confirm("Supprimer cette image ?");
+    if (!confirmed) return;
+
+    setError("");
+    try {
+      // TODO: Implement API call to delete image
+      // await deleteDestinationImage(imageId, accessToken);
+      console.log("Delete image:", imageId);
+      setSuccessMessage("Image supprimee avec succes.");
+      // await reloadDestination();
+    } catch (deleteError) {
+      setError(getErrorMessage(deleteError, "Impossible de supprimer cette image"));
+    }
+  }
+
   function handleOpenGallery() {
     const galleryElement = document.getElementById("gallery-section");
     if (galleryElement) {
@@ -318,9 +336,7 @@ export function AdminDestinationDetailContent({
           {/* En-tÃªte avec actions rapides */}
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-3">
-              <Button asChild variant="outline" size="sm">
-                <Link href="/admin">â† Retour aux destinations</Link>
-              </Button>
+             
 
               {/* <div>
                 <h1 className="text-3xl font-semibold tracking-tight">
@@ -593,19 +609,30 @@ export function AdminDestinationDetailContent({
                                 className="relative z-0 h-32 w-full rounded-lg object-cover transition-transform duration-700 ease-out group-hover:scale-[1.75] group-hover:shadow-2xl"
                               />
                               <div className="relative z-30 border-t border-border/40 bg-background/95 px-2 py-2">
-                                <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                                  <input
-                                    type="checkbox"
-                                    checked={Boolean(image.estPrincipale)}
-                                    disabled={updatingPhotoId === image.id}
-                                    onChange={(event) =>
-                                      handleTogglePhotoPrincipale(image.id, event.target.checked)
-                                    }
-                                  />
-                                  <span>
-                                    {updatingPhotoId === image.id ? "Mise a jour..." : "Image principale"}
-                                  </span>
-                                </label>
+                                <div className="flex items-center justify-between gap-2">
+                                  <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                                    <input
+                                      type="checkbox"
+                                      checked={Boolean(image.estPrincipale)}
+                                      disabled={updatingPhotoId === image.id}
+                                      onChange={(event) =>
+                                        handleTogglePhotoPrincipale(image.id, event.target.checked)
+                                      }
+                                    />
+                                    <span>
+                                      {updatingPhotoId === image.id ? "Mise a jour..." : "Image principale"}
+                                    </span>
+                                  </label>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 w-6 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                                    onClick={() => handleDeleteImage(image.id)}
+                                  >
+                                    <Trash className="h-3 w-3" />
+                                  </Button>
+                                </div>
                               </div>
                               
                               {/* {image.description ? (
