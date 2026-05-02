@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Bell, ExternalLink, Eye, Trash2, X } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Bell, MessageCircle, Check, Trash2, ExternalLink, X, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,7 @@ import {
   markAdminNotificationAsRead,
 } from "@/lib/api/admin-notifications";
 import { AdminNotification } from "@/lib/type/admin-notification";
+import { CommentaireData } from "@/lib/type/commentaire";
 
 export function AdminNotifications() {
   const router = useRouter();
@@ -21,6 +22,7 @@ export function AdminNotifications() {
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
+  const notificationRef = useRef<HTMLDivElement>(null);
 
   const loadNotifications = async () => {
     if (!token) return;
@@ -45,6 +47,21 @@ export function AdminNotifications() {
   }, [token]);
 
   const unreadCount = notifications.filter((notification) => !notification.read).length;
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
 
   const formatRelativeTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -111,96 +128,95 @@ export function AdminNotifications() {
         <span className="sr-only">Notifications de reservations</span>
       </Button>
 
-      {isOpen ? (
-        <>
-          <div className="fixed inset-0 z-30" onClick={() => setIsOpen(false)} />
+      {isOpen && (
+        <Card 
+          ref={notificationRef}
+          className="absolute right-0 top-12 w-96 max-h-96 z-50 shadow-lg"
+        >
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-lg">Notifications reservations</CardTitle>
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsOpen(false)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </CardHeader>
 
-          <Card className="absolute right-0 top-12 z-40 max-h-96 w-96 shadow-lg">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-lg">Notifications reservations</CardTitle>
-              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsOpen(false)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </CardHeader>
+          <CardContent className="p-0">
+            {isLoading ? (
+              <div className="p-4 text-center text-sm text-muted-foreground">Chargement...</div>
+            ) : notifications.length === 0 ? (
+              <div className="p-4 text-center text-sm text-muted-foreground">
+                <Bell className="mx-auto mb-2 h-8 w-8 opacity-50" />
+                Aucune notification de reservation
+              </div>
+            ) : (
+              <div className="max-h-80 overflow-y-auto">
+                {notifications.slice(0, 8).map((notification) => (
+                  <div key={notification.id} className="border-b p-4 last:border-b-0">
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 flex-shrink-0">
+                        <Bell className="h-4 w-4 text-emerald-600" />
+                      </div>
 
-            <CardContent className="p-0">
-              {isLoading ? (
-                <div className="p-4 text-center text-sm text-muted-foreground">Chargement...</div>
-              ) : notifications.length === 0 ? (
-                <div className="p-4 text-center text-sm text-muted-foreground">
-                  <Bell className="mx-auto mb-2 h-8 w-8 opacity-50" />
-                  Aucune notification de reservation
-                </div>
-              ) : (
-                <div className="max-h-80 overflow-y-auto">
-                  {notifications.slice(0, 8).map((notification) => (
-                    <div key={notification.id} className="border-b p-4 last:border-b-0">
-                      <div className="flex items-start gap-3">
-                        <div className="mt-0.5 flex-shrink-0">
-                          <Bell className="h-4 w-4 text-emerald-600" />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-sm font-medium text-foreground">{notification.title}</p>
+                          {!notification.read ? (
+                            <Badge variant="secondary" className="text-xs">
+                              Nouveau
+                            </Badge>
+                          ) : null}
                         </div>
 
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-start justify-between gap-2">
-                            <p className="text-sm font-medium text-foreground">{notification.title}</p>
-                            {!notification.read ? (
-                              <Badge variant="secondary" className="text-xs">
-                                Nouveau
-                              </Badge>
-                            ) : null}
-                          </div>
+                        <p className="mt-1 line-clamp-3 text-sm text-muted-foreground">
+                          {notification.message}
+                        </p>
 
-                          <p className="mt-1 line-clamp-3 text-sm text-muted-foreground">
-                            {notification.message}
+                        <div className="mt-2 flex items-center justify-between">
+                          <p className="text-xs text-muted-foreground">
+                            {formatRelativeTime(notification.createdAt)}
                           </p>
 
-                          <div className="mt-2 flex items-center justify-between">
-                            <p className="text-xs text-muted-foreground">
-                              {formatRelativeTime(notification.createdAt)}
-                            </p>
-
-                            <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => void handleOpenReservation(notification)}
+                              className="h-6 px-2 text-xs"
+                            >
+                              <ExternalLink className="mr-1 h-3 w-3" />
+                              Voir
+                            </Button>
+                            {!notification.read ? (
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => void handleOpenReservation(notification)}
-                                className="h-6 px-2 text-xs"
+                                className="h-6 px-2 text-xs text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
                               >
-                                <ExternalLink className="mr-1 h-3 w-3" />
-                                Voir
+                                <Eye className="mr-1 h-3 w-3" />
+                                Lire
                               </Button>
-                              {!notification.read ? (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => void handleOpenReservation(notification)}
-                                  className="h-6 px-2 text-xs text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
-                                >
-                                  <Eye className="mr-1 h-3 w-3" />
-                                  Lire
-                                </Button>
-                              ) : null}
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => void handleDeleteNotification(notification.id)}
-                                className="h-6 px-2 text-xs text-red-600 hover:bg-red-50 hover:text-red-700"
-                              >
-                                <Trash2 className="mr-1 h-3 w-3" />
-                                Supprimer
-                              </Button>
-                            </div>
+                            ) : null}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => void handleDeleteNotification(notification.id)}
+                              className="h-6 px-2 text-xs text-red-600 hover:bg-red-50 hover:text-red-700"
+                            >
+                              <Trash2 className="mr-1 h-3 w-3" />
+                              Supprimer
+                            </Button>
                           </div>
                         </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </>
-      ) : null}
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

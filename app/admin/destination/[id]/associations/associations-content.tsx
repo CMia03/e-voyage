@@ -597,20 +597,17 @@ export function AdminDestinationAssociationsContent({ destinationId }: Props) {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-muted/30 to-background text-foreground">
-      <AdminHeader />
       <main className="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 sm:py-8">
         <div className="space-y-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-3">
-              <Button asChild variant="outline" size="sm">
-                <Link href={`/admin/destination/${destinationId}`}>Retour au detail de la destination</Link>
-              </Button>
+             
               <div>
                 <h1 className="text-3xl font-semibold tracking-tight">
                   Hebergements et activites
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  Selectionnez ce que les voyageurs pourront faire et ou ils pourront se loger pour cette destination.
+                  Sélectionnez ce que les voyageurs pourront faire et où ils pourront se loger pour cette destination.
                 </p>
               </div>
             </div>
@@ -618,11 +615,11 @@ export function AdminDestinationAssociationsContent({ destinationId }: Props) {
             <div className="flex flex-wrap gap-2">
               <Button type="button" onClick={() => scrollToSection("hebergements")}>
                 <BedDouble className="size-4" />
-                Ajouter hebergement
+                Ajouter hébergement
               </Button>
               <Button type="button" variant="outline" onClick={() => scrollToSection("activites")}>
                 <Compass className="size-4" />
-                Ajouter Activiter
+                Ajouter activité
               </Button>
               <Button type="button" variant="outline" onClick={() => scrollToSection("prestations")}>
                 <Gift className="size-4" />

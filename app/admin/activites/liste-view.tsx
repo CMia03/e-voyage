@@ -314,7 +314,7 @@ export function AdminActivitesListe({
           >
             <ToggleGroupItem value="cards" aria-label="Vue en cartes">
               <LayoutGrid className="size-4" />
-              <span className="sr-only md:not-sr-only md:ml-2">Cartes</span>
+              <span className="sr-only md:not-sr-only md:ml-2">Mosaiques</span>
             </ToggleGroupItem>
             <ToggleGroupItem value="list" aria-label="Vue en liste">
               <List className="size-4" />

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { loadAuth, clearAuth, AuthSession } from "@/lib/auth";
 import { ApiError, getErrorMessage } from "@/lib/api/client";
 import { getProfile } from "@/lib/api/auth";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Menu, Home, MapPin, Building, Play, ChevronDown, Calendar, Users, Bell, Briefcase, MessageCircle, ClipboardList, Settings } from "lucide-react";
@@ -46,10 +46,27 @@ export function AdminHeaderWithNotifications() {
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isClient, setIsClient] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    if (isMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isMenuOpen]);
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev =>
@@ -201,16 +218,12 @@ export function AdminHeaderWithNotifications() {
 
               {/* Dropdown menu */}
               {isMenuOpen && (
-                <>
-                  {/* Overlay pour fermer le menu en cliquant à l'extérieur */}
-                  <div
-                    className="fixed inset-0 z-30"
-                    onClick={() => setIsMenuOpen(false)}
-                  />
-                  
-                  <div className="absolute right-0 mt-2 w-80 z-40 rounded-lg border border-border/50 bg-white shadow-xl dark:bg-gray-900">
-                    {/* En-tête du profil */}
-                    <div className="p-4 border-b border-border/50">
+                <div 
+                  ref={menuRef}
+                  className="absolute right-0 mt-2 w-80 z-50 rounded-lg border border-border/50 bg-white shadow-xl dark:bg-gray-900"
+                >
+                  {/* En-tête du profil */}
+                  <div className="p-4 border-b border-border/50">
                       <div className="flex items-center gap-3">
                         {profile?.photoProfilUrl ? (
                           <div className="relative h-12 w-12 overflow-hidden rounded-full">
@@ -325,7 +338,6 @@ export function AdminHeaderWithNotifications() {
                       </button>
                     </div>
                   </div>
-                </>
               )}
             </div>
           )}
@@ -406,14 +418,14 @@ export function AdminHeaderWithNotifications() {
                     className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Liste des hebergements
+                    Liste des hébergements
                   </Link>
                   <Link
                     href="/admin?section=hebergements-create"
                     className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Ajouter hebergement
+                    Ajouter hébergement
                   </Link>
                 </div>
               )}
@@ -439,14 +451,14 @@ export function AdminHeaderWithNotifications() {
                     className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Liste des activites
+                    Liste des activités
                   </Link>
                   <Link
                     href="/admin?section=activites-create"
                     className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Ajouter activite
+                    Ajouter activité
                   </Link>
                 </div>
               )}
@@ -513,14 +525,14 @@ export function AdminHeaderWithNotifications() {
                     className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Liste reservations
+                    Liste réservations
                   </Link>
                   <Link
                     href="/admin?section=reservations-ajout"
                     className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Ajout reservation
+                    Ajout réservation
                   </Link>
                 </div>
               )}

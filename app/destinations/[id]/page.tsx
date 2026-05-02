@@ -38,9 +38,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ id
         <main className="flex-1">
           <div className="bg-background">
             <div className="container mx-auto px-4 py-6">
-              <Button variant="ghost" asChild>
-                <Link href="/#destinations">← Retour aux destinations</Link>
-              </Button>
+             
             </div>
             <div className="container mx-auto px-4 py-12">
               <div className="max-w-2xl mx-auto text-center">
@@ -48,9 +46,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ id
                 <p className="text-muted-foreground mb-8">
                   Les détails de cette destination ne sont pas disponibles dans la base de données.
                 </p>
-                <Button variant="outline" asChild>
-                  <Link href="/#destinations">Retour aux destinations</Link>
-                </Button>
+                
               </div>
             </div>
           </div>
