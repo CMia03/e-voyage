@@ -136,11 +136,13 @@ export function ReservationViewModal({ reservation, open, onClose }: Reservation
                     <Tag className="h-4 w-4 text-muted-foreground" />
                     <p className="text-sm font-medium">Elements selectionnes</p>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {detail.elementsSelectionnes.map((element) => (
-                      <Badge key={element} variant="secondary">{element}</Badge>
-                    ))}
-                  </div>
+                    <div className="flex flex-wrap gap-2">
+                      {detail.elementsSelectionnes.map((element) => (
+                        <Badge key={`${element.elementId}-${element.quantite}`} variant="secondary">
+                          {element.elementId} - {element.quantite} pers
+                        </Badge>
+                      ))}
+                    </div>
                 </div>
               ) : null}
 

@@ -42,7 +42,9 @@ export function UserInfoDisplay({
       <div className={`flex items-center gap-2 ${className}`}>
         {showAvatar && (
           <Avatar className="w-8 h-8">
-            <AvatarImage src={googleUserInfo.avatar} alt={googleUserInfo.displayName} />
+            {googleUserInfo.avatar ? (
+              <AvatarImage src={googleUserInfo.avatar} alt={googleUserInfo.displayName} />
+            ) : null}
             <AvatarFallback className="text-xs">
               {getInitials(googleUserInfo.firstName, googleUserInfo.lastName)}
             </AvatarFallback>
@@ -61,7 +63,9 @@ export function UserInfoDisplay({
       {showAvatar && (
         <div className="flex justify-center">
           <Avatar className="w-16 h-16">
-            <AvatarImage src={googleUserInfo.avatar} alt={googleUserInfo.displayName} />
+            {googleUserInfo.avatar ? (
+              <AvatarImage src={googleUserInfo.avatar} alt={googleUserInfo.displayName} />
+            ) : null}
             <AvatarFallback className="text-lg">
               {getInitials(googleUserInfo.firstName, googleUserInfo.lastName)}
             </AvatarFallback>

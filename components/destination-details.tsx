@@ -56,13 +56,17 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
           <div className="flex-1">
         {/* Header avec image */}
         <div className="relative mb-6 sm:mb-8 h-64 sm:h-80 md:h-96 w-full overflow-hidden rounded-lg">
-          <Image
-            src={destination.image}
-            alt={destination.title}
-            fill
-            className="object-cover"
-            priority
-          />
+          {destination.image?.trim() ? (
+            <Image
+              src={destination.image}
+              alt={destination.title}
+              fill
+              className="object-cover"
+              priority
+            />
+          ) : (
+            <div className="absolute inset-0 bg-[linear-gradient(135deg,_rgba(16,185,129,0.2),_rgba(15,23,42,0.18))]" />
+          )}
           <div className="absolute inset-0 bg-black/40"></div>
           <div className="absolute bottom-4 sm:bottom-8 left-4 sm:left-8 right-4 sm:right-8">
             <h1 className="mb-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white">
@@ -224,7 +228,7 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
             <div className="mb-6 sm:mb-8">
               <h2 className="mb-4 text-xl sm:text-2xl font-bold">Galerie</h2>
               <div className="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-3">
-              {galleryAll.map((img, index) => (
+              {galleryAll.filter((img) => !!img?.trim()).map((img, index) => (
                 <button
                   key={index}
                   onClick={() => {

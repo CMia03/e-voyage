@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { Suspense } from "react";
 import { AdminHeaderWithNotifications } from "@/components/admin-header-with-notifications";
 import { AdminSidebarWithNotifications } from "@/components/admin-sidebar-with-notifications";
 import { AdminFooter } from "./components/footer";
@@ -30,7 +31,9 @@ function AdminLayoutContent({
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-muted/30 to-background text-foreground flex flex-col">
-      <AdminHeaderWithNotifications />
+      <Suspense fallback={<div className="h-16 bg-background border-b" />}>
+        <AdminHeaderWithNotifications />
+      </Suspense>
       <div className="mx-auto flex w-full max-w-[1400px] flex-1">
         <AdminSidebarWithNotifications active={active} onSelect={handleSelectSection} />
         <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8 overflow-auto min-h-0">

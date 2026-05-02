@@ -47,13 +47,13 @@ export function useGoogleAuth() {
       const result = await checkAndLoadGoogleUserProfile();
       
       if (result.isGoogleUser && result.profile) {
-        const userInfo = prepareGoogleUserDisplay(result.session, result.profile);
+        const userInfo = prepareGoogleUserDisplay(result.session!, result.profile);
         setGoogleUserInfo(userInfo);
         
         console.log("Profil Google chargé automatiquement:", userInfo);
       } else if (result.isGoogleUser && !result.profile) {
         // Utilisateur Google mais profil pas encore complété
-        const userInfo = prepareGoogleUserDisplay(result.session, null);
+        const userInfo = prepareGoogleUserDisplay(result.session!, null);
         setGoogleUserInfo(userInfo);
         
         console.log("Utilisateur Google détecté, profil incomplet");

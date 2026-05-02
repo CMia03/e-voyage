@@ -1,76 +1,37 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Bell, Check, X, Trash2, Eye, Clock, User, Calendar } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Bell, Check, Trash2, Eye, Clock, ExternalLink } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useBreadcrumbs } from "../contexts/breadcrumbs-context";
-
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: "info" | "success" | "warning" | "error";
-  read: boolean;
-  createdAt: string;
-  user?: string;
-  priority: "low" | "medium" | "high";
-}
+import { loadAuth } from "@/lib/auth";
+import { getErrorMessage } from "@/lib/api/client";
+import {
+  deleteAdminNotification,
+  deleteAllAdminNotifications,
+  listAdminNotifications,
+  markAdminNotificationAsRead,
+  markAdminNotificationAsUnread,
+  markAllAdminNotificationsAsRead,
+} from "@/lib/api/admin-notifications";
+import { AdminNotification } from "@/lib/type/admin-notification";
 
 export function AdminNotifications() {
   const { setBreadcrumbs } = useBreadcrumbs();
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: "1",
-      title: "Nouvelle réservation",
-      message: "Une nouvelle réservation a été effectuée pour l'hébergement 'Villa Paradis'",
-      type: "info",
-      read: false,
-      createdAt: "2024-01-15T10:30:00",
-      user: "Jean Dupont",
-      priority: "medium"
-    },
-    {
-      id: "2",
-      title: "Paiement confirmé",
-      message: "Le paiement pour la réservation #1234 a été confirmé avec succès",
-      type: "success",
-      read: false,
-      createdAt: "2024-01-15T09:15:00",
-      user: "Marie Martin",
-      priority: "low"
-    },
-    {
-      id: "3",
-      title: "Alerte disponibilité",
-      message: "L'hébergement 'Appartement Vue Mer' n'a plus de disponibilités pour la période demandée",
-      type: "warning",
-      read: true,
-      createdAt: "2024-01-14T16:45:00",
-      priority: "high"
-    },
-    {
-      id: "4",
-      title: "Nouvel avis client",
-      message: "Un client a laissé un avis 5 étoiles pour l'activité 'Tour en bateau'",
-      type: "success",
-      read: true,
-      createdAt: "2024-01-14T14:20:00",
-      priority: "medium"
-    },
-    {
-      id: "5",
-      title: "Erreur système",
-      message: "Une erreur est survenue lors de la synchronisation des données",
-      type: "error",
-      read: false,
-      createdAt: "2024-01-14T11:30:00",
-      priority: "high"
-    }
-  ]);
+  const router = useRouter();
+  const session = useMemo(() => loadAuth(), []);
+  const token = session?.accessToken;
+
+  const [notifications, setNotifications] = useState<AdminNotification[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<"all" | "read" | "unread">("all");
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     setBreadcrumbs([
@@ -79,258 +40,256 @@ export function AdminNotifications() {
     ]);
   }, [setBreadcrumbs]);
 
-  const [filter, setFilter] = useState<"all" | "read" | "unread">("all");
-  const [typeFilter, setTypeFilter] = useState<"all" | "info" | "success" | "warning" | "error">("all");
-  const [searchTerm, setSearchTerm] = useState("");
+  const loadNotifications = async () => {
+    if (!token) {
+      setError("Connexion requise pour consulter les notifications.");
+      setLoading(false);
+      return;
+    }
 
-  const filteredNotifications = notifications.filter(notification => {
-    const matchesFilter = 
-      filter === "all" || 
-      (filter === "read" && notification.read) || 
+    try {
+      setLoading(true);
+      const response = await listAdminNotifications(token);
+      setNotifications(response.data?.notifications ?? []);
+      setError(null);
+    } catch (requestError) {
+      setError(getErrorMessage(requestError, "Impossible de charger les notifications."));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadNotifications();
+  }, [token]);
+
+  const filteredNotifications = notifications.filter((notification) => {
+    const matchesFilter =
+      filter === "all" ||
+      (filter === "read" && notification.read) ||
       (filter === "unread" && !notification.read);
-    
-    const matchesType = 
-      typeFilter === "all" || 
-      notification.type === typeFilter;
-    
-    const matchesSearch = 
-      notification.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      notification.message.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    return matchesFilter && matchesType && matchesSearch;
+
+    const haystack = `${notification.title} ${notification.message}`.toLowerCase();
+    const matchesSearch = haystack.includes(searchTerm.toLowerCase());
+
+    return matchesFilter && matchesSearch;
   });
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev => 
-      prev.map(notif => 
-        notif.id === id ? { ...notif, read: true } : notif
-      )
-    );
-  };
-
-  const markAsUnread = (id: string) => {
-    setNotifications(prev => 
-      prev.map(notif => 
-        notif.id === id ? { ...notif, read: false } : notif
-      )
-    );
-  };
-
-  const deleteNotification = (id: string) => {
-    setNotifications(prev => prev.filter(notif => notif.id !== id));
-  };
-
-  const markAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(notif => ({ ...notif, read: true }))
-    );
-  };
-
-  const clearAllNotifications = () => {
-    setNotifications([]);
-  };
-
-  const unreadCount = notifications.filter(n => !n.read).length;
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "high": return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
-      case "medium": return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
-      case "low": return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
-      default: return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
-    }
-  };
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case "info": return <Bell className="h-4 w-4 text-blue-500" />;
-      case "success": return <Check className="h-4 w-4 text-green-500" />;
-      case "warning": return <Clock className="h-4 w-4 text-yellow-500" />;
-      case "error": return <X className="h-4 w-4 text-red-500" />;
-      default: return <Bell className="h-4 w-4 text-gray-500" />;
-    }
-  };
+  const unreadCount = notifications.filter((notification) => !notification.read).length;
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours < 1) return "Il y a quelques minutes";
     if (diffInHours < 24) return `Il y a ${diffInHours}h`;
     if (diffInHours < 48) return "Hier";
-    return date.toLocaleDateString('fr-FR');
+    return date.toLocaleDateString("fr-FR");
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "high":
+        return "bg-red-100 text-red-800";
+      case "medium":
+        return "bg-yellow-100 text-yellow-800";
+      default:
+        return "bg-green-100 text-green-800";
+    }
+  };
+
+  const handleOpenNotification = async (notification: AdminNotification) => {
+    if (!token) return;
+
+    try {
+      if (!notification.read) {
+        await markAdminNotificationAsRead(notification.id, token);
+        setNotifications((current) =>
+          current.map((item) => (item.id === notification.id ? { ...item, read: true } : item))
+        );
+      }
+    } catch {
+      // silent open fallback
+    }
+
+    if (notification.reservationId) {
+      router.push(`/admin/reservations/liste?reservationId=${encodeURIComponent(notification.reservationId)}`);
+      return;
+    }
+
+    if (notification.actionUrl) {
+      router.push(notification.actionUrl);
+    }
+  };
+
+  const handleMarkAsRead = async (id: string) => {
+    if (!token) return;
+    await markAdminNotificationAsRead(id, token);
+    setNotifications((current) =>
+      current.map((item) => (item.id === id ? { ...item, read: true } : item))
+    );
+  };
+
+  const handleMarkAsUnread = async (id: string) => {
+    if (!token) return;
+    await markAdminNotificationAsUnread(id, token);
+    setNotifications((current) =>
+      current.map((item) => (item.id === id ? { ...item, read: false } : item))
+    );
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!token) return;
+    await deleteAdminNotification(id, token);
+    setNotifications((current) => current.filter((item) => item.id !== id));
+  };
+
+  const handleReadAll = async () => {
+    if (!token) return;
+    await markAllAdminNotificationsAsRead(token);
+    setNotifications((current) => current.map((item) => ({ ...item, read: true })));
+  };
+
+  const handleDeleteAll = async () => {
+    if (!token) return;
+    await deleteAllAdminNotifications(token);
+    setNotifications([]);
   };
 
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Notifications
-          </h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Notifications</h1>
           <p className="text-sm text-muted-foreground">
-            Gérez toutes vos notifications et alertes système.
+            Suivez les nouvelles reservations et accedez rapidement aux demandes clients.
           </p>
         </div>
 
         <div className="flex flex-wrap gap-3">
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
-              {unreadCount} non lue{unreadCount > 1 ? "s" : ""}
-            </Badge>
-          </div>
-          {unreadCount > 0 && (
-            <Button onClick={markAllAsRead} variant="outline" size="sm">
+          <Badge variant="secondary" className="bg-emerald-100 text-emerald-800">
+            {unreadCount} non lue{unreadCount > 1 ? "s" : ""}
+          </Badge>
+          {unreadCount > 0 ? (
+            <Button onClick={handleReadAll} variant="outline" size="sm">
               <Check className="mr-2 h-4 w-4" />
               Tout marquer comme lu
             </Button>
-          )}
-          {notifications.length > 0 && (
-            <Button onClick={clearAllNotifications} variant="outline" size="sm">
+          ) : null}
+          {notifications.length > 0 ? (
+            <Button onClick={handleDeleteAll} variant="outline" size="sm">
               <Trash2 className="mr-2 h-4 w-4" />
               Tout supprimer
             </Button>
-          )}
+          ) : null}
         </div>
       </div>
+
+      {error ? (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {error}
+        </div>
+      ) : null}
 
       <Card className="border-border/50">
         <CardHeader>
           <CardTitle>Filtres</CardTitle>
-          <CardDescription>Filtrer les notifications selon différents critères</CardDescription>
+          <CardDescription>Affinez la liste des notifications du back-office.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Recherche</label>
-              <Input
-                placeholder="Rechercher dans les notifications..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Statut</label>
-              <Select value={filter} onValueChange={(value: "all" | "read" | "unread") => setFilter(value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Toutes</SelectItem>
-                  <SelectItem value="unread">Non lues</SelectItem>
-                  <SelectItem value="read">Lues</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Type</label>
-              <Select value={typeFilter} onValueChange={(value: "all" | "info" | "success" | "warning" | "error") => setTypeFilter(value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les types</SelectItem>
-                  <SelectItem value="info">Informations</SelectItem>
-                  <SelectItem value="success">Succès</SelectItem>
-                  <SelectItem value="warning">Avertissements</SelectItem>
-                  <SelectItem value="error">Erreurs</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+        <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Recherche</label>
+            <Input
+              placeholder="Rechercher dans les notifications..."
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Statut</label>
+            <Select value={filter} onValueChange={(value: "all" | "read" | "unread") => setFilter(value)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes</SelectItem>
+                <SelectItem value="unread">Non lues</SelectItem>
+                <SelectItem value="read">Lues</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
 
       <div className="space-y-4">
-        {filteredNotifications.length === 0 ? (
+        {loading ? (
+          <Card className="border-border/50">
+            <CardContent className="py-12 text-center text-sm text-muted-foreground">
+              Chargement des notifications...
+            </CardContent>
+          </Card>
+        ) : filteredNotifications.length === 0 ? (
           <Card className="border-border/50">
             <CardContent className="py-12 text-center">
-              <Bell className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-2">
-                Aucune notification
-              </h3>
+              <Bell className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+              <h3 className="mb-2 text-lg font-medium text-foreground">Aucune notification</h3>
               <p className="text-muted-foreground">
-                {searchTerm || filter !== "all" || typeFilter !== "all"
-                  ? "Aucune notification ne correspond à vos critères de recherche."
+                {searchTerm || filter !== "all"
+                  ? "Aucune notification ne correspond a vos criteres."
                   : "Vous n'avez aucune notification pour le moment."}
               </p>
             </CardContent>
           </Card>
         ) : (
           filteredNotifications.map((notification) => (
-            <Card 
-              key={notification.id} 
+            <Card
+              key={notification.id}
               className={`border-border/50 transition-all duration-200 ${
-                !notification.read 
-                  ? "bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800" 
-                  : ""
+                !notification.read ? "border-emerald-200 bg-emerald-50/40" : ""
               }`}
             >
               <CardContent className="p-6">
                 <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3 flex-1">
-                    <div className="mt-1">
-                      {getTypeIcon(notification.type)}
+                  <div className="flex-1 space-y-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className={`text-base text-foreground ${!notification.read ? "font-semibold" : "font-medium"}`}>
+                        {notification.title}
+                      </h3>
+                      {!notification.read ? (
+                        <Badge className="bg-emerald-500 text-white">Nouveau</Badge>
+                      ) : null}
+                      <Badge variant="outline" className={getPriorityColor(notification.priority)}>
+                        {notification.priority === "high" ? "Haute" : notification.priority === "medium" ? "Moyenne" : "Basse"}
+                      </Badge>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className={`font-medium text-foreground ${
-                          !notification.read ? "font-semibold" : ""
-                        }`}>
-                          {notification.title}
-                        </h3>
-                        {!notification.read && (
-                          <Badge variant="default" className="bg-emerald-500 text-white">
-                            Nouveau
-                          </Badge>
-                        )}
-                        <Badge variant="outline" className={getPriorityColor(notification.priority)}>
-                          {notification.priority === "high" ? "Haute" : 
-                           notification.priority === "medium" ? "Moyenne" : "Basse"}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-3">
-                        {notification.message}
-                      </p>
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {formatDate(notification.createdAt)}
-                        </div>
-                        {notification.user && (
-                          <div className="flex items-center gap-1">
-                            <User className="h-3 w-3" />
-                            {notification.user}
-                          </div>
-                        )}
-                      </div>
+
+                    <p className="text-sm text-muted-foreground">{notification.message}</p>
+
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      {formatDate(notification.createdAt)}
                     </div>
                   </div>
+
                   <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => void handleOpenNotification(notification)}>
+                      <ExternalLink className="h-4 w-4" />
+                    </Button>
                     {!notification.read ? (
-                      <Button
-                        onClick={() => markAsRead(notification.id)}
-                        variant="ghost"
-                        size="sm"
-                        className="text-emerald-600 hover:text-emerald-700"
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => void handleMarkAsRead(notification.id)}>
                         <Eye className="h-4 w-4" />
                       </Button>
                     ) : (
-                      <Button
-                        onClick={() => markAsUnread(notification.id)}
-                        variant="ghost"
-                        size="sm"
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => void handleMarkAsUnread(notification.id)}>
                         <Bell className="h-4 w-4" />
                       </Button>
                     )}
                     <Button
-                      onClick={() => deleteNotification(notification.id)}
                       variant="ghost"
                       size="sm"
                       className="text-red-600 hover:text-red-700"
+                      onClick={() => void handleDelete(notification.id)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

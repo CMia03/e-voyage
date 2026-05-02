@@ -72,7 +72,9 @@ export function GoogleUserWelcome({
         <CardHeader className="text-center">
           <div className="mx-auto mb-4">
             <Avatar className="w-20 h-20">
-              <AvatarImage src={googleUserInfo.avatar} alt={googleUserInfo.displayName} />
+              {googleUserInfo.avatar ? (
+                <AvatarImage src={googleUserInfo.avatar} alt={googleUserInfo.displayName} />
+              ) : null}
               <AvatarFallback className="text-lg">
                 {getInitials(googleUserInfo.firstName, googleUserInfo.lastName)}
               </AvatarFallback>

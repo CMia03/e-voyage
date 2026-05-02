@@ -21,10 +21,9 @@ export function BudgetInput({
 }: BudgetInputProps) {
   const hasMinimumBudget = typeof minBudget === "number" && minBudget > 0;
   const minimumBudget = hasMinimumBudget ? minBudget : 0;
-  const maxBudget =
-    adminBudget && adminBudget > 0
-      ? adminBudget
-      : Math.max(value, minimumBudget, 100000);
+  const budgetPlaceholder = hasMinimumBudget ? formatAr(minimumBudget) : "Ex: 500000";
+  const computedAdminBudget = adminBudget && adminBudget > 0 ? adminBudget : 0;
+  const maxBudget = Math.max(computedAdminBudget, value, minimumBudget, 100000);
   const budgetRange = Math.max(maxBudget - minimumBudget, 1);
   const clampedValue = Math.min(Math.max(value, minimumBudget), maxBudget);
   const ratio = ((clampedValue - minimumBudget) / budgetRange) * 100;
@@ -44,14 +43,17 @@ export function BudgetInput({
           </p>
         </div>
 
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-right">
+
+        {/* <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-right">
           <p className="text-xs uppercase tracking-[0.18em] text-emerald-700">
             Budget saisi
           </p>
           <p className="mt-2 text-lg font-semibold text-emerald-950">
             {value > 0 ? formatAr(value) : "Non renseigne"}
           </p>
-        </div>
+        </div> */}
+
+
       </div>
 
       <div className="mt-5 space-y-4">
@@ -59,7 +61,7 @@ export function BudgetInput({
           type="number"
           value={value || ""}
           onChange={(event) => onChange(parseInt(event.target.value, 10) || 0)}
-          placeholder="Ex: 500000"
+          placeholder={budgetPlaceholder}
           disabled={disabled}
           className="h-13 w-full rounded-2xl border border-slate-300 bg-white px-4 text-base font-medium text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 disabled:bg-slate-100"
         />
@@ -92,7 +94,7 @@ export function BudgetInput({
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
               <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
-                Minimum accepte
+                Budget min
               </p>
               <p className="mt-2 text-sm font-semibold text-slate-900">
                 {hasMinimumBudget ? formatAr(minimumBudget) : "A calculer"}
@@ -100,7 +102,7 @@ export function BudgetInput({
             </div>
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
               <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
-                Maximum admin
+                Budget max
               </p>
               <p className="mt-2 text-sm font-semibold text-slate-900">
                 {formatAr(maxBudget)}

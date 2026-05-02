@@ -73,9 +73,9 @@ export function hasPreviousGoogleSession(): boolean {
   const session = loadAuth();
   if (!session) return false;
   
-  return session.login?.includes('@gmail.com') || 
+  return !!(session.login?.includes('@gmail.com') || 
          session.login?.includes('@google.com') ||
-         session.userId?.includes('google');
+         session.userId?.includes('google'));
 }
 
 /**

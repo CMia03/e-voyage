@@ -1,4 +1,14 @@
 
+export type VoyageurProfile = {
+    categorieClientId: string;
+    gamme: string;
+    nombrePersonnes: number;
+};
+
+export type ElementSelection = {
+    elementId: string;
+    quantite: number;
+};
 
 export type SimulationRequest = {
     destinationId: string;
@@ -7,7 +17,8 @@ export type SimulationRequest = {
     idCategorieClient: string;
     gamme: string;
     nombrePersonnes: number;
-    elementsSelectionnes?: string[];
+    profilsVoyageurs?: VoyageurProfile[];
+    elementsSelectionnes?: ElementSelection[];
 };
 
 export type SeuilMinimumRequest = {
@@ -16,6 +27,7 @@ export type SeuilMinimumRequest = {
     idCategorieClient: string;
     gamme: string;
     nombrePersonnes: number;
+    profilsVoyageurs?: VoyageurProfile[];
 };
 
 export type SeuilMinimumResponse = {
@@ -37,6 +49,11 @@ export type PlanificationType = {
     nomPlanification: string;
     budgetTotal: number | null;
     jours?: unknown[];
+    dateHeureDebut?: string | null;
+    dateHeureFin?: string | null;
+    depart?: string | null;
+    arriver?: string | null;
+    description?: string | null;
 };
 
 export type CategorieType = {
@@ -50,6 +67,12 @@ export type ElementDetail = {
     prixParPersonne?: number;
     nombreEtoiles?: number;
     adresse?: string;
+    description?: string;
+    telephone?: string;
+    email?: string;
+    siteWeb?: string;
+    latitude?: number;
+    longitude?: number;
     telephone?: string;
     duree?: string;
     difficulte?: string;
@@ -57,7 +80,12 @@ export type ElementDetail = {
     participantsMax?: number;
     depart?: string;
     arrivee?: string;
+    latitudeDepart?: number;
+    longitudeDepart?: number;
+    latitudeArrivee?: number;
+    longitudeArrivee?: number;
     distance?: string;
+    images?: string[];
 };
 
 export type ElementSimulation = {
@@ -67,6 +95,8 @@ export type ElementSimulation = {
     prix: number;
     obligatoire: boolean;
     coche: boolean;
+    quantiteSelectionnee?: number;
+    quantiteMax?: number;
     details: ElementDetail;
 };
 
@@ -89,6 +119,8 @@ export type Resume = {
     totalObligatoire: number;
     totalOptionnel: number;
     totalCoche: number;
+    margeBrute?: number;
+    totalAvecMarge?: number;
     budgetClient: number;
     reste: number;
     obligatoiresCoches: number;
