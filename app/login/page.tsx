@@ -141,12 +141,12 @@ function LoginContent() {
                     <label htmlFor="password" className="text-sm font-medium text-white/90 drop-shadow-md">
                       Mot de passe
                     </label>
-                    {/* <Link 
+                    <Link 
                       href="/forgot-password" 
                       className="text-sm text-emerald-300 hover:text-emerald-200 transition-colors drop-shadow-md"
                     >
                       Mot de passe oublié ?
-                    </Link> */}
+                    </Link>
                   </div>
                   <input
                     id="password"
