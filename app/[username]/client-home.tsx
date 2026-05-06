@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
 import { clearAuth, loadAuth, type AuthSession } from "@/lib/auth";
 import { resolvePostLoginPath } from "@/lib/auth-redirect";
 
@@ -20,7 +19,7 @@ import ReservationsPage from "./reservations/page";
 export function ClientHome({ username }: { username: string }) {
   const router = useRouter();
   const [activeSection, setActiveSection] = useState<ClientSection>("simulation");
-  const [session, setSession] = useState<AuthSession | null>(null);
+  const [session] = useState<AuthSession | null>(() => loadAuth());
   const displayName = useMemo(() => {
     if (!session) return username;
     const fullName = [session.prenom, session.nom].filter(Boolean).join(" ").trim();
@@ -28,9 +27,8 @@ export function ClientHome({ username }: { username: string }) {
   }, [session, username]);
 
   useEffect(() => {
-    const currentSession = loadAuth();
-    setSession(currentSession);
-
+    const currentSession = session || loadAuth();
+    
     if (!currentSession?.accessToken) {
       router.replace("/login");
       return;
@@ -51,7 +49,7 @@ export function ClientHome({ username }: { username: string }) {
     if (expectedUsername && expectedUsername !== username) {
       router.replace(expectedPath);
     }
-  }, [router, username]);
+  }, [router, username, session]);
 
   function handleLogout() {
     clearAuth();

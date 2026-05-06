@@ -150,7 +150,7 @@ export function PlanningJournalier({
             title: element.titre,
             type: getTypeLabel(element.type),
             dayLabel,
-            position: [details.latitude, details.longitude],
+            position: [details.latitude!, details.longitude!],
             subtitle: details.adresse || details.duree,
             images: details.images ?? [],
             description: element.obligatoire
@@ -171,35 +171,39 @@ export function PlanningJournalier({
             title: element.titre,
             dayLabel,
             points: [
-              [details.latitudeDepart, details.longitudeDepart],
-              [details.latitudeArrivee, details.longitudeArrivee],
+              [details.latitudeDepart!, details.longitudeDepart!],
+              [details.latitudeArrivee!, details.longitudeArrivee!],
             ],
             depart: details.depart,
             arrivee: details.arrivee,
           });
 
-          markers.push({
-            id: `${element.id}-depart`,
-            title: details.depart || `${element.titre} - depart`,
-            type: "Transport",
-            dayLabel,
-            position: [details.latitudeDepart, details.longitudeDepart],
-            subtitle: "Point de depart",
-            images: [],
-            description: details.distance || element.titre,
-            details,
-          });
-          markers.push({
-            id: `${element.id}-arrivee`,
-            title: details.arrivee || `${element.titre} - arrivee`,
-            type: "Transport",
-            dayLabel,
-            position: [details.latitudeArrivee, details.longitudeArrivee],
-            subtitle: "Point d'arrivee",
-            images: [],
-            description: details.distance || element.titre,
-            details,
-          });
+          if (details.latitudeDepart != null && details.longitudeDepart != null) {
+            markers.push({
+              id: `${element.id}-depart`,
+              title: details.depart || `${element.titre} - depart`,
+              type: "Transport",
+              dayLabel,
+              position: [details.latitudeDepart, details.longitudeDepart],
+              subtitle: "Point de depart",
+              images: [],
+              description: details.distance || element.titre,
+              details,
+            });
+          }
+          if (details.latitudeArrivee != null && details.longitudeArrivee != null) {
+            markers.push({
+              id: `${element.id}-arrivee`,
+              title: details.arrivee || `${element.titre} - arrivee`,
+              type: "Transport",
+              dayLabel,
+              position: [details.latitudeArrivee, details.longitudeArrivee],
+              subtitle: "Point d'arrivee",
+              images: [],
+              description: details.distance || element.titre,
+              details,
+            });
+          }
         }
       });
     });
@@ -221,19 +225,23 @@ export function PlanningJournalier({
   }, [jours, quantityMap]);
   const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
   const [selectedMarkerImageIndex, setSelectedMarkerImageIndex] = useState(0);
+  
   const selectedMarker = useMemo(
     () => mapData.markers.find((marker) => marker.id === selectedMarkerId) ?? mapData.markers[0] ?? null,
     [mapData.markers, selectedMarkerId]
   );
+  
+  // Reset image index when marker changes
+  const handleMarkerSelect = (markerId: string) => {
+    setSelectedMarkerId(markerId);
+    setSelectedMarkerImageIndex(0);
+  };
+  
   const selectedMarkerQuantity = selectedMarker
     ? (quantityMap.get(selectedMarker.id.replace(/-(point|depart|arrivee)$/, "")) ?? 0)
     : 0;
   const selectedMarkerQuantityLabel =
     selectedMarkerQuantity > 0 ? `${selectedMarkerQuantity} personne(s) sur ce bloc` : null;
-
-  useEffect(() => {
-    setSelectedMarkerImageIndex(0);
-  }, [selectedMarkerId]);
 
   return (
     <div className="space-y-4">
@@ -542,7 +550,7 @@ export function PlanningJournalier({
                       position={marker.position}
                       icon={icon}
                       eventHandlers={{
-                        click: () => setSelectedMarkerId(marker.id),
+                        click: () => handleMarkerSelect(marker.id),
                       }}
                     />
                   );
@@ -769,7 +777,7 @@ export function PlanningJournalier({
                               <button
                                 key={`map-list-${element.id}`}
                                 type="button"
-                                onClick={() => setSelectedMarkerId(`${element.id}-point`)}
+                                onClick={() => handleMarkerSelect(`${element.id}-point`)}
                                 className="block w-full rounded-xl bg-slate-50 px-3 py-2 text-left transition hover:bg-slate-100"
                               >
                                 <p className="text-sm font-medium text-slate-900">{element.titre}</p>

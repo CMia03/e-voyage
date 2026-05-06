@@ -134,7 +134,7 @@ export function AdminNotifications() {
           className="absolute right-0 top-12 w-96 max-h-96 z-50 shadow-lg"
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-lg">Notifications reservations</CardTitle>
+            <CardTitle className="text-lg">Notifications</CardTitle>
             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsOpen(false)}>
               <X className="h-4 w-4" />
             </Button>

@@ -67,3 +67,10 @@ export function updateProfile(token: string, profileData: {
     body: profileData,
   });
 }
+
+export function forgotPassword(email: string) {
+  return apiRequest<{ message: string }>("/api/auth/forgot-password", {
+    method: "POST",
+    body: { email },
+  });
+}

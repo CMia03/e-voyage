@@ -112,12 +112,6 @@ export function Header() {
                     <span>Mon espace</span>
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/profile" className="flex items-center gap-2">
-                    <Settings className="h-4 w-4" />
-                    <span>Profil</span>
-                  </Link>
-                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 text-red-600">
                   <LogOut className="h-4 w-4" />
@@ -218,7 +212,7 @@ export function Header() {
                   </div>
                   <Link
                     href={`/${session?.login || session?.userId || 'utilisateur'}`}
-                    className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-lg text-sm font-medium transition-all bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 dark:text-emerald-400 dark:hover:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/50"
+                    className="cursor-pointer flex items-center justify-center gap-2 w-full px-4 py-3 rounded-lg text-sm font-medium transition-all bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 dark:text-emerald-400 dark:hover:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/50"
                   >
                     <User className="h-4 w-4" />
                     <span>Mon espace</span>
