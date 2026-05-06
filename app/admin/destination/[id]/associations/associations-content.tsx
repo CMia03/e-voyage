@@ -2,12 +2,10 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BedDouble, CheckCircle2, Compass, Gift, Loader2, MapPin, Map as MapIcon, Tag, X } from "lucide-react";
+import { ArrowLeft, BedDouble, CalendarDays, CheckCircle2, Compass, Gift, Info, Loader2, MapPin, Map as MapIcon, SlidersHorizontal, Tag, X } from "lucide-react";
 
-import { AdminFooter } from "@/app/admin/components/footer";
-import { AdminHeader } from "@/app/admin/components/header";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,9 +40,14 @@ import type {
 
 type Props = {
   destinationId: string;
+  embedded?: boolean;
+  initialSection?: "top" | "hebergements" | "activites" | "prestations" | "carte";
+  title?: string;
+  description?: string;
+  showBackToDetail?: boolean;
 };
 
-type ViewMode = "list" | "map";
+type ActiveSection = "hebergements" | "activites" | "prestations" | "carte";
 type MapCategoryFilter = "all" | "hebergement" | "activite";
 
 const DestinationAssociationsMap = dynamic(
@@ -62,12 +65,15 @@ const DestinationAssociationsMap = dynamic(
   }
 );
 
-export function AdminDestinationAssociationsContent({ destinationId }: Props) {
+export function AdminDestinationAssociationsContent({
+  destinationId,
+  embedded = false,
+  initialSection = "top",
+  title = "Hébergements et activités",
+  description = "Sélectionnez ce que les voyageurs pourront faire et où ils pourront se loger pour cette destination.",
+  showBackToDetail = !embedded,
+}: Props) {
   const router = useRouter();
-  const hebergementsRef = useRef<HTMLDivElement | null>(null);
-  const activitesRef = useRef<HTMLDivElement | null>(null);
-  const prestationsRef = useRef<HTMLDivElement | null>(null);
-
   const [accessToken, setAccessToken] = useState("");
   const [role, setRole] = useState("");
   const [data, setData] = useState<DestinationAssociations | null>(null);
@@ -75,7 +81,9 @@ export function AdminDestinationAssociationsContent({ destinationId }: Props) {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [pendingKey, setPendingKey] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [activeSection, setActiveSection] = useState<ActiveSection>(
+    initialSection === "top" ? "hebergements" : initialSection
+  );
   const [focusedItemId, setFocusedItemId] = useState<string | null>(null);
   const [mapCategoryFilter, setMapCategoryFilter] = useState<MapCategoryFilter>("all");
   const [isCreatePrestationDialogOpen, setIsCreatePrestationDialogOpen] = useState(false);
@@ -180,15 +188,9 @@ export function AdminDestinationAssociationsContent({ destinationId }: Props) {
     }
   }, [filteredMapItems, focusedItemId]);
 
-  function scrollToSection(section: "hebergements" | "activites" | "prestations") {
-    const target =
-      section === "hebergements"
-        ? hebergementsRef.current
-        : section === "activites"
-          ? activitesRef.current
-          : prestationsRef.current;
-    target?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
+  useEffect(() => {
+    setActiveSection(initialSection === "top" ? "hebergements" : initialSection);
+  }, [initialSection]);
 
   async function handleToggleHebergement(item: DestinationAssociationItem, checked: boolean) {
     if (!accessToken) {
@@ -402,7 +404,7 @@ export function AdminDestinationAssociationsContent({ destinationId }: Props) {
         }`}
         onClick={() => {
           setFocusedItemId(item.id);
-          setViewMode("map");
+          setActiveSection("carte");
         }}
       >
         <div className="h-20 w-24 shrink-0 overflow-hidden rounded-xl border border-border/40 bg-muted/20">
@@ -464,16 +466,18 @@ export function AdminDestinationAssociationsContent({ destinationId }: Props) {
     return (
       <div
         key={item.id}
-        className={`grid gap-4 px-4 py-4 transition-colors md:grid-cols-[1.9fr_1.2fr_1fr_0.9fr_1.4fr] ${
-          focusedItemId === item.id ? "bg-primary/5" : "bg-card/50 hover:bg-muted/20"
+        className={`grid gap-4 px-4 py-4 transition-all duration-200 md:grid-cols-[1.9fr_1.2fr_1fr_0.9fr_1.4fr] hover:bg-muted/30 ${
+          focusedItemId === item.id 
+            ? "bg-primary/5 border-l-4 border-l-primary" 
+            : "border-l-4 border-l-transparent hover:border-l-border/40"
         }`}
         onClick={() => {
           setFocusedItemId(item.id);
-          setViewMode("map");
+          setActiveSection("carte");
         }}
       >
-        <div className="flex min-w-0 flex-col items-start gap-2">
-          <div className="h-12 w-14 shrink-0 overflow-hidden rounded-xl border border-border/40 bg-muted/20">
+        <div className="flex min-w-0 flex-col items-start gap-3">
+          <div className="h-12 w-14 shrink-0 overflow-hidden rounded-xl border border-border/40 bg-muted/20 shadow-sm">
             {item.image ? (
               <img src={item.image} alt={item.nom} className="h-full w-full object-cover" />
             ) : (
@@ -488,23 +492,22 @@ export function AdminDestinationAssociationsContent({ destinationId }: Props) {
         </div>
 
         <div className="flex items-center text-sm text-muted-foreground">
-          <span className="truncate">{item.place || "Place non renseignee"}</span>
+          <span className="truncate">{item.place || "Place non renseignée"}</span>
         </div>
 
         <div className="flex items-center text-sm text-muted-foreground">
-          <span className="truncate">{item.region || "Region non renseignee"}</span>
+          <span className="truncate">{item.region || "Région non renseignée"}</span>
         </div>
 
         <div className="flex items-center text-sm text-muted-foreground">
           <span className="truncate">
-            {item.meta || (type === "hebergement" ? "Non classe" : "Duree non renseignee")}
+            {item.meta || (type === "hebergement" ? "Non classé" : "Durée non renseignée")}
           </span>
         </div>
 
         <div className="flex items-center justify-start gap-3">
-          {pending ? <Loader2 className="size-4 animate-spin text-muted-foreground" /> : null}
+          {pending ? <Loader2 className="size-4 animate-spin text-primary" /> : null}
           <div className="flex items-center gap-2" onClick={(event) => event.stopPropagation()}>
-
             <Checkbox
               checked={item.estSelectionne}
               disabled={pending}
@@ -514,10 +517,14 @@ export function AdminDestinationAssociationsContent({ destinationId }: Props) {
                   : void handleToggleActivite(item, checked === true)
               }
               aria-label={`Associer ${item.nom}`}
+              className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
             />
-
             <span className="whitespace-nowrap text-sm font-medium">
-              {item.estSelectionne ? "Actif pour la destination" : "Non associe"}
+              {item.estSelectionne ? (
+                <span className="text-emerald-600">Actif</span>
+              ) : (
+                <span className="text-muted-foreground">Non associé</span>
+              )}
             </span>
           </div>
         </div>
@@ -531,7 +538,7 @@ export function AdminDestinationAssociationsContent({ destinationId }: Props) {
     return (
       <div
         key={item.id}
-        className="grid gap-3 px-4 py-4 md:grid-cols-[1.2fr_1.4fr_180px_220px_120px]"
+        className="grid gap-3 px-4 py-4 transition-all duration-200 md:grid-cols-[1.2fr_1.4fr_180px_220px_120px] hover:bg-muted/30 border-l-4 border-l-transparent hover:border-l-border/40"
       >
         <div className="min-w-0">
           <p className="font-medium text-foreground">{item.libelle}</p>
@@ -544,16 +551,21 @@ export function AdminDestinationAssociationsContent({ destinationId }: Props) {
         </div>
 
         <div className="flex items-center gap-3">
-          {pending ? <Loader2 className="size-4 animate-spin text-muted-foreground" /> : null}
+          {pending ? <Loader2 className="size-4 animate-spin text-primary" /> : null}
           <div className="flex items-center gap-2">
             <Checkbox
               checked={item.estSelectionne}
               disabled={pending}
               onCheckedChange={(checked) => void handleTogglePrestation(item, checked === true)}
               aria-label={`Associer ${item.libelle}`}
+              className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
             />
             <span className="text-sm font-medium">
-              {item.estSelectionne ? "Associee à cette destination" : "Non associee à cette destination"}
+              {item.estSelectionne ? (
+                <span className="text-emerald-600">Associée</span>
+              ) : (
+                <span className="text-muted-foreground">Non associée</span>
+              )}
             </span>
           </div>
         </div>
@@ -566,7 +578,7 @@ export function AdminDestinationAssociationsContent({ destinationId }: Props) {
               void handlePrestationStatutChange(item, value as "INCLUS" | "EN_SUS")
             }
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full shadow-sm">
               <SelectValue placeholder="Choisir le statut" />
             </SelectTrigger>
             <SelectContent>
@@ -578,10 +590,10 @@ export function AdminDestinationAssociationsContent({ destinationId }: Props) {
 
         <div className="flex items-center">
           <span
-            className={`inline-flex w-fit rounded-full px-3 py-1 text-xs font-medium ${
+            className={`inline-flex w-fit rounded-full px-3 py-1 text-xs font-medium shadow-sm ${
               item.statut === "EN_SUS"
-                ? "bg-amber-100 text-amber-700"
-                : "bg-emerald-100 text-emerald-700"
+                ? "bg-amber-100 text-amber-700 border border-amber-200"
+                : "bg-emerald-100 text-emerald-700 border border-emerald-200"
             }`}
           >
             {item.statut === "EN_SUS" ? "EN SUS" : "INCLUS"}
@@ -596,42 +608,91 @@ export function AdminDestinationAssociationsContent({ destinationId }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-muted/30 to-background text-foreground">
-      <main className="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 sm:py-8">
-        <div className="space-y-8">
+    <div className={embedded ? "text-foreground" : "min-h-screen bg-gradient-to-b from-background via-muted/30 to-background text-foreground"}>
+      <main className={embedded ? "w-full" : "mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 sm:py-8"}>
+        <div id="destination-management" className="space-y-8">
+          {/* Header Section */}
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-3">
-             
+              
+              {showBackToDetail ? (
+                <Button asChild variant="ghost" size="sm" className="w-fit px-2">
+                  <Link href={`/admin/destination/${destinationId}`}>
+                    <ArrowLeft className="mr-2 size-4" />
+                    Retour au détail
+                  </Link>
+                </Button>
+              ) : null}
+
               <div>
-                <h1 className="text-3xl font-semibold tracking-tight">
-                  Hebergements et activites
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  Sélectionnez ce que les voyageurs pourront faire et où ils pourront se loger pour cette destination.
-                </p>
+                <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
+                <p className="text-sm text-muted-foreground mt-2">{description}</p>
+                {data?.nomDestination && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Destination: <span className="font-medium">{data.nomDestination}</span>
+                  </p>
+                )}
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              <Button type="button" onClick={() => scrollToSection("hebergements")}>
-                <BedDouble className="size-4" />
-                Ajouter hébergement
+            <div className="flex flex-wrap gap-3">
+              {!embedded ? (
+                <>
+                  <Button asChild type="button" variant="outline" className="shadow-sm">
+                    <Link href={`/admin/destination/${destinationId}`}>
+                      <Info className="size-4 mr-2" />
+                      Détails
+                    </Link>
+                  </Button>
+                  <Button asChild type="button" variant="outline" className="shadow-sm">
+                    <Link href={`/admin/destination/${destinationId}/parametrage`}>
+                      <SlidersHorizontal className="size-4 mr-2" />
+                      Paramétrage
+                    </Link>
+                  </Button>
+                  <Button asChild type="button" variant="outline" className="shadow-sm">
+                    <Link href={`/admin/destination/${destinationId}/planning`}>
+                      <CalendarDays className="size-4 mr-2" />
+                      Planning
+                    </Link>
+                  </Button>
+                </>
+              ) : null}
+              <Button 
+                type="button" 
+                variant={activeSection === "hebergements" ? "default" : "outline"}
+                onClick={() => setActiveSection("hebergements")}
+                className="shadow-sm"
+              >
+                <BedDouble className="size-4 mr-2" />
+                Hébergements
               </Button>
-              <Button type="button" variant="outline" onClick={() => scrollToSection("activites")}>
-                <Compass className="size-4" />
-                Ajouter activité
+              <Button 
+                type="button" 
+                variant={activeSection === "activites" ? "default" : "outline"}
+                onClick={() => setActiveSection("activites")}
+                className="shadow-sm"
+              >
+                <Compass className="size-4 mr-2" />
+                Activités
               </Button>
-              <Button type="button" variant="outline" onClick={() => scrollToSection("prestations")}>
-                <Gift className="size-4" />
-                Prestation
+              <Button 
+                type="button" 
+                variant={activeSection === "prestations" ? "default" : "outline"}
+                onClick={() => setActiveSection("prestations")}
+                className="shadow-sm"
+              >
+                <Gift className="size-4 mr-2" />
+                Prestations
               </Button>
               <Button
                 type="button"
-                variant={viewMode === "map" ? "default" : "outline"}
-                onClick={() => setViewMode((current) => (current === "map" ? "list" : "map"))}
+                variant={activeSection === "carte" ? "default" : "outline"}
+                onClick={() => setActiveSection("carte")}
+                className="shadow-sm"
               >
-                <MapIcon className="size-4" />
-                {viewMode === "map" ? "Vue liste" : "Vue sur cart"}
+                <MapIcon className="size-4 mr-2" />
+                Vue carte
               </Button>
             </div>
           </div>
@@ -663,13 +724,13 @@ export function AdminDestinationAssociationsContent({ destinationId }: Props) {
             </Alert>
           ) : null}
 
-          {viewMode === "map" ? (
-            <Card className="border-border/50 shadow-sm">
-              <CardHeader className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          {activeSection === "carte" ? (
+            <Card className="border-border/50 shadow-lg">
+              <CardHeader className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between bg-gradient-to-r from-muted/20 to-transparent">
                 <div className="space-y-1.5">
-                  <CardTitle>Vue sur cart</CardTitle>
-                  <CardDescription>
-                    Visualisez les hebergements et activites sur la carte, puis activez-les directement depuis le popup ou la liste.
+                  <CardTitle className="text-xl">Vue carte</CardTitle>
+                  <CardDescription className="text-sm">
+                    Visualisez les hébergements et activités sur la carte, puis activez-les directement depuis le popup ou la liste.
                   </CardDescription>
                 </div>
 
@@ -679,6 +740,7 @@ export function AdminDestinationAssociationsContent({ destinationId }: Props) {
                     size="sm"
                     variant={mapCategoryFilter === "all" ? "default" : "outline"}
                     onClick={() => setMapCategoryFilter("all")}
+                    className="shadow-sm"
                   >
                     Tous
                   </Button>
@@ -687,36 +749,42 @@ export function AdminDestinationAssociationsContent({ destinationId }: Props) {
                     size="sm"
                     variant={mapCategoryFilter === "hebergement" ? "default" : "outline"}
                     onClick={() => setMapCategoryFilter("hebergement")}
+                    className="shadow-sm"
                   >
-                    Hebergements
+                    Hébergements
                   </Button>
                   <Button
                     type="button"
                     size="sm"
                     variant={mapCategoryFilter === "activite" ? "default" : "outline"}
                     onClick={() => setMapCategoryFilter("activite")}
+                    className="shadow-sm"
                   >
-                    Activites
+                    Activités
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-6">
                 <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_380px]">
-                  <DestinationAssociationsMap
-                    items={filteredMapItems}
-                    pendingKey={pendingKey}
-                    focusedItemId={focusedItemId}
-                    onToggle={(item, checked) => void handleToggleFromMap(item, checked)}
-                    onFocusChange={(item) => setFocusedItemId(item.id)}
-                  />
+                  <div className="rounded-2xl border border-border/30 bg-gradient-to-br from-background to-muted/10 overflow-hidden">
+                    <DestinationAssociationsMap
+                      items={filteredMapItems}
+                      pendingKey={pendingKey}
+                      focusedItemId={focusedItemId}
+                      onToggle={(item, checked) => void handleToggleFromMap(item, checked)}
+                      onFocusChange={(item) => setFocusedItemId(item.id)}
+                    />
+                  </div>
 
-                  <div className="space-y-6">
+                  <div className="space-y-4">
                     {mapCategoryFilter !== "activite" ? (
-                      <div className="rounded-2xl border border-border/50 bg-card/50 p-4">
-                        <p className="text-sm font-semibold">Hebergements</p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {totalHebergementsSelectionnes} selectionne(s)
-                        </p>
+                      <div className="rounded-2xl border border-border/40 bg-gradient-to-br from-card to-muted/20 p-4 shadow-sm">
+                        <div className="flex items-center justify-between mb-3">
+                          <p className="text-sm font-semibold text-foreground">Hébergements</p>
+                          <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+                            {totalHebergementsSelectionnes} sélectionné(s)
+                          </span>
+                        </div>
                         <div className="mt-4 max-h-[220px] space-y-3 overflow-y-auto pr-2">
                           {(data?.hebergements ?? []).map((item) => renderItem(item, "hebergement"))}
                         </div>
@@ -724,11 +792,13 @@ export function AdminDestinationAssociationsContent({ destinationId }: Props) {
                     ) : null}
 
                     {mapCategoryFilter !== "hebergement" ? (
-                      <div className="rounded-2xl border border-border/50 bg-card/50 p-4">
-                        <p className="text-sm font-semibold">Activites</p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {totalActivitesSelectionnees} selectionne(s)
-                        </p>
+                      <div className="rounded-2xl border border-border/40 bg-gradient-to-br from-card to-muted/20 p-4 shadow-sm">
+                        <div className="flex items-center justify-between mb-3">
+                          <p className="text-sm font-semibold text-foreground">Activités</p>
+                          <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+                            {totalActivitesSelectionnees} sélectionné(s)
+                          </span>
+                        </div>
                         <div className="mt-4 max-h-[220px] space-y-3 overflow-y-auto pr-2">
                           {(data?.activites ?? []).map((item) => renderItem(item, "activite"))}
                         </div>
@@ -740,129 +810,190 @@ export function AdminDestinationAssociationsContent({ destinationId }: Props) {
             </Card>
           ) : (
           <div className="grid gap-6 xl:grid-cols-2">
-            <Card ref={hebergementsRef} className="border-border/50 shadow-sm">
-              <CardHeader>
-                <CardTitle>Hebergements</CardTitle>
-                <CardDescription>
-                  {isLoading
-                    ? "Chargement..."
-                    : `${totalHebergementsSelectionnes} hebergement(s) actif(s) pour ${data?.nomDestination ?? "cette destination"}`}
-                </CardDescription>
+            {activeSection === "hebergements" ? (
+            <Card className="border-border/50 shadow-lg overflow-hidden xl:col-span-2">
+              <CardHeader className="bg-gradient-to-r from-muted/20 to-transparent">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-xl flex items-center gap-2">
+                      <BedDouble className="size-5 text-primary" />
+                      Hébergements
+                    </CardTitle>
+                    <CardDescription className="text-sm mt-1">
+                      {isLoading
+                        ? "Chargement..."
+                        : `${totalHebergementsSelectionnes} hébergement(s) actif(s) pour ${data?.nomDestination ?? "cette destination"}`}
+                    </CardDescription>
+                  </div>
+                  {totalHebergementsSelectionnes > 0 && (
+                    <span className="inline-flex items-center rounded-full bg-emerald-100 text-emerald-700 px-3 py-1 text-sm font-medium">
+                      {totalHebergementsSelectionnes}
+                    </span>
+                  )}
+                </div>
               </CardHeader>
 
-              <CardContent>
+              <CardContent className="p-0">
                 {isLoading ? (
-                  <div className="flex items-center justify-center py-10">
-                    <Loader2 className="size-6 animate-spin text-muted-foreground" />
+                  <div className="flex items-center justify-center py-12">
+                    <div className="flex flex-col items-center gap-3">
+                      <Loader2 className="size-8 animate-spin text-primary" />
+                      <p className="text-sm text-muted-foreground">Chargement des hébergements...</p>
+                    </div>
                   </div>
                 ) : (
-                  <div className="max-h-[60vh] overflow-y-auto rounded-2xl border border-border/50">
-
-                    <div className="hidden bg-muted/30 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground md:grid md:grid-cols-[1.9fr_1.2fr_1fr_0.9fr_1.4fr] md:gap-4">
-                      <span>Hebergement</span>
-                      <span>Adresse</span>
-                      <span>Type</span>
-                      {/* <span>Etoiles</span> */}
-                      <span>Statut</span>
+                  <div className="max-h-[60vh] overflow-y-auto">
+                    <div className="sticky top-0 bg-gradient-to-b from-background via-background to-transparent z-10">
+                      <div className="hidden bg-muted/30 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground md:grid md:grid-cols-[1.9fr_1.2fr_1fr_0.9fr_1.4fr] md:gap-4 border-b border-border/30">
+                        <span>Hébergement</span>
+                        <span>Adresse</span>
+                        <span>Type</span>
+                        <span>Statut</span>
+                        <span>Actions</span>
+                      </div>
                     </div>
 
-                    <div className="divide-y divide-border/40">
+                    <div className="divide-y divide-border/30">
                       {(data?.hebergements ?? []).map((item) => renderListTableItem(item, "hebergement"))}
                     </div>
-
                   </div>
                 )}
               </CardContent>
-
-
             </Card>
+            ) : null}
 
-            <Card ref={activitesRef} className="border-border/50 shadow-sm">
-              <CardHeader>
-                <CardTitle>Activites</CardTitle>
-                <CardDescription>
-                  {isLoading
-                    ? "Chargement..."
-                    : `${totalActivitesSelectionnees} activite(s) active(s) pour ${data?.nomDestination ?? "cette destination"}`}
-                </CardDescription>
+            {activeSection === "activites" ? (
+            <Card className="border-border/50 shadow-lg overflow-hidden xl:col-span-2">
+              <CardHeader className="bg-gradient-to-r from-muted/20 to-transparent">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-xl flex items-center gap-2">
+                      <Compass className="size-5 text-primary" />
+                      Activités
+                    </CardTitle>
+                    <CardDescription className="text-sm mt-1">
+                      {isLoading
+                        ? "Chargement..."
+                        : `${totalActivitesSelectionnees} activité(s) active(s) pour ${data?.nomDestination ?? "cette destination"}`}
+                    </CardDescription>
+                  </div>
+                  {totalActivitesSelectionnees > 0 && (
+                    <span className="inline-flex items-center rounded-full bg-emerald-100 text-emerald-700 px-3 py-1 text-sm font-medium">
+                      {totalActivitesSelectionnees}
+                    </span>
+                  )}
+                </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-0">
                 {isLoading ? (
-                  <div className="flex items-center justify-center py-10">
-                    <Loader2 className="size-6 animate-spin text-muted-foreground" />
+                  <div className="flex items-center justify-center py-12">
+                    <div className="flex flex-col items-center gap-3">
+                      <Loader2 className="size-8 animate-spin text-primary" />
+                      <p className="text-sm text-muted-foreground">Chargement des activités...</p>
+                    </div>
                   </div>
                 ) : (
-                  <div className="max-h-[60vh] overflow-y-auto rounded-2xl border border-border/50">
-                    <div className="hidden bg-muted/30 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground md:grid md:grid-cols-[1.9fr_1.2fr_1fr_0.9fr_1.4fr] md:gap-4">
-                      <span>Activite</span>
-                      <span>Categorie</span>
-                      <span>Difficulte</span>
-                      <span>Duree</span>
-                      <span>Statut</span>
+                  <div className="max-h-[60vh] overflow-y-auto">
+                    <div className="sticky top-0 bg-gradient-to-b from-background via-background to-transparent z-10">
+                      <div className="hidden bg-muted/30 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground md:grid md:grid-cols-[1.9fr_1.2fr_1fr_0.9fr_1.4fr] md:gap-4 border-b border-border/30">
+                        <span>Activité</span>
+                        <span>Catégorie</span>
+                        <span>Difficulté</span>
+                        <span>Durée</span>
+                        <span>Actions</span>
+                      </div>
                     </div>
-                    <div className="divide-y divide-border/40">
+                    <div className="divide-y divide-border/30">
                       {(data?.activites ?? []).map((item) => renderListTableItem(item, "activite"))}
                     </div>
                   </div>
                 )}
               </CardContent>
             </Card>
+            ) : null}
 
-            <Card ref={prestationsRef} className="border-border/50 shadow-sm xl:col-span-2">
-              <CardHeader className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                <div className="space-y-1.5">
-                  <CardTitle>Prestations</CardTitle>
-                  <CardDescription>
-                    {isLoading
-                      ? "Chargement..."
-                      : `${totalPrestationsSelectionnees} prestation(s) active(s) pour ${data?.nomDestination ?? "cette destination"}`}
-                  </CardDescription>
+            {activeSection === "prestations" ? (
+            <Card className="border-border/50 shadow-lg overflow-hidden xl:col-span-2">
+              <CardHeader className="bg-gradient-to-r from-muted/20 to-transparent">
+                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                  <div className="space-y-1.5">
+                    <CardTitle className="text-xl flex items-center gap-2">
+                      <Gift className="size-5 text-primary" />
+                      Prestations
+                    </CardTitle>
+                    <CardDescription className="text-sm">
+                      {isLoading
+                        ? "Chargement..."
+                        : `${totalPrestationsSelectionnees} prestation(s) active(s) pour ${data?.nomDestination ?? "cette destination"}`}
+                    </CardDescription>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    {totalPrestationsSelectionnees > 0 && (
+                      <span className="inline-flex items-center rounded-full bg-emerald-100 text-emerald-700 px-3 py-1 text-sm font-medium">
+                        {totalPrestationsSelectionnees}
+                      </span>
+                    )}
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setIsCreatePrestationDialogOpen(true)}
+                      className="shadow-sm"
+                    >
+                      <Gift className="size-4 mr-2" />
+                      Ajouter prestation
+                    </Button>
+                  </div>
                 </div>
-
-                <Button type="button" variant="outline" onClick={() => setIsCreatePrestationDialogOpen(true)}>
-                  <Gift className="size-4" />
-                  Ajouter prestation
-                </Button>
               </CardHeader>
 
-              <CardContent>
+              <CardContent className="p-0">
                 {isLoading ? (
-                  <div className="flex items-center justify-center py-10">
-                    <Loader2 className="size-6 animate-spin text-muted-foreground" />
+                  <div className="flex items-center justify-center py-12">
+                    <div className="flex flex-col items-center gap-3">
+                      <Loader2 className="size-8 animate-spin text-primary" />
+                      <p className="text-sm text-muted-foreground">Chargement des prestations...</p>
+                    </div>
                   </div>
                 ) : (
-                  <div className="max-h-[60vh] overflow-y-auto rounded-2xl border border-border/50">
-                    <div className="hidden bg-muted/30 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground md:grid md:grid-cols-[1.2fr_1.4fr_180px_220px_120px] md:gap-3">
-                      <span>Prestation</span>
-                      <span>Description</span>
-                      <span>Association</span>
-                      <span>Choix</span>
-                      <span>Statut</span>
+                  <div className="max-h-[60vh] overflow-y-auto">
+                    <div className="sticky top-0 bg-gradient-to-b from-background via-background to-transparent z-10">
+                      <div className="hidden bg-muted/30 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground md:grid md:grid-cols-[1.2fr_1.4fr_180px_220px_120px] md:gap-3 border-b border-border/30">
+                        <span>Prestation</span>
+                        <span>Description</span>
+                        <span>Association</span>
+                        <span>Choix</span>
+                        <span>Statut</span>
+                      </div>
                     </div>
-                    <div className="divide-y divide-border/50">
+                    <div className="divide-y divide-border/30">
                       {(data?.prestations ?? []).map(renderPrestationItem)}
                     </div>
                   </div>
                 )}
               </CardContent>
             </Card>
+            ) : null}
           </div>
           )}
         </div>
       </main>
 
       <Dialog open={isCreatePrestationDialogOpen} onOpenChange={setIsCreatePrestationDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Ajouter prestation</DialogTitle>
-            <DialogDescription>
-              Ajoute une nouvelle prestation dans la liste globale par defaut. Elle sera ensuite disponible pour toutes les destinations.
+        <DialogContent className="sm:max-w-lg shadow-xl">
+          <DialogHeader className="space-y-3">
+            <DialogTitle className="text-xl flex items-center gap-2">
+              <Gift className="size-5 text-primary" />
+              Ajouter prestation
+            </DialogTitle>
+            <DialogDescription className="text-sm">
+              Ajoute une nouvelle prestation dans la liste globale par défaut. Elle sera ensuite disponible pour toutes les destinations.
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleCreatePrestation} className="space-y-5">
-            <div className="space-y-2">
-              <label htmlFor="prestation-libelle" className="text-sm font-medium">
+          <form onSubmit={handleCreatePrestation} className="space-y-6">
+            <div className="space-y-3">
+              <label htmlFor="prestation-libelle" className="text-sm font-medium text-foreground">
                 Libelle
               </label>
               <Input
@@ -872,11 +1003,13 @@ export function AdminDestinationAssociationsContent({ destinationId }: Props) {
                   setNewPrestation((current) => ({ ...current, libelle: event.target.value }))
                 }
                 placeholder="Ex: Assurance voyage"
+                className="shadow-sm"
+                required
               />
             </div>
 
-            <div className="space-y-2">
-              <label htmlFor="prestation-description" className="text-sm font-medium">
+            <div className="space-y-3">
+              <label htmlFor="prestation-description" className="text-sm font-medium text-foreground">
                 Description
               </label>
               <Input
@@ -886,12 +1019,13 @@ export function AdminDestinationAssociationsContent({ destinationId }: Props) {
                   setNewPrestation((current) => ({ ...current, description: event.target.value }))
                 }
                 placeholder="Description courte de la prestation"
+                className="shadow-sm"
               />
             </div>
 
-            <div className="space-y-2">
-              <label htmlFor="prestation-ordre" className="text-sm font-medium">
-                Ordre d'affichage
+            <div className="space-y-3">
+              <label htmlFor="prestation-ordre" className="text-sm font-medium text-foreground">
+                Ordre d&apos;affichage
               </label>
               <Input
                 id="prestation-ordre"
@@ -901,10 +1035,12 @@ export function AdminDestinationAssociationsContent({ destinationId }: Props) {
                   setNewPrestation((current) => ({ ...current, ordreAffichage: event.target.value }))
                 }
                 placeholder="0"
+                className="shadow-sm"
+                min="0"
               />
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="gap-3">
               <Button
                 type="button"
                 variant="outline"
@@ -913,17 +1049,28 @@ export function AdminDestinationAssociationsContent({ destinationId }: Props) {
                   resetPrestationForm();
                 }}
                 disabled={isCreatingPrestation}
+                className="shadow-sm"
               >
                 Annuler
               </Button>
-              <Button type="submit" disabled={isCreatingPrestation}>
-                {isCreatingPrestation ? "Ajout..." : "Ajouter"}
+              <Button 
+                type="submit" 
+                disabled={isCreatingPrestation}
+                className="shadow-sm"
+              >
+                {isCreatingPrestation ? (
+                  <>
+                    <Loader2 className="size-4 mr-2 animate-spin" />
+                    Ajout...
+                  </>
+                ) : (
+                  "Ajouter"
+                )}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
-      <AdminFooter />
     </div>
   );
 }

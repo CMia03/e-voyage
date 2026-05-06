@@ -25,6 +25,11 @@ import {
 } from "@/components/ui/card";
 import { Activite } from "@/lib/type/activite";
 
+const greenOutlineButtonClass =
+  "border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100 hover:text-emerald-800";
+const greenPrimaryButtonClass =
+  "border-transparent bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/20 hover:from-emerald-700 hover:to-teal-700";
+
 const HebergementsOverviewMap = dynamic(
   () =>
     import("@/components/hebergements-overview-map").then(
@@ -68,6 +73,7 @@ export function AdminActivitesListe({
 
   useEffect(() => {
     if (!successMessage) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowSuccessAlert(false);
       return;
     }
@@ -82,6 +88,7 @@ export function AdminActivitesListe({
 
   useEffect(() => {
     if (!error) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowErrorAlert(false);
       return;
     }
@@ -107,11 +114,11 @@ export function AdminActivitesListe({
         </div>
 
         <div className="flex flex-wrap gap-3">
-          <Button variant="outline" onClick={onRefresh} disabled={isLoading}>
+          <Button variant="outline" onClick={onRefresh} disabled={isLoading} className={greenOutlineButtonClass}>
             <RefreshCcw className="size-4" />
             Actualiser
           </Button>
-          <Button onClick={onCreate}>
+          <Button onClick={onCreate} className={greenPrimaryButtonClass}>
             <Plus className="size-4" />
             Creer
           </Button>
@@ -262,10 +269,10 @@ export function AdminActivitesListe({
                   ) : null}
 
                   <div className="mt-5 flex flex-wrap gap-2">
-                    <Button size="sm" asChild>
+                    <Button size="sm" asChild className={greenPrimaryButtonClass}>
                       <Link href={`/admin/activites/${activite.id}`}>Voir details</Link>
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => onEdit(activite.id)}>
+                    <Button size="sm" variant="outline" onClick={() => onEdit(activite.id)} className={greenOutlineButtonClass}>
                       <Pencil className="size-4" />
                       Modifier
                     </Button>

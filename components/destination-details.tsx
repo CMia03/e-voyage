@@ -1,24 +1,62 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DestinationDetails } from "@/lib/type/destination";
+import { DestinationDetails, PublicDestinationPlanification } from "@/lib/type/destination";
 import { Check, X, Phone, Calendar, MapPin, Clock } from "lucide-react";
 import { ImageLightbox } from "@/components/image-lightbox";
 import { DestinationSidebar } from "@/components/destination-sidebar";
-import { useEffect, useState } from "react";
+import { ModalMap } from "@/components/modal-map";
 import { getEntrepriseInfoPublic } from "@/lib/api/entreprise-info";
+import { listPublicDestinationPlanifications } from "@/lib/api/destinations";
 
 interface DestinationDetailsProps {
   destination: DestinationDetails;
 }
 
+function formatDateRange(start?: string | null, end?: string | null) {
+  if (!start && !end) return "Date non renseignee";
+
+  const formatter = new Intl.DateTimeFormat("fr-FR", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  const startDate = start ? new Date(start) : null;
+  const endDate = end ? new Date(end) : null;
+  const startLabel = startDate && !Number.isNaN(startDate.getTime()) ? formatter.format(startDate) : start;
+  const endLabel = endDate && !Number.isNaN(endDate.getTime()) ? formatter.format(endDate) : end;
+
+  if (startLabel && endLabel && startLabel !== endLabel) {
+    return `${startLabel} - ${endLabel}`;
+  }
+
+  return startLabel || endLabel || "Date non renseignee";
+}
+
+function formatMoney(value?: number | null, devise = "Ar") {
+  if (value === null || value === undefined) return "-";
+  return `${Math.round(value).toLocaleString("fr-MG")} ${devise || "Ar"}`;
+}
+
 export function DestinationDetailsComponent({ destination }: DestinationDetailsProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [mapModalOpen, setMapModalOpen] = useState(false);
+  const [publicPlanifications, setPublicPlanifications] = useState<PublicDestinationPlanification[]>([]);
+  const [selectedPlanificationId, setSelectedPlanificationId] = useState<string | null>(null);
+  const [isLoadingPlanifications, setIsLoadingPlanifications] = useState(false);
+  const [planificationError, setPlanificationError] = useState<string | null>(null);
   const galleryAll = destination.galleryAll?.length ? destination.galleryAll : destination.gallery;
+  const selectedPlanification = useMemo(
+    () =>
+      publicPlanifications.find((planification) => planification.id === selectedPlanificationId) ??
+      publicPlanifications[0] ??
+      null,
+    [publicPlanifications, selectedPlanificationId]
+  );
   const [reservationContacts, setReservationContacts] = useState({
     phone: destination.reservation?.phone ?? "",
     orangeMoney: destination.reservation?.orangeMoney ?? "",
@@ -48,6 +86,39 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
     };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    const loadPlanifications = async () => {
+      setIsLoadingPlanifications(true);
+      setPlanificationError(null);
+
+      try {
+        const response = await listPublicDestinationPlanifications(destination.id);
+        const items = response.data ?? [];
+        if (!active) return;
+
+        setPublicPlanifications(items);
+        setSelectedPlanificationId((current) =>
+          current && items.some((item) => item.id === current) ? current : items[0]?.id ?? null
+        );
+      } catch {
+        if (!active) return;
+        setPublicPlanifications([]);
+        setSelectedPlanificationId(null);
+        setPlanificationError("Impossible de charger les dates disponibles.");
+      } finally {
+        if (active) {
+          setIsLoadingPlanifications(false);
+        }
+      }
+    };
+
+    void loadPlanifications();
+    return () => {
+      active = false;
+    };
+  }, [destination.id]);
+
   return (
     <div className="container mx-auto px-4 py-6 sm:py-12">
       <div className="mx-auto max-w-7xl">
@@ -74,10 +145,20 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
             </h1>
             <p className="text-sm sm:text-base md:text-xl text-white/90">{destination.description}</p>
           </div>
+          
+          {/* Bouton Voir carte */}
+          <Button
+            onClick={() => setMapModalOpen(true)}
+            className="absolute bottom-4 right-4 bg-white/90 hover:bg-white text-primary hover:text-primary shadow-lg flex items-center gap-2"
+            size="sm"
+          >
+            <MapPin className="h-4 w-4" />
+            Voir carte
+          </Button>
         </div>
 
         {/* Informations principales */}
-        <div className="mb-6 sm:mb-8 grid gap-4 sm:gap-6 sm:grid-cols-2">
+        <div className="hidden">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -111,6 +192,139 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
                   {destination.priceDetails.children && (
                     <p className="font-semibold text-primary">{destination.priceDetails.children}</p>
                   )}
+                </div>
+              ) : (
+                <p className="text-2xl font-bold text-primary">{destination.price}</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="mb-6 sm:mb-8 grid gap-4 sm:gap-6 sm:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-primary" />
+                Duree
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {isLoadingPlanifications ? (
+                <p className="text-sm text-muted-foreground">Chargement des dates disponibles...</p>
+              ) : publicPlanifications.length > 0 ? (
+                <>
+                  <div className="space-y-2">
+                    {publicPlanifications.map((planification) => {
+                      const isSelected = selectedPlanification?.id === planification.id;
+
+                      return (
+                        <button
+                          key={planification.id}
+                          type="button"
+                          onClick={() => setSelectedPlanificationId(planification.id)}
+                          className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
+                            isSelected
+                              ? "border-emerald-400 bg-emerald-50 shadow-sm"
+                              : "border-slate-200 bg-white hover:border-emerald-200 hover:bg-emerald-50/50"
+                          }`}
+                        >
+                          <p className="text-sm font-semibold text-slate-900">
+                            {planification.nomPlanification}
+                          </p>
+                          <p className="mt-1 text-sm text-emerald-700">
+                            {formatDateRange(planification.dateHeureDebut, planification.dateHeureFin)}
+                          </p>
+                          {planification.dureeJours ? (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              {planification.dureeJours} jour(s)
+                            </p>
+                          ) : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {selectedPlanification ? (
+                    <p className="text-xs text-muted-foreground">
+                      Depart : {selectedPlanification.depart || "-"} - Arrivee : {selectedPlanification.arriver || "-"}
+                    </p>
+                  ) : null}
+                </>
+              ) : (
+                <>
+                  <p className="text-2xl font-bold text-primary">{destination.duration || "Non renseignee"}</p>
+                  {destination.dates ? (
+                    <p className="mt-2 text-sm text-muted-foreground">Dates : {destination.dates}</p>
+                  ) : null}
+                  {planificationError ? (
+                    <p className="text-sm text-red-600">{planificationError}</p>
+                  ) : null}
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                💰 Tarifs
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {selectedPlanification ? (
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">{selectedPlanification.nomPlanification}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDateRange(selectedPlanification.dateHeureDebut, selectedPlanification.dateHeureFin)}
+                    </p>
+                  </div>
+
+                  {selectedPlanification.budgets.length > 0 ? (
+                    <div className="grid gap-2">
+                      {selectedPlanification.budgets.map((budget) => {
+                        const devise = selectedPlanification.deviseBudget || "Ar";
+                        const price = budget.prixAvecReduction ?? budget.prixNormal;
+
+                        return (
+                          <div
+                            key={budget.id}
+                            className="rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3"
+                          >
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-semibold text-slate-900">
+                                  {budget.nomCategorieClient || "Categorie client"}
+                                </p>
+                                <p className="mt-1 text-xs uppercase tracking-[0.16em] text-emerald-700">
+                                  {budget.gamme || "Gamme"} - {budget.nombrePersonnes || 1} personne(s)
+                                </p>
+                              </div>
+                              <p className="text-base font-bold text-emerald-700">
+                                {formatMoney(price, devise)}
+                              </p>
+                            </div>
+                            {budget.reduction && budget.reduction > 0 ? (
+                              <p className="mt-2 text-xs text-muted-foreground">
+                                Prix normal : {formatMoney(budget.prixNormal, devise)} - Reduction : {budget.reduction}%
+                              </p>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Aucun tarif public n&apos;est encore configure pour cette date.
+                    </p>
+                  )}
+                </div>
+              ) : destination.priceDetails ? (
+                <div className="space-y-2">
+                  {destination.priceDetails.shared4 ? <p className="font-semibold">{destination.priceDetails.shared4}</p> : null}
+                  {destination.priceDetails.shared2 ? <p className="font-semibold">{destination.priceDetails.shared2}</p> : null}
+                  {destination.priceDetails.children ? (
+                    <p className="font-semibold text-primary">{destination.priceDetails.children}</p>
+                  ) : null}
                 </div>
               ) : (
                 <p className="text-2xl font-bold text-primary">{destination.price}</p>
@@ -268,6 +482,19 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
           />
         </div>
       </div>
+      
+      {/* Modal carte */}
+      <ModalMap
+        isOpen={mapModalOpen}
+        onClose={() => setMapModalOpen(false)}
+        destinationName={destination.title}
+        location={destination.departure?.location}
+        // You can add coordinates if available in destination object
+        // coordinates={{
+        //   lat: destination.latitude,
+        //   lng: destination.longitude
+        // }}
+      />
     </div>
   );
 }

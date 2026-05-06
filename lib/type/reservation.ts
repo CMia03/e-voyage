@@ -16,6 +16,7 @@ export type VoyageurProfile = {
 export type ElementSelection = {
   elementId: string;
   quantite: number;
+  type?: string;
 };
 
 export interface ReservationDetail {

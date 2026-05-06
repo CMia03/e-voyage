@@ -12,7 +12,6 @@ import { ClientSidebar, type ClientSection } from "./components/client-sidebar";
 
 function resolveSection(pathname: string): ClientSection {
   if (pathname.includes("/destinations")) return "destinations";
-  if (pathname.includes("/planifications")) return "destinations";
   if (pathname.includes("/reservations")) return "reservations";
   if (pathname.includes("/profile")) return "profile";
   if (pathname.includes("/simulation")) return "simulation";
@@ -72,7 +71,7 @@ export function ClientLayoutShell({
   return (
     <div className="min-h-screen bg-muted/30">
       <ClientHeader username={displayName} onLogout={handleLogout} />
-      <div className="mx-auto flex w-full max-w-[1400px] gap-0 px-0 sm:px-6">
+      <div className="mx-auto flex w-full max-w-[1400px] px-0 sm:px-6">
         <ClientSidebar active={activeSection} username={username} />
         <main className="min-h-[70vh] flex-1 p-4 sm:p-6">{children}</main>
       </div>

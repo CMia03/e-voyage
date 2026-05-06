@@ -32,6 +32,58 @@ export default function DestinationsPage() {
     void loadDestinations();
   }, []);
 
+  // List of icons for marketing items - you can easily modify this list
+  const marketingIcons = [
+    <Sparkles className="mt-0.5 size-4 text-emerald-600" />,
+    <TrendingUp className="mt-0.5 size-4 text-amber-500" />,
+    <Compass className="mt-0.5 size-4 text-blue-600" />,
+    <MapPinned className="mt-0.5 size-4 text-purple-600" />,
+  ];
+
+  // Component to render marketing content
+  const renderMarketingContent = (destination: DestinationDetails) => {
+    const marketingItems = destination.marketing || [];
+    
+    if (marketingItems.length === 0) {
+      // Fallback to static content if no marketing data
+      return (
+        // <div className="rounded-[22px] border border-slate-100 bg-slate-50/80 p-4">
+        //   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Deux parcours</p>
+        //   <div className="mt-3 space-y-2 text-sm text-slate-700">
+        //     <div className="flex items-start gap-2">
+        //       {marketingIcons[0]}
+        //       Reserver directement en consultant les forfaits et leurs prix normaux.
+        //     </div>
+        //     <div className="flex items-start gap-2">
+        //       {marketingIcons[1]}
+        //       Passer par la simulation pour ajuster les profils et les options.
+        //     </div>
+        //   </div>
+        // </div>
+        <p></p>
+      );
+    }
+
+    return (
+      <div className="rounded-[22px] border border-slate-100 bg-slate-50/80 p-4">
+        
+        {/* <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+          {marketingItems[0] || "Options disponibles"}
+        </p> */}
+
+        <div className="mt-3 text-sm text-slate-700">
+          {marketingItems.map((item, index) => (
+            <div key={index} className="flex items-start gap-2">
+              {/* {marketingIcons[index % marketingIcons.length]} */}
+              <span className="mr-2 text-primary">✓</span>
+              <span>{item}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   const filteredDestinations = useMemo(() => {
     const keyword = search.trim().toLowerCase();
     if (!keyword) return destinations;
@@ -86,36 +138,23 @@ export default function DestinationsPage() {
               )}
               <div className="absolute inset-x-0 bottom-0 bg-[linear-gradient(180deg,transparent,rgba(15,23,42,0.64))] p-4">
                 <span className="inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-800">
-                  <MapPinned className="size-3.5 text-emerald-600" />
-                  Destination
+                  {/* <MapPinned className="size-3.5 text-emerald-600" /> */}
+                  {destination.title}
                 </span>
               </div>
             </div>
 
             <div className="space-y-4 p-5">
               <div className="space-y-2">
-                <h2 className="text-xl font-semibold text-slate-900">{destination.title}</h2>
                 <p className="line-clamp-3 text-sm leading-6 text-slate-600">{destination.description}</p>
               </div>
 
-              <div className="rounded-[22px] border border-slate-100 bg-slate-50/80 p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Deux parcours</p>
-                <div className="mt-3 space-y-2 text-sm text-slate-700">
-                  <div className="flex items-start gap-2">
-                    <Sparkles className="mt-0.5 size-4 text-emerald-600" />
-                    Reserver directement en consultant les forfaits et leurs prix normaux.
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <TrendingUp className="mt-0.5 size-4 text-amber-500" />
-                    Passer par la simulation pour ajuster les profils et les options.
-                  </div>
-                </div>
-              </div>
+              {renderMarketingContent(destination)}
 
               <div className="flex flex-wrap gap-2">
                 <Button asChild size="sm" className="rounded-full">
-                  <Link href={`/${username}/planifications?destinationId=${encodeURIComponent(destination.id)}`}>
-                    Voir les forfaits
+                  <Link href={`/${username}/destinations/${encodeURIComponent(destination.id)}`}>
+                    Voir détails & gérer
                   </Link>
                 </Button>
                 <Button asChild size="sm" variant="outline" className="rounded-full">

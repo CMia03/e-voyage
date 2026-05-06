@@ -5,7 +5,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Pencil, Plus, Trash2, X } from "lucide-react";
+import { CheckCircle2, Pencil, Plus, Settings, Trash2, X } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -79,7 +79,17 @@ const TransportEndpointsMap = dynamic(
   { ssr: false }
 );
 
-type Props = { destinationId: string };
+type Props = {
+  destinationId: string;
+  embedded?: boolean;
+};
+
+const greenButtonScopeClass =
+  "[&_button[data-slot='button']]:border-emerald-200 [&_button[data-slot='button']]:bg-emerald-50 [&_button[data-slot='button']]:text-emerald-700 [&_button[data-slot='button']]:shadow-sm [&_button[data-slot='button']:hover]:border-emerald-300 [&_button[data-slot='button']:hover]:bg-emerald-100 [&_button[data-slot='button']:hover]:text-emerald-800";
+const greenPrimaryButtonClass =
+  "!border-transparent !bg-gradient-to-r !from-emerald-600 !to-teal-600 !text-white !shadow-lg !shadow-emerald-500/20 hover:!from-emerald-700 hover:!to-teal-700";
+const greenOutlineButtonClass =
+  "!border-emerald-200 !bg-emerald-50 !text-emerald-700 hover:!border-emerald-300 hover:!bg-emerald-100 hover:!text-emerald-800";
 
 type PlanificationFormState = {
   nomPlanification: string;
@@ -361,8 +371,9 @@ function getLinkedLabel(element: ElementJourPlanification) {
   return element.nomTransport || element.nomActivite || element.nomHebergement || null;
 }
 
-export function AdminDestinationPlanningContentNext({ destinationId }: Props) {
+export function AdminDestinationPlanningContentNext({ destinationId, embedded = false }: Props) {
   const router = useRouter();
+  const detailUrl = `/admin/destination/${destinationId}`;
   const [accessToken, setAccessToken] = useState("");
   const [role, setRole] = useState("");
   const [destination, setDestination] = useState<AdminDestination | null>(null);
@@ -1418,9 +1429,23 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
   }
 
   return (
-    <div className="bg-background text-foreground">
-      <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    <div className={`${embedded ? "bg-transparent text-foreground" : "bg-background text-foreground"} ${greenButtonScopeClass}`}>
+      <main
+        className={
+          embedded
+            ? "w-full"
+            : "mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8"
+        }
+      >
         <div className="space-y-6">
+          {embedded ? (
+            <div className="flex justify-end">
+              <Button onClick={openCreatePlanificationDialog} size="sm" className={greenPrimaryButtonClass}>
+                <Plus className="size-4" />
+                Ajouter planification
+              </Button>
+            </div>
+          ) : (
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -1430,8 +1455,45 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
               <h1 className="text-2xl font-semibold tracking-tight">Planning voyage{destination ? ` - ${destination.nom}` : ""}</h1>
               <p className="text-sm text-muted-foreground">En haut, la liste des planifications. En bas, les sections du voyage, avec un focus sur le planning.</p>
             </div>
-            <Button onClick={openCreatePlanificationDialog}><Plus className="size-4" />Ajouter planification</Button>
+            <div className="flex flex-wrap justify-end gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className={greenOutlineButtonClass}
+                onClick={() => router.push(`${detailUrl}?section=marketing`)}
+              >
+                Ajouter Marketing
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className={greenOutlineButtonClass}
+                onClick={() => router.push(`${detailUrl}?section=gallery`)}
+              >
+                Galerie
+              </Button>
+              <Button type="button" size="sm" variant="default" className={greenPrimaryButtonClass}>
+                Planning voyage
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className={greenOutlineButtonClass}
+                onClick={() => router.push(`${detailUrl}?section=settings`)}
+              >
+                <Settings className="mr-2 h-4 w-4" />
+                Paramétrage
+              </Button>
+              <Button onClick={openCreatePlanificationDialog} size="sm" className={greenPrimaryButtonClass}>
+                <Plus className="size-4" />
+                Ajouter planification
+              </Button>
+            </div>
           </div>
+          )}
 
           {showSuccessAlert && successMessage ? (
             <Alert className="border-emerald-200 bg-emerald-50 text-emerald-900"><CheckCircle2 className="size-4" /><AlertTitle>Succes</AlertTitle><AlertDescription>{successMessage}</AlertDescription></Alert>
