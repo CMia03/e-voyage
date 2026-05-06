@@ -3,6 +3,7 @@ import axios from "axios";
 import {
   AdminDestination,
   DestinationDetails,
+  PublicDestinationPlanification,
   DestinationAssociations,
   ElementJourPlanification,
   JourPlanificationVoyage,
@@ -461,4 +462,13 @@ export function getDestinationDetailsFromBackend(id: string, token?: string) {
     method: "GET",
     token,
   });
+}
+
+export function listPublicDestinationPlanifications(destinationId: string) {
+  return apiRequest<ApiEnvelope<PublicDestinationPlanification[]>>(
+    `/api/public/destinations/${destinationId}/planifications`,
+    {
+      method: "GET",
+    }
+  );
 }

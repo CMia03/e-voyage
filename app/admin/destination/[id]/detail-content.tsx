@@ -1,9 +1,8 @@
 ﻿"use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Trash } from "lucide-react";
+import { Trash, Settings, Package } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -31,6 +30,8 @@ import type {
   SavePhotoDestinationBulkPayload,
 } from "@/lib/type/destination";
 
+import { AdminDestinationAssociationsContent } from "./associations/associations-content";
+import { AdminDestinationPlanningContentNext } from "./planning/planning-content-admin";
 import { PhotoDestinationForm, PhotoDestinationFormState } from "./photo-form";
 
 const initialPhotoForm: PhotoDestinationFormState = {
@@ -58,10 +59,25 @@ const initialMarketingForm: MarketingFormState = {
 
 type AdminDestinationDetailContentProps = {
   destinationId: string;
+  initialSection?: DetailSection;
 };
+
+type DetailSection = "marketing" | "gallery" | "planning" | "settings";
+
+const greenButtonScopeClass =
+  "[&_button[data-slot='button']]:border-emerald-200 [&_button[data-slot='button']]:bg-emerald-50 [&_button[data-slot='button']]:text-emerald-700 [&_button[data-slot='button']]:shadow-sm [&_button[data-slot='button']:hover]:border-emerald-300 [&_button[data-slot='button']:hover]:bg-emerald-100 [&_button[data-slot='button']:hover]:text-emerald-800";
+const greenPrimaryButtonClass =
+  "!border-transparent !bg-gradient-to-r !from-emerald-600 !to-teal-600 !text-white !shadow-lg !shadow-emerald-500/20 hover:!from-emerald-700 hover:!to-teal-700";
+const greenOutlineButtonClass =
+  "!border-emerald-200 !bg-emerald-50 !text-emerald-700 hover:!border-emerald-300 hover:!bg-emerald-100 hover:!text-emerald-800";
+
+function sectionButtonClass(isActive: boolean) {
+  return isActive ? greenPrimaryButtonClass : greenOutlineButtonClass;
+}
 
 export function AdminDestinationDetailContent({
   destinationId,
+  initialSection = "marketing",
 }: AdminDestinationDetailContentProps) {
   const router = useRouter();
   const imageSectionRef = useRef<HTMLDivElement | null>(null);
@@ -80,6 +96,7 @@ export function AdminDestinationDetailContent({
   const [isMarketingDialogOpen, setIsMarketingDialogOpen] = useState(false);
   const [marketingForm, setMarketingForm] = useState<MarketingFormState>(initialMarketingForm);
   const [isSubmittingMarketing, setIsSubmittingMarketing] = useState(false);
+  const [activeSection, setActiveSection] = useState<DetailSection>(initialSection);
 
   const sortedPhotoGroups = useMemo(
     () =>
@@ -105,6 +122,10 @@ export function AdminDestinationDetailContent({
       ),
     [destination]
   );
+
+  useEffect(() => {
+    setActiveSection(initialSection);
+  }, [initialSection]);
 
   useEffect(() => {
     const session = loadAuth();
@@ -215,6 +236,7 @@ export function AdminDestinationDetailContent({
       setPhotoForm(initialPhotoForm);
       setSuccessMessage("Images ajoutÃ©es avec succÃ¨s.");
       setIsDialogOpen(false);
+      setActiveSection("gallery");
       
       // Scroll vers la galerie aprÃ¨s ajout rÃ©ussi
       setTimeout(() => {
@@ -308,10 +330,11 @@ export function AdminDestinationDetailContent({
   }
 
   function handleOpenGallery() {
-    const galleryElement = document.getElementById("gallery-section");
-    if (galleryElement) {
-      galleryElement.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+    setActiveSection("gallery");
+  }
+
+  function handleOpenManagement() {
+    setActiveSection("settings");
   }
 
   function scrollPhotoGroup(groupKey: string, direction: "left" | "right") {
@@ -330,7 +353,7 @@ export function AdminDestinationDetailContent({
   }
 
   return (
-    <div className="bg-gradient-to-b from-background via-muted/30 to-background text-foreground">
+    <div className={`bg-gradient-to-b from-background via-muted/30 to-background text-foreground ${greenButtonScopeClass}`}>
       <main className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6 sm:py-8">
         <div className="space-y-8">
           {/* En-tÃªte avec actions rapides */}
@@ -347,22 +370,42 @@ export function AdminDestinationDetailContent({
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <Button type="button" size="sm" variant="outline" onClick={openMarketingDialog}>
+              <Button
+                type="button"
+                size="sm"
+                variant={activeSection === "marketing" ? "default" : "outline"}
+                className={sectionButtonClass(activeSection === "marketing")}
+                onClick={() => setActiveSection("marketing")}
+              >
                 Ajouter Marketing
-              </Button>
-              <Button type="button" size="sm" onClick={openImageDialog}>
-                Ajouter des images
-              </Button>
-              <Button type="button" variant="outline" size="sm" onClick={handleOpenGallery}>
-                Voir la galerie
               </Button>
               <Button
                 type="button"
-                variant="outline"
+                variant={activeSection === "gallery" ? "default" : "outline"}
                 size="sm"
-                onClick={() => router.push(`/admin/destination/${destinationId}/planning`)}
+                className={sectionButtonClass(activeSection === "gallery")}
+                onClick={handleOpenGallery}
+              >
+                Galerie
+              </Button>
+              <Button
+                type="button"
+                variant={activeSection === "planning" ? "default" : "outline"}
+                size="sm"
+                className={sectionButtonClass(activeSection === "planning")}
+                onClick={() => setActiveSection("planning")}
               >
                 Planning voyage
+              </Button>
+              <Button
+                type="button"
+                variant={activeSection === "settings" ? "default" : "outline"}
+                size="sm"
+                className={sectionButtonClass(activeSection === "settings")}
+                onClick={handleOpenManagement}
+              >
+                <Settings className="mr-2 h-4 w-4" />
+                Paramétrage
               </Button>
             </div>
           </div>
@@ -382,119 +425,174 @@ export function AdminDestinationDetailContent({
             </Alert>
           ) : null}
 
-          {/* Informations principales */}
-          <Card className="border-border/50 shadow-sm">
-            <CardHeader>
-              <CardTitle>Informations principales</CardTitle>
-              <CardDescription>RÃ©sumÃ© rapide de la destination.</CardDescription>
+          {activeSection === "marketing" ? (
+            <>
+          <Card className="border border-gray-200 shadow-sm">
+            <CardHeader className="border-b border-gray-100">
+              <CardTitle className="text-lg font-semibold text-gray-900">Informations principales</CardTitle>
+              <CardDescription className="text-gray-600">Vue d&apos;ensemble de la destination</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-6">
               {isLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
                 </div>
               ) : destination ? (
-                <div className="flex flex-col gap-4 rounded-2xl border border-border/50 bg-card/40 p-4 xl:flex-row xl:items-start">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start xl:flex-1">
-                    {destination.urlImagePrincipale ? (
-                      <div className="w-full overflow-hidden rounded-xl border border-border/40 bg-muted/20 sm:w-[170px] sm:min-w-[170px]">
-                        <img
-                          src={destination.urlImagePrincipale}
-                          alt={destination.nom}
-                          className="h-32 w-full object-cover"
-                        />
-                      </div>
-                    ) : null}
-                    <div className="min-w-0 flex-1 space-y-2">
-                      <h2 className="text-xl font-semibold tracking-tight">
-                        {destination.nom}
-                      </h2>
-                      <p className="text-sm leading-6 text-muted-foreground">
-                        {destination.description || "Aucune description"}
-                      </p>
+                <div className="space-y-6">
+                  <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+                    {/* Image */}
+                    <div className="lg:w-1/3">
+                      {destination.urlImagePrincipale ? (
+                        <div className="overflow-hidden rounded-lg border border-gray-200">
+                          <img
+                            src={destination.urlImagePrincipale}
+                            alt={destination.nom}
+                            className="h-64 w-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex h-64 w-full items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50">
+                          <div className="text-center">
+                            <div className="mx-auto mb-2 h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                              <Package className="h-4 w-4 text-gray-500" />
+                            </div>
+                            <p className="text-sm text-gray-500">Aucune image</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </div>
 
-                  <div className="grid gap-2 text-sm xl:w-[260px] xl:min-w-[260px]">
-                    <div className="rounded-xl border border-border/50 bg-card/50 px-3 py-2.5">
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Adresse : {destination.adresse || "Non renseignÃ©e"}</p>
-                    </div>
-                    <div className="rounded-xl border border-border/50 bg-card/50 px-3 py-2.5">
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">CoordonnÃ©es : {destination.latitude}, {destination.longitude}</p>
+                    {/* Informations */}
+                    <div className="flex-1 space-y-4">
+                      <div>
+                        <h2 className="text-xl font-semibold text-gray-900">
+                          {destination.nom}
+                        </h2>
+                        <p className="mt-2 text-gray-600">
+                          {destination.description || "Aucune description disponible"}
+                        </p>
+                      </div>
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Adresse</p>
+                          <p className="mt-1 text-sm text-gray-900">{destination.adresse || "Non renseignée"}</p>
+                        </div>
+
+                        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Coordonnées GPS</p>
+                          <p className="mt-1 text-sm text-gray-900">
+                            {destination.latitude && destination.longitude 
+                              ? `${destination.latitude}, ${destination.longitude}`
+                              : "Non renseignées"
+                            }
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">
-                  Destination introuvable.
-                </p>
+                <div className="text-center py-8">
+                  <p className="text-sm text-gray-500">Destination introuvable</p>
+                </div>
               )}
             </CardContent>
           </Card>
 
-          <Card className="border-border/50 shadow-sm">
-            <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <CardTitle>Marketing destination</CardTitle>
-                <CardDescription>
-                  {marketingItems.length} element{marketingItems.length > 1 ? "s" : ""} marketing pour cette destination.
-                </CardDescription>
+
+
+
+          <Card className="border border-gray-200 shadow-sm">
+            <CardHeader className="border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg font-semibold text-gray-900">Marketing destination</CardTitle>
+                  <CardDescription className="text-gray-600">
+                    {marketingItems.length} élément{marketingItems.length > 1 ? "s" : ""} marketing pour cette destination
+                  </CardDescription>
+                </div>
+                <Button type="button" size="sm" onClick={openMarketingDialog}>
+                  Ajouter Marketing
+                </Button>
               </div>
-              <Button type="button" size="sm" onClick={openMarketingDialog}>
-                Ajouter Marketing
-              </Button>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-6">
               {marketingItems.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Aucun marketing pour le moment.
-                </p>
+                <div className="text-center py-8">
+                  <p className="text-sm text-gray-500 mb-4">Aucun élément marketing</p>
+                  <Button variant="outline" onClick={openMarketingDialog}>
+                    Ajouter le premier élément
+                  </Button>
+                </div>
               ) : (
-                <div className="space-y-3">
-                  {marketingItems.map((item) => (
+                <div className="space-y-4">
+                  {marketingItems.map((item, index) => (
                     <div
                       key={item.id}
-                      className="flex flex-col gap-3 rounded-xl border border-border/50 bg-card/40 px-4 py-3 sm:flex-row sm:items-start sm:justify-between"
+                      className="rounded-lg border border-gray-200 bg-white p-4"
                     >
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold">{item.libelle}</p>
-                        {item.description ? (
-                          <p className="mt-1 text-sm text-muted-foreground">{item.description}</p>
-                        ) : null}
-                        <p className="mt-2 text-xs text-muted-foreground">
-                          Ordre: {item.ordreAffichage ?? 0} | Statut: {item.estActif ? "Actif" : "Inactif"}
-                        </p>
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-start gap-3">
+                            <span className="flex h-6 w-6 items-center justify-center rounded bg-gray-100 text-xs font-medium text-gray-600">
+                              {item.ordreAffichage ?? index + 1}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <h3 className="text-sm font-medium text-gray-900">{item.libelle}</h3>
+                              {item.description && (
+                                <p className="mt-1 text-sm text-gray-600">{item.description}</p>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="mt-3 flex items-center gap-4">
+                            <span className={`inline-flex items-center rounded px-2 py-1 text-xs font-medium ${
+                              item.estActif 
+                                ? "bg-green-100 text-green-800" 
+                                : "bg-gray-100 text-gray-600"
+                            }`}>
+                              {item.estActif ? "Actif" : "Inactif"}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              Ordre: {item.ordreAffichage ?? 0}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteMarketing(item.id)}
+                          className="text-red-600 border-red-200 hover:bg-red-50"
+                        >
+                          Supprimer
+                        </Button>
                       </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteMarketing(item.id)}
-                      >
-                        Supprimer
-                      </Button>
                     </div>
                   ))}
                 </div>
               )}
             </CardContent>
           </Card>
+            </>
+          ) : null}
 
           {/* Galerie d'images */}
+          {activeSection === "gallery" ? (
           <div id="gallery-section">
-            <Card className="border-border/50 shadow-sm">
-              <CardHeader>
+            <Card className="border border-gray-200 shadow-sm">
+              <CardHeader className="border-b border-gray-100">
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle>Galerie multimÃ©dia</CardTitle>
-                    <CardDescription>
-                      {totalImages} image{totalImages > 1 ? "s" : ""} rÃ©partie
-                      {totalImages > 1 ? "s" : ""} dans {sortedPhotoGroups.length} lot
-                      {sortedPhotoGroups.length > 1 ? "s" : ""}
+                    <CardTitle className="text-lg font-semibold text-gray-900">Galerie multimédia</CardTitle>
+                    <CardDescription className="text-gray-600">
+                      {totalImages} image{totalImages > 1 ? "s" : ""} répartie{totalImages > 1 ? "s" : ""} dans {sortedPhotoGroups.length} lot{sortedPhotoGroups.length > 1 ? "s" : ""}
                     </CardDescription>
                   </div>
                   <Button onClick={openImageDialog} size="sm">
-                    + Ajouter des images
+                    Ajouter des images
                   </Button>
                 </div>
               </CardHeader>
@@ -655,6 +753,31 @@ export function AdminDestinationDetailContent({
               </CardContent>
             </Card>
           </div>
+          ) : null}
+
+          {activeSection === "planning" ? (
+            <AdminDestinationPlanningContentNext destinationId={destinationId} embedded />
+          ) : null}
+
+          {activeSection === "settings" ? (
+          <Card className="border border-gray-200 shadow-sm">
+            <CardHeader className="border-b border-gray-100">
+              <CardTitle className="text-lg font-semibold text-gray-900">Paramétrage destination</CardTitle>
+              <CardDescription className="text-gray-600">
+                Gérez les hébergements, activités, prestations et la vue carte depuis le détail de cette destination
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-6">
+              <AdminDestinationAssociationsContent
+                destinationId={destinationId}
+                embedded
+                showBackToDetail={false}
+                title="Gestion de la destination"
+                description="Associez les hébergements, activités et prestations qui composent cette destination."
+              />
+            </CardContent>
+          </Card>
+          ) : null}
         </div>
       </main>
 

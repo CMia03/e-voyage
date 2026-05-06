@@ -50,6 +50,13 @@ const initialTarifForm: TarifFormState = {
   dateValiditeFin: "",
 };
 
+const greenButtonScopeClass =
+  "[&_button[data-slot='button']:not([data-variant='destructive'])]:border-emerald-200 [&_button[data-slot='button']:not([data-variant='destructive'])]:bg-emerald-50 [&_button[data-slot='button']:not([data-variant='destructive'])]:text-emerald-700 [&_button[data-slot='button']:not([data-variant='destructive']):hover]:border-emerald-300 [&_button[data-slot='button']:not([data-variant='destructive']):hover]:bg-emerald-100 [&_button[data-slot='button']:not([data-variant='destructive']):hover]:text-emerald-800";
+const greenPrimaryButtonClass =
+  "!border-transparent !bg-gradient-to-r !from-emerald-600 !to-teal-600 !text-white !shadow-lg !shadow-emerald-500/20 hover:!from-emerald-700 hover:!to-teal-700";
+const greenOutlineButtonClass =
+  "!border-emerald-200 !bg-emerald-50 !text-emerald-700 hover:!border-emerald-300 hover:!bg-emerald-100 hover:!text-emerald-800";
+
 export function AdminActiviteDetailContent({ activiteId }: Props) {
   const router = useRouter();
   const [accessToken, setAccessToken] = useState("");
@@ -362,15 +369,14 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
   ) : null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-muted/30 to-background text-foreground">
-      <AdminHeader />
+    <div className={`min-h-screen bg-gradient-to-b from-background via-muted/30 to-background text-foreground ${greenButtonScopeClass}`}>
       {errorAlert}
       {successAlert}
       <main className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6 sm:py-8">
         <div className="space-y-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-3">
-              <Button asChild variant="outline" size="sm">
+              <Button asChild variant="outline" size="sm" className={greenOutlineButtonClass}>
                 <Link href="/admin?section=activites">Retour aux activites</Link>
               </Button>
               <div>
@@ -381,11 +387,11 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button onClick={openCreateTarifDialog}>
+              <Button onClick={openCreateTarifDialog} className={greenPrimaryButtonClass}>
                 <Plus className="size-4" />
                 Ajouter tarif
               </Button>
-              <Button variant="outline" onClick={() => setIsPhotoDialogOpen(true)}>
+              <Button variant="outline" onClick={() => setIsPhotoDialogOpen(true)} className={greenOutlineButtonClass}>
                 <Plus className="size-4" />
                 Ajouter photos
               </Button>
@@ -395,7 +401,7 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
           <Card className="border-border/50">
             <CardHeader>
               <CardTitle>Informations principales</CardTitle>
-              <CardDescription>Resume de l'activite selectionnee.</CardDescription>
+              <CardDescription>Resume de l&apos;activite selectionnee.</CardDescription>
             </CardHeader>
             <CardContent>
               {isLoading ? (
@@ -444,7 +450,7 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
 
           <Card className="border-border/50">
             <CardHeader>
-              <CardTitle>Tarifs de l'activite</CardTitle>
+              <CardTitle>Tarifs de l&apos;activite</CardTitle>
               <CardDescription>{tarifs.length} tarif(s) enregistres.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -478,7 +484,7 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
                           </div>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          <Button size="sm" variant="secondary" onClick={() => openEditTarifDialog(tarif)}>
+                          <Button size="sm" variant="secondary" onClick={() => openEditTarifDialog(tarif)} className={greenOutlineButtonClass}>
                             <Pencil className="size-4" />
                             Modifier
                           </Button>
@@ -502,7 +508,7 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
 
           <Card className="border-border/50">
             <CardHeader>
-              <CardTitle>Photos de l'activite</CardTitle>
+              <CardTitle>Photos de l&apos;activite</CardTitle>
               <CardDescription>{activite?.photos?.length ?? 0} photo(s).</CardDescription>
             </CardHeader>
             <CardContent>
@@ -574,6 +580,7 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
                     type="button"
                     variant="outline"
                     size="icon"
+                    className={greenOutlineButtonClass}
                     onClick={() => setShowCategorieClientCreator((current) => !current)}
                     aria-label="Ajouter une categorie client"
                   >
@@ -589,7 +596,7 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
                         onChange={(event) => setNewCategorieClientName(event.target.value)}
                       />
                       <div className="flex gap-2">
-                        <Button type="button" onClick={handleCreateCategorieClient} disabled={isCreatingCategorieClient}>
+                        <Button type="button" onClick={handleCreateCategorieClient} disabled={isCreatingCategorieClient} className={greenPrimaryButtonClass}>
                           {isCreatingCategorieClient ? "Ajout..." : "Ajouter"}
                         </Button>
                         <Button
@@ -671,7 +678,7 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
             </div>
 
             <div className="flex justify-end">
-              <Button type="submit" disabled={isSavingTarif}>
+              <Button type="submit" disabled={isSavingTarif} className={greenPrimaryButtonClass}>
                 {isSavingTarif ? "Enregistrement..." : editingTarifId ? "Enregistrer les modifications" : "Ajouter le tarif"}
               </Button>
             </div>
@@ -731,7 +738,7 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
             ) : null}
 
             <div className="flex justify-end">
-              <Button type="submit" disabled={isSavingPhotos}>
+              <Button type="submit" disabled={isSavingPhotos} className={greenPrimaryButtonClass}>
                 {isSavingPhotos ? "Envoi..." : "Ajouter les photos"}
               </Button>
             </div>

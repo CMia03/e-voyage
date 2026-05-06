@@ -11,7 +11,7 @@ import { loadAuth } from "@/lib/auth";
 import { getErrorMessage } from "@/lib/api/client";
 import { deleteMyReservation, getReservationById } from "@/lib/api/reservations";
 import { simulerPlanification } from "@/lib/api/simulationService";
-import { Reservation, ReservationStatus, VoyageurProfile } from "@/lib/type/reservation";
+import { Reservation, ReservationStatus, VoyageurProfile, ElementSelection } from "@/lib/type/reservation";
 import { JourSimulation } from "@/lib/type/simulation.types";
 import { PlanningJournalier } from "@/app/[username]/simulation/components/PlanningJournalier";
 
@@ -70,7 +70,53 @@ function totalVoyageurs(reservation: Reservation): number {
 }
 
 function getUniqueSelectedElements(reservation: Reservation) {
-  return reservation.elementsSelectionnes ?? [];
+  const elements = reservation.elementsSelectionnes ?? [];
+  if (elements.length > 0) {
+    return elements;
+  }
+
+  const detailElements = reservation.details.flatMap((detail) => detail.elementsSelectionnes ?? []);
+  const uniqueElements = new Map<string, ElementSelection>();
+
+  detailElements.forEach((element) => {
+    if (!element.elementId || element.quantite <= 0) return;
+    const existing = uniqueElements.get(element.elementId);
+    if (!existing) {
+      uniqueElements.set(element.elementId, element);
+      return;
+    }
+
+    uniqueElements.set(element.elementId, {
+      ...existing,
+      quantite: Math.max(existing.quantite, element.quantite),
+    });
+  });
+
+  return Array.from(uniqueElements.values());
+}
+
+function groupElementsByDay(elements: ElementSelection[], planningPreview: JourSimulation[]) {
+  const dayMap = new Map<number, ElementSelection[]>();
+  
+  // Initialiser les jours vides
+  planningPreview.forEach((jour) => {
+    dayMap.set(jour.numeroJour, []);
+  });
+  
+  // Grouper les éléments par jour
+  elements.forEach((element) => {
+    // Trouver le jour de l'élément dans le planning
+    for (const jour of planningPreview) {
+      if (jour.elements.some((el) => el.id === element.elementId)) {
+        const dayElements = dayMap.get(jour.numeroJour) || [];
+        dayElements.push(element);
+        dayMap.set(jour.numeroJour, dayElements);
+        break;
+      }
+    }
+  });
+  
+  return dayMap;
 }
 
 function mergeReservationDetails(reservation: Reservation) {
@@ -166,6 +212,10 @@ export default function ReservationDetailPage() {
   const reservationElements = useMemo(
     () => (reservation ? getUniqueSelectedElements(reservation) : []),
     [reservation]
+  );
+  const elementsByDay = useMemo(
+    () => groupElementsByDay(reservationElements, planningPreview),
+    [reservationElements, planningPreview]
   );
   const mergedDetails = useMemo(
     () => (reservation ? mergeReservationDetails(reservation) : []),
@@ -496,30 +546,83 @@ export default function ReservationDetailPage() {
             </Card>
 
             {reservationElements.length > 0 ? (
-              <Card className="border-border/50">
-                <CardHeader>
+              <Card className="border-border/50 overflow-hidden">
+                <CardHeader className="bg-gradient-to-r from-emerald-50 to-emerald-100/30 border-b border-emerald-200">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                      <CardTitle>Elements selectionnes</CardTitle>
-                      <CardDescription>
+                      <CardTitle className="text-emerald-900 flex items-center gap-2">
+                        <span className="text-2xl">📋</span>
+                        Elements selectionnes
+                      </CardTitle>
+                      <CardDescription className="text-emerald-700">
                         Blocs retenus pour l&apos;ensemble de la reservation.
                       </CardDescription>
                     </div>
                     {reservation.source === "SIMULATION" ? (
-                      <Button type="button" variant="outline" onClick={() => setIsPlanningOpen(true)}>
+                      <Button 
+                        type="button" 
+                        className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white border-2 border-emerald-400 shadow-lg transition-all duration-300 hover:scale-105"
+                        onClick={() => setIsPlanningOpen(true)}
+                      >
+                        <span className="mr-2">📅</span>
                         Voir le planning journalier
                       </Button>
                     ) : null}
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2">
-                    {reservationElements.map((element) => (
-                      <Badge key={`${element.elementId}-${element.quantite}`} variant="outline">
-                        {elementNameMap.get(element.elementId) ?? element.elementId} - {element.quantite} pers
-                      </Badge>
-                    ))}
+                <CardContent className="p-6 bg-gradient-to-b from-emerald-50/20 to-transparent">
+                  <div className="space-y-6">
+                    {Array.from(elementsByDay.entries())
+                      .sort(([dayA], [dayB]) => dayA - dayB)
+                      .map(([dayNumber, elements]) => (
+                        <div key={dayNumber} className="space-y-3">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white font-bold shadow-lg">
+                              📅
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-bold text-emerald-900">Jour {dayNumber}</h3>
+                              <p className="text-sm text-emerald-700">
+                                {elements.length} bloc{elements.length > 1 ? 's' : ''}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                            {elements.map((element) => (
+                              <div
+                                key={`${element.elementId}-${element.quantite}`}
+                                className="group relative overflow-hidden rounded-2xl border-2 bg-gradient-to-br from-white via-emerald-50/20 to-emerald-50/40 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.03] hover:-translate-y-1 border-emerald-200"
+                              >
+                                {/* Header avec icône */}
+                                <div className="relative p-4 pb-3">
+                                 
+
+                                  <div className="flex items-start gap-3">
+                                    <div className="flex-1 min-w-0">
+                                     
+                                      
+                                      <h4 className="text-base font-bold text-slate-900 leading-tight group-hover:text-emerald-700 transition-colors line-clamp-2">
+                                        {elementNameMap.get(element.elementId) ?? element.elementId}
+                                      </h4>
+                                      
+                                      <div className="mt-2 flex items-center gap-2">
+                                        <div className="inline-flex items-center gap-1 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-3 py-1 text-xs font-medium shadow-lg">
+                                          <span className="text-xs">👥</span>
+                                          <span>{element.quantite} pers</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
                   </div>
+                  
+                  
                 </CardContent>
               </Card>
             ) : null}
@@ -570,7 +673,7 @@ export default function ReservationDetailPage() {
                   <p className="font-medium text-foreground">Statut actuel</p>
                   <p className="mt-2">{formatStatus(reservation.status)}</p>
                 </div>
-                <div className="rounded-xl border border-dashed border-border/70 p-4">
+                {/* <div className="rounded-xl border border-dashed border-border/70 p-4">
                   <p className="font-medium text-foreground">Ce que cela signifie</p>
                   <p className="mt-2">
                     {reservation.status === "EN_ATTENTE"
@@ -583,7 +686,7 @@ export default function ReservationDetailPage() {
                             ? "Votre reservation est confirmee."
                             : "La reservation a ete annulee."}
                   </p>
-                </div>
+                </div> */}
               </CardContent>
             </Card>
 

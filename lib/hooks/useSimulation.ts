@@ -156,7 +156,7 @@ export function useSimulation() {
   const collectElementIds = useCallback((jours: JourSimulation[] | undefined, quantiteParBloc: number): ElementSelection[] => {
     if (!jours) return [];
     return jours.flatMap((jour: JourSimulation) =>
-      jour.elements.map((el: ElementSimulation) => ({ elementId: el.id, quantite: Math.max(quantiteParBloc, 0) }))
+      jour.elements.map((el: ElementSimulation) => ({ elementId: el.id, quantite: Math.max(quantiteParBloc, 0), type: el.type }))
     );
   }, []);
 
@@ -165,7 +165,7 @@ export function useSimulation() {
     return jours.flatMap((jour: JourSimulation) =>
       jour.elements
         .filter((el: ElementSimulation) => el.obligatoire)
-        .map((el: ElementSimulation) => ({ elementId: el.id, quantite: Math.max(quantiteParBloc, 0) }))
+        .map((el: ElementSimulation) => ({ elementId: el.id, quantite: Math.max(quantiteParBloc, 0), type: el.type }))
     );
   }, []);
 
@@ -176,6 +176,7 @@ export function useSimulation() {
         .map((element) => ({
           elementId: element.id,
           quantite: Math.max(Number(element.quantiteSelectionnee) || 0, 0),
+          type: element.type,
         }))
         .filter((selection) => selection.quantite > 0)
     );

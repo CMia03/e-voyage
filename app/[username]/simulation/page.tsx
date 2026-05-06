@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { BellRing, Expand } from "lucide-react";
@@ -147,23 +146,21 @@ function getOptionalSuggestions(
     .flatMap((jour) => jour.elements)
     .filter(
       (element: ElementSimulation) =>
-        !element.obligatoire && element.coche && (element.quantiteSelectionnee ?? 0) > 0 && element.prix > 0
+        !element.obligatoire &&
+        (element.quantiteSelectionnee ?? 0) > 0 &&
+        getElementUnitPrice(element) > 0
     )
-    .sort((a, b) => {
-      const unitA = a.quantiteSelectionnee ? a.prix / a.quantiteSelectionnee : a.prix;
-      const unitB = b.quantiteSelectionnee ? b.prix / b.quantiteSelectionnee : b.prix;
-      return unitB - unitA;
-    });
+    .sort((a, b) => getElementUnitPrice(b) - getElementUnitPrice(a));
 
   const suggestions = optionnels
     .map((element) => {
       const quantiteSelectionnee = Math.max(element.quantiteSelectionnee ?? 0, 0);
-      const prixParPersonne = quantiteSelectionnee > 0 ? element.prix / quantiteSelectionnee : 0;
+      const prixParPersonne = getElementUnitPrice(element);
 
       return {
         id: element.id,
         titre: element.titre,
-        prix: Math.round(element.prix),
+        prix: Math.round(prixParPersonne * quantiteSelectionnee),
         type: element.type,
         quantiteSelectionnee,
         prixParPersonne: Math.round(prixParPersonne),
@@ -197,25 +194,97 @@ function getOptionalSuggestions(
   return suggestions.filter((element) => element.quantiteRetiree > 0);
 }
 
+function getElementUnitPrice(element: ElementSimulation): number {
+  const details = element.details as ElementSimulation["details"] & {
+    prixParHeur?: number;
+    prixReservation?: number;
+    budgetPrevu?: number;
+    montant?: number;
+    prixUnitaire?: number;
+  };
+  const quantiteSelectionnee = Math.max(Number(element.quantiteSelectionnee) || 0, 0);
+  const prixElement = Number(element.prix) || 0;
+
+  return Math.round(
+    Number(details?.prixParPersonne) ||
+      Number(details?.prixParNuit) ||
+      Number(details?.prixParHeur) ||
+      Number(details?.prixReservation) ||
+      Number(details?.prixUnitaire) ||
+      Number(details?.budgetPrevu) ||
+      Number(details?.montant) ||
+      (quantiteSelectionnee > 1 && prixElement > 0 ? prixElement / quantiteSelectionnee : prixElement) ||
+      0
+  );
+}
+
 function getAffordableOptionalSuggestions(
   jours: JourSimulation[] | undefined,
-  resteBudget: number
+  resteBudget: number,
+  quantiteMaxFallback: number
 ): SuggestedElement[] {
   if (!jours || resteBudget <= 0) return [];
 
-  return jours
+  const fallbackMax = Math.max(quantiteMaxFallback, 1);
+  const candidats = jours
     .flatMap((jour) => jour.elements)
-    .filter(
-      (element: ElementSimulation) =>
-        !element.obligatoire && !element.coche && element.prix > 0 && element.prix <= resteBudget
-    )
-    .sort((a, b) => a.prix - b.prix)
-    .map((element) => ({
-      id: element.id,
-      titre: element.titre,
-      prix: element.prix,
-      type: element.type,
-    }));
+    .map((element: ElementSimulation): SuggestedElement | null => {
+      if (element.obligatoire) return null;
+
+      const quantiteSelectionnee = Math.max(Number(element.quantiteSelectionnee) || 0, 0);
+      const quantiteMax = Math.max(Number(element.quantiteMax) || fallbackMax, quantiteSelectionnee + 1);
+      const quantiteRestante = Math.max(quantiteMax - quantiteSelectionnee, 0);
+      const prixUnitaire = getElementUnitPrice(element);
+
+      if (quantiteRestante <= 0 || prixUnitaire <= 0 || prixUnitaire > resteBudget) {
+        return null;
+      }
+
+      const quantiteAchetable = Math.min(
+        quantiteRestante,
+        Math.floor(resteBudget / prixUnitaire)
+      );
+
+      if (quantiteAchetable <= 0) return null;
+
+      return {
+        id: element.id,
+        titre: element.titre,
+        prix: prixUnitaire * quantiteAchetable,
+        type: element.type,
+        quantiteSelectionnee,
+        prixParPersonne: prixUnitaire,
+        quantiteSuggeree: quantiteAchetable,
+        quantiteRetiree: 0,
+        economieSuggeree: 0,
+      };
+    })
+    .filter((element): element is SuggestedElement => element !== null)
+    .sort((a, b) => a.prixParPersonne - b.prixParPersonne);
+
+  let budgetRestant = resteBudget;
+  const suggestions: SuggestedElement[] = [];
+
+  for (const element of candidats) {
+    const quantiteAchetable = Math.min(
+      element.quantiteSuggeree,
+      Math.floor(budgetRestant / element.prixParPersonne)
+    );
+
+    if (quantiteAchetable <= 0) continue;
+
+    const prixSuggestion = quantiteAchetable * element.prixParPersonne;
+    suggestions.push({
+      ...element,
+      prix: prixSuggestion,
+      quantiteSuggeree: quantiteAchetable,
+    });
+
+    budgetRestant -= prixSuggestion;
+    if (budgetRestant <= 0) break;
+  }
+
+  return suggestions;
 }
 
 function formatAr(value?: number | null) {
@@ -378,14 +447,24 @@ export default function SimulationPage() {
     [result?.jours, depassement]
   );
   const suggestionsDisponibles = useMemo(
-    () => getAffordableOptionalSuggestions(result?.jours, resteDisponible),
-    [result?.jours, resteDisponible]
+    () =>
+      getAffordableOptionalSuggestions(
+        result?.jours,
+        resteDisponible,
+        Math.max(totalVoyageurs(voyageurProfiles), 1)
+      ),
+    [result?.jours, resteDisponible, voyageurProfiles]
   );
 
   const totalSuggestions = suggestionsOptionnelles.reduce(
     (total, element) => total + element.economieSuggeree,
     0
   );
+  const totalSuggestionsDisponibles = suggestionsDisponibles.reduce(
+    (total, element) => total + element.prix,
+    0
+  );
+  const resteApresSuggestions = Math.max(0, resteDisponible - totalSuggestionsDisponibles);
   const [dismissedBudgetAlertKey, setDismissedBudgetAlertKey] = useState<string | null>(null);
   const [dismissedPositiveBudgetKey, setDismissedPositiveBudgetKey] = useState<string | null>(null);
   const budgetAlertKey = useMemo(
@@ -466,7 +545,7 @@ export default function SimulationPage() {
         .filter((element) => (element.quantiteSelectionnee ?? 0) > 0)
         .map((element) => ({ elementId: element.id, quantite: element.quantiteSelectionnee ?? 0 }))
     );
-  }, [elementsSelectionnes, result?.jours]);
+  }, [elementsSelectionnes, result]);
   const simulationElementDetails = useMemo<ReservationElementPreview[]>(() => {
     if (!result?.jours) {
       return [];
@@ -485,7 +564,7 @@ export default function SimulationPage() {
           jourTitre: jour.titre,
         }))
     );
-  }, [result?.jours]);
+  }, [result]);
 
   const simulationSummary = useMemo(
     () =>
@@ -509,6 +588,8 @@ export default function SimulationPage() {
   );
 
   const handleLancerSimulation = async () => {
+    setDismissedBudgetAlertKey(null);
+    setDismissedPositiveBudgetKey(null);
     await lancerSimulation();
   };
 
@@ -618,7 +699,7 @@ export default function SimulationPage() {
               </h3>
               <p className="mt-2 text-sm leading-6 text-amber-900/85">
                 Il manque <span className="font-semibold">{formatAr(depassement)}</span>{" "}
-                pour couvrir tous les blocs coches.
+                pour couvrir toutes les quantités sélectionnées.
               </p>
             </div>
 
@@ -693,26 +774,28 @@ export default function SimulationPage() {
 
           <p className="mt-4 text-xs leading-5 text-amber-900/80">
             Vous pouvez continuer a modifier le budget, reduire le nombre de personnes
-            sur un bloc ou retirer une option sans fermer ce panneau.
+            sur un bloc optionnel sans fermer ce panneau.
           </p>
           </div>
         </section>
       ) : null}
 
         {showPositiveBudgetModal ? (
-        <section className="pointer-events-auto fixed right-4 top-44 z-[120] w-[min(360px,calc(100vw-2rem))] rounded-[24px] border border-emerald-200 bg-[linear-gradient(180deg,_rgba(236,253,245,0.99),_rgba(220,252,231,0.97))] p-4 shadow-[0_24px_80px_-38px_rgba(16,185,129,0.55)] sm:right-6">
+        <section className="pointer-events-auto fixed right-4 top-44 z-[120] max-h-[calc(100vh-12rem)] w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-[24px] border border-emerald-200 bg-[linear-gradient(180deg,_rgba(236,253,245,0.99),_rgba(220,252,231,0.97))] p-4 shadow-[0_24px_80px_-38px_rgba(16,185,129,0.55)] sm:right-6">
           <div className="absolute -top-2 right-7 h-4 w-4 rotate-45 border-l border-t border-emerald-200 bg-emerald-50" />
 
+          <div className="flex max-h-[calc(100vh-14rem)] flex-col overflow-y-auto pr-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-700">
-                Suggestions budget
+                Suggestion budget
               </p>
               <h3 className="mt-2 text-base font-semibold leading-6 text-emerald-950">
-                Vous pouvez encore enrichir votre voyage
+                Votre budget permet encore quelques ajouts.
               </h3>
               <p className="mt-2 text-sm leading-6 text-emerald-900/85">
-                Il vous reste <span className="font-semibold">{formatAr(resteDisponible)}</span>. Voici les blocs optionnels que vous pouvez encore cocher sans depasser votre budget.
+                Il vous reste <span className="font-semibold">{formatAr(resteDisponible)}</span>{" "}
+                pour augmenter le nombre de personnes sur certains blocs optionnels.
               </p>
             </div>
 
@@ -729,6 +812,18 @@ export default function SimulationPage() {
             </button>
           </div>
 
+          <div className="mt-4 rounded-2xl border border-emerald-300 bg-white/75 px-4 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
+              Total suggere
+            </p>
+            <p className="mt-1 text-lg font-semibold text-emerald-950">
+              {formatAr(totalSuggestionsDisponibles)}
+            </p>
+            <p className="mt-1 text-xs text-emerald-800/80">
+              Reste apres suggestion : {formatAr(resteApresSuggestions)}
+            </p>
+          </div>
+
           <div className="mt-4 space-y-2.5">
             {suggestionsDisponibles.slice(0, 4).map((element) => (
               <div
@@ -738,12 +833,33 @@ export default function SimulationPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="truncate font-medium text-slate-900">{element.titre}</p>
-                    <p className="mt-1 text-xs text-emerald-700">
-                      {element.type}
-                    </p>
-                  </div>
-                  <p className="shrink-0 text-sm font-semibold text-slate-900">
-                    {formatAr(element.prix)}
+                  <p className="mt-1 text-xs text-emerald-700">
+                    {element.type}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {element.quantiteSelectionnee > 0
+                      ? `Déjà ${element.quantiteSelectionnee} personne(s), +${element.quantiteSuggeree} possible(s)`
+                      : `${element.quantiteSuggeree} personne(s) possible(s)`}
+                  </p>
+                </div>
+                <p className="shrink-0 text-sm font-semibold text-slate-900">
+                  {formatAr(element.prix)}
+                </p>
+                </div>
+
+                <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50/70 px-3 py-2 text-xs leading-5 text-emerald-900/90">
+                  <p>
+                    Prix par personne : <span className="font-semibold">{formatAr(element.prixParPersonne)}</span>
+                  </p>
+                  <p>
+                    Ajout suggere : <span className="font-semibold">{element.quantiteSuggeree}</span> personne(s)
+                  </p>
+                  <p>
+                    Suggestion : passer a{" "}
+                    <span className="font-semibold">
+                      {element.quantiteSelectionnee + element.quantiteSuggeree}
+                    </span>{" "}
+                    personne(s)
                   </p>
                 </div>
 
@@ -751,17 +867,23 @@ export default function SimulationPage() {
                   type="button"
                   variant="outline"
                   className="mt-3 w-full border-emerald-200 text-emerald-800 hover:bg-emerald-100"
-                  onClick={() => void updateElementQuantity(element.id, 1)}
+                  onClick={() =>
+                    void updateElementQuantity(
+                      element.id,
+                      element.quantiteSelectionnee + element.quantiteSuggeree
+                    )
+                  }
                 >
-                  Cocher ce bloc
+                  Ajouter {element.quantiteSuggeree} personne(s)
                 </Button>
               </div>
             ))}
           </div>
 
           <p className="mt-4 text-xs leading-5 text-emerald-900/80">
-            Vous pouvez cocher directement un bloc propose ou continuer a ajuster votre simulation.
+            Vous pouvez augmenter directement le nombre de personnes sur un bloc propose ou continuer a ajuster votre simulation.
           </p>
+          </div>
         </section>
       ) : null}
 

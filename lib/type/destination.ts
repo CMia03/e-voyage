@@ -31,6 +31,29 @@ export interface DestinationDetails {
   };
 }
 
+export type PublicDestinationPlanificationBudget = {
+  id: string;
+  idCategorieClient: string | null;
+  nomCategorieClient: string | null;
+  gamme: string | null;
+  prixNormal: number | null;
+  reduction: number | null;
+  prixAvecReduction: number | null;
+  nombrePersonnes: number | null;
+};
+
+export type PublicDestinationPlanification = {
+  id: string;
+  nomPlanification: string;
+  dateHeureDebut: string | null;
+  dateHeureFin: string | null;
+  depart: string | null;
+  arriver: string | null;
+  deviseBudget: string | null;
+  dureeJours: number | null;
+  budgets: PublicDestinationPlanificationBudget[];
+};
+
 export type PhotoDestination = {
   id: string;
   titre: string;

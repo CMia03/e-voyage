@@ -27,7 +27,7 @@ export type AdminSection =
   | "reservations-ajout"
   | "avis"
   | "commentaires"
-  | "admin-notifications"
+  | "notifications"
   | "statistiques"
   | "entreprise-info"
   | "planification";
@@ -246,8 +246,8 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
             <div className="ml-4 space-y-1 pl-4 border-l-2 border-emerald-200 dark:border-emerald-800">
               <button
                 type="button"
-                onClick={() => onSelect("admin-notifications")}
-                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${active === "admin-notifications"
+                onClick={() => onSelect("notifications")}
+                className={`flex w-full cursor-pointer items-center rounded-md px-3 py-2 text-left text-sm ${active === "notifications"
                     ? "bg-emerald-500/10 font-medium text-emerald-600"
                     : "text-muted-foreground hover:bg-primary/10"
                   }`}

@@ -8,6 +8,7 @@ export type VoyageurProfile = {
 export type ElementSelection = {
     elementId: string;
     quantite: number;
+    type?: string;
 };
 
 export type SimulationRequest = {
@@ -65,6 +66,11 @@ export type ElementDetail = {
     capacite?: number;
     prixParNuit?: number;
     prixParPersonne?: number;
+    prixParHeur?: number;
+    prixReservation?: number;
+    prixUnitaire?: number;
+    budgetPrevu?: number;
+    montant?: number;
     nombreEtoiles?: number;
     adresse?: string;
     description?: string;
@@ -73,7 +79,6 @@ export type ElementDetail = {
     siteWeb?: string;
     latitude?: number;
     longitude?: number;
-    telephone?: string;
     duree?: string;
     difficulte?: string;
     participantMin?: number;

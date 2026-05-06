@@ -58,6 +58,13 @@ type AdminActivitesListeProps = {
 
 type ViewMode = "cards" | "list" | "map";
 
+const viewModeButtonClass =
+  "text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 data-[state=on]:bg-gradient-to-r data-[state=on]:from-emerald-600 data-[state=on]:to-teal-600 data-[state=on]:text-white data-[state=on]:shadow-md data-[state=on]:shadow-emerald-500/20";
+const greenOutlineButtonClass =
+  "border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100 hover:text-emerald-800";
+const greenPrimaryButtonClass =
+  "border-transparent bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/20 hover:from-emerald-700 hover:to-teal-700";
+
 export function AdminActivitesListe({
   activites,
   isLoading,
@@ -171,10 +178,10 @@ export function AdminActivitesListe({
       ) : null}
 
       <div className="mt-5 flex flex-wrap gap-2">
-        <Button size="sm" asChild>
+        <Button size="sm" asChild className={greenPrimaryButtonClass}>
           <Link href={`/admin/activites/${activite.id}`}>Voir details</Link>
         </Button>
-        <Button size="sm" variant="outline" onClick={() => onEdit(activite.id)}>
+        <Button size="sm" variant="outline" onClick={() => onEdit(activite.id)} className={greenOutlineButtonClass}>
           <Pencil className="size-4" />
           Modifier
         </Button>
@@ -242,10 +249,10 @@ export function AdminActivitesListe({
       </div>
 
       <div className="ml-4 flex shrink-0 gap-2">
-        <Button size="sm" asChild>
+        <Button size="sm" asChild className={greenPrimaryButtonClass}>
           <Link href={`/admin/activites/${activite.id}`}>Voir details</Link>
         </Button>
-        <Button size="sm" variant="outline" onClick={() => onEdit(activite.id)}>
+        <Button size="sm" variant="outline" onClick={() => onEdit(activite.id)} className={greenOutlineButtonClass}>
           <Pencil className="size-4" />
         </Button>
         <Button
@@ -310,27 +317,27 @@ export function AdminActivitesListe({
             type="single"
             value={viewMode}
             onValueChange={(value) => value && setViewMode(value as ViewMode)}
-            className="rounded-lg border border-border/50 p-1"
+            className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-1"
           >
-            <ToggleGroupItem value="cards" aria-label="Vue en cartes">
+            <ToggleGroupItem value="cards" aria-label="Vue en cartes" className={viewModeButtonClass}>
               <LayoutGrid className="size-4" />
               <span className="sr-only md:not-sr-only md:ml-2">Mosaiques</span>
             </ToggleGroupItem>
-            <ToggleGroupItem value="list" aria-label="Vue en liste">
+            <ToggleGroupItem value="list" aria-label="Vue en liste" className={viewModeButtonClass}>
               <List className="size-4" />
               <span className="sr-only md:not-sr-only md:ml-2">Liste</span>
             </ToggleGroupItem>
-            <ToggleGroupItem value="map" aria-label="Vue carte">
+            <ToggleGroupItem value="map" aria-label="Vue carte" className={viewModeButtonClass}>
               <Map className="size-4" />
               <span className="sr-only md:not-sr-only md:ml-2">Carte</span>
             </ToggleGroupItem>
           </ToggleGroup>
 
-          <Button variant="outline" onClick={onRefresh} disabled={isLoading}>
+          <Button variant="outline" onClick={onRefresh} disabled={isLoading} className={greenOutlineButtonClass}>
             <RefreshCcw className="size-4" />
             Actualiser
           </Button>
-          <Button onClick={onCreate}>
+          <Button onClick={onCreate} className={greenPrimaryButtonClass}>
             <Plus className="size-4" />
             Creer
           </Button>

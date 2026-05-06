@@ -111,6 +111,13 @@ function normalizeGamme(value: string | null | undefined) {
   return normalized === "LUXE" ? "LUXE" : "MOYENNE";
 }
 
+function getSelectLabel(value: string | null | undefined, selectedLabel: string | null | undefined, placeholder: string) {
+  if (value && value.trim() !== "") {
+    return selectedLabel || placeholder;
+  }
+  return placeholder;
+}
+
 function extractBudgetClientFromSummary(summary: string | null | undefined): number {
   if (!summary) return 0;
 
@@ -284,6 +291,9 @@ function buildPayload(form: ReservationFormState): ReservationCreatePayload {
     (profile) => !!profile.categorieClientId && !!profile.gamme && profile.nombrePersonnes > 0
   );
   const firstProfile = validProfiles[0];
+  const elementsSelectionnes =
+    form.source === "SIMULATION" ? parseElementSelections(form.elementsSelectionnes) : [];
+
   return {
     source: form.source,
     destinationId: form.destinationId,
@@ -293,10 +303,7 @@ function buildPayload(form: ReservationFormState): ReservationCreatePayload {
     nombrePersonnes: totalVoyageurs(validProfiles) || form.nombrePersonnes,
     profilsVoyageurs: validProfiles,
     commentaireClient: form.commentaireClient || undefined,
-    elementsSelectionnes:
-      form.source === "SIMULATION"
-        ? parseElementSelections(form.elementsSelectionnes)
-        : undefined,
+    elementsSelectionnes: elementsSelectionnes.length > 0 ? elementsSelectionnes : undefined,
     resumeSimulation:
       form.source === "SIMULATION" && form.resumeSimulation.trim()
         ? form.resumeSimulation.trim()
@@ -304,15 +311,13 @@ function buildPayload(form: ReservationFormState): ReservationCreatePayload {
   };
 }
 
-function getSelectLabel(value: string, selectedLabel: string | null | undefined, placeholder: string) {
-  return value ? (selectedLabel || value) : placeholder;
-}
-
 export default function ReservationsPage() {
-  const params = useParams<{ username: string }>();
+  const { username } = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const username = typeof params?.username === "string" ? params.username : "client";
+    
+  type ReservationSubSection = "create" | "list";
+  const [activeReservationSection, setActiveReservationSection] = useState<ReservationSubSection>("list");
 
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [destinations, setDestinations] = useState<DestinationDetails[]>([]);
@@ -326,7 +331,6 @@ export default function ReservationsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [activeSection, setActiveSection] = useState<"create" | "list">("create");
   const [statusFilter, setStatusFilter] = useState<ReservationStatus | "ALL">("ALL");
   const selectedElementsScrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -873,66 +877,31 @@ export default function ReservationsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Mes reservations</h1>
-        <p className="text-sm text-muted-foreground">
-          Suivez vos demandes et creez une reservation depuis un prix direct ou votre simulation.
-        </p>
-      </div>
+      <section className="p-6">
+        <div>
+          <h1 className="text-2xl font-semibold">Mes reservations</h1>
+          <p className="text-sm text-muted-foreground">
+            Suivez vos demandes et creez une reservation depuis un prix direct ou votre simulation.
+          </p>
+        </div>
 
-      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
         <Button
           type="button"
-          variant={activeSection === "create" ? "default" : "outline"}
-          onClick={() => setActiveSection("create")}
+          variant={activeReservationSection === "create" ? "default" : "outline"}
+          onClick={() => setActiveReservationSection("create")}
         >
           Creation d&apos;une reservation
         </Button>
         <Button
           type="button"
-          variant={activeSection === "list" ? "default" : "outline"}
-          onClick={() => setActiveSection("list")}
+          variant={activeReservationSection === "list" ? "default" : "outline"}
+          onClick={() => setActiveReservationSection("list")}
         >
           Liste reservation
         </Button>
       </div>
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Card className="border-border/50 bg-white/90">
-          <CardContent className="p-5">
-            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-              Total reservations
-            </p>
-            <p className="mt-3 text-2xl font-semibold">{reservationStats.total}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-border/50 bg-white/90">
-          <CardContent className="p-5">
-            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-              En cours
-            </p>
-            <p className="mt-3 text-2xl font-semibold">{reservationStats.enCours}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-border/50 bg-white/90">
-          <CardContent className="p-5">
-            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-              Confirmees
-            </p>
-            <p className="mt-3 text-2xl font-semibold">{reservationStats.confirmees}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-border/50 bg-white/90">
-          <CardContent className="p-5">
-            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-              Montant cumule
-            </p>
-            <p className="mt-3 text-2xl font-semibold">
-              {formatCurrency(reservationStats.montantTotal)}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      </section>
 
       {error ? (
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
@@ -946,9 +915,9 @@ export default function ReservationsPage() {
         </div>
       ) : null}
 
-      {activeSection === "create" ? (
-      <div className="mx-auto w-full max-w-6xl px-6 py-8">
-        <Card className="min-w-0 border-border/50">
+      {activeReservationSection === "create" ? (
+        <div className="py-8 max-w-4xl mx-auto">
+          <Card className="border-border/50">
           <CardHeader>
             <CardTitle>{isEditMode ? "Modifier ma reservation" : "Nouvelle reservation"}</CardTitle>
             <CardDescription>
@@ -971,7 +940,7 @@ export default function ReservationsPage() {
                 >
                   <p className="font-medium">Depuis un prix</p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Reservation directe a partir d'une planification et d'un tarif.
+                    Reservation directe a partir d&apos;une planification et d&apos;un tarif.
                   </p>
                 </button>
                 <button
@@ -1086,136 +1055,170 @@ export default function ReservationsPage() {
                   ) : null}
                 </div>
 
-                <div className="grid gap-3">
-                  {ensureValidProfiles(form.voyageurProfiles, categories, form.categorieClientId || undefined).map((profile, index) => {
-                    const profileCategory = categories.find((categorie) => categorie.id === profile.categorieClientId);
-                    const quoteLine = form.source === "PRIX_DIRECT" ? quote?.lignes?.[index] : null;
-                    return (
-                      <div key={`${profile.categorieClientId || "profil"}-${index}`} className="rounded-2xl border border-border/60 bg-white p-4">
-                        <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(220px,1fr)_180px_180px_170px_170px_auto] lg:items-end">
-                          <div className="min-w-0 space-y-2">
-                            <Label>Categorie client</Label>
-                            {isLockedPrefill ? (
-                              <Input value={profileCategory?.nom ?? `Categorie ${index + 1}`} readOnly />
-                            ) : (
-                              <Select
-                                value={profile.categorieClientId}
-                                onValueChange={(value) =>
-                                  setForm((current) => ({
-                                    ...current,
-                                    voyageurProfiles: current.voyageurProfiles.map((item, currentIndex) =>
-                                      currentIndex === index ? { ...item, categorieClientId: value } : item
-                                    ),
-                                  }))
-                                }
-                              >
-                                <SelectTrigger className="w-full">
-                                  <SelectValue placeholder="Selectionner une categorie">
-                                    {profileCategory?.nom ?? "Selectionner une categorie"}
-                                  </SelectValue>
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {categoryOptions.map((categorie) => (
-                                    <SelectItem key={categorie.id} value={categorie.id}>
-                                      {categorie.nom}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            )}
-                          </div>
-
-                          <div className="w-full lg:w-44 space-y-2">
-                            <Label>Gamme</Label>
-                            {isLockedPrefill ? (
-                              <Input value={normalizeGamme(profile.gamme)} readOnly />
-                            ) : (
-                              <Select
-                                value={normalizeGamme(profile.gamme)}
-                                onValueChange={(value) =>
-                                  setForm((current) => ({
-                                    ...current,
-                                    voyageurProfiles: current.voyageurProfiles.map((item, currentIndex) =>
-                                      currentIndex === index
-                                        ? { ...item, gamme: normalizeGamme(value) }
-                                        : item
-                                    ),
-                                  }))
-                                }
-                              >
-                                <SelectTrigger className="w-full">
-                                  <SelectValue placeholder="Selectionner une gamme">
-                                    {normalizeGamme(profile.gamme)}
-                                  </SelectValue>
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="MOYENNE">MOYENNE</SelectItem>
-                                  <SelectItem value="LUXE">LUXE</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            )}
-                          </div>
-
-                          <div className="w-full lg:w-44 space-y-2">
-                            <Label>Nombre de personnes</Label>
-                            <Input
-                              type="number"
-                              min={1}
-                              readOnly={isLockedPrefill}
-                              value={profile.nombrePersonnes}
-                              onChange={(event) =>
-                                setForm((current) => ({
-                                  ...current,
-                                  voyageurProfiles: current.voyageurProfiles.map((item, currentIndex) =>
-                                    currentIndex === index
-                                      ? { ...item, nombrePersonnes: Number(event.target.value) || 1 }
-                                      : item
-                                  ),
-                                }))
-                              }
-                            />
-                          </div>
-
-                          {form.source === "PRIX_DIRECT" ? (
-                            <>
-                              <div className="w-full space-y-2">
-                                <Label>Prix unitaire</Label>
-                                <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 px-4 py-3 text-sm font-semibold text-slate-900">
-                                  {quoteLine ? formatCurrency(quoteLine.prixUnitaire, quote?.devise ?? "MGA") : "-"}
-                                </div>
-                              </div>
-                              <div className="w-full space-y-2">
-                                <Label>Prix total</Label>
-                                <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 px-4 py-3 text-sm font-semibold text-slate-900">
-                                  {quoteLine ? formatCurrency(quoteLine.prixTotal, quote?.devise ?? "MGA") : "-"}
-                                </div>
-                              </div>
-                            </>
-                          ) : null}
-
-                          {!isLockedPrefill ? (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              disabled={form.voyageurProfiles.length <= 1}
-                              onClick={() =>
-                                setForm((current) => ({
-                                  ...current,
-                                  voyageurProfiles:
-                                    current.voyageurProfiles.length <= 1
-                                      ? current.voyageurProfiles
-                                      : current.voyageurProfiles.filter((_, currentIndex) => currentIndex !== index),
-                                }))
-                              }
-                            >
-                              <Trash2 className="h-4 w-4 text-rose-600" />
-                            </Button>
-                          ) : null}
-                        </div>
+                <div className="overflow-hidden rounded-2xl border border-border/60 bg-white shadow-sm">
+                  <div className="bg-gradient-to-r from-slate-50 to-slate-100 px-6 py-4 border-b border-border/60">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-slate-900">Profils des voyageurs</h3>
+                      <div className="text-sm text-slate-600">
+                        {ensureValidProfiles(form.voyageurProfiles, categories, form.categorieClientId || undefined).reduce((sum, p) => sum + p.nombrePersonnes, 0)} personne{ensureValidProfiles(form.voyageurProfiles, categories, form.categorieClientId || undefined).reduce((sum, p) => sum + p.nombrePersonnes, 0) > 1 ? 's' : ''} au total
                       </div>
-                    );
-                  })}
+                    </div>
+                  </div>
+                  
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-slate-50 border-b border-border/40">
+                        <tr>
+                          <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Catégorie</th>
+                          <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Gamme</th>
+                          <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Personnes</th>
+                          {form.source === "PRIX_DIRECT" && (
+                            <>
+                              <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Prix unitaire</th>
+                              <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Prix total</th>
+                            </>
+                          )}
+                          <th className="px-6 py-4 text-center text-sm font-semibold text-slate-700 w-20">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border/40">
+                        {ensureValidProfiles(form.voyageurProfiles, categories, form.categorieClientId || undefined).map((profile, index) => {
+                          const profileCategory = categories.find((categorie) => categorie.id === profile.categorieClientId);
+                          const quoteLine = form.source === "PRIX_DIRECT" ? quote?.lignes?.[index] : null;
+                          return (
+                            <tr key={`${profile.categorieClientId || "profil"}-${index}`} className="hover:bg-slate-50/50 transition-colors">
+                              <td className="px-6 py-4">
+                                {isLockedPrefill ? (
+                                  <div className="rounded-lg border border-border/30 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700">
+                                    {profileCategory?.nom ?? `Catégorie ${index + 1}`}
+                                  </div>
+                                ) : (
+                                  <Select
+                                    value={profile.categorieClientId}
+                                    onValueChange={(value) =>
+                                      setForm((current) => ({
+                                        ...current,
+                                        voyageurProfiles: current.voyageurProfiles.map((item, currentIndex) =>
+                                          currentIndex === index ? { ...item, categorieClientId: value } : item
+                                        ),
+                                      }))
+                                    }
+                                  >
+                                    <SelectTrigger className="w-full border-border/60 bg-white">
+                                      <SelectValue placeholder="Sélectionner">
+                                        {profileCategory?.nom ?? "Sélectionner"}
+                                      </SelectValue>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {categoryOptions.map((categorie) => (
+                                        <SelectItem key={categorie.id} value={categorie.id}>
+                                          {categorie.nom}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                              </td>
+
+                              <td className="px-6 py-4">
+                                {isLockedPrefill ? (
+                                  <div className="rounded-lg border border-border/30 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700">
+                                    {normalizeGamme(profile.gamme)}
+                                  </div>
+                                ) : (
+                                  <Select
+                                    value={normalizeGamme(profile.gamme)}
+                                    onValueChange={(value) =>
+                                      setForm((current) => ({
+                                        ...current,
+                                        voyageurProfiles: current.voyageurProfiles.map((item, currentIndex) =>
+                                          currentIndex === index
+                                            ? { ...item, gamme: normalizeGamme(value) }
+                                            : item
+                                        ),
+                                      }))
+                                    }
+                                  >
+                                    <SelectTrigger className="w-full border-border/60 bg-white">
+                                      <SelectValue placeholder="Sélectionner">
+                                        {normalizeGamme(profile.gamme)}
+                                      </SelectValue>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="MOYENNE">MOYENNE</SelectItem>
+                                      <SelectItem value="LUXE">LUXE</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                              </td>
+
+                              <td className="px-6 py-4">
+                                <Input
+                                  type="number"
+                                  min={1}
+                                  readOnly={isLockedPrefill}
+                                  value={profile.nombrePersonnes}
+                                  onChange={(event) =>
+                                    setForm((current) => ({
+                                      ...current,
+                                      voyageurProfiles: current.voyageurProfiles.map((item, currentIndex) =>
+                                        currentIndex === index
+                                          ? { ...item, nombrePersonnes: Number(event.target.value) || 1 }
+                                          : item
+                                      ),
+                                    }))
+                                  }
+                                  className="w-24 border-border/60 bg-white"
+                                />
+                              </td>
+
+                              {form.source === "PRIX_DIRECT" && (
+                                <>
+                                  <td className="px-6 py-4">
+                                    <div className="rounded-lg border border-emerald-200 bg-emerald-50/80 px-3 py-2 text-sm font-semibold text-emerald-800">
+                                      {quoteLine ? formatCurrency(quoteLine.prixUnitaire, quote?.devise ?? "MGA") : "-"}
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    <div className="rounded-lg border border-emerald-200 bg-emerald-50/80 px-3 py-2 text-sm font-semibold text-emerald-800">
+                                      {quoteLine ? formatCurrency(quoteLine.prixTotal, quote?.devise ?? "MGA") : "-"}
+                                    </div>
+                                  </td>
+                                </>
+                              )}
+
+                              <td className="px-6 py-4 text-center">
+                                {!isLockedPrefill ? (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    disabled={form.voyageurProfiles.length <= 1}
+                                    onClick={() =>
+                                      setForm((current) => ({
+                                        ...current,
+                                        voyageurProfiles:
+                                          current.voyageurProfiles.length <= 1
+                                            ? current.voyageurProfiles
+                                            : current.voyageurProfiles.filter((_, currentIndex) => currentIndex !== index),
+                                      }))
+                                    }
+                                    className="hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                ) : (
+                                  <div className="w-8 h-8 flex items-center justify-center">
+                                    <span className="text-slate-400">—</span>
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
 
                 <div className="rounded-xl bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
@@ -1382,11 +1385,54 @@ export default function ReservationsPage() {
             </form>
           </CardContent>
         </Card>
-      </div>
+        </div>
       ) : null}
 
-      {activeSection === "list" ? (
+      {activeReservationSection === "list" ? (
       <>
+
+      
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <Card className="border-border/50 bg-white/90">
+          <CardContent className="p-5">
+            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+              Total reservations
+            </p>
+            <p className="mt-3 text-2xl font-semibold">{reservationStats.total}</p>
+          </CardContent>
+        </Card>
+        <Card className="border-border/50 bg-white/90">
+          <CardContent className="p-5">
+            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+              En cours
+            </p>
+            <p className="mt-3 text-2xl font-semibold">{reservationStats.enCours}</p>
+          </CardContent>
+        </Card>
+        <Card className="border-border/50 bg-white/90">
+          <CardContent className="p-5">
+            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+              Confirmees
+            </p>
+            <p className="mt-3 text-2xl font-semibold">{reservationStats.confirmees}</p>
+          </CardContent>
+        </Card>
+        <Card className="border-border/50 bg-white/90">
+          <CardContent className="p-5">
+            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+              Montant cumule
+            </p>
+            <p className="mt-3 text-2xl font-semibold">
+              {formatCurrency(reservationStats.montantTotal)}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      
+
+
       <Card className="border-border/50">
         <CardHeader>
           <CardTitle>Liste de mes reservations</CardTitle>
@@ -1430,95 +1476,150 @@ export default function ReservationsPage() {
               const showElementsCount = reservation.source === "SIMULATION";
 
               return (
-                <div
+                <article
                   key={reservation.id}
-                  className="rounded-2xl border border-border/60 bg-white p-5 shadow-sm"
+                  className="group relative overflow-hidden rounded-3xl border-2 bg-gradient-to-br from-white via-slate-50/20 to-slate-50/40 shadow-xl transition-all duration-500 hover:shadow-2xl hover:scale-[1.02] hover:-translate-y-1"
                 >
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="space-y-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-lg font-semibold">{reservation.reference}</p>
-                        <Badge className={statusStyles[reservation.status]}>
-                          {formatStatus(reservation.status)}
-                        </Badge>
-                        <Badge variant="outline">{formatSource(reservation.source)}</Badge>
+                  {/* Header avec statut visuel */}
+                  <div className="relative p-6 pb-4">
+                    <div className="absolute top-4 right-4">
+                      <div className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold tracking-wide shadow-lg ${
+                        reservation.status === "VALIDEE" 
+                          ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white border-2 border-emerald-400"
+                          : reservation.status === "ANNULEE"
+                          ? "bg-gradient-to-r from-rose-500 to-rose-600 text-white border-2 border-rose-400"
+                          : reservation.status === "EN_ATTENTE_DISPONIBILITE"
+                          ? "bg-gradient-to-r from-sky-500 to-sky-600 text-white border-2 border-sky-400"
+                          : "bg-gradient-to-r from-amber-500 to-amber-600 text-white border-2 border-amber-400"
+                      }`}>
+                        {reservation.status === "VALIDEE" ? "✓" : "⏱"}
+                        <span>{formatStatus(reservation.status)}</span>
                       </div>
-
-                      <div>
-                        <p className="font-medium text-foreground">
-                          {detail?.nomDestination ?? "-"} - {detail?.nomPlanification ?? "-"}
-                        </p>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          {getReservationProfilesSummary(reservation)}
-                        </p>
-                      </div>
-
-                      <div className={`grid gap-3 sm:grid-cols-2 ${showElementsCount ? "xl:grid-cols-4" : "xl:grid-cols-3"}`}>
-                        <div className="rounded-xl bg-muted/40 p-3">
-                          <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                            Montant
-                          </p>
-                          <p className="mt-1 font-medium">
-                            {formatCurrency(reservation.montantTotal, reservation.devise)}
-                          </p>
-                        </div>
-                        <div className="rounded-xl bg-muted/40 p-3">
-                          <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                            Creee le
-                          </p>
-                          <p className="mt-1 font-medium">{formatDate(reservation.dateReservation)}</p>
-                        </div>
-                        {showElementsCount ? (
-                          <div className="rounded-xl bg-muted/40 p-3">
-                            <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                              Elements
-                            </p>
-                            <p className="mt-1 font-medium">{totalElements}</p>
-                          </div>
-                        ) : null}
-                        <div className="rounded-xl bg-muted/40 p-3">
-                          <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                            Commentaire
-                          </p>
-                          <p className="mt-1 line-clamp-2 text-sm text-foreground">
-                            {reservation.commentaireClient?.trim() || "Aucun commentaire"}
-                          </p>
-                        </div>
-                      </div>
-
-                      {reservation.resumeSimulation ? (
-                        <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 text-sm text-emerald-900">
-                          <p className="font-medium">Resume de simulation conserve</p>
-                          <p className="mt-2 line-clamp-3 whitespace-pre-wrap">
-                            {reservation.resumeSimulation}
-                          </p>
-                        </div>
-                      ) : null}
                     </div>
 
-                    <div className="flex shrink-0 flex-col gap-3 lg:w-44">
-                      <Button asChild className="w-full">
-                        <Link href={`/${username}/reservations/${reservation.id}`}>Voir detail</Link>
-                      </Button>
-                      {reservation.status === "EN_ATTENTE" ? (
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          className="w-full"
-                          onClick={() => void handleDeleteReservation(reservation.id)}
-                        >
-                          Supprimer
-                        </Button>
+                    <div className="flex items-start gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3 mb-3">
+                          <span className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold bg-gradient-to-r from-slate-400 to-slate-500 text-white shadow-lg border-2 border-slate-400">
+                            {formatSource(reservation.source)}
+                          </span>
+                        </div>
+                        
+                        <h3 className="text-2xl font-bold text-slate-900 leading-tight group-hover:text-emerald-700 transition-colors">
+                          {reservation.reference}
+                        </h3>
+                        
+                        <div className="mt-3 space-y-2">
+                          <p className="text-lg font-semibold text-slate-800">
+                            {detail?.nomDestination ?? "-"} - {detail?.nomPlanification ?? "-"}
+                          </p>
+                          <p className="text-sm text-slate-600 font-medium">
+                            {getReservationProfilesSummary(reservation)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Cartes d'informations avec design moderne */}
+                    <div className={`grid gap-4 sm:grid-cols-2 ${showElementsCount ? "xl:grid-cols-4" : "xl:grid-cols-3"} mt-6`}>
+                      <div className="rounded-2xl border-2 bg-gradient-to-br from-emerald-50 via-emerald-100/30 to-emerald-100/60 border-emerald-200 p-4 shadow-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white">
+                            💰
+                          </div>
+                          <p className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Montant</p>
+                        </div>
+                        <p className="text-xl font-black text-slate-900">
+                          {formatCurrency(reservation.montantTotal, reservation.devise)}
+                        </p>
+                      </div>
+
+                      <div className="rounded-2xl border-2 bg-gradient-to-br from-blue-50 via-blue-100/30 to-blue-100/60 border-blue-200 p-4 shadow-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white">
+                            📅
+                          </div>
+                          <p className="text-xs font-bold text-blue-700 uppercase tracking-wider">Créée le</p>
+                        </div>
+                        <p className="text-lg font-bold text-slate-900">{formatDate(reservation.dateReservation)}</p>
+                      </div>
+
+                      {showElementsCount ? (
+                        <div className="rounded-2xl border-2 bg-gradient-to-br from-violet-50 via-violet-100/30 to-violet-100/60 border-violet-200 p-4 shadow-lg">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center text-white">
+                              📋
+                            </div>
+                            <p className="text-xs font-bold text-violet-700 uppercase tracking-wider">Éléments</p>
+                          </div>
+                          <p className="text-xl font-black text-slate-900">{totalElements}</p>
+                        </div>
                       ) : null}
-                      <div className="rounded-xl border border-dashed border-border/70 px-4 py-3 text-sm text-muted-foreground">
-                        Derniere mise a jour
-                        <p className="mt-2 font-medium text-foreground">
+
+                      <div className="rounded-2xl border-2 bg-gradient-to-br from-amber-50 via-amber-100/30 to-amber-100/60 border-amber-200 p-4 shadow-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-white">
+                            💬
+                          </div>
+                          <p className="text-xs font-bold text-amber-700 uppercase tracking-wider">Commentaire</p>
+                        </div>
+                        <p className="text-sm font-medium text-slate-900 line-clamp-2">
+                          {reservation.commentaireClient?.trim() || "Aucun commentaire"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section simulation si présente */}
+                  {reservation.resumeSimulation ? (
+                    <div className="px-6 pb-4">
+                      <div className="rounded-2xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 via-emerald-100/30 to-emerald-100/60 p-4 shadow-lg">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white">
+                            📊
+                          </div>
+                          <p className="text-sm font-bold text-emerald-700 uppercase tracking-wider">Résumé de simulation</p>
+                        </div>
+                        <p className="text-sm text-emerald-900 font-medium line-clamp-3 whitespace-pre-wrap">
+                          {reservation.resumeSimulation}
+                        </p>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {/* Footer avec actions */}
+                  <div className="px-6 pb-6 bg-gradient-to-b from-slate-50/20 to-transparent">
+                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <Button asChild className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white border-2 border-emerald-400 shadow-lg transition-all duration-300 hover:scale-105">
+                          <Link href={`/${username}/reservations/${reservation.id}`} className="flex items-center gap-2">
+                            <span>👁️</span>
+                            Voir détail
+                          </Link>
+                        </Button>
+                        
+                        {reservation.status === "EN_ATTENTE" ? (
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            className="bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white border-2 border-rose-400 shadow-lg transition-all duration-300 hover:scale-105"
+                            onClick={() => void handleDeleteReservation(reservation.id)}
+                          >
+                            <span>🗑️</span>
+                            Supprimer
+                          </Button>
+                        ) : null}
+                      </div>
+
+                      <div className="rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50/80 px-4 py-3 text-sm text-slate-600">
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Dernière mise à jour</p>
+                        <p className="font-medium text-slate-800">
                           {formatDate(reservation.dateModification ?? reservation.dateReservation)}
                         </p>
                       </div>
                     </div>
                   </div>
-                </div>
+                </article>
               );
             })
           )}
@@ -1529,3 +1630,4 @@ export default function ReservationsPage() {
     </div>
   );
 }
+
