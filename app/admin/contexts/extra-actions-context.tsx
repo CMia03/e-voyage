@@ -1,10 +1,10 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, ReactNode } from "react";
 
 interface ExtraActionsContextType {
   extraActions: ReactNode;
-  setExtraActions: (actions: ReactNode) => void;
+  setExtraActions: (actions: ReactNode | null) => void;
   clearExtraActions: () => void;
 }
 
@@ -13,9 +13,9 @@ const ExtraActionsContext = createContext<ExtraActionsContextType | undefined>(u
 export function ExtraActionsProvider({ children }: { children: ReactNode }) {
   const [extraActions, setExtraActions] = useState<ReactNode>(null);
 
-  const clearExtraActions = () => {
+  const clearExtraActions = useCallback(() => {
     setExtraActions(null);
-  };
+  }, []);
 
   return (
     <ExtraActionsContext.Provider value={{ extraActions, setExtraActions, clearExtraActions }}>
