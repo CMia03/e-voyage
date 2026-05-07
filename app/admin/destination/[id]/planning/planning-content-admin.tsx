@@ -1438,14 +1438,7 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
         }
       >
         <div className="space-y-6">
-          {embedded ? (
-            <div className="flex justify-end">
-              <Button onClick={openCreatePlanificationDialog} size="sm" className={greenPrimaryButtonClass}>
-                <Plus className="size-4" />
-                Ajouter planification
-              </Button>
-            </div>
-          ) : (
+          {!embedded && (
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -1487,10 +1480,7 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
                 <Settings className="mr-2 h-4 w-4" />
                 Paramétrage
               </Button>
-              <Button onClick={openCreatePlanificationDialog} size="sm" className={greenPrimaryButtonClass}>
-                <Plus className="size-4" />
-                Ajouter planification
-              </Button>
+             
             </div>
           </div>
           )}
@@ -1517,6 +1507,7 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
             onToggleActive={(planification, nextValue) =>
               void handleTogglePlanificationVisibility(planification, nextValue)
             }
+            onAddPlanification={openCreatePlanificationDialog}
           />
 
           <Card className="border-border/50">

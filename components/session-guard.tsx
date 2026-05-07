@@ -18,7 +18,6 @@ export function SessionGuard({
 }: SessionGuardProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticatedState, setIsAuthenticatedState] = useState(false);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -27,21 +26,21 @@ export function SessionGuard({
           initializeSessionManager();
         }
 
-        if (requireAuth) {
-          const authenticated = isAuthenticated();
-          setIsAuthenticatedState(authenticated);
+        const authenticated = isAuthenticated();
 
-          if (!authenticated) {
+        // Ne rediriger que si c'est une route strictement protégée ET non authentifié
+        if (requireAuth && !authenticated) {
+          // Vérifier si on est déjà sur une page publique pour éviter les boucles
+          const currentPath = window.location.pathname;
+          const publicPaths = ['/login', '/register', '/forgot-password', '/'];
+          
+          if (!publicPaths.includes(currentPath)) {
             router.push(redirectTo);
             return;
           }
-        } else {
-          setIsAuthenticatedState(isAuthenticated());
         }
       } catch {
-        if (requireAuth) {
-          router.push(redirectTo);
-        }
+        // En cas d'erreur, ne pas rediriger automatiquement
       } finally {
         setIsLoading(false);
       }
@@ -54,10 +53,15 @@ export function SessionGuard({
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === "cool_voyage_auth") {
         const authenticated = isAuthenticated();
-        setIsAuthenticatedState(authenticated);
         
+        // Ne rediriger que si c'est une route strictement protégée
         if (requireAuth && !authenticated) {
-          router.push(redirectTo);
+          const currentPath = window.location.pathname;
+          const publicPaths = ['/login', '/register', '/forgot-password', '/'];
+          
+          if (!publicPaths.includes(currentPath)) {
+            router.push(redirectTo);
+          }
         }
       }
     };
@@ -70,16 +74,17 @@ export function SessionGuard({
 
   useEffect(() => {
     const handleFocus = () => {
-      if (requireAuth && !isAuthenticated()) {
-        router.push(redirectTo);
-      }
+      // Ne plus rediriger automatiquement au focus
+      // Permettre la navigation même si session expirée
+      // Mettre à jour l'état d'authentification sans rediriger
+      isAuthenticated();
     };
 
     if (typeof window !== "undefined") {
       window.addEventListener("focus", handleFocus);
       return () => window.removeEventListener("focus", handleFocus);
     }
-  }, [router, redirectTo, requireAuth]);
+  }, [redirectTo, requireAuth]);
 
   if (isLoading) {
     return (
@@ -89,8 +94,41 @@ export function SessionGuard({
     );
   }
 
-  if (requireAuth && !isAuthenticatedState) {
-    return null;
+  return <>{children}</>;
+}
+
+export function AuthWrapper({ 
+  children, 
+  fallback = null,
+  requireAuth = true 
+}: { 
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
+  requireAuth?: boolean;
+}) {
+  const [isAuth, setIsAuth] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = () => {
+      const authenticated = isAuthenticated();
+      setIsAuth(authenticated);
+      setIsLoading(false);
+    };
+
+    checkAuth();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-4">
+        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-emerald-500"></div>
+      </div>
+    );
+  }
+
+  if (requireAuth && !isAuth) {
+    return <>{fallback}</>;
   }
 
   return <>{children}</>;

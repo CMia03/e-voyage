@@ -1,11 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { CalendarDays, List, MapPinned, Pencil, Trash2 } from "lucide-react";
+import { CalendarDays, MapPinned, Pencil, Plus, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { PlanificationVoyage } from "@/lib/type/destination";
 
 type Props = {
@@ -19,6 +17,7 @@ type Props = {
   onEdit: (planification: PlanificationVoyage) => void;
   onDelete: (planificationId: string) => void;
   onToggleActive: (planification: PlanificationVoyage, nextValue: boolean) => void;
+  onAddPlanification?: () => void;
 };
 
 function formatDate(value?: string | null) {
@@ -42,9 +41,8 @@ export function PlanificationsList({
   onEdit,
   onDelete,
   onToggleActive,
+onAddPlanification,
 }: Props) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -55,7 +53,7 @@ export function PlanificationsList({
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-2 md:justify-end">
+        <div className="flex flex-wrap items-center gap-2 md:justify-end">
           <div className="min-w-[90px] rounded-2xl border border-white/80 bg-white/90 px-3 py-2 shadow-sm">
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Total</p>
             <p className="mt-1 text-base font-semibold text-slate-900">{planifications.length}</p>
@@ -72,6 +70,15 @@ export function PlanificationsList({
               {isLoading || isRefreshingPlanifications ? "Actualisation..." : "Pret a organiser"}
             </p>
           </div>
+          {onAddPlanification && (
+            <Button
+              onClick={onAddPlanification}
+              size="sm"
+              className="rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
 
