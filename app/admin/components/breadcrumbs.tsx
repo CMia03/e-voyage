@@ -12,7 +12,11 @@ interface BreadcrumbItem {
   isActive?: boolean;
 }
 
-export function AdminBreadcrumbs() {
+interface AdminBreadcrumbsProps {
+  noMargin?: boolean;
+}
+
+export function AdminBreadcrumbs({ noMargin = false }: AdminBreadcrumbsProps = {}) {
   const { active, setActive } = useAdminNavigation();
   const { breadcrumbs: customBreadcrumbs, resetBreadcrumbs } = useBreadcrumbs();
 
@@ -194,7 +198,7 @@ export function AdminBreadcrumbs() {
   const breadcrumbs = getBreadcrumbs();
 
   return (
-    <nav className="flex items-center space-x-1 text-sm text-muted-foreground mb-6">
+    <nav className={`flex items-center space-x-1 text-sm text-muted-foreground ${noMargin ? '' : 'mb-6'}`}>
       {breadcrumbs.map((item, index) => (
         <div key={index} className="flex items-center">
           {index === 0 && <Home className="h-4 w-4 mr-1" />}

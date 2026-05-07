@@ -9,6 +9,7 @@ import { AdminBreadcrumbs } from "./components/breadcrumbs";
 import { AdminNavigationProvider, useAdminNavigation } from "./contexts/admin-navigation-context";
 import { AdminSection } from "./components/sidebar";
 import { BreadcrumbsProvider } from "./contexts/breadcrumbs-context";
+import { ExtraActionsProvider, useExtraActions } from "./contexts/extra-actions-context";
 
 function AdminLayoutContent({
   children,
@@ -17,6 +18,7 @@ function AdminLayoutContent({
 }>) {
   const router = useRouter();
   const { active, setActive } = useAdminNavigation();
+  const { extraActions } = useExtraActions();
 
   const handleSelectSection = (section: AdminSection) => {
     setActive(section);
@@ -37,7 +39,16 @@ function AdminLayoutContent({
       <div className="mx-auto flex w-full max-w-[1400px] flex-1">
         <AdminSidebarWithNotifications active={active} onSelect={handleSelectSection} />
         <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8 overflow-auto min-h-0">
-          <AdminBreadcrumbs />
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex-1 min-w-0">
+              <AdminBreadcrumbs noMargin />
+            </div>
+            {extraActions && (
+              <div className="flex flex-nowrap gap-2 overflow-x-auto">
+                {extraActions}
+              </div>
+            )}
+          </div>
           {children}
         </main>
       </div>
@@ -54,7 +65,9 @@ export default function AdminLayout({
   return (
     <AdminNavigationProvider>
       <BreadcrumbsProvider>
-        <AdminLayoutContent>{children}</AdminLayoutContent>
+        <ExtraActionsProvider>
+          <AdminLayoutContent>{children}</AdminLayoutContent>
+        </ExtraActionsProvider>
       </BreadcrumbsProvider>
     </AdminNavigationProvider>
   );

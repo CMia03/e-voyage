@@ -47,7 +47,6 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
   const [commentairesNonLus, setCommentairesNonLus] = useState(0);
   const { session } = useAuth();
 
-  // Charger le nombre de commentaires en attente
   useEffect(() => {
     const loadCommentairesEnAttente = async () => {
       if (!session?.accessToken) return;
@@ -64,7 +63,6 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
     };
 
     loadCommentairesEnAttente();
-    // RafraÃ®chir toutes les 30 secondes
     const interval = setInterval(loadCommentairesEnAttente, 30000);
     return () => clearInterval(interval);
   }, [session?.accessToken]);
@@ -146,7 +144,7 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
           >
             <div className="flex items-center">
               <Building className="mr-3 h-4 w-4" />
-              HÃ©bergements
+              Hébergements
             </div>
             <ChevronDown
               className={`h-4 w-4 transition-all duration-300 ease-in-out transform ${
@@ -166,7 +164,7 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
                   }`}
               >
                 <span className="mr-2"></span>
-                Liste des hÃ©bergements
+                Liste des hébergements
               </button>
               <button
                 type="button"
@@ -178,7 +176,7 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
                 }`}
               >
                 <span className="mr-2"></span>
-                Ajouter hÃ©bergement
+                Ajouter hébergement
               </button>
             </div>
           )}
@@ -192,7 +190,7 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
           >
             <div className="flex items-center">
               <Play className="mr-3 h-4 w-4" />
-              ActivitÃ©s
+              Activités
             </div>
             <ChevronDown
               className={`h-4 w-4 transition-all duration-300 ease-in-out transform ${
@@ -212,7 +210,7 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
                   }`}
               >
                 <span className="mr-2"></span>
-                Liste des activitÃ©s
+                Liste des activités
               </button>
               <button
                 type="button"
@@ -224,7 +222,7 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
                 }`}
               >
                 <span className="mr-2"></span>
-                Ajouter activitÃ©
+                Ajouter activité
               </button>
             </div>
           )}
@@ -306,7 +304,7 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
           >
             <div className="flex items-center">
               <ClipboardList className="mr-3 h-4 w-4" />
-              RÃ©servations
+              Réservations
             </div>
             <ChevronDown
               className={`h-4 w-4 transition-all duration-300 ease-in-out transform ${
@@ -326,7 +324,7 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
                   }`}
               >
                 <span className="mr-2"></span>
-                Liste rÃ©servations
+                Liste réservations
               </button>
               <button
                 type="button"
@@ -338,7 +336,7 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
                 }`}
               >
                 <span className="mr-2"></span>
-                Ajout rÃ©servation
+                Ajout réservation
               </button>
             </div>
           )}
@@ -364,7 +362,7 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
           >
             <div className="flex items-center">
               <Settings className="mr-3 h-4 w-4" />
-              Parametrage
+              Paramètrage
             </div>
             <ChevronDown
               className={`h-4 w-4 transition-all duration-300 ease-in-out transform ${
