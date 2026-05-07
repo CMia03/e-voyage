@@ -31,6 +31,7 @@ import type {
 } from "@/lib/type/destination";
 import { useBreadcrumbs } from "../../contexts/breadcrumbs-context";
 import { useExtraActions } from "../../contexts/extra-actions-context";
+import { useAdminNavigation } from "../../contexts/admin-navigation-context";
 
 import { AdminDestinationAssociationsContent } from "./associations/associations-content";
 import { AdminDestinationPlanningContentNext } from "./planning/planning-content-admin";
@@ -85,6 +86,7 @@ export function AdminDestinationDetailContent({
   const router = useRouter();
   const { setBreadcrumbs } = useBreadcrumbs();
   const { setExtraActions, clearExtraActions } = useExtraActions();
+  const { setActive } = useAdminNavigation();
   const imageSectionRef = useRef<HTMLDivElement | null>(null);
   const photoScrollerRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [accessToken, setAccessToken] = useState("");
@@ -131,6 +133,11 @@ export function AdminDestinationDetailContent({
   useEffect(() => {
     setActiveSection(initialSection);
   }, [initialSection]);
+
+  useEffect(() => {
+    // Synchroniser la section active avec la navigation admin
+    setActive("destinations-view");
+  }, [setActive]);
 
   useEffect(() => {
     setBreadcrumbs([

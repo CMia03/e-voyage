@@ -333,7 +333,7 @@ export function AdminHebergementsListe({
             type="single" 
             value={viewMode} 
             onValueChange={(value) => value && setViewMode(value as ViewMode)}
-            className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-1"
+            className="rounded-lg border border-emerald-200 bg-emerald-50/60"
           >
             <ToggleGroupItem value="cards" aria-label="Vue en cartes" className={viewModeButtonClass}>
               <LayoutGrid className="size-4" />

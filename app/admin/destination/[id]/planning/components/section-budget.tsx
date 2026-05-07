@@ -72,7 +72,7 @@ function formatMoneySafe(value: number | null | undefined, devise: string): stri
 
 const CATEGORY_LABELS: Record<BudgetCategory, string> = {
   activite: "ActivitÃ©",
-  hebergement: "HÃ©bergement",
+  hebergement: "Hébergements",
   transport: "Transport",
   autre: "Autre",
 };

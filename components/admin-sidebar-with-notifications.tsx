@@ -255,7 +255,6 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
                     : "text-muted-foreground hover:bg-primary/10"
                   }`}
               >
-                <span className="mr-2">Â·</span>
                 Notifications
               </button>
               <button
@@ -267,7 +266,6 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
                     : "text-muted-foreground hover:bg-primary/10"
                 }`}
               >
-                <span className="mr-2">Â·</span>
                 Avis
               </button>
               <button
@@ -279,7 +277,6 @@ export function AdminSidebarWithNotifications({ active, onSelect }: AdminSidebar
                     : "text-muted-foreground hover:bg-primary/10"
                 }`}
               >
-                <span className="mr-2">Â·</span>
                 <div className="flex items-center gap-2">
                   Commentaires
                   {commentairesNonLus > 0 && (
