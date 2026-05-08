@@ -65,6 +65,7 @@ export function AdminActivitesCreation({
 
   useEffect(() => {
     if (!successMessage) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowSuccessAlert(false);
       return;
     }
@@ -87,6 +88,7 @@ export function AdminActivitesCreation({
 
   useEffect(() => {
     if (!error) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowErrorAlert(false);
       return;
     }
@@ -189,7 +191,7 @@ export function AdminActivitesCreation({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] max-w-5xl overflow-y-auto">
+      <DialogContent className="max-h-[92vh] w-[calc(100vw-2rem)] max-w-6xl overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>Ajouter une activite</DialogTitle>
           <DialogDescription>
