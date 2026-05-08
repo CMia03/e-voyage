@@ -382,6 +382,12 @@ export default function ReservationsPage() {
   }, [searchParams]);
 
   useEffect(() => {
+    if (hasNavigationPrefill) {
+      setActiveReservationSection("create");
+    }
+  }, [hasNavigationPrefill]);
+
+  useEffect(() => {
     const loadInitialData = async () => {
       if (!token) {
         setError("Vous devez etre connecte pour gerer vos reservations.");
@@ -612,7 +618,8 @@ export default function ReservationsPage() {
     "Selectionner une gamme"
   );
   const isSimulationPrefill = form.source === "SIMULATION";
-  const isLockedPrefill = isSimulationPrefill;
+  const isDirectForfaitPrefill = form.source === "PRIX_DIRECT" && !!prefill.destinationId && !!prefill.planificationVoyageId;
+  const isLockedPrefill = isSimulationPrefill || isDirectForfaitPrefill;
   const isEditMode = !!prefill.editReservationId;
   const simulationElementCards = useMemo<SimulationElementCard[]>(() => {
     const quantitiesByElement = new Map(

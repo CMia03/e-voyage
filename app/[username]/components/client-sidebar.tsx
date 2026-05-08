@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { Compass, CreditCard, Home, TrendingUp, UserRound } from "lucide-react";
+import { CreditCard, Home, UserRound } from "lucide-react";
 
-export type ClientSection = "home" | "simulation" | "destinations" | "planifications" | "reservations" | "profile";
+export type ClientSection = "home" | "simulation" | "reservations" | "profile";
 
 type ClientSidebarProps =
   | {
@@ -21,24 +21,6 @@ const items: Array<{ key: ClientSection; label: string; href: string; icon: Reac
     label: "Accueil",
     href: "",
     icon: <Home className="size-4" />,
-  },
-  {
-    key: "simulation",
-    label: "Simulation budget",
-    href: "simulation",
-    icon: <TrendingUp className="size-4" />,
-  },
-  {
-    key: "destinations",
-    label: "Destinations",
-    href: "destinations",
-    icon: <Compass className="size-4" />,
-  },
-  {
-    key: "planifications",
-    label: "Planifications",
-    href: "planifications",
-    icon: <Compass className="size-4" />,
   },
   {
     key: "reservations",

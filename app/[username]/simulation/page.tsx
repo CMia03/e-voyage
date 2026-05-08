@@ -6,8 +6,6 @@ import { BellRing, Expand } from "lucide-react";
 
 import { useSimulation } from "@/lib/hooks/useSimulation";
 import { ElementSelection, ElementSimulation, JourSimulation, VoyageurProfile } from "@/lib/type/simulation.types";
-import { DestinationSelector } from "./components/DestinationSelector";
-import { PlanificationSelector } from "./components/PlanificationSelector";
 import { BudgetInput } from "./components/BudgetInput";
 import { CategoryGammeSelector } from "./components/CategoryGammeSelector";
 import { PlanningJournalier } from "./components/PlanningJournalier";
@@ -329,7 +327,6 @@ export default function SimulationPage() {
     result,
     minimumBudget,
     budgetByPlanification,
-    budgetisationsByPlanification,
     selectedDestinationId,
     setSelectedDestinationId,
     selectedPlanificationId,
@@ -434,6 +431,9 @@ export default function SimulationPage() {
     () => planifications.find((planification) => planification.id === selectedPlanificationId) ?? null,
     [planifications, selectedPlanificationId]
   );
+  const hasForfaitPrefill = Boolean(
+    reservationEditPrefill.destinationId && reservationEditPrefill.planificationId
+  );
 
   const budgetCategorieSelectionnee = selectedPlanificationId
     ? budgetByPlanification[selectedPlanificationId] ?? null
@@ -523,6 +523,7 @@ export default function SimulationPage() {
 
   const canSimulate =
     !loading &&
+    hasForfaitPrefill &&
     !!selectedPlanificationId &&
     voyageurProfiles.length > 0 &&
     budgetClient > 0;
@@ -888,68 +889,7 @@ export default function SimulationPage() {
       ) : null}
 
       <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
-        <section className="overflow-hidden rounded-[28px] border border-emerald-100 bg-white/90 shadow-[0_20px_70px_-35px_rgba(15,118,110,0.45)] backdrop-blur">
-          <div className="grid gap-8 px-6 py-8 lg:grid-cols-[minmax(0,1.2fr)_320px] lg:px-8 lg:py-10">
-            <div className="space-y-5">
-              <div className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-emerald-700">
-                Simulation budget voyage
-              </div>
-
-              <div className="space-y-3">
-                <h1 className="max-w-3xl text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-                  Concevez un voyage plus clair, plus serein et adapte a votre budget reel.
-                </h1>
-                <p className="max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
-                  Choisissez votre destination, votre forfait, votre categorie et votre
-                  gamme. Ensuite, nous vous aidons a construire une proposition plus
-                  ambitieuse, mais toujours realiste et facile a ajuster.
-                </p>
-              </div>
-
-              {/* <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                    Destination
-                  </p>
-                  <p className="mt-2 text-sm font-semibold text-slate-900">
-                    {selectedDestination?.title ?? "A choisir"}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                    Forfait
-                  </p>
-                  <p className="mt-2 text-sm font-semibold text-slate-900">
-                    {selectedPlanification?.nomPlanification ?? "A choisir"}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                    Budget minimum
-                  </p>
-                  <p className="mt-2 text-sm font-semibold text-slate-900">
-                    {seuilMinimum > 0 ? formatAr(seuilMinimum) : "A calculer"}
-                  </p>
-                </div>
-              </div> */}
-              
-            </div>
-
-            <div className="rounded-[24px] border border-slate-200 bg-slate-950 p-6 text-white shadow-[0_18px_40px_-30px_rgba(15,23,42,0.9)]">
-              <p className="text-xs uppercase tracking-[0.24em] text-emerald-300">
-                Notre ambition
-              </p>
-              <h2 className="mt-4 text-xl font-semibold leading-8">
-                Donner a chaque voyageur une experience lisible, elegante et rassurante.
-              </h2>
-              <p className="mt-4 text-sm leading-7 text-slate-300">
-                Vous visualisez tout de suite ce qui est obligatoire, ce qui est
-                optionnel et ce qu&apos;il faut ajuster pour rester dans votre budget,
-                sans perdre la qualite du voyage.
-              </p>
-            </div>
-          </div>
-        </section>
+       
 
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
           <div className="space-y-6">
@@ -957,7 +897,7 @@ export default function SimulationPage() {
               <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-700">
-                    Etape 1
+                    Simulation budget voyage
                   </p>
                   <h2 className="mt-2 text-xl font-semibold text-slate-900">
                     Configurez votre simulation
@@ -973,19 +913,12 @@ export default function SimulationPage() {
               </div>
 
               <div className="space-y-4">
-                <DestinationSelector
-                  destinations={destinations}
-                  value={selectedDestinationId}
-                  onChange={setSelectedDestinationId}
-                />
-
-                <PlanificationSelector
-                  planifications={planifications}
-                  value={selectedPlanificationId}
-                  onChange={setSelectedPlanificationId}
-                  loading={loading}
-                  budgetisationsByPlanification={budgetisationsByPlanification}
-                />
+                {!hasForfaitPrefill ? (
+                  <div className="rounded-3xl border border-emerald-100 bg-emerald-50/70 p-4 text-sm text-emerald-900">
+                    Choisissez d&apos;abord une destination puis un forfait depuis l&apos;accueil client ou la page details.
+                    La simulation s&apos;ouvrira ensuite directement sur les profils voyageurs et le budget.
+                  </div>
+                ) : null}
 
                 <CategoryGammeSelector
                   categories={categories}

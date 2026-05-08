@@ -12,7 +12,6 @@ import { ClientSidebar, type ClientSection } from "./components/client-sidebar";
 
 // Import des pages
 import SimulationPage from "./simulation/page";
-import DestinationsPage from "./destinations/page";
 import ReservationsPage from "./reservations/page";
 
 export function ClientHome({ username }: { username: string }) {
@@ -59,8 +58,6 @@ export function ClientHome({ username }: { username: string }) {
     switch (activeSection) {
       case "simulation":
         return <SimulationPage />;
-      case "destinations":
-        return <DestinationsPage />;
       case "reservations":
         return <ReservationsPage />;
       case "profile":

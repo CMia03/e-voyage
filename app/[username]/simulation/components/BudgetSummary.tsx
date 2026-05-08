@@ -53,20 +53,7 @@ export function BudgetSummary({
           </p>
         </div>
 
-        <div
-          className={`rounded-2xl border px-4 py-3 text-right ${
-            estDansBudget
-              ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-              : "border-red-200 bg-red-50 text-red-900"
-          }`}
-        >
-          <p className="text-xs uppercase tracking-[0.18em]">
-            Statut
-          </p>
-          <p className="mt-2 text-lg font-semibold">
-            {estDansBudget ? "Dans le budget" : "Au-dessus du budget"}
-          </p>
-        </div>
+        
       </div>
 
       <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-5">

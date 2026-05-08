@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DestinationDetails, PublicDestinationPlanification } from "@/lib/type/destination";
@@ -11,6 +12,8 @@ import { DestinationSidebar } from "@/components/destination-sidebar";
 import { ModalMap } from "@/components/modal-map";
 import { getEntrepriseInfoPublic } from "@/lib/api/entreprise-info";
 import { listPublicDestinationPlanifications } from "@/lib/api/destinations";
+import { loadAuth } from "@/lib/auth";
+import { resolvePostLoginPath } from "@/lib/auth-redirect";
 
 interface DestinationDetailsProps {
   destination: DestinationDetails;
@@ -42,11 +45,13 @@ function formatMoney(value?: number | null, devise = "Ar") {
 }
 
 export function DestinationDetailsComponent({ destination }: DestinationDetailsProps) {
+  const router = useRouter();
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [mapModalOpen, setMapModalOpen] = useState(false);
   const [publicPlanifications, setPublicPlanifications] = useState<PublicDestinationPlanification[]>([]);
   const [selectedPlanificationId, setSelectedPlanificationId] = useState<string | null>(null);
+  const [selectedBudgetId, setSelectedBudgetId] = useState<string | null>(null);
   const [isLoadingPlanifications, setIsLoadingPlanifications] = useState(false);
   const [planificationError, setPlanificationError] = useState<string | null>(null);
   const galleryAll = destination.galleryAll?.length ? destination.galleryAll : destination.gallery;
@@ -57,6 +62,13 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
       null,
     [publicPlanifications, selectedPlanificationId]
   );
+  const selectedBudget = useMemo(() => {
+    if (!selectedPlanification?.budgets.length) return null;
+    return (
+      selectedPlanification.budgets.find((budget) => budget.id === selectedBudgetId) ??
+      selectedPlanification.budgets[0]
+    );
+  }, [selectedBudgetId, selectedPlanification]);
   const [reservationContacts, setReservationContacts] = useState({
     phone: destination.reservation?.phone ?? "",
     orangeMoney: destination.reservation?.orangeMoney ?? "",
@@ -118,6 +130,55 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
       active = false;
     };
   }, [destination.id]);
+
+  useEffect(() => {
+    setSelectedBudgetId(selectedPlanification?.budgets[0]?.id ?? null);
+  }, [selectedPlanification?.budgets, selectedPlanification?.id]);
+
+  const buildClientPath = (pathname: "simulation" | "reservations") => {
+    const session = loadAuth();
+    if (!session) {
+      return "/login";
+    }
+
+    const basePath = resolvePostLoginPath(session);
+    if (basePath === "/admin") {
+      return "/login";
+    }
+
+    return `${basePath}/${pathname}`;
+  };
+
+  const handleClientAction = (mode: "simulation" | "reservation") => {
+    if (!selectedPlanification) return;
+
+    const params = new URLSearchParams();
+    params.set("destinationId", destination.id);
+    params.set("destinationTitle", destination.title);
+    params.set("planificationId", selectedPlanification.id);
+    params.set("planificationTitle", selectedPlanification.nomPlanification);
+
+    if (selectedBudget?.idCategorieClient) {
+      params.set("categorieId", selectedBudget.idCategorieClient);
+    }
+    if (selectedBudget?.nomCategorieClient) {
+      params.set("categorieTitle", selectedBudget.nomCategorieClient);
+    }
+    if (selectedBudget?.gamme) {
+      params.set("gamme", selectedBudget.gamme);
+    }
+    if (selectedBudget?.nombrePersonnes) {
+      params.set("nombrePersonnes", String(selectedBudget.nombrePersonnes));
+    }
+
+    if (mode === "reservation") {
+      params.set("source", "PRIX_DIRECT");
+      router.push(`${buildClientPath("reservations")}?${params.toString()}`);
+      return;
+    }
+
+    router.push(`${buildClientPath("simulation")}?${params.toString()}`);
+  };
 
   return (
     <div className="container mx-auto px-4 py-6 sm:py-12">
@@ -286,9 +347,15 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
                         const price = budget.prixAvecReduction ?? budget.prixNormal;
 
                         return (
-                          <div
+                          <button
                             key={budget.id}
-                            className="rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3"
+                            type="button"
+                            onClick={() => setSelectedBudgetId(budget.id)}
+                            className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
+                              selectedBudget?.id === budget.id
+                                ? "border-emerald-400 bg-emerald-50 shadow-sm"
+                                : "border-emerald-100 bg-emerald-50/70 hover:border-emerald-300"
+                            }`}
                           >
                             <div className="flex flex-wrap items-start justify-between gap-3">
                               <div>
@@ -308,7 +375,7 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
                                 Prix normal : {formatMoney(budget.prixNormal, devise)} - Reduction : {budget.reduction}%
                               </p>
                             ) : null}
-                          </div>
+                          </button>
                         );
                       })}
                     </div>
@@ -329,6 +396,26 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
               ) : (
                 <p className="text-2xl font-bold text-primary">{destination.price}</p>
               )}
+
+              {selectedPlanification ? (
+                <div className="grid gap-2 pt-2 sm:grid-cols-2">
+                  <Button
+                    type="button"
+                    onClick={() => handleClientAction("simulation")}
+                    className="bg-emerald-600 text-white hover:bg-emerald-700"
+                  >
+                    Simuler
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => handleClientAction("reservation")}
+                    disabled={!selectedBudget}
+                    className="bg-emerald-600 text-white hover:bg-emerald-700 disabled:bg-slate-300"
+                  >
+                    Reserver
+                  </Button>
+                </div>
+              ) : null}
             </CardContent>
           </Card>
         </div>

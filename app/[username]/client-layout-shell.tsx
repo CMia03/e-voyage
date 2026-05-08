@@ -11,7 +11,6 @@ import { ClientFooter } from "./components/client-footer";
 import { ClientSidebar, type ClientSection } from "./components/client-sidebar";
 
 function resolveSection(pathname: string): ClientSection {
-  if (pathname.includes("/destinations")) return "destinations";
   if (pathname.includes("/reservations")) return "reservations";
   if (pathname.includes("/profile")) return "profile";
   if (pathname.includes("/simulation")) return "simulation";
@@ -27,7 +26,7 @@ export function ClientLayoutShell({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [session, setSession] = useState<AuthSession | null>(null);
+  const [session] = useState<AuthSession | null>(() => loadAuth());
 
   const displayName = useMemo(() => {
     if (!session) return username;
@@ -37,7 +36,6 @@ export function ClientLayoutShell({
 
   useEffect(() => {
     const currentSession = loadAuth();
-    setSession(currentSession);
 
     if (!currentSession?.accessToken) {
       router.replace("/login");

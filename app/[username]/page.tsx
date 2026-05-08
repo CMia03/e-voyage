@@ -4,9 +4,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { Compass, CreditCard, Sparkles, TrendingUp } from "lucide-react";
+import { CreditCard, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { SearchBar } from "@/components/search-bar";
 import { listDestinations } from "@/lib/api/destinations";
 import { destinationsData as fallbackDestinations } from "@/lib/destinations";
 import type { DestinationDetails } from "@/lib/type/destination";
@@ -53,18 +54,6 @@ export default function UserHomePage() {
             </div>
 
             <div className="flex flex-wrap gap-3">
-              <Button asChild size="lg" className="rounded-full px-6">
-                <Link href={`/${username}/destinations`}>
-                  <Compass className="mr-2 size-4" />
-                  Explorer les destinations
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="rounded-full px-6">
-                <Link href={`/${username}/simulation`}>
-                  <TrendingUp className="mr-2 size-4" />
-                  Lancer une simulation
-                </Link>
-              </Button>
               <Button asChild size="lg" variant="ghost" className="rounded-full px-6 text-slate-700">
                 <Link href={`/${username}/reservations`}>
                   <CreditCard className="mr-2 size-4" />
@@ -97,6 +86,18 @@ export default function UserHomePage() {
         </div>
       </section>
 
+      <section className="rounded-[28px] border border-emerald-100 bg-white p-5 shadow-sm">
+        <div className="mb-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">
+            Recherche rapide
+          </p>
+          <h2 className="mt-2 text-xl font-semibold text-slate-900">
+            Trouvez une destination
+          </h2>
+        </div>
+        <SearchBar destinations={destinations} />
+      </section>
+
       <section className="space-y-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -105,9 +106,6 @@ export default function UserHomePage() {
               Commencez par une destination, puis choisissez le parcours qui vous convient.
             </p>
           </div>
-          <Button asChild variant="outline" className="rounded-full">
-            <Link href={`/${username}/destinations`}>Voir toutes les destinations</Link>
-          </Button>
         </div>
 
         <div className="grid gap-4 xl:grid-cols-3">
@@ -130,13 +128,8 @@ export default function UserHomePage() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Button asChild size="sm" className="rounded-full">
-                    <Link href={`/${username}/simulation?destinationId=${encodeURIComponent(destination.id)}`}>
-                      Simuler ce voyage
-                    </Link>
-                  </Button>
-                  <Button asChild size="sm" variant="outline" className="rounded-full">
-                    <Link href={`/${username}/planifications?destinationId=${encodeURIComponent(destination.id)}`}>
-                      Voir les forfaits
+                    <Link href={`/destinations/${encodeURIComponent(destination.id)}`}>
+                      Voir details
                     </Link>
                   </Button>
                 </div>

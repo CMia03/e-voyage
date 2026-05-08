@@ -8,6 +8,7 @@ import { destinationsData } from "@/lib/destinations";
 import { listHebergements } from "@/lib/api/hebergements";
 import { listActivites } from "@/lib/api/activites";
 import { cn } from "@/lib/utils";
+import type { DestinationDetails } from "@/lib/type/destination";
 
 interface SearchResult {
   id: string;
@@ -17,7 +18,11 @@ interface SearchResult {
   url: string;
 }
 
-export function SearchBar() {
+type SearchBarProps = {
+  destinations?: DestinationDetails[];
+};
+
+export function SearchBar({ destinations }: SearchBarProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -47,7 +52,8 @@ export function SearchBar() {
     const queryLower = searchQuery.toLowerCase();
 
     // Search destinations
-    destinationsData.forEach((dest) => {
+    const destinationSource = destinations?.length ? destinations : destinationsData;
+    destinationSource.forEach((dest) => {
       if (
         dest.title.toLowerCase().includes(queryLower) ||
         dest.description.toLowerCase().includes(queryLower)
