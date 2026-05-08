@@ -1,15 +1,28 @@
 ﻿"use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Plus, X } from "lucide-react";
+import dynamic from "next/dynamic";
+import {
+  Bath,
+  BedDouble,
+  CheckCircle2,
+  ChevronRight,
+  ImageIcon,
+  Mail,
+  Phone,
+  Plus,
+  Share2,
+  Snowflake,
+  Star,
+  Globe2,
+  Users,
+  X,
+} from "lucide-react";
 
 import { FormTarifHebergement, TarifFormState } from "./form-tarif-hebergement";
-import { ListeTarifHebergement } from "./liste-tarif-hebergement";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -31,6 +44,11 @@ import { Hebergement, SaveTarifHebergementPayload, SaveTarifPhotoPayload, TarifH
 
 type Props = { hebergementId: string };
 type PhotoFormState = { idTypeSalle: string; imageFiles: File[] };
+type GalleryImage = {
+  url: string;
+  label: string;
+  subtitle?: string;
+};
 
 const initialTarifForm: TarifFormState = {
   prixReservation: "",
@@ -46,6 +64,21 @@ const initialTarifForm: TarifFormState = {
 };
 
 const initialPhotoForm: PhotoFormState = { idTypeSalle: "", imageFiles: [] };
+
+const HebergementMap = dynamic(
+  () => import("@/components/hebergement-map").then((mod) => mod.HebergementMap),
+  { ssr: false }
+);
+
+function formatMoney(value: number | null | undefined, devise = "MGA") {
+  if (value === null || value === undefined) return "-";
+  return `${Number(value).toLocaleString("fr-FR")} ${devise}`;
+}
+
+function formatDate(value: string | null | undefined) {
+  if (!value) return "Non definie";
+  return new Date(value).toLocaleDateString("fr-FR");
+}
 
 export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
   const router = useRouter();
@@ -73,10 +106,48 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [showErrorAlert, setShowErrorAlert] = useState(false);
   const [editingTarifId, setEditingTarifId] = useState<string | null>(null);
+  const [roomPhotoIndexes, setRoomPhotoIndexes] = useState<Record<string, number>>({});
+  const [isGalleryDialogOpen, setIsGalleryDialogOpen] = useState(false);
 
   const tarifs = useMemo(
     () => [...(hebergement?.tarifs ?? [])].sort((a, b) => new Date(b.dateCreation ?? 0).getTime() - new Date(a.dateCreation ?? 0).getTime()),
     [hebergement]
+  );
+  const galleryImages = useMemo<GalleryImage[]>(() => {
+    const images: GalleryImage[] = [];
+    const seen = new Set<string>();
+
+    if (hebergement?.urlImagePrincipale?.trim()) {
+      images.push({
+        url: hebergement.urlImagePrincipale,
+        label: "Image principale",
+        subtitle: hebergement.nom,
+      });
+      seen.add(hebergement.urlImagePrincipale);
+    }
+
+    tarifs.forEach((tarif) => {
+      tarif.photos.forEach((photo) => {
+        if (!photo.urlImage?.trim() || seen.has(photo.urlImage)) return;
+
+        images.push({
+          url: photo.urlImage,
+          label: photo.nomTypeSalle || "Image",
+          subtitle: tarif.nomTypeChambre,
+        });
+        seen.add(photo.urlImage);
+      });
+    });
+
+    return images;
+  }, [hebergement?.nom, hebergement?.urlImagePrincipale, tarifs]);
+  const minTarif = useMemo(
+    () =>
+      tarifs.reduce<(typeof tarifs)[number] | null>((lowest, tarif) => {
+        if (!lowest) return tarif;
+        return Number(tarif.prixParNuit ?? 0) < Number(lowest.prixParNuit ?? 0) ? tarif : lowest;
+      }, null),
+    [tarifs]
   );
   const photoPreviews = useMemo(
     () =>
@@ -133,6 +204,30 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
       photoPreviews.forEach((preview) => URL.revokeObjectURL(preview.url));
     };
   }, [photoPreviews]);
+
+  useEffect(() => {
+    if (tarifs.length === 0) return;
+
+    const interval = window.setInterval(() => {
+      setRoomPhotoIndexes((current) => {
+        const next = { ...current };
+
+        tarifs.forEach((tarif) => {
+          const imageCount = Math.max(tarif.photos.length, 1);
+          if (imageCount <= 1) {
+            next[tarif.id] = 0;
+            return;
+          }
+
+          next[tarif.id] = ((current[tarif.id] ?? 0) + 1) % imageCount;
+        });
+
+        return next;
+      });
+    }, 3500);
+
+    return () => window.clearInterval(interval);
+  }, [tarifs]);
 
   async function loadPage() {
     setIsLoading(true);
@@ -409,74 +504,358 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
       {errorAlert}
       {successAlert}
       <div className="space-y-8">
-        <div className="space-y-8">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div className="space-y-3">
-              <div>
-                <h1 className="text-3xl font-semibold tracking-tight">{hebergement?.nom ?? "Detail hebergement"}</h1>
-                <p className="text-sm text-muted-foreground">Gestion des tarifs, types de chambre et photos de salles.</p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button type="button" onClick={openTarifDialog}>
-                <Plus className="size-4" />
-                Ajouter tarif
-              </Button>
-            </div>
+        {isLoading ? (
+          <div className="rounded-2xl border border-slate-200 bg-white p-8 text-sm text-slate-500 shadow-sm">
+            Chargement...
           </div>
-
-          <Card className="border-border/50">
-            <CardHeader>
-              <CardTitle>Informations principales</CardTitle>
-              <CardDescription>Resume de l&apos;hebergement selectionne.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? <p className="text-sm text-muted-foreground">Chargement...</p> : hebergement ? (
-                <div className="rounded-2xl border border-border/50 bg-card/40 p-4">
-                  <div className="flex flex-col gap-4 xl:flex-row xl:items-start">
-                    {hebergement.urlImagePrincipale ? (
-                      <div className="w-full overflow-hidden rounded-xl border border-border/40 bg-muted/20 sm:w-[170px] sm:min-w-[170px]">
-                        <img src={hebergement.urlImagePrincipale} alt={hebergement.nom} className="h-32 w-full object-cover" />
+        ) : hebergement ? (
+          <>
+            <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_360px]">
+                <div className="space-y-5">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h1 className="text-3xl font-bold tracking-tight text-slate-950">{hebergement.nom}</h1>
+                        <div className="flex items-center gap-0.5 text-amber-400">
+                          {Array.from({ length: Math.max(hebergement.nombreEtoiles || 0, 0) }).map((_, index) => (
+                            <Star key={index} className="size-4 fill-current" />
+                          ))}
+                        </div>
                       </div>
-                    ) : null}
-                    <div className="min-w-0 flex-1 space-y-2">
-                      <h2 className="text-xl font-semibold tracking-tight">{hebergement.nom}</h2>
-                      <p className="text-sm leading-6 text-muted-foreground">{hebergement.description || "Aucune description"}</p>
+                      <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-slate-500">
+                        <span>{hebergement.adresse || "Adresse non renseignee"}</span>
+                        {/* <span className="inline-flex items-center gap-1 text-blue-600">
+                          <MapPin className="size-4" />
+                          Voir la carte
+                        </span> */}
+                      </div>
+                      <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+                        <span className="font-semibold text-slate-900">{hebergement.estActif ? "Actif" : "Inactif"}</span>
+                        <span className="text-slate-500">- {hebergement.nomTypeHebergement || "Type non renseigne"}</span>
+                      </div>
                     </div>
-                    <div className="grid gap-2 text-sm xl:w-[260px] xl:min-w-[260px]">
-                      <div className="rounded-xl border border-border/50 bg-card/50 px-3 py-2.5">
-                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Type</p>
-                        <p className="mt-1 text-sm text-muted-foreground">{hebergement.nomTypeHebergement || "Non renseigne"}</p>
+                    <Button type="button" onClick={openTarifDialog} className="bg-emerald-600 text-white hover:bg-emerald-700">
+                      <Plus className="size-4" />
+                      Ajouter tarif
+                    </Button>
+                  </div>
+
+                  <div className="grid gap-3 lg:grid-cols-[minmax(0,2.4fr)_minmax(260px,1fr)]">
+                    <div className="relative min-h-[280px] overflow-hidden rounded-sm bg-slate-100">
+                      {galleryImages[0]?.url ? (
+                        <img src={galleryImages[0].url} alt={galleryImages[0].label} className="h-full min-h-[280px] w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full min-h-[280px] items-center justify-center text-slate-400">
+                          <ImageIcon className="size-10" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="grid gap-3">
+                      {[galleryImages[1], galleryImages[2]].map((image, index) => (
+                        <div key={`${image?.url ?? "empty"}-${index}`} className="relative min-h-[132px] overflow-hidden rounded-sm bg-slate-100">
+                          {image?.url ? (
+                            <img src={image.url} alt={image.label} className="h-full min-h-[132px] w-full object-cover" />
+                          ) : (
+                            <div className="flex h-full min-h-[132px] items-center justify-center text-slate-400">
+                              <ImageIcon className="size-8" />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-4">
+                    {[galleryImages[3], galleryImages[4], galleryImages[5], galleryImages[6]].map((image, index) => (
+                      <div key={`${image?.url ?? "thumb"}-${index}`} className="relative h-28 overflow-hidden rounded-sm bg-slate-100">
+                        {image?.url ? (
+                          <img src={image.url} alt={image.label} className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-slate-400">
+                            <ImageIcon className="size-6" />
+                          </div>
+                        )}
+                        {index === 3 ? (
+                          <button
+                            type="button"
+                            onClick={() => setIsGalleryDialogOpen(true)}
+                            className="absolute inset-0 flex items-center justify-center bg-slate-950/55 text-lg font-bold text-white transition hover:bg-slate-950/65"
+                          >
+                            Voir {galleryImages.length} photos
+                          </button>
+                        ) : null}
                       </div>
-                      <div className="rounded-xl border border-border/50 bg-card/50 px-3 py-2.5">
-                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Adresse</p>
-                        <p className="mt-1 text-sm text-muted-foreground">{hebergement.adresse || "Non renseignee"}</p>
+                    ))}
+                  </div>
+                </div>
+
+                <aside className="space-y-6">
+                  <div className="flex items-center justify-between gap-4">
+                    <button type="button" className="rounded-full border border-slate-200 p-2 text-slate-500 hover:bg-slate-50" aria-label="Partager">
+                      <Share2 className="size-4" />
+                    </button>
+                    <div className="text-right">
+                      <p className="text-sm text-slate-500">A partir de</p>
+                      <p className="text-3xl font-bold text-slate-950">
+                        {minTarif ? formatMoney(minTarif.prixParNuit, minTarif.devise) : "-"}
+                        <span className="text-base font-normal text-slate-500"> / nuit</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* <Button type="button" onClick={openTarifDialog} className="h-14 w-full justify-between rounded-xl bg-yellow-400 px-6 text-base font-semibold text-slate-950 hover:bg-yellow-300">
+                    Ajouter disponibilite
+                    <ChevronRight className="size-6" />
+                  </Button> */}
+
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-950">Ou se trouve le logement ?</h2>
+                    <div className="mt-4 overflow-hidden rounded-sm border border-slate-200 bg-slate-100 [&_.leaflet-container]:!h-48 [&_.leaflet-control-attribution]:hidden">
+                      <HebergementMap
+                        latitude={Number(hebergement.latitude)}
+                        longitude={Number(hebergement.longitude)}
+                        onChange={() => undefined}
+                      />
+                    </div>
+                    <p className="mt-2 font-semibold text-emerald-700">{hebergement.adresse || "Emplacement renseigne"}</p>
+                    <p className="mt-1 text-xs text-slate-500">{hebergement.latitude}, {hebergement.longitude}</p>
+                  </div>
+
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-950">Caracteristiques</h2>
+                    <div className="mt-4 flex flex-wrap gap-x-5 gap-y-3 text-sm text-slate-500">
+                      {hebergement.equipements.length === 0 ? (
+                        <span>Aucune caracteristique selectionnee.</span>
+                      ) : null}
+                      {hebergement.equipements.map((equipement) => (
+                        <span key={equipement} className="inline-flex items-center gap-2">
+                          <CheckCircle2 className="size-4 text-emerald-600" />
+                          {equipement}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-950">Contact</h2>
+                    <div className="mt-4 space-y-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 text-sm text-slate-600">
+                      <div className="flex items-start gap-3">
+                        <Phone className="mt-0.5 size-4 text-emerald-700" />
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Telephone</p>
+                          <p className="mt-1 break-words font-medium text-slate-900">{hebergement.telephone || "Non renseigne"}</p>
+                        </div>
                       </div>
-                      <div className="rounded-xl border border-border/50 bg-card/50 px-3 py-2.5">
-                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Coordonnees</p>
-                        <p className="mt-1 text-sm text-muted-foreground">{hebergement.latitude}, {hebergement.longitude}</p>
+                      <div className="flex items-start gap-3">
+                        <Mail className="mt-0.5 size-4 text-emerald-700" />
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Email</p>
+                          <p className="mt-1 break-words font-medium text-slate-900">{hebergement.email || "Non renseigne"}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <Globe2 className="mt-0.5 size-4 text-emerald-700" />
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Site web</p>
+                          {hebergement.siteWeb ? (
+                            <a
+                              href={hebergement.siteWeb}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="mt-1 block break-words font-medium text-blue-600 hover:underline"
+                            >
+                              {hebergement.siteWeb}
+                            </a>
+                          ) : (
+                            <p className="mt-1 font-medium text-slate-900">Non renseigne</p>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ) : <p className="text-sm text-muted-foreground">Hebergement introuvable.</p>}
-            </CardContent>
-          </Card>
+                </aside>
+              </div>
+            </section>
 
-          <ListeTarifHebergement
-            tarifs={tarifs}
-            isDeletingTarifId={isDeletingTarifId}
-            isDeletingPhotoId={isDeletingPhotoId}
-            onEditTarif={openEditTarifDialog}
-            onDeleteTarif={handleDeleteTarif}
-            onDeletePhoto={handleDeletePhoto}
-            onOpenPhotoModal={openPhotoDialog}
-          />
-        </div>
+            <section className="space-y-4">
+              <div className="flex items-center justify-between gap-4">
+                <h2 className="text-2xl font-bold text-slate-950">Chambres et disponibilites</h2>
+                <span className="text-sm text-slate-500">{tarifs.length} resultat{tarifs.length > 1 ? "s" : ""} affiche{tarifs.length > 1 ? "s" : ""}</span>
+              </div>
+
+              {tarifs.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
+                  Aucun tarif ajoute pour cet hebergement.
+                </div>
+              ) : (
+                <div className="space-y-5">
+                  {tarifs.map((tarif) => {
+                    const roomImages = tarif.photos.length > 0
+                      ? tarif.photos.map((photo) => photo.urlImage)
+                      : [hebergement.urlImagePrincipale].filter(Boolean);
+                    const currentPhotoIndex = Math.min(roomPhotoIndexes[tarif.id] ?? 0, Math.max(roomImages.length - 1, 0));
+                    const roomImage = roomImages[currentPhotoIndex];
+                    const currentPhotoType = tarif.photos[currentPhotoIndex]?.nomTypeSalle ?? "";
+                    const photoTypes = Array.from(
+                      new Set(
+                        tarif.photos
+                          .map((photo) => photo.nomTypeSalle?.trim())
+                          .filter((value): value is string => Boolean(value))
+                      )
+                    );
+
+                    const goToRoomImage = (nextIndex: number) => {
+                      if (roomImages.length <= 1) return;
+                      setRoomPhotoIndexes((current) => ({
+                        ...current,
+                        [tarif.id]: (nextIndex + roomImages.length) % roomImages.length,
+                      }));
+                    };
+
+                    return (
+                      <article key={tarif.id} className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm">
+                        <div className="grid gap-0 lg:grid-cols-[360px_minmax(0,1fr)_260px]">
+                          <div className="relative h-52 bg-slate-100">
+                            {roomImage ? (
+                              <img src={roomImage} alt={tarif.nomTypeChambre} className="h-full w-full object-cover" />
+                            ) : (
+                              <div className="flex h-full items-center justify-center text-slate-400">
+                                <ImageIcon className="size-8" />
+                              </div>
+                            )}
+                            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent" />
+                            <button
+                              type="button"
+                              onClick={() => goToRoomImage(currentPhotoIndex - 1)}
+                              disabled={roomImages.length <= 1}
+                              className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-slate-950/45 p-1.5 text-white disabled:opacity-30"
+                            >
+                              <ChevronRight className="size-6 rotate-180" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => goToRoomImage(currentPhotoIndex + 1)}
+                              disabled={roomImages.length <= 1}
+                              className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/75 p-1.5 text-slate-700 disabled:opacity-30"
+                            >
+                              <ChevronRight className="size-6" />
+                            </button>
+                            {currentPhotoType ? (
+                              <span className="absolute left-5 top-5 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-800 shadow-sm">
+                                {currentPhotoType}
+                              </span>
+                            ) : null}
+                            <h3 className="absolute bottom-5 left-5 text-2xl font-bold text-white drop-shadow">{tarif.nomTypeChambre}</h3>
+                            {roomImages.length > 1 ? (
+                              <div className="absolute bottom-4 right-4 flex gap-1.5">
+                                {roomImages.map((image, index) => (
+                                  <button
+                                    key={`${image}-${index}`}
+                                    type="button"
+                                    onClick={() => goToRoomImage(index)}
+                                    aria-label={`Voir image ${index + 1}`}
+                                    className={`h-1.5 rounded-full transition-all ${
+                                      index === currentPhotoIndex ? "w-6 bg-white" : "w-1.5 bg-white/55"
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            ) : null}
+                          </div>
+
+                          <div className="space-y-5 p-5">
+                            <button type="button" onClick={() => openEditTarifDialog(tarif)} className="inline-flex items-center gap-2 text-sm text-blue-600">
+                              <ImageIcon className="size-4" />
+                              Voir details
+                            </button>
+                            <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm text-slate-500">
+                              <span className="inline-flex items-center gap-2"><Users className="size-4" />{tarif.capacite} Hote{tarif.capacite > 1 ? "s" : ""}</span>
+                              <span className="inline-flex items-center gap-2"><Snowflake className="size-4" />{tarif.gamme}</span>
+                              <span className="inline-flex items-center gap-2"><BedDouble className="size-4" />{tarif.petitDejeunerInclus ? "Petit dejeuner inclus" : "Petit dejeuner non inclus"}</span>
+                              {photoTypes.map((typeSalle) => (
+                                <span key={typeSalle} className="inline-flex items-center gap-2">
+                                  <Bath className="size-4" />
+                                  {typeSalle}
+                                </span>
+                              ))}
+                              <span>{formatDate(tarif.dateValiditeDebut)} - {formatDate(tarif.dateValiditeFin)}</span>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              <Button size="sm" variant="outline" onClick={() => openPhotoDialog(tarif.id)}>Ajouter image</Button>
+                              <Button size="sm" variant="secondary" onClick={() => openEditTarifDialog(tarif)}>Modifier</Button>
+                              <Button variant="destructive" size="sm" onClick={() => handleDeleteTarif(tarif.id)} disabled={isDeletingTarifId === tarif.id}>
+                                {isDeletingTarifId === tarif.id ? "Suppression..." : "Supprimer"}
+                              </Button>
+                            </div>
+
+                            {tarif.photos.length > 0 ? (
+                              <div className="flex flex-wrap gap-2">
+                                {tarif.photos.map((photo, index) => (
+                                  <button
+                                    key={photo.id}
+                                    type="button"
+                                    onClick={() => goToRoomImage(index)}
+                                    disabled={isDeletingPhotoId === photo.id}
+                                    className={`group relative h-16 w-24 overflow-hidden rounded border ${
+                                      index === currentPhotoIndex ? "border-emerald-500" : "border-slate-200"
+                                    }`}
+                                  >
+                                    <img src={photo.urlImage} alt={photo.nomTypeSalle} className="h-full w-full object-cover" />
+                                    <span className="absolute inset-x-0 bottom-0 truncate bg-slate-950/65 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                                      {photo.nomTypeSalle}
+                                    </span>
+                                    <span
+                                      role="button"
+                                      tabIndex={0}
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        handleDeletePhoto(photo.id);
+                                      }}
+                                      onKeyDown={(event) => {
+                                        if (event.key === "Enter" || event.key === " ") {
+                                          event.preventDefault();
+                                          event.stopPropagation();
+                                          handleDeletePhoto(photo.id);
+                                        }
+                                      }}
+                                      className="absolute right-1 top-1 hidden rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-semibold text-white group-hover:block"
+                                    >
+                                      X
+                                    </span>
+                                  </button>
+                                ))}
+                              </div>
+                            ) : null}
+                          </div>
+
+                          <div className="flex items-center justify-end p-5">
+                            <div className="w-full space-y-4 text-right">
+                              <p className="text-2xl font-bold text-slate-950">{formatMoney(tarif.prixParNuit, tarif.devise)}</p>
+                              <p className="text-sm text-slate-500">Reservation: {formatMoney(tarif.prixReservation, tarif.devise)}</p>
+                              {/* <Button type="button" onClick={() => openEditTarifDialog(tarif)} className="h-12 w-full justify-between rounded-xl bg-yellow-400 px-6 text-slate-950 hover:bg-yellow-300">
+                                Voir disponibilite
+                                <ChevronRight className="size-5" />
+                              </Button> */}
+                            </div>
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          </>
+        ) : (
+          <div className="rounded-2xl border border-slate-200 bg-white p-8 text-sm text-slate-500 shadow-sm">
+            Hebergement introuvable.
+          </div>
+        )}
       </div>
 
       <Dialog open={isTarifDialogOpen} onOpenChange={setIsTarifDialogOpen}>
-        <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
+        <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] max-w-5xl overflow-y-auto">
           <DialogHeader><DialogTitle>Ajouter un tarif</DialogTitle><DialogDescription>Cree une nouvelle offre de chambre pour cet hebergement.</DialogDescription></DialogHeader>
           <FormTarifHebergement
             form={tarifForm}
@@ -502,7 +881,7 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
           }
         }}
       >
-        <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
+        <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] max-w-5xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Modifier un tarif</DialogTitle>
             <DialogDescription>Met a jour les informations de ce tarif d hebergement.</DialogDescription>
@@ -604,6 +983,39 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
               <Button type="submit" disabled={isSubmittingPhoto}>{isSubmittingPhoto ? "Envoi..." : "Ajouter les photos"}</Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isGalleryDialogOpen} onOpenChange={setIsGalleryDialogOpen}>
+        <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto p-0">
+          <DialogHeader className="border-b border-slate-200 px-6 py-4">
+            <DialogTitle>Galerie photos</DialogTitle>
+            <DialogDescription>
+              {galleryImages.length} photo{galleryImages.length > 1 ? "s" : ""} pour {hebergement?.nom ?? "cet hebergement"}.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 px-6 py-5">
+            {galleryImages.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">
+                Aucune image disponible.
+              </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2">
+                {galleryImages.map((image, index) => (
+                  <figure key={`${image.url}-${index}`} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <img src={image.url} alt={image.label} className="h-72 w-full object-cover" />
+                    <figcaption className="space-y-1 px-4 py-3">
+                      <p className="text-sm font-semibold text-slate-900">{image.label}</p>
+                      {image.subtitle ? (
+                        <p className="text-xs text-slate-500">{image.subtitle}</p>
+                      ) : null}
+                    </figcaption>
+                  </figure>
+                ))}
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </>
