@@ -22,8 +22,6 @@ interface ReservationEditModalProps {
 
 const statuses: ReservationStatus[] = [
   "EN_ATTENTE",
-  "A_REVOIR",
-  "EN_ATTENTE_DISPONIBILITE",
   "VALIDEE",
   "ANNULEE",
 ];
@@ -116,9 +114,18 @@ export function ReservationEditModal({ reservation, open, onClose, onSave }: Res
                   commentaireAdmin: event.target.value,
                 }))
               }
-              placeholder="Ajoutez une note interne si necessaire"
+              placeholder={
+                formData.status === "VALIDEE"
+                  ? "Message envoye au client avec l'email de validation"
+                  : "Ajoutez une note interne si necessaire"
+              }
               rows={5}
             />
+            {formData.status === "VALIDEE" ? (
+              <p className="text-xs text-emerald-700">
+                Ce commentaire sera envoye au client par email avec la validation de sa reservation.
+              </p>
+            ) : null}
           </div>
 
           <div className="flex justify-end gap-3 pt-2">

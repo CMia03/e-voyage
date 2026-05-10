@@ -56,10 +56,7 @@ export default function UserHomePage() {
   const reservationStats = useMemo(() => {
     const total = reservations.length;
     const enCours = reservations.filter(
-      (reservation) =>
-        reservation.status === "EN_ATTENTE" ||
-        reservation.status === "A_REVOIR" ||
-        reservation.status === "EN_ATTENTE_DISPONIBILITE"
+      (reservation) => reservation.status === "EN_ATTENTE"
     ).length;
     const confirmees = reservations.filter((reservation) => reservation.status === "VALIDEE").length;
 

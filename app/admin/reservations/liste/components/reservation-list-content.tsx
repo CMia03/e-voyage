@@ -36,16 +36,12 @@ import { ReservationViewModal } from "@/components/reservation-view-modal";
 
 const statusStyles: Record<ReservationStatus, string> = {
   EN_ATTENTE: "border-amber-200 bg-amber-50 text-amber-700",
-  A_REVOIR: "border-orange-200 bg-orange-50 text-orange-700",
-  EN_ATTENTE_DISPONIBILITE: "border-sky-200 bg-sky-50 text-sky-700",
   VALIDEE: "border-emerald-200 bg-emerald-50 text-emerald-700",
   ANNULEE: "border-rose-200 bg-rose-50 text-rose-700",
 };
 
 const statusLabels: Record<ReservationStatus, string> = {
   EN_ATTENTE: "En attente",
-  A_REVOIR: "A revoir",
-  EN_ATTENTE_DISPONIBILITE: "Attente disponibilite",
   VALIDEE: "Validee",
   ANNULEE: "Annulee",
 };
@@ -233,9 +229,7 @@ export function ReservationListContent() {
     return {
       total: reservations.length,
       enAttente: reservations.filter((reservation) => reservation.status === "EN_ATTENTE").length,
-      aTraiter: reservations.filter((reservation) =>
-        ["A_REVOIR", "EN_ATTENTE_DISPONIBILITE"].includes(reservation.status)
-      ).length,
+      annulees: reservations.filter((reservation) => reservation.status === "ANNULEE").length,
       validees: reservations.filter((reservation) => reservation.status === "VALIDEE").length,
     };
   }, [reservations]);
@@ -323,7 +317,7 @@ export function ReservationListContent() {
       <div className="grid gap-4 md:grid-cols-4">
         <StatCard label="Total" value={stats.total} tone="bg-slate-100 text-slate-700" icon={Layers} />
         <StatCard label="En attente" value={stats.enAttente} tone="bg-amber-100 text-amber-700" icon={CalendarDays} />
-        <StatCard label="A traiter" value={stats.aTraiter} tone="bg-sky-100 text-sky-700" icon={RefreshCw} />
+        <StatCard label="Annulees" value={stats.annulees} tone="bg-rose-100 text-rose-700" icon={RefreshCw} />
         <StatCard label="Validees" value={stats.validees} tone="bg-emerald-100 text-emerald-700" icon={CircleDollarSign} />
       </div>
 

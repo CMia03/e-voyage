@@ -17,8 +17,6 @@ import { PlanningJournalier } from "@/app/[username]/simulation/components/Plann
 
 const statusStyles: Record<ReservationStatus, string> = {
   EN_ATTENTE: "bg-amber-100 text-amber-800 hover:bg-amber-100",
-  A_REVOIR: "bg-orange-100 text-orange-800 hover:bg-orange-100",
-  EN_ATTENTE_DISPONIBILITE: "bg-sky-100 text-sky-800 hover:bg-sky-100",
   VALIDEE: "bg-emerald-100 text-emerald-800 hover:bg-emerald-100",
   ANNULEE: "bg-rose-100 text-rose-800 hover:bg-rose-100",
 };
@@ -678,13 +676,9 @@ export default function ReservationDetailPage() {
                   <p className="mt-2">
                     {reservation.status === "EN_ATTENTE"
                       ? "Votre demande a bien ete enregistree et attend le traitement de l'admin."
-                      : reservation.status === "A_REVOIR"
-                        ? "Votre reservation doit encore etre verifiee avant validation."
-                        : reservation.status === "EN_ATTENTE_DISPONIBILITE"
-                          ? "L'equipe verifie actuellement la disponibilite avant confirmation."
-                          : reservation.status === "VALIDEE"
-                            ? "Votre reservation est confirmee."
-                            : "La reservation a ete annulee."}
+                      : reservation.status === "VALIDEE"
+                        ? "Votre reservation est confirmee."
+                        : "La reservation a ete annulee."}
                   </p>
                 </div> */}
               </CardContent>

@@ -14,8 +14,6 @@ interface ReservationViewModalProps {
 
 const statusClasses: Record<ReservationStatus, string> = {
   EN_ATTENTE: "bg-amber-100 text-amber-800 hover:bg-amber-100",
-  A_REVOIR: "bg-orange-100 text-orange-800 hover:bg-orange-100",
-  EN_ATTENTE_DISPONIBILITE: "bg-sky-100 text-sky-800 hover:bg-sky-100",
   VALIDEE: "bg-emerald-100 text-emerald-800 hover:bg-emerald-100",
   ANNULEE: "bg-rose-100 text-rose-800 hover:bg-rose-100",
 };
@@ -44,7 +42,10 @@ export function ReservationViewModal({ reservation, open, onClose }: Reservation
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent
+        showCloseButton={false}
+        className="w-[calc(100vw-2rem)] max-w-none overflow-visible p-5 sm:max-w-none 2xl:w-[1500px]"
+      >
         <DialogHeader>
           <div className="flex items-center justify-between gap-3">
             <div>
@@ -59,15 +60,15 @@ export function ReservationViewModal({ reservation, open, onClose }: Reservation
           </div>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
             <Badge className={statusClasses[reservation.status]}>{formatStatus(reservation.status)}</Badge>
             <Badge variant="outline">{formatSource(reservation.source)}</Badge>
             <Badge variant="outline">{formatCurrency(reservation.montantTotal, reservation.devise)}</Badge>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-xl border p-4">
+          <div className="grid gap-4 lg:grid-cols-[1fr_1fr_0.65fr]">
+            <div className="rounded-xl border p-3">
               <div className="flex items-start gap-3">
                 <User className="mt-0.5 h-4 w-4 text-muted-foreground" />
                 <div>
@@ -80,7 +81,7 @@ export function ReservationViewModal({ reservation, open, onClose }: Reservation
               </div>
             </div>
 
-            <div className="rounded-xl border p-4">
+            <div className="rounded-xl border p-3">
               <div className="flex items-start gap-3">
                 <Calendar className="mt-0.5 h-4 w-4 text-muted-foreground" />
                 <div>
@@ -92,11 +93,19 @@ export function ReservationViewModal({ reservation, open, onClose }: Reservation
                 </div>
               </div>
             </div>
+
+            <div className="rounded-xl border bg-emerald-50/40 p-3">
+              <p className="text-sm text-muted-foreground">Montant total</p>
+              <p className="mt-2 text-2xl font-bold text-emerald-700">
+                {formatCurrency(reservation.montantTotal, reservation.devise)}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">{formatSource(reservation.source)}</p>
+            </div>
           </div>
 
           {reservation.details.map((detail) => (
-            <div key={detail.id} className="rounded-2xl border border-border/60 p-4 space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
+            <div key={detail.id} className="space-y-3 rounded-2xl border border-border/60 p-3">
+              <div className="grid gap-4 lg:grid-cols-[1.1fr_1fr_0.7fr_0.75fr_0.75fr]">
                 <div className="flex items-start gap-3">
                   <MapPin className="mt-0.5 h-4 w-4 text-muted-foreground" />
                   <div>
@@ -113,9 +122,6 @@ export function ReservationViewModal({ reservation, open, onClose }: Reservation
                     <p className="text-sm text-muted-foreground">Categorie: {detail.nomCategorieClient}</p>
                   </div>
                 </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-3">
                 <div className="rounded-xl bg-muted/40 p-3">
                   <p className="text-xs uppercase tracking-wide text-muted-foreground">Gamme</p>
                   <p className="mt-1 font-medium">{detail.gamme}</p>
@@ -130,8 +136,9 @@ export function ReservationViewModal({ reservation, open, onClose }: Reservation
                 </div>
               </div>
 
-              {detail.elementsSelectionnes.length > 0 ? (
-                <div>
+              <div className="grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+                {detail.elementsSelectionnes.length > 0 ? (
+                <div className="rounded-xl border border-border/60 p-3">
                   <div className="mb-2 flex items-center gap-2">
                     <Tag className="h-4 w-4 text-muted-foreground" />
                     <p className="text-sm font-medium">Elements selectionnes</p>
@@ -139,41 +146,44 @@ export function ReservationViewModal({ reservation, open, onClose }: Reservation
                     <div className="flex flex-wrap gap-2">
                       {detail.elementsSelectionnes.map((element) => (
                         <Badge key={`${element.elementId}-${element.quantite}`} variant="secondary">
-                          {element.elementId} - {element.quantite} pers
+                          {element.nomElement || element.elementId} - {element.quantite} pers
                         </Badge>
                       ))}
                     </div>
                 </div>
-              ) : null}
+                ) : null}
 
-              {detail.resumeSimulation ? (
+                {detail.resumeSimulation ? (
                 <div className="rounded-xl border border-dashed border-border/70 p-3">
                   <p className="text-sm font-medium">Resume simulation</p>
-                  <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
+                  <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">
                     {detail.resumeSimulation}
                   </p>
                 </div>
-              ) : null}
+                ) : null}
+              </div>
             </div>
           ))}
 
-          {reservation.commentaireClient ? (
-            <div className="rounded-xl border border-border/60 p-4">
-              <p className="text-sm font-medium">Commentaire client</p>
-              <p className="mt-2 text-sm text-muted-foreground whitespace-pre-wrap">
-                {reservation.commentaireClient}
-              </p>
-            </div>
-          ) : null}
+          <div className="grid gap-4 lg:grid-cols-2">
+            {reservation.commentaireClient ? (
+              <div className="rounded-xl border border-border/60 p-4">
+                <p className="text-sm font-medium">Commentaire client</p>
+                <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">
+                  {reservation.commentaireClient}
+                </p>
+              </div>
+            ) : null}
 
-          {reservation.commentaireAdmin ? (
-            <div className="rounded-xl border border-border/60 p-4">
-              <p className="text-sm font-medium">Commentaire admin</p>
-              <p className="mt-2 text-sm text-muted-foreground whitespace-pre-wrap">
-                {reservation.commentaireAdmin}
-              </p>
-            </div>
-          ) : null}
+            {reservation.commentaireAdmin ? (
+              <div className="rounded-xl border border-border/60 p-4">
+                <p className="text-sm font-medium">Commentaire admin</p>
+                <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">
+                  {reservation.commentaireAdmin}
+                </p>
+              </div>
+            ) : null}
+          </div>
         </div>
       </DialogContent>
     </Dialog>

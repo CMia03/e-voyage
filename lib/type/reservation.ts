@@ -1,7 +1,5 @@
 export type ReservationStatus =
   | "EN_ATTENTE"
-  | "A_REVOIR"
-  | "EN_ATTENTE_DISPONIBILITE"
   | "VALIDEE"
   | "ANNULEE";
 
@@ -15,6 +13,7 @@ export type VoyageurProfile = {
 
 export type ElementSelection = {
   elementId: string;
+  nomElement?: string | null;
   quantite: number;
   type?: string;
 };

@@ -88,8 +88,6 @@ const initialForm: ReservationFormState = {
 
 const statusStyles: Record<ReservationStatus, string> = {
   EN_ATTENTE: "bg-amber-100 text-amber-800 hover:bg-amber-100",
-  A_REVOIR: "bg-orange-100 text-orange-800 hover:bg-orange-100",
-  EN_ATTENTE_DISPONIBILITE: "bg-sky-100 text-sky-800 hover:bg-sky-100",
   VALIDEE: "bg-emerald-100 text-emerald-800 hover:bg-emerald-100",
   ANNULEE: "bg-rose-100 text-rose-800 hover:bg-rose-100",
 };
@@ -734,10 +732,7 @@ export default function ReservationsPage() {
   const reservationStats = useMemo(() => {
     const total = reservations.length;
     const enCours = reservations.filter(
-      (reservation) =>
-        reservation.status === "EN_ATTENTE" ||
-        reservation.status === "A_REVOIR" ||
-        reservation.status === "EN_ATTENTE_DISPONIBILITE"
+      (reservation) => reservation.status === "EN_ATTENTE"
     ).length;
     const confirmees = reservations.filter((reservation) => reservation.status === "VALIDEE").length;
     const montantTotal = reservations.reduce(
@@ -1536,8 +1531,6 @@ export default function ReservationsPage() {
                     <SelectContent position="popper">
                       <SelectItem value="ALL">Tous les statuts</SelectItem>
                       <SelectItem value="EN_ATTENTE">EN ATTENTE</SelectItem>
-                      <SelectItem value="A_REVOIR">A REVOIR</SelectItem>
-                      <SelectItem value="EN_ATTENTE_DISPONIBILITE">EN ATTENTE DISPONIBILITE</SelectItem>
                       <SelectItem value="VALIDEE">VALIDEE</SelectItem>
                       <SelectItem value="ANNULEE">ANNULEE</SelectItem>
                     </SelectContent>
@@ -1646,8 +1639,6 @@ export default function ReservationsPage() {
                           ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white border-2 border-emerald-400"
                           : reservation.status === "ANNULEE"
                           ? "bg-gradient-to-r from-rose-500 to-rose-600 text-white border-2 border-rose-400"
-                          : reservation.status === "EN_ATTENTE_DISPONIBILITE"
-                          ? "bg-gradient-to-r from-sky-500 to-sky-600 text-white border-2 border-sky-400"
                           : "bg-gradient-to-r from-amber-500 to-amber-600 text-white border-2 border-amber-400"
                       }`}>
                         {reservation.status === "VALIDEE" ? "✓" : "⏱"}
