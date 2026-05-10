@@ -21,7 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CalendarDays, Edit3, ExternalLink, List, Trash2 } from "lucide-react";
+import { CalendarDays, Edit3, ExternalLink, List, RotateCcw, Search, Trash2 } from "lucide-react";
 import type { PlanificationVoyage, SavePlanificationVoyagePayload } from "@/lib/type/destination";
 
 const locales = {
@@ -45,6 +45,8 @@ type CalendarEvent = {
 };
 
 type DisplayMode = "calendar" | "list";
+
+type VisibilityFilter = "all" | "visible" | "hidden";
 
 type PlanificationFormState = {
   nomPlanification: string;
@@ -126,6 +128,14 @@ function formatBudget(amount?: number | null, devise = "MGA") {
   return `${Math.round(amount).toLocaleString("fr-FR")} ${devise || "MGA"}`;
 }
 
+function normalizeSearchValue(value?: string | number | null) {
+  return String(value ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
 // Generate consistent colors based on destination ID
 function getDestinationColor(destinationId: string): string {
   const colors = [
@@ -184,6 +194,12 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
   const [selectedPlanification, setSelectedPlanification] = useState<PlanificationVoyage | null>(null);
   const [form, setForm] = useState<PlanificationFormState>(initialFormState);
   const [selectedDestinationFilter, setSelectedDestinationFilter] = useState<string>("all");
+  const [listSearch, setListSearch] = useState("");
+  const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilter>("all");
+  const [dateFromFilter, setDateFromFilter] = useState("");
+  const [dateToFilter, setDateToFilter] = useState("");
+  const [budgetMinFilter, setBudgetMinFilter] = useState("");
+  const [budgetMaxFilter, setBudgetMaxFilter] = useState("");
 
   const loadCalendarData = useCallback(async () => {
     if (!accessToken) {
@@ -244,6 +260,86 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
       })),
     [filteredPlanifications]
   );
+
+  const listPlanifications = useMemo(() => {
+    const query = normalizeSearchValue(listSearch);
+    const minBudget = budgetMinFilter ? Number(budgetMinFilter) : null;
+    const maxBudget = budgetMaxFilter ? Number(budgetMaxFilter) : null;
+    const startBoundary = dateFromFilter ? new Date(`${dateFromFilter}T00:00:00`) : null;
+    const endBoundary = dateToFilter ? new Date(`${dateToFilter}T23:59:59`) : null;
+
+    return filteredPlanifications.filter((planification) => {
+      if (query) {
+        const searchable = normalizeSearchValue([
+          planification.nomPlanification,
+          planification.nomDestination,
+          planification.depart,
+          planification.arriver,
+          planification.deviseBudget,
+          planification.budgetTotal,
+        ].join(" "));
+
+        if (!searchable.includes(query)) {
+          return false;
+        }
+      }
+
+      if (visibilityFilter === "visible" && !planification.estVisibleClient) {
+        return false;
+      }
+
+      if (visibilityFilter === "hidden" && planification.estVisibleClient) {
+        return false;
+      }
+
+      const startDate = planification.dateHeureDebut ? new Date(planification.dateHeureDebut) : null;
+      const endDate = planification.dateHeureFin ? new Date(planification.dateHeureFin) : startDate;
+
+      if (startBoundary && endDate && endDate < startBoundary) {
+        return false;
+      }
+
+      if (endBoundary && startDate && startDate > endBoundary) {
+        return false;
+      }
+
+      const budget = planification.budgetTotal;
+      if (minBudget !== null && (budget === null || budget === undefined || budget < minBudget)) {
+        return false;
+      }
+
+      if (maxBudget !== null && (budget === null || budget === undefined || budget > maxBudget)) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [
+    budgetMaxFilter,
+    budgetMinFilter,
+    dateFromFilter,
+    dateToFilter,
+    filteredPlanifications,
+    listSearch,
+    visibilityFilter,
+  ]);
+
+  const hasListFilters =
+    listSearch.trim() ||
+    visibilityFilter !== "all" ||
+    dateFromFilter ||
+    dateToFilter ||
+    budgetMinFilter ||
+    budgetMaxFilter;
+
+  const resetListFilters = () => {
+    setListSearch("");
+    setVisibilityFilter("all");
+    setDateFromFilter("");
+    setDateToFilter("");
+    setBudgetMinFilter("");
+    setBudgetMaxFilter("");
+  };
 
   const openCreateModal = (slot?: SlotInfo) => {
     setSelectedPlanification(null);
@@ -499,8 +595,103 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
               />
             </div>
           ) : (
-            <div className="overflow-hidden rounded-lg border border-border">
-              <div className="overflow-x-auto">
+            <div className="space-y-4">
+              <div className="rounded-lg border border-border bg-muted/20 p-4">
+                <div className="space-y-4">
+                  <div className="grid gap-3 lg:grid-cols-[minmax(320px,1fr)_auto] lg:items-end">
+                    <div className="space-y-2">
+                      <Label htmlFor="planification-search">Recherche</Label>
+                      <div className="relative">
+                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          id="planification-search"
+                          value={listSearch}
+                          onChange={(event) => setListSearch(event.target.value)}
+                          placeholder="Nom, destination, trajet, devise..."
+                          className="pl-9"
+                        />
+                      </div>
+                    </div>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={resetListFilters}
+                      disabled={!hasListFilters}
+                      className="w-full gap-2 lg:w-auto"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                      Reinitialiser
+                    </Button>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                    <div className="space-y-2">
+                      <Label>Visibilite</Label>
+                      <Select value={visibilityFilter} onValueChange={(value) => setVisibilityFilter(value as VisibilityFilter)}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Tous les statuts</SelectItem>
+                          <SelectItem value="visible">Visible</SelectItem>
+                          <SelectItem value="hidden">Masque</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="date-from-filter">Debut apres</Label>
+                      <Input
+                        id="date-from-filter"
+                        type="date"
+                        value={dateFromFilter}
+                        onChange={(event) => setDateFromFilter(event.target.value)}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="date-to-filter">Fin avant</Label>
+                      <Input
+                        id="date-to-filter"
+                        type="date"
+                        value={dateToFilter}
+                        onChange={(event) => setDateToFilter(event.target.value)}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="budget-min-filter">Budget min</Label>
+                      <Input
+                        id="budget-min-filter"
+                        type="number"
+                        min="0"
+                        value={budgetMinFilter}
+                        onChange={(event) => setBudgetMinFilter(event.target.value)}
+                        placeholder="0"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="budget-max-filter">Budget max</Label>
+                      <Input
+                        id="budget-max-filter"
+                        type="number"
+                        min="0"
+                        value={budgetMaxFilter}
+                        onChange={(event) => setBudgetMaxFilter(event.target.value)}
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  {listPlanifications.length} resultat(s) sur {filteredPlanifications.length} planification(s).
+                </p>
+              </div>
+
+              <div className="overflow-hidden rounded-lg border border-border">
+                <div className="overflow-x-auto">
                 <table className="w-full min-w-[980px] text-sm">
                   <thead className="bg-muted/60 text-left text-xs uppercase text-muted-foreground">
                     <tr>
@@ -515,8 +706,8 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border bg-background">
-                    {filteredPlanifications.length > 0 ? (
-                      filteredPlanifications.map((planification) => (
+                    {listPlanifications.length > 0 ? (
+                      listPlanifications.map((planification) => (
                         <tr key={planification.id} className="transition hover:bg-muted/30">
                           <td className="px-4 py-4">
                             <div className="flex items-start gap-3">
@@ -600,12 +791,13 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
                     ) : (
                       <tr>
                         <td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">
-                          Aucune planification trouvee pour ce filtre.
+                          Aucune planification trouvee pour ces criteres.
                         </td>
                       </tr>
                     )}
                   </tbody>
                 </table>
+                </div>
               </div>
             </div>
           )}
