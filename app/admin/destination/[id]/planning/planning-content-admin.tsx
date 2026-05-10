@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
@@ -1446,15 +1445,7 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
               </Button>
             </div>
           ) : (
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Link href={`/admin/destination/${destinationId}`} className="hover:text-foreground">Retour au detail de la destination</Link>
-                <span>/</span><span>Planning voyage</span>
-              </div>
-              <h1 className="text-2xl font-semibold tracking-tight">Planning voyage{destination ? ` - ${destination.nom}` : ""}</h1>
-              <p className="text-sm text-muted-foreground">En haut, la liste des planifications. En bas, les sections du voyage, avec un focus sur le planning.</p>
-            </div>
+          <div className="space-y-10">
             <div className="flex flex-wrap justify-end gap-2">
               <Button
                 type="button"
@@ -1487,6 +1478,8 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
                 <Settings className="mr-2 h-4 w-4" />
                 Paramétrage
               </Button>
+            </div>
+            <div className="flex justify-end">
               <Button onClick={openCreatePlanificationDialog} size="sm" className={greenPrimaryButtonClass}>
                 <Plus className="size-4" />
                 Ajouter planification

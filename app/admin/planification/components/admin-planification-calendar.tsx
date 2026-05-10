@@ -21,9 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { List } from "lucide-react";
+import { CalendarDays, Edit3, ExternalLink, List, Trash2 } from "lucide-react";
 import type { PlanificationVoyage, SavePlanificationVoyagePayload } from "@/lib/type/destination";
 
 const locales = {
@@ -45,6 +43,8 @@ type CalendarEvent = {
   end: Date;
   resource: PlanificationVoyage;
 };
+
+type DisplayMode = "calendar" | "list";
 
 type PlanificationFormState = {
   nomPlanification: string;
@@ -102,6 +102,30 @@ function fromDateTimeLocalValue(value: string) {
   return new Date(value).toISOString();
 }
 
+function formatPlanificationDate(value?: string | null) {
+  if (!value) {
+    return "Non defini";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "Non defini";
+  }
+
+  return new Intl.DateTimeFormat("fr-FR", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+}
+
+function formatBudget(amount?: number | null, devise = "MGA") {
+  if (amount === null || amount === undefined) {
+    return "-";
+  }
+
+  return `${Math.round(amount).toLocaleString("fr-FR")} ${devise || "MGA"}`;
+}
+
 // Generate consistent colors based on destination ID
 function getDestinationColor(destinationId: string): string {
   const colors = [
@@ -148,6 +172,7 @@ function buildFormState(planification?: PlanificationVoyage | null): Planificati
 
 export function AdminPlanificationCalendar({ accessToken }: { accessToken?: string }) {
   const router = useRouter();
+  const [displayMode, setDisplayMode] = useState<DisplayMode>("calendar");
   const [calendarView, setCalendarView] = useState<View>(Views.MONTH);
   const [calendarDate, setCalendarDate] = useState(new Date());
   const [destinations, setDestinations] = useState<Array<{ id: string; nom: string }>>([]);
@@ -159,7 +184,6 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
   const [selectedPlanification, setSelectedPlanification] = useState<PlanificationVoyage | null>(null);
   const [form, setForm] = useState<PlanificationFormState>(initialFormState);
   const [selectedDestinationFilter, setSelectedDestinationFilter] = useState<string>("all");
-  const [showListModal, setShowListModal] = useState(false);
 
   const loadCalendarData = useCallback(async () => {
     if (!accessToken) {
@@ -201,21 +225,24 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
     void loadCalendarData();
   }, [loadCalendarData]);
 
+  const filteredPlanifications = useMemo(
+    () =>
+      selectedDestinationFilter === "all"
+        ? planifications
+        : planifications.filter((planification) => planification.idDestination === selectedDestinationFilter),
+    [planifications, selectedDestinationFilter]
+  );
+
   const events = useMemo<CalendarEvent[]>(
-    () => {
-      const filteredPlanifications = selectedDestinationFilter === "all" 
-        ? planifications 
-        : planifications.filter(p => p.idDestination === selectedDestinationFilter);
-      
-      return filteredPlanifications.map((planification) => ({
+    () =>
+      filteredPlanifications.map((planification) => ({
         id: planification.id,
         title: `${planification.nomPlanification} - ${planification.nomDestination}`,
         start: toDate(planification.dateHeureDebut),
         end: toDate(planification.dateHeureFin ?? planification.dateHeureDebut),
         resource: planification,
-      }));
-    },
-    [planifications, selectedDestinationFilter]
+      })),
+    [filteredPlanifications]
   );
 
   const openCreateModal = (slot?: SlotInfo) => {
@@ -233,6 +260,13 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
     setSelectedPlanification(event.resource);
     setError(null);
     setForm(buildFormState(event.resource));
+    setShowModal(true);
+  };
+
+  const openEditPlanification = (planification: PlanificationVoyage) => {
+    setSelectedPlanification(planification);
+    setError(null);
+    setForm(buildFormState(planification));
     setShowModal(true);
   };
 
@@ -309,6 +343,30 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
     }
   };
 
+  const handleDeletePlanification = async (planification: PlanificationVoyage) => {
+    if (!accessToken) {
+      setError("Session introuvable.");
+      return;
+    }
+
+    const confirmed = window.confirm(`Supprimer la planification "${planification.nomPlanification}" ?`);
+    if (!confirmed) {
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+
+    try {
+      await deletePlanificationVoyage(planification.id, accessToken);
+      await loadCalendarData();
+    } catch (err) {
+      setError(getErrorMessage(err, "Impossible de supprimer la planification."));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -317,7 +375,7 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
             Planification
           </h1>
           <p className="text-sm text-muted-foreground">
-            Toutes les planifications sont affichées dans le calendrier, avec création,
+            Toutes les planifications sont disponibles en calendrier ou en liste, avec creation,
             modification et suppression directement depuis cette vue.
           </p>
         </div>
@@ -331,15 +389,20 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
         <CardHeader>
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <CardTitle>Calendrier des planifications</CardTitle>
+              <CardTitle>
+                {displayMode === "calendar" ? "Calendrier des planifications" : "Liste des planifications"}
+              </CardTitle>
               <CardDescription>
-                Cliquez sur une plage horaire pour créer une planification, ou sur un élément
-                existant pour le modifier.
+                {displayMode === "calendar"
+                  ? "Cliquez sur une plage horaire pour creer une planification, ou sur un element existant pour le modifier."
+                  : "Consultez, modifiez ou supprimez les planifications dans un tableau clair."}
               </CardDescription>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Label htmlFor="destination-filter">Filtrer par destination:</Label>
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <Label htmlFor="destination-filter" className="text-sm text-muted-foreground">
+                  Filtrer par destination
+                </Label>
                 <Select
                   value={selectedDestinationFilter}
                   onValueChange={setSelectedDestinationFilter}
@@ -357,15 +420,28 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
                   </SelectContent>
                 </Select>
               </div>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setShowListModal(true)}
-                className="flex items-center gap-2"
-              >
-                <List className="h-4 w-4" />
-                Liste des planifications
-              </Button>
+              <div className="inline-flex rounded-md border border-border bg-muted/40 p-1">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={displayMode === "calendar" ? "default" : "ghost"}
+                  onClick={() => setDisplayMode("calendar")}
+                  className="h-9 gap-2"
+                >
+                  <CalendarDays className="h-4 w-4" />
+                  Calendrier
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={displayMode === "list" ? "default" : "ghost"}
+                  onClick={() => setDisplayMode("list")}
+                  className="h-9 gap-2"
+                >
+                  <List className="h-4 w-4" />
+                  Liste
+                </Button>
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -380,7 +456,7 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
             <div className="flex h-[600px] items-center justify-center text-sm text-muted-foreground">
               Chargement des planifications...
             </div>
-          ) : (
+          ) : displayMode === "calendar" ? (
             <div className="h-[600px]">
               <Calendar
                 localizer={localizer}
@@ -421,6 +497,116 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
                   },
                 })}
               />
+            </div>
+          ) : (
+            <div className="overflow-hidden rounded-lg border border-border">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[980px] text-sm">
+                  <thead className="bg-muted/60 text-left text-xs uppercase text-muted-foreground">
+                    <tr>
+                      <th className="px-4 py-3 font-semibold">Planification</th>
+                      <th className="px-4 py-3 font-semibold">Destination</th>
+                      <th className="px-4 py-3 font-semibold">Trajet</th>
+                      <th className="px-4 py-3 font-semibold">Debut</th>
+                      <th className="px-4 py-3 font-semibold">Fin</th>
+                      <th className="px-4 py-3 font-semibold">Budget</th>
+                      <th className="px-4 py-3 font-semibold">Statut</th>
+                      <th className="px-4 py-3 text-right font-semibold">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border bg-background">
+                    {filteredPlanifications.length > 0 ? (
+                      filteredPlanifications.map((planification) => (
+                        <tr key={planification.id} className="transition hover:bg-muted/30">
+                          <td className="px-4 py-4">
+                            <div className="flex items-start gap-3">
+                              <span
+                                className="mt-1 h-3 w-3 shrink-0 rounded-full"
+                                style={{ backgroundColor: getDestinationColor(planification.idDestination) }}
+                                aria-hidden="true"
+                              />
+                              <div>
+                                <p className="font-semibold text-foreground">{planification.nomPlanification}</p>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                  {planification.jours?.length ?? 0} jour(s), {planification.transports?.length ?? 0} transport(s)
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 text-muted-foreground">
+                            {planification.nomDestination || "-"}
+                          </td>
+                          <td className="px-4 py-4">
+                            <span className="font-medium text-foreground">{planification.depart || "-"}</span>
+                            <span className="mx-2 text-muted-foreground">vers</span>
+                            <span className="font-medium text-foreground">{planification.arriver || "-"}</span>
+                          </td>
+                          <td className="px-4 py-4 text-muted-foreground">
+                            {formatPlanificationDate(planification.dateHeureDebut)}
+                          </td>
+                          <td className="px-4 py-4 text-muted-foreground">
+                            {formatPlanificationDate(planification.dateHeureFin)}
+                          </td>
+                          <td className="px-4 py-4 font-medium">
+                            {formatBudget(planification.budgetTotal, planification.deviseBudget)}
+                          </td>
+                          <td className="px-4 py-4">
+                            <span
+                              className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
+                                planification.estVisibleClient
+                                  ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+                                  : "bg-slate-100 text-slate-600 ring-1 ring-slate-200"
+                              }`}
+                            >
+                              {planification.estVisibleClient ? "Visible" : "Masque"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="outline"
+                                onClick={() => openEditPlanification(planification)}
+                                disabled={saving}
+                                title="Modifier"
+                              >
+                                <Edit3 className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="outline"
+                                onClick={() => router.push(`/admin/destination/${planification.idDestination}/planning`)}
+                                title="Voir le detail"
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="outline"
+                                onClick={() => void handleDeletePlanification(planification)}
+                                disabled={saving}
+                                title="Supprimer"
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">
+                          Aucune planification trouvee pour ce filtre.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </CardContent>
@@ -609,79 +795,6 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
         </div>
       ) : null}
 
-      {/* Modal liste des planifications */}
-      {showListModal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <CardHeader>
-              <CardTitle>Liste des planifications</CardTitle>
-              <CardDescription>
-                Toutes les planifications disponibles
-              </CardDescription>
-            </CardHeader>
-
-            <CardContent>
-              <div className="space-y-4">
-                {planifications.length > 0 ? (
-                  planifications.map((planification) => (
-                    <div key={planification.id} className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <h3 className="font-semibold">{planification.nomPlanification}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {planification.nomDestination} • {planification.depart} → {planification.arriver}
-                          </p>
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            <span>
-                              Début: {planification.dateHeureDebut ? new Date(planification.dateHeureDebut).toLocaleDateString('fr-FR') : 'Non défini'}
-                            </span>
-                            <span>
-                              Fin: {planification.dateHeureFin ? new Date(planification.dateHeureFin).toLocaleDateString('fr-FR') : 'Non défini'}
-                            </span>
-                            {planification.budgetTotal && (
-                              <span>Budget: {planification.budgetTotal} {planification.deviseBudget}</span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className={`px-2 py-1 rounded text-xs ${
-                            planification.estVisibleClient 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {planification.estVisibleClient ? 'Visible' : 'Masqué'}
-                          </span>
-                          <Button
-                            size="sm"
-                            onClick={() => {
-                              setSelectedPlanification(planification);
-                              setForm(buildFormState(planification));
-                              setShowListModal(false);
-                              setShowModal(true);
-                            }}
-                          >
-                            Ouvrir
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-muted-foreground text-center py-8">
-                    Aucune planification trouvée.
-                  </p>
-                )}
-              </div>
-
-              <div className="flex justify-end mt-6">
-                <Button onClick={() => setShowListModal(false)}>
-                  Fermer
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      ) : null}
     </div>
   );
 }
