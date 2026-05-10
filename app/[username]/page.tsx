@@ -9,13 +9,17 @@ import { CreditCard, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SearchBar } from "@/components/search-bar";
 import { listDestinations } from "@/lib/api/destinations";
+import { listMyReservations } from "@/lib/api/reservations";
+import { loadAuth } from "@/lib/auth";
 import { destinationsData as fallbackDestinations } from "@/lib/destinations";
 import type { DestinationDetails } from "@/lib/type/destination";
+import type { Reservation } from "@/lib/type/reservation";
 
 export default function UserHomePage() {
   const params = useParams<{ username: string }>();
   const username = typeof params?.username === "string" ? params.username : "client";
   const [destinations, setDestinations] = useState<DestinationDetails[]>(fallbackDestinations);
+  const [reservations, setReservations] = useState<Reservation[]>([]);
 
   useEffect(() => {
     const loadDestinations = async () => {
@@ -32,7 +36,35 @@ export default function UserHomePage() {
     void loadDestinations();
   }, []);
 
+  useEffect(() => {
+    const loadReservationStats = async () => {
+      const session = loadAuth();
+      if (!session?.accessToken) return;
+
+      try {
+        const response = await listMyReservations(session.accessToken);
+        setReservations(response.data ?? []);
+      } catch (error) {
+        console.error("Erreur chargement reservations:", error);
+      }
+    };
+
+    void loadReservationStats();
+  }, []);
+
   const featuredDestinations = useMemo(() => destinations.slice(0, 3), [destinations]);
+  const reservationStats = useMemo(() => {
+    const total = reservations.length;
+    const enCours = reservations.filter(
+      (reservation) =>
+        reservation.status === "EN_ATTENTE" ||
+        reservation.status === "A_REVOIR" ||
+        reservation.status === "EN_ATTENTE_DISPONIBILITE"
+    ).length;
+    const confirmees = reservations.filter((reservation) => reservation.status === "VALIDEE").length;
+
+    return { total, enCours, confirmees };
+  }, [reservations]);
 
   return (
     <div className="space-y-8">
@@ -84,6 +116,12 @@ export default function UserHomePage() {
             </div>
           </div>
         </div>
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-3">
+        <ReservationStatCard label="Total reservations" value={reservationStats.total} />
+        <ReservationStatCard label="En cours" value={reservationStats.enCours} />
+        <ReservationStatCard label="Confirmees" value={reservationStats.confirmees} />
       </section>
 
       <section className="rounded-[28px] border border-emerald-100 bg-white p-5 shadow-sm">
@@ -138,6 +176,19 @@ export default function UserHomePage() {
           ))}
         </div>
       </section>
+    </div>
+  );
+}
+
+function ReservationStatCard({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-[24px] border border-emerald-100 bg-white p-5 shadow-sm">
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+        {label}
+      </p>
+      <p className="mt-3 text-3xl font-semibold tracking-tight text-emerald-700">
+        {value}
+      </p>
     </div>
   );
 }

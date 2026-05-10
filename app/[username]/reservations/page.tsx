@@ -10,7 +10,18 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  CircleDollarSign,
+  Eye,
+  SlidersHorizontal,
+  Layers,
+  MessageSquare,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { loadAuth } from "@/lib/auth";
 import { getErrorMessage } from "@/lib/api/client";
 import { listDestinations, listPlanificationsByDestination } from "@/lib/api/destinations";
@@ -332,6 +343,11 @@ export default function ReservationsPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<ReservationStatus | "ALL">("ALL");
+  const [reservationSearch, setReservationSearch] = useState("");
+  const [sourceFilter, setSourceFilter] = useState<ReservationSource | "ALL">("ALL");
+  const [amountMinFilter, setAmountMinFilter] = useState("");
+  const [amountMaxFilter, setAmountMaxFilter] = useState("");
+  const [showReservationFilters, setShowReservationFilters] = useState(false);
   const selectedElementsScrollRef = useRef<HTMLDivElement | null>(null);
 
   const session = useMemo(() => loadAuth(), []);
@@ -732,13 +748,43 @@ export default function ReservationsPage() {
     return { total, enCours, confirmees, montantTotal };
   }, [reservations]);
   const recentReservations = useMemo(() => reservations.slice(0, 3), [reservations]);
-  const filteredReservations = useMemo(
-    () =>
-      statusFilter === "ALL"
-        ? reservations
-        : reservations.filter((reservation) => reservation.status === statusFilter),
-    [reservations, statusFilter]
-  );
+  const filteredReservations = useMemo(() => {
+    const query = reservationSearch.trim().toLowerCase();
+    const amountMin = amountMinFilter.trim() ? Number(amountMinFilter) : null;
+    const amountMax = amountMaxFilter.trim() ? Number(amountMaxFilter) : null;
+
+    return reservations.filter((reservation) => {
+      const detail = reservation.details[0];
+      const matchesStatus = statusFilter === "ALL" || reservation.status === statusFilter;
+      const matchesSource = sourceFilter === "ALL" || reservation.source === sourceFilter;
+      const matchesMin = amountMin === null || Number.isNaN(amountMin) || reservation.montantTotal >= amountMin;
+      const matchesMax = amountMax === null || Number.isNaN(amountMax) || reservation.montantTotal <= amountMax;
+      const totalElements = countUniqueSelectedElements(reservation);
+      const searchableText = [
+        reservation.reference,
+        reservation.commentaireClient,
+        reservation.commentaireAdmin,
+        reservation.montantTotal,
+        formatCurrency(reservation.montantTotal, reservation.devise),
+        formatDate(reservation.dateReservation),
+        formatDate(reservation.dateModification ?? reservation.dateReservation),
+        getReservationProfilesSummary(reservation),
+        totalElements,
+        detail?.nomDestination,
+        detail?.nomPlanification,
+        detail?.nomCategorieClient,
+        detail?.gamme,
+        formatStatus(reservation.status),
+        formatSource(reservation.source),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      const matchesQuery = !query || searchableText.includes(query);
+
+      return matchesStatus && matchesSource && matchesMin && matchesMax && matchesQuery;
+    });
+  }, [amountMaxFilter, amountMinFilter, reservations, reservationSearch, sourceFilter, statusFilter]);
 
   const handleCreateReservation = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -1398,9 +1444,7 @@ export default function ReservationsPage() {
       {activeReservationSection === "list" ? (
       <>
 
-      
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      {/* <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Card className="border-border/50 bg-white/90">
           <CardContent className="p-5">
             <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
@@ -1435,40 +1479,133 @@ export default function ReservationsPage() {
             </p>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
 
       
 
 
       <Card className="border-border/50">
-        <CardHeader>
-          <CardTitle>Liste de mes reservations</CardTitle>
-          <CardDescription>
-            Retrouvez toutes les reservations deja creees dans votre espace client.
-          </CardDescription>
+        <CardHeader className="flex flex-row items-start justify-between gap-4">
+          <div>
+            <CardTitle>Liste de mes reservations</CardTitle>
+            <CardDescription>
+              Retrouvez toutes les reservations deja creees dans votre espace client.
+            </CardDescription>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={() => setShowReservationFilters((current) => !current)}
+            title="Afficher les filtres"
+            aria-label="Afficher les filtres"
+            aria-expanded={showReservationFilters}
+            className="shrink-0"
+          >
+            <SlidersHorizontal className="size-4" />
+          </Button>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <Label htmlFor="status-filter">Trier par statut</Label>
-            <Select
-              value={statusFilter}
-              onValueChange={(value) => setStatusFilter(value as ReservationStatus | "ALL")}
-            >
-              <SelectTrigger id="status-filter" className="w-[240px]">
-                <span className="truncate">
-                  {statusFilter === "ALL" ? "Tous les statuts" : formatStatus(statusFilter)}
-                </span>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">Tous les statuts</SelectItem>
-                <SelectItem value="EN_ATTENTE">EN ATTENTE</SelectItem>
-                <SelectItem value="A_REVOIR">A REVOIR</SelectItem>
-                <SelectItem value="EN_ATTENTE_DISPONIBILITE">EN ATTENTE DISPONIBILITE</SelectItem>
-                <SelectItem value="VALIDEE">VALIDEE</SelectItem>
-                <SelectItem value="ANNULEE">ANNULEE</SelectItem>
-              </SelectContent>
-            </Select>
+          <p className="text-xs text-slate-500">
+            {filteredReservations.length} resultat(s) sur {reservations.length}
+          </p>
+
+          {showReservationFilters ? (
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="reservation-search">Recherche</Label>
+                <Input
+                  id="reservation-search"
+                  value={reservationSearch}
+                  onChange={(event) => setReservationSearch(event.target.value)}
+                  placeholder="Reference, destination, forfait, commentaire..."
+                />
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(170px,1fr)_minmax(170px,1fr)_minmax(120px,0.7fr)_minmax(120px,0.7fr)_auto] xl:items-end">
+                <div className="space-y-2">
+                  <Label htmlFor="status-filter">Statut</Label>
+                  <Select
+                    value={statusFilter}
+                    onValueChange={(value) => setStatusFilter(value as ReservationStatus | "ALL")}
+                  >
+                    <SelectTrigger id="status-filter" className="w-full">
+                      <SelectValue placeholder="Tous les statuts" />
+                    </SelectTrigger>
+                    <SelectContent position="popper">
+                      <SelectItem value="ALL">Tous les statuts</SelectItem>
+                      <SelectItem value="EN_ATTENTE">EN ATTENTE</SelectItem>
+                      <SelectItem value="A_REVOIR">A REVOIR</SelectItem>
+                      <SelectItem value="EN_ATTENTE_DISPONIBILITE">EN ATTENTE DISPONIBILITE</SelectItem>
+                      <SelectItem value="VALIDEE">VALIDEE</SelectItem>
+                      <SelectItem value="ANNULEE">ANNULEE</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="source-filter">Source</Label>
+                  <Select
+                    value={sourceFilter}
+                    onValueChange={(value) => setSourceFilter(value as ReservationSource | "ALL")}
+                  >
+                    <SelectTrigger id="source-filter" className="w-full">
+                      <SelectValue placeholder="Toutes les sources" />
+                    </SelectTrigger>
+                    <SelectContent position="popper">
+                      <SelectItem value="ALL">Toutes les sources</SelectItem>
+                      <SelectItem value="SIMULATION">Simulation</SelectItem>
+                      <SelectItem value="PRIX_DIRECT">Prix direct</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="amount-min-filter">Min</Label>
+                  <Input
+                    id="amount-min-filter"
+                    type="number"
+                    min="0"
+                    value={amountMinFilter}
+                    onChange={(event) => setAmountMinFilter(event.target.value)}
+                    placeholder="Min"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="amount-max-filter">Max</Label>
+                  <Input
+                    id="amount-max-filter"
+                    type="number"
+                    min="0"
+                    value={amountMaxFilter}
+                    onChange={(event) => setAmountMaxFilter(event.target.value)}
+                    placeholder="Max"
+                  />
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full xl:w-auto"
+                  onClick={() => {
+                    setReservationSearch("");
+                    setStatusFilter("ALL");
+                    setSourceFilter("ALL");
+                    setAmountMinFilter("");
+                    setAmountMaxFilter("");
+                  }}
+                >
+                  Reinitialiser
+                </Button>
+              </div>
+            </div>
+            <p className="mt-3 text-xs text-slate-500">
+              {filteredReservations.length} resultat(s) sur {reservations.length}. Les montants min/max filtrent seulement si une valeur est saisie.
+            </p>
           </div>
+          ) : null}
 
           {loadingReservations ? (
             <p className="text-sm text-muted-foreground">Chargement des reservations...</p>
@@ -1481,6 +1618,20 @@ export default function ReservationsPage() {
               const detail = reservation.details[0];
               const totalElements = countUniqueSelectedElements(reservation);
               const showElementsCount = reservation.source === "SIMULATION";
+
+              if (reservation.id) {
+                return (
+                  <ReservationListCard
+                    key={reservation.id}
+                    reservation={reservation}
+                    username={username}
+                    detail={detail}
+                    totalElements={totalElements}
+                    showElementsCount={showElementsCount}
+                    onDelete={handleDeleteReservation}
+                  />
+                );
+              }
 
               return (
                 <article
@@ -1634,6 +1785,138 @@ export default function ReservationsPage() {
       </Card>
       </>
       ) : null}
+    </div>
+  );
+}
+
+function ReservationListCard({
+  reservation,
+  username,
+  detail,
+  totalElements,
+  showElementsCount,
+  onDelete,
+}: {
+  reservation: Reservation;
+  username: string;
+  detail: Reservation["details"][number] | undefined;
+  totalElements: number;
+  showElementsCount: boolean;
+  onDelete: (reservationId: string) => Promise<void>;
+}) {
+  return (
+    <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-emerald-200 hover:shadow-md">
+      <div className="border-b border-slate-100 p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0 space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-600">
+                {formatSource(reservation.source)}
+              </Badge>
+              <Badge className={statusStyles[reservation.status]}>
+                {formatStatus(reservation.status)}
+              </Badge>
+            </div>
+
+            <div className="space-y-1">
+              <h3 className="text-xl font-semibold tracking-tight text-slate-950">
+                {reservation.reference}
+              </h3>
+              <p className="text-base font-medium text-slate-800">
+                {detail?.nomDestination ?? "-"} - {detail?.nomPlanification ?? "-"}
+              </p>
+              <p className="text-sm text-slate-500">
+                {getReservationProfilesSummary(reservation)}
+              </p>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 lg:text-right">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+              Derniere mise a jour
+            </p>
+            <p className="mt-1 font-medium text-slate-800">
+              {formatDate(reservation.dateModification ?? reservation.dateReservation)}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-5">
+        <div className={`grid gap-3 sm:grid-cols-2 ${showElementsCount ? "xl:grid-cols-[repeat(4,minmax(0,1fr))_auto]" : "xl:grid-cols-[repeat(3,minmax(0,1fr))_auto]"}`}>
+          <ReservationInfoTile
+            icon={CircleDollarSign}
+            label="Montant"
+            value={formatCurrency(reservation.montantTotal, reservation.devise)}
+          />
+          <ReservationInfoTile
+            icon={CalendarDays}
+            label="Creee le"
+            value={formatDate(reservation.dateReservation)}
+          />
+          {showElementsCount ? (
+            <ReservationInfoTile icon={Layers} label="Elements" value={String(totalElements)} />
+          ) : null}
+          <ReservationInfoTile
+            icon={MessageSquare}
+            label="Commentaire"
+            value={reservation.commentaireClient?.trim() || "Aucun commentaire"}
+            muted
+          />
+
+          <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/50 p-4 xl:min-w-[72px]">
+            <Button
+              asChild
+              size="icon"
+              className="bg-emerald-600 text-white hover:bg-emerald-700"
+              title="Voir detail"
+            >
+              <Link href={`/${username}/reservations/${reservation.id}`} aria-label="Voir detail">
+                <Eye className="size-4" />
+              </Link>
+            </Button>
+
+            {reservation.status === "EN_ATTENTE" ? (
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                onClick={() => void onDelete(reservation.id)}
+                title="Supprimer"
+                aria-label="Supprimer"
+              >
+                <Trash2 className="size-4" />
+              </Button>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function ReservationInfoTile({
+  icon: Icon,
+  label,
+  value,
+  muted = false,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  muted?: boolean;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-4">
+      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+        <span className="flex size-8 items-center justify-center rounded-full bg-white text-emerald-700 shadow-sm">
+          <Icon className="size-4" />
+        </span>
+        {label}
+      </div>
+      <p className={`${muted ? "line-clamp-2 text-sm font-medium" : "text-lg font-semibold"} text-slate-950`}>
+        {value}
+      </p>
     </div>
   );
 }

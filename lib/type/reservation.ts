@@ -45,6 +45,9 @@ export interface Reservation {
   devise: string;
   commentaireClient: string | null;
   commentaireAdmin: string | null;
+  clientNom?: string | null;
+  clientPrenom?: string | null;
+  clientContact?: string | null;
   elementsSelectionnes: ElementSelection[];
   resumeSimulation: string | null;
   dateReservation: string;
@@ -73,6 +76,9 @@ export interface ReservationQuote {
 
 export interface ReservationCreatePayload {
   utilisateurId?: string;
+  clientNom?: string;
+  clientPrenom?: string;
+  clientContact?: string;
   source?: ReservationSource;
   destinationId: string;
   planificationVoyageId: string;

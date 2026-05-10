@@ -71,7 +71,7 @@ export function ClientLayoutShell({
       <ClientHeader username={displayName} onLogout={handleLogout} />
       <div className="mx-auto flex w-full max-w-[1400px] px-0 sm:px-6">
         <ClientSidebar active={activeSection} username={username} />
-        <main className="min-h-[70vh] flex-1 p-4 sm:p-6">{children}</main>
+        <main className="min-w-0 min-h-[70vh] flex-1 overflow-hidden p-4 sm:p-6">{children}</main>
       </div>
       <ClientFooter />
     </div>
