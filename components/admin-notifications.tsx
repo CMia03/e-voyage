@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Bell, MessageCircle, Trash2, ExternalLink, X, Eye } from "lucide-react";
+import { Bell, MessageCircle, Trash2, ExternalLink, X, Eye, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -148,10 +148,15 @@ export function AdminNotifications() {
       {isOpen && (
         <Card 
           ref={notificationRef}
-          className="absolute right-0 top-12 w-96 max-h-96 z-50 shadow-lg"
+          className="absolute right-0 top-12 z-50 max-h-[520px] w-[420px] overflow-hidden rounded-xl border shadow-xl"
         >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-lg">Notifications</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b px-4 py-4">
+            <div>
+              <CardTitle className="text-lg">Notifications</CardTitle>
+              <p className="text-xs text-muted-foreground">
+                {unreadCount > 0 ? `${unreadCount} élément(s) à traiter` : "Tout est à jour"}
+              </p>
+            </div>
             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsOpen(false)}>
               <X className="h-4 w-4" />
             </Button>
@@ -166,67 +171,70 @@ export function AdminNotifications() {
                 Aucune notification
               </div>
             ) : (
-              <div className="max-h-80 overflow-y-auto">
+              <div className="max-h-[440px] overflow-y-auto">
                 {pendingCommentaires.length > 0 ? (
-                  <div className="border-b bg-amber-50/60 p-4">
-                    <div className="mb-3 flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <MessageCircle className="h-4 w-4 text-amber-700" />
-                        <p className="text-sm font-semibold text-amber-900">
-                          Commentaires en attente
-                        </p>
-                      </div>
-                      <Badge className="bg-red-600 text-white hover:bg-red-600">
-                        {pendingCommentaires.length > 99 ? "99+" : pendingCommentaires.length}
-                      </Badge>
-                    </div>
-
-                    <div className="space-y-2">
-                      {pendingCommentaires.slice(0, 3).map((commentaire) => (
-                        <button
-                          key={`${commentaire.idDestination}-${commentaire.idUser}`}
-                          type="button"
-                          onClick={handleOpenCommentaires}
-                          className="w-full rounded-md border bg-white px-3 py-2 text-left text-sm transition-colors hover:bg-amber-50"
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="font-medium text-foreground">
-                              {commentaire.nomUser || commentaire.idUser}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {commentaire.nomDestination || "Destination"}
-                            </span>
-                          </div>
-                          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-                            {commentaire.contenu}
-                          </p>
-                        </button>
-                      ))}
-                    </div>
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
+                  <div className="border-b bg-amber-50/50">
+                    <button
+                      type="button"
                       onClick={handleOpenCommentaires}
-                      className="mt-3 h-8 w-full text-amber-800 hover:bg-amber-100 hover:text-amber-900"
+                      className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-amber-50"
                     >
-                      Voir les commentaires
-                    </Button>
+                      <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+                        <MessageCircle className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">
+                              Commentaires en attente
+                            </p>
+                            <p className="mt-0.5 text-xs text-muted-foreground">
+                              {pendingCommentaires.length} commentaire(s) à modérer
+                            </p>
+                          </div>
+                          <Badge className="bg-red-600 text-white hover:bg-red-600">
+                            {pendingCommentaires.length > 99 ? "99+" : pendingCommentaires.length}
+                          </Badge>
+                        </div>
+                        <div className="mt-2 rounded-lg border bg-white px-3 py-2">
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="truncate text-sm font-medium text-foreground">
+                              {pendingCommentaires[0].nomUser || pendingCommentaires[0].idUser}
+                            </p>
+                            <p className="shrink-0 text-xs text-muted-foreground">
+                              {pendingCommentaires[0].nomDestination || "Destination"}
+                            </p>
+                          </div>
+                          <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
+                            {pendingCommentaires[0].contenu}
+                          </p>
+                        </div>
+                        <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-amber-800">
+                          Voir les commentaires
+                          <ArrowRight className="h-3 w-3" />
+                        </span>
+                      </div>
+                    </button>
                   </div>
                 ) : null}
 
                 {notifications.slice(0, 8).map((notification) => (
-                  <div key={notification.id} className="border-b p-4 last:border-b-0">
+                  <div
+                    key={notification.id}
+                    className={`border-b px-4 py-3 last:border-b-0 ${
+                      !notification.read ? "bg-emerald-50/35" : "bg-white"
+                    }`}
+                  >
                     <div className="flex items-start gap-3">
-                      <div className="mt-0.5 flex-shrink-0">
-                        <Bell className="h-4 w-4 text-emerald-600" />
+                      <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                        <Bell className="h-4 w-4" />
                       </div>
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
-                          <p className="text-sm font-medium text-foreground">{notification.title}</p>
+                          <p className="line-clamp-1 text-sm font-semibold text-foreground">{notification.title}</p>
                           {!notification.read ? (
-                            <Badge variant="secondary" className="text-xs">
+                            <Badge variant="secondary" className="shrink-0 text-xs">
                               Nouveau
                             </Badge>
                           ) : null}
@@ -236,12 +244,12 @@ export function AdminNotifications() {
                           {notification.message}
                         </p>
 
-                        <div className="mt-2 flex items-center justify-between">
+                        <div className="mt-3 flex items-center justify-between gap-2">
                           <p className="text-xs text-muted-foreground">
                             {formatRelativeTime(notification.createdAt)}
                           </p>
 
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-0.5">
                             <Button
                               variant="ghost"
                               size="sm"
@@ -256,7 +264,7 @@ export function AdminNotifications() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => void handleOpenReservation(notification)}
-                                className="h-6 px-2 text-xs text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+                                className="h-6 px-2 text-xs text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800"
                               >
                                 <Eye className="mr-1 h-3 w-3" />
                                 Lire

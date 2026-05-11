@@ -1,8 +1,7 @@
 "use client";
 
 import React from "react";
-import { X, MapPin } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { MapPin } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface ModalMapProps {
@@ -20,7 +19,7 @@ export function ModalMap({ isOpen, onClose, destinationName, location, coordinat
   // Generate Google Maps embed URL
   const getMapUrl = () => {
     if (coordinates) {
-      return `https://maps.google.com/maps?q=${coordinates.lat},${coordinates.lng}&z=6&output=embed`;
+      return `https://maps.google.com/maps?q=${coordinates.lat},${coordinates.lng}&z=13&output=embed`;
     }
     if (location) {
       // For Madagascar locations, use a broader zoom to show the country

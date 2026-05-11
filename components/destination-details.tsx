@@ -44,6 +44,12 @@ function formatMoney(value?: number | null, devise = "Ar") {
   return `${Math.round(value).toLocaleString("fr-MG")} ${devise || "Ar"}`;
 }
 
+function toCoordinate(value?: number | string | null) {
+  if (value === null || value === undefined || value === "") return null;
+  const coordinate = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(coordinate) ? coordinate : null;
+}
+
 export function DestinationDetailsComponent({ destination }: DestinationDetailsProps) {
   const router = useRouter();
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -55,6 +61,16 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
   const [isLoadingPlanifications, setIsLoadingPlanifications] = useState(false);
   const [planificationError, setPlanificationError] = useState<string | null>(null);
   const galleryAll = destination.galleryAll?.length ? destination.galleryAll : destination.gallery;
+  const destinationCoordinates = useMemo(() => {
+    const lat = toCoordinate(destination.latitude);
+    const lng = toCoordinate(destination.longitude);
+
+    if (lat === null || lng === null) {
+      return undefined;
+    }
+
+    return { lat, lng };
+  }, [destination.latitude, destination.longitude]);
   const selectedPlanification = useMemo(
     () =>
       publicPlanifications.find((planification) => planification.id === selectedPlanificationId) ??
@@ -576,11 +592,7 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
         onClose={() => setMapModalOpen(false)}
         destinationName={destination.title}
         location={destination.departure?.location}
-        // You can add coordinates if available in destination object
-        // coordinates={{
-        //   lat: destination.latitude,
-        //   lng: destination.longitude
-        // }}
+        coordinates={destinationCoordinates}
       />
     </div>
   );

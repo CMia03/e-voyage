@@ -4,6 +4,8 @@ export interface DestinationDetails {
   description: string;
   image: string;
   price: string;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
   rating?: number;
   priceDetails?: {
     shared4?: string;
