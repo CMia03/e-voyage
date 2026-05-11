@@ -1109,7 +1109,9 @@ export default function ReservationsPage() {
                     <div className="flex items-center justify-between">
                       <h3 className="text-lg font-semibold text-slate-900">Profils des voyageurs</h3>
                       <div className="text-sm text-slate-600">
+
                         {ensureValidProfiles(form.voyageurProfiles, categories, form.categorieClientId || undefined).reduce((sum, p) => sum + p.nombrePersonnes, 0)} personne{ensureValidProfiles(form.voyageurProfiles, categories, form.categorieClientId || undefined).reduce((sum, p) => sum + p.nombrePersonnes, 0) > 1 ? 's' : ''} au total
+                        
                       </div>
                     </div>
                   </div>

@@ -22,6 +22,12 @@ export interface DashboardData {
     totalCount: number;
     status: string;
   };
+  voyageursParDestination?: {
+    destinationId: string;
+    destinationName: string;
+    nombrePersonnes: number;
+    pourcentage: number;
+  }[];
 
   monthlyActivity?: ActivityData[];
 }

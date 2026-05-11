@@ -242,6 +242,21 @@ export function ReservationListContent() {
     setAmountMaxFilter("");
   };
 
+  const closeReservationModals = useCallback(() => {
+    setIsViewModalOpen(false);
+    setIsEditModalOpen(false);
+    setSelectedReservation(null);
+
+    if (searchParams.has("reservationId")) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("reservationId");
+      const query = params.toString();
+      router.replace(query ? `/admin/reservations/liste?${query}` : "/admin/reservations/liste", {
+        scroll: false,
+      });
+    }
+  }, [router, searchParams]);
+
   const handleSaveReservation = useCallback(
     async (id: string, data: ReservationStatusUpdatePayload) => {
       try {
@@ -526,18 +541,12 @@ export function ReservationListContent() {
           <ReservationViewModal
             reservation={selectedReservation}
             open={isViewModalOpen}
-            onClose={() => {
-              setIsViewModalOpen(false);
-              setSelectedReservation(null);
-            }}
+            onClose={closeReservationModals}
           />
           <ReservationEditModal
             reservation={selectedReservation}
             open={isEditModalOpen}
-            onClose={() => {
-              setIsEditModalOpen(false);
-              setSelectedReservation(null);
-            }}
+            onClose={closeReservationModals}
             onSave={handleSaveReservation}
           />
         </>

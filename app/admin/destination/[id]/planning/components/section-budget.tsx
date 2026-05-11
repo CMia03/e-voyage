@@ -1,7 +1,7 @@
 "use client";
 
 // COMPOSANT SECTION BUDGET
-// Affiche un tableau dÃ©taillÃ© de budgÃ©tisation pour un voyage planifiÃ©
+// Affiche un tableau detaille de budgetisation pour un voyage planifie
 // + Budgets enregistrÃ©s (CRUD admin / lecture publique)
 
 import { useMemo, useState } from "react";
@@ -31,7 +31,7 @@ type Props = {
 
 type BudgetCategory = "activite" | "hebergement" | "transport" | "autre";
 
-type Gamme = "MOYENNE" | "LUXE";
+type Gamme = string;
 
 type TarificationCell = {
   moyenne: number | null;
@@ -70,9 +70,22 @@ function formatMoneySafe(value: number | null | undefined, devise: string): stri
   return `${formatAmount(value)} ${devise}`;
 }
 
+function normalizeText(value: string | null | undefined): string {
+  return (value ?? "").trim().toLowerCase();
+}
+
+function normalizeGamme(value: string | null | undefined): string {
+  return normalizeText(value) || "moyenne";
+}
+
+function isNamedClientCategory(value: string | null | undefined): value is string {
+  const normalized = normalizeText(value);
+  return normalized !== "" && !normalized.startsWith("sans cat");
+}
+
 const CATEGORY_LABELS: Record<BudgetCategory, string> = {
-  activite: "ActivitÃ©",
-  hebergement: "HÃ©bergement",
+  activite: "Activité",
+  hebergement: "Hébergement",
   transport: "Transport",
   autre: "Autre",
 };
@@ -120,9 +133,7 @@ function getUniqueGammes(
           (t) => t.idHebergement === element.idHebergement && t.estActif
         );
         tarifs.forEach((tarif) => {
-          if (tarif.gamme) {
-            gammes.add(tarif.gamme.toLowerCase());
-          }
+          gammes.add(normalizeGamme(tarif.gamme));
         });
       }
     }
@@ -176,7 +187,7 @@ function getActivityTarifsForElement(
       const montant = item.prixParPersonne ?? item.prixParHeur;
       if (montant === null || montant === undefined) return null;
       return {
-        categorieClient: item.nomCategorieClient || "Sans catÃ©gorie",
+        categorieClient: item.nomCategorieClient || "Sans catégorie",
         montant,
         devise: item.devise || "MGA",
       };
@@ -206,7 +217,7 @@ function getHebergementTarifsForElement(
       const montant = item.capacite && item.capacite > 0 ? brut / item.capacite : brut;
 
       return {
-        gamme: item.gamme as Gamme,
+        gamme: normalizeGamme(item.gamme),
         montant,
         devise: item.devise || "MGA",
         capacite: item.capacite || 0,
@@ -250,7 +261,7 @@ function buildActivityCell(
 
   for (const tarif of filteredTarifs) {
     const details = formatMoney(tarif.montant, tarif.devise);
-    parts.push(`${tarif.categorieClient || "Sans catÃ©gorie"}: ${details}`);
+    parts.push(`${tarif.categorieClient || "Sans catégorie"}: ${details}`);
     totalMoyenne += tarif.montant;
   }
 
@@ -273,23 +284,29 @@ function buildHebergementCell(
 ): TarificationCell {
   const filteredTarifs =
     selectedGamme && selectedGamme.trim() !== ""
-      ? tarifs.filter((item) => item.gamme.toLowerCase() === selectedGamme.toLowerCase())
+      ? tarifs.filter((item) => normalizeGamme(item.gamme) === normalizeGamme(selectedGamme))
       : tarifs;
 
   const display = filteredTarifs
     .map((item) => {
       const prixTotal = item.montant * (item.capacite || 1);
-      return `${formatMoney(prixTotal, item.devise)} (${item.nomTypeChambre || "Sans type"} - Cap: ${
+      const gammeLabel = normalizeGamme(item.gamme) === "luxe" ? "Luxe" : "Moyenne";
+      return `${gammeLabel} - ${formatMoney(prixTotal, item.devise)} (${item.nomTypeChambre || "Sans type"} - Cap: ${
         item.capacite || 0
       }) - ${formatMoney(item.montant, item.devise)}/pers`;
     })
     .join("\n");
 
-  const totalParPersonne = filteredTarifs.reduce((sum, item) => sum + item.montant, 0) || null;
+  const totalMoyenne = filteredTarifs
+    .filter((item) => normalizeGamme(item.gamme) === "moyenne")
+    .reduce((sum, item) => sum + item.montant, 0);
+  const totalLuxe = filteredTarifs
+    .filter((item) => normalizeGamme(item.gamme) === "luxe")
+    .reduce((sum, item) => sum + item.montant, 0);
 
   return {
-    moyenne: totalParPersonne,
-    luxe: totalParPersonne,
+    moyenne: totalMoyenne || null,
+    luxe: totalLuxe || null,
     display: display.length > 0 ? display : "-",
   };
 }
@@ -385,9 +402,9 @@ function BudgetBadgeList({
     <div className="rounded-2xl border border-border/50 bg-background/80 overflow-hidden">
       <div className="flex flex-col gap-3 border-b border-border/50 bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="font-semibold">Budgets enregistrÃ©s</h3>
+          <h3 className="font-semibold">Budgets enregistrés</h3>
           <p className="text-xs text-muted-foreground">
-            Budgets saisis par lâ€™administrateur pour cette planification.
+            Budgets saisis par l&apos;administrateur pour cette planification.
           </p>
         </div>
 
@@ -399,12 +416,10 @@ function BudgetBadgeList({
         ) : null}
       </div>
 
-      
-
       <div className="p-4">
         {budgetsPlanification.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border/60 px-4 py-8 text-center text-sm text-muted-foreground">
-            Aucun budget enregistrÃ© pour cette planification.
+            Aucun budget enregistré pour cette planification.
           </div>
         ) : (
           <div className="flex flex-wrap gap-3">
@@ -464,7 +479,7 @@ function BudgetBadgeList({
   );
 }
 
-// ====== COMPOSANT TABLEAU RÃ‰CAPITULATIF ======
+// ====== COMPOSANT TABLEAU RECAPITULATIF ======
 
 interface RecapTableProps {
   sortedDays: JourPlanificationVoyage[];
@@ -493,7 +508,7 @@ function RecapTable({ sortedDays, tarifsActivites, tarifsHebergements, devise, p
         if (element.codeTypeElementJour === "ACTIVITE" && element.idActivite) {
           const tarifs = getActivityTarifsForElement(element.idActivite, tarifsActivites);
           tarifs.forEach((tarif) => {
-            if (tarif.categorieClient && tarif.categorieClient !== "Sans catÃ©gorie") {
+            if (isNamedClientCategory(tarif.categorieClient)) {
               categoriesDuJour.add(tarif.categorieClient);
             }
           });
@@ -515,7 +530,7 @@ function RecapTable({ sortedDays, tarifsActivites, tarifsHebergements, devise, p
         if (element.codeTypeElementJour === "HEBERGEMENT" && element.idHebergement) {
           const tarifs = getHebergementTarifsForElement(element.idHebergement, tarifsHebergements);
           for (const tarif of tarifs) {
-            const gamme = tarif.gamme?.toLowerCase() || "moyenne";
+            const gamme = normalizeGamme(tarif.gamme);
             if (gamme === "moyenne") {
               hebergementMoyenneParPers += tarif.montant;
               aDesHebergements = true;
@@ -534,7 +549,7 @@ function RecapTable({ sortedDays, tarifsActivites, tarifsHebergements, devise, p
           const tarifs = getActivityTarifsForElement(element.idActivite, tarifsActivites);
           for (const tarif of tarifs) {
             const categorieClient = tarif.categorieClient;
-            if (categorieClient && categorieClient !== "Sans catÃ©gorie") {
+            if (isNamedClientCategory(categorieClient)) {
               if (!activitesParCategorie[categorieClient]) {
                 activitesParCategorie[categorieClient] = { moyenne: 0, luxe: 0 };
               }
@@ -564,7 +579,59 @@ function RecapTable({ sortedDays, tarifsActivites, tarifsHebergements, devise, p
       }
     }
 
-    return totals;
+    const tripTotals: Record<string, Record<string, number>> = {
+      moyenne: {},
+      luxe: {},
+    };
+    const tripCategories = new Set<string>();
+    const activityTotalsByCategory: Record<string, number> = {};
+    let commonTripTotal = 0;
+    let hebergementMoyenneTotal = 0;
+    let hebergementLuxeTotal = 0;
+
+    for (const day of sortedDays) {
+      for (const element of day.elements ?? []) {
+        const categorie = getElementCategory(element);
+
+        if (categorie === "transport") {
+          commonTripTotal += getTransportAmount(element.idTransport, transportsById) ?? 0;
+        } else if (categorie === "autre") {
+          commonTripTotal += element.budgetPrevu ?? 0;
+        }
+
+        if (element.codeTypeElementJour === "HEBERGEMENT" && element.idHebergement) {
+          const tarifs = getHebergementTarifsForElement(element.idHebergement, tarifsHebergements);
+          for (const tarif of tarifs) {
+            const gamme = normalizeGamme(tarif.gamme);
+            if (gamme === "moyenne") {
+              hebergementMoyenneTotal += tarif.montant;
+            } else if (gamme === "luxe") {
+              hebergementLuxeTotal += tarif.montant;
+            }
+          }
+        }
+
+        if (element.codeTypeElementJour === "ACTIVITE" && element.idActivite) {
+          const tarifs = getActivityTarifsForElement(element.idActivite, tarifsActivites);
+          for (const tarif of tarifs) {
+            const categorieClient = tarif.categorieClient;
+            if (isNamedClientCategory(categorieClient)) {
+              tripCategories.add(categorieClient);
+              activityTotalsByCategory[categorieClient] =
+                (activityTotalsByCategory[categorieClient] ?? 0) + tarif.montant;
+            }
+          }
+        }
+      }
+    }
+
+    for (const cat of tripCategories) {
+      const activityTotal = activityTotalsByCategory[cat] ?? 0;
+      tripTotals.moyenne[cat] = commonTripTotal + hebergementMoyenneTotal + activityTotal;
+      tripTotals.luxe[cat] = commonTripTotal + hebergementLuxeTotal + activityTotal;
+    }
+
+    return tripTotals;
   };
 
   const totals = calculateTotals();
@@ -575,7 +642,7 @@ function RecapTable({ sortedDays, tarifsActivites, tarifsHebergements, devise, p
       if (element.codeTypeElementJour === "ACTIVITE" && element.idActivite) {
         const tarifs = getActivityTarifsForElement(element.idActivite, tarifsActivites);
         tarifs.forEach((tarif) => {
-          if (tarif.categorieClient && tarif.categorieClient !== "Sans catÃ©gorie") {
+          if (isNamedClientCategory(tarif.categorieClient)) {
             allCategories.add(tarif.categorieClient);
           }
         });
@@ -592,9 +659,9 @@ function RecapTable({ sortedDays, tarifsActivites, tarifsHebergements, devise, p
   return (
     <div className="rounded-2xl border border-border/50 bg-background/80 overflow-hidden mb-6">
       <div className="bg-muted/20 px-4 py-3 border-b border-border/50">
-        <h3 className="font-semibold">RÃ©capitulatif des tarifs</h3>
+        <h3 className="font-semibold">Récapitulatif des tarifs</h3>
         <p className="text-xs text-muted-foreground">
-          Gammes vs CatÃ©gories client (prix par personne)
+          Gammes vs catégories client (prix par personne)
         </p>
       </div>
       <div className="overflow-x-auto">
@@ -675,17 +742,11 @@ function DayBudgetTable({
           return line.luxe;
         }
       }
-      if (globalSelections.categorieClient) {
-        return line.moyenne;
-      }
       return null;
     }
 
     if (line.categorie === "activite") {
       if (globalSelections.categorieClient) {
-        return line.moyenne;
-      }
-      if (globalSelections.gamme) {
         return line.moyenne;
       }
       return null;
@@ -720,11 +781,11 @@ function DayBudgetTable({
           <thead className={TABLE_HEADER_CLASS}>
             <tr>
               <th className={`${TABLE_HEADER_CELL_CLASS} text-left`}>Bloc</th>
-              <th className={`${TABLE_HEADER_CELL_CLASS} text-left`}>CatÃ©gorie</th>
+              <th className={`${TABLE_HEADER_CELL_CLASS} text-left`}>Catégorie</th>
               <th className={`${TABLE_HEADER_CELL_CLASS} text-left`}>Tarifs</th>
               <th className={`${TABLE_HEADER_CELL_CLASS} text-left`}>
                 <div className="space-y-2">
-                  <div className="font-semibold">Budget calculÃ©</div>
+                  <div className="font-semibold">Budget calculé</div>
                   <div className="flex gap-2 text-xs">
                     {availableGammes.length > 0 && (
                       <select
@@ -732,7 +793,7 @@ function DayBudgetTable({
                         value={globalSelections.gamme}
                         onChange={(e) => updateGlobalSelection("gamme", e.target.value)}
                       >
-                        <option value="">SÃ©lectionner une gamme</option>
+                        <option value="">Sélectionner une gamme</option>
                         {availableGammes.map((gamme) => (
                           <option key={gamme} value={gamme}>
                             {gamme === "moyenne" ? "Moyenne" : gamme === "luxe" ? "Luxe" : gamme}
@@ -747,7 +808,7 @@ function DayBudgetTable({
                         value={globalSelections.categorieClient}
                         onChange={(e) => updateGlobalSelection("categorieClient", e.target.value)}
                       >
-                        <option value="">SÃ©lectionner une catÃ©gorie</option>
+                        <option value="">Sélectionner une catégorie</option>
                         {availableCategories.map((categorie) => (
                           <option key={categorie} value={categorie}>
                             {categorie}
@@ -797,7 +858,7 @@ function DayBudgetTable({
           <tfoot className="border-t-2 border-border bg-muted/20">
             <tr>
               <td colSpan={3} className={`${TABLE_CELL_CLASS} font-semibold`}>
-                Total sÃ©lectionnÃ©
+                Total sélectionné
               </td>
               <td className={`${TABLE_CELL_CLASS} text-xs font-medium text-foreground`}>
                 {globalSelections.gamme || globalSelections.categorieClient ? (
@@ -809,7 +870,7 @@ function DayBudgetTable({
                     devise
                   )
                 ) : (
-                  <span className="text-muted-foreground">SÃ©lectionnez une option</span>
+                  <span className="text-muted-foreground">Sélectionnez une option</span>
                 )}
               </td>
             </tr>
@@ -883,9 +944,9 @@ export function SectionBudget({
   return (
     <Card className="overflow-hidden border-border/60 bg-gradient-to-br from-background via-background to-muted/20">
       <CardHeader className="border-b border-border/50 bg-muted/20">
-        <CardTitle>BudgÃ©tisation</CardTitle>
+        <CardTitle>Budgétisation</CardTitle>
         <CardDescription>
-          Vue d&apos;ensemble et dÃ©tails journaliers de la budgÃ©tisation du voyage.
+          Vue d&apos;ensemble et détails journaliers de la budgétisation du voyage.
         </CardDescription>
       </CardHeader>
 
@@ -908,11 +969,11 @@ export function SectionBudget({
         />
 
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold">DÃ©tails par jour</h2>
+          <h2 className="text-xl font-semibold">Détails par jour</h2>
 
           {dayBudgets.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border/60 px-4 py-10 text-center text-sm text-muted-foreground">
-              Aucun jour disponible pour la budgÃ©tisation.
+              Aucun jour disponible pour la budgétisation.
             </div>
           ) : (
             dayBudgets.map(({ day, lines }) => (

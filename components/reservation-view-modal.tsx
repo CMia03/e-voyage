@@ -41,7 +41,7 @@ export function ReservationViewModal({ reservation, open, onClose }: Reservation
   if (!reservation) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
       <DialogContent
         showCloseButton={false}
         className="w-[calc(100vw-2rem)] max-w-none overflow-visible p-5 sm:max-w-none 2xl:w-[1500px]"

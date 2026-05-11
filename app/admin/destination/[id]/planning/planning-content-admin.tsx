@@ -252,6 +252,26 @@ function formatDateTime(value?: string | null) {
   return parsed.toLocaleString("fr-FR");
 }
 
+function toTimeInputValue(value?: string | null) {
+  if (!value) return "";
+  const directTime = /^(\d{2}):(\d{2})/.exec(value);
+  if (directTime) return `${directTime[1]}:${directTime[2]}`;
+  const isoTime = /T(\d{2}):(\d{2})/.exec(value);
+  if (isoTime) return `${isoTime[1]}:${isoTime[2]}`;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "";
+  return `${String(parsed.getHours()).padStart(2, "0")}:${String(parsed.getMinutes()).padStart(2, "0")}`;
+}
+
+function combineDateAndTime(dateValue?: string | null, timeValue?: string | null) {
+  if (!timeValue) return null;
+  const normalizedTime = toTimeInputValue(timeValue);
+  if (!normalizedTime) return null;
+  const datePart = dateValue ? toDateInputValue(dateValue) : "";
+  if (!datePart) return normalizedTime;
+  return `${datePart}T${normalizedTime}:00`;
+}
+
 function toDateInputValue(value?: string | null) {
   if (!value) return "";
   const direct = value.slice(0, 10);
@@ -349,8 +369,8 @@ function mapElementToForm(element: ElementJourPlanification): ElementFormState {
   return {
     titre: element.titre ?? "",
     description: element.description ?? "",
-    heureDebut: element.heureDebut ? element.heureDebut.slice(0, 16) : "",
-    heureFin: element.heureFin ? element.heureFin.slice(0, 16) : "",
+    heureDebut: toTimeInputValue(element.heureDebut),
+    heureFin: toTimeInputValue(element.heureFin),
     budgetPrevu: element.budgetPrevu !== null && element.budgetPrevu !== undefined ? String(element.budgetPrevu) : "",
     devise: element.devise ?? "MGA",
     estActif: element.estActif,
@@ -1069,12 +1089,14 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
             .flatMap((jour) => jour.elements ?? [])
             .find((element) => element.id === editingElementId) ?? null
         : null;
+    const targetJour =
+      selectedPlanification?.jours.find((jour) => jour.id === targetJourIdForElement) ?? null;
 
     return {
       titre: elementForm.titre.trim(),
       description: elementForm.description.trim(),
-      heureDebut: elementForm.heureDebut || null,
-      heureFin: elementForm.heureFin || null,
+      heureDebut: combineDateAndTime(targetJour?.dateJour, elementForm.heureDebut),
+      heureFin: combineDateAndTime(targetJour?.dateJour, elementForm.heureFin),
       ordreAffichage: currentElement?.ordreAffichage ?? insertElementAtIndex + 1,
       budgetPrevu: elementForm.budgetPrevu ? Number(elementForm.budgetPrevu) : null,
       devise: elementForm.devise.trim() || "MGA",
@@ -1955,11 +1977,11 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Heure debut</label>
-                <Input type="datetime-local" value={elementForm.heureDebut} onChange={(event) => updateElementForm("heureDebut", event.target.value)} />
+                <Input type="time" value={elementForm.heureDebut} onChange={(event) => updateElementForm("heureDebut", event.target.value)} />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Heure fin</label>
-                <Input type="datetime-local" value={elementForm.heureFin} onChange={(event) => updateElementForm("heureFin", event.target.value)} />
+                <Input type="time" value={elementForm.heureFin} onChange={(event) => updateElementForm("heureFin", event.target.value)} />
               </div>
               {(selectedTypeElementJour?.code === "ACTIVITE" || selectedTypeElementJour?.code === "HEBERGEMENT") ? (
                 <div className="space-y-2 sm:col-span-2">

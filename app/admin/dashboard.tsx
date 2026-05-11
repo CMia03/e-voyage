@@ -17,6 +17,8 @@ type AdminDashboardProps = {
   accessToken: string;
 };
 
+const destinationTravelerColors = ["#10b981", "#f59e0b", "#3b82f6", "#64748b", "#14b8a6", "#a855f7"];
+
 export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
   const [users, setUsers] = useState<UserSummary[]>([]);
   const [usersError, setUsersError] = useState("");
@@ -42,13 +44,20 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
     ];
   }, [dashboardData]);
 
-  // Mock data for user stats
-  const userStatsData = [
-    { name: "Admins", value: 5, color: "#3b82f6" },
-    { name: "Premium", value: 120, color: "#10b981" },
-    { name: "Standard", value: 280, color: "#6b7280" },
-    { name: "Nouveaux", value: 45, color: "#f59e0b" },
-  ];
+  const destinationTravelerData = useMemo(
+    () =>
+      (dashboardData?.data.voyageursParDestination ?? []).map((item, index) => ({
+        name: item.destinationName,
+        value: item.pourcentage,
+        count: item.nombrePersonnes,
+        color: destinationTravelerColors[index % destinationTravelerColors.length],
+      })),
+    [dashboardData?.data.voyageursParDestination]
+  );
+  const totalTravelers = (dashboardData?.data.voyageursParDestination ?? []).reduce(
+    (sum, item) => sum + item.nombrePersonnes,
+    0
+  );
 
   useEffect(() => {
     if (role !== "ADMIN" || !accessToken) return;
@@ -99,6 +108,7 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
       active = false;
     };
   }, [accessToken]);
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-2">
@@ -192,14 +202,22 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
           </CardHeader>
           <CardContent>
             <div>
-              <h4 className="text-sm font-medium mb-3">Utilisateurs enregistrés</h4>
-              <UserStatsChart data={userStatsData} />
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <div>
+                  <h4 className="text-sm font-medium">Voyageurs par destination</h4>
+                  <p className="text-xs text-muted-foreground">Toutes les réservations avec voyageurs.</p>
+                </div>
+                <div className="rounded-md bg-emerald-50 px-2 py-1 text-right text-xs text-emerald-800">
+                  <p className="font-semibold">{totalTravelers}</p>
+                  <p>personne(s)</p>
+                </div>
+              </div>
+              <UserStatsChart data={destinationTravelerData} />
             </div>
           </CardContent>
         </Card>
       </section>
 
-      
       {role === "ADMIN" ? (
         <section className="grid gap-4">
           <Card>
