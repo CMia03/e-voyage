@@ -158,7 +158,12 @@ export default function UserHomePage() {
               </div>
               <div className="space-y-4 p-5">
                 <div className="space-y-2">
-                  <h3 className="text-xl font-semibold text-slate-900">{destination.title}</h3>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <h3 className="text-xl font-semibold text-slate-900">{destination.title}</h3>
+                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">
+                      {destination.price?.trim() || "Prix sur demande"}
+                    </span>
+                  </div>
                   <p className="line-clamp-3 text-sm leading-6 text-slate-600">{destination.description}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">

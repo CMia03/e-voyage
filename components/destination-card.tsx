@@ -14,6 +14,7 @@ interface DestinationCardProps {
 
 export function DestinationCard({ destination }: DestinationCardProps) {
   const { title, description, image, price, marketing, features, gallery = [], id } = destination;
+  const displayPrice = price?.trim() || "Prix sur demande";
   const marketingItems = marketing?.length ? marketing : (features ?? []);
   const images = gallery.length > 0 ? gallery : [image];
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -48,8 +49,8 @@ export function DestinationCard({ destination }: DestinationCardProps) {
             />
           </div>
         ))}
-        <Badge className="absolute right-4 top-4 z-20 bg-primary/90 text-white">
-          {price}
+        <Badge className="absolute right-4 top-4 z-20 max-w-[calc(100%-2rem)] bg-primary/90 text-white shadow-lg">
+          {displayPrice}
         </Badge>
         {/* Indicateurs de progression */}
         {images.length > 1 && (

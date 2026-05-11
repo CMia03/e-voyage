@@ -34,6 +34,7 @@ export function DestinationSelector({
         {destinations.map((destination) => {
           const selected = value === destination.id;
           const imageSrc = destination.image?.trim() ? destination.image : null;
+          const displayPrice = destination.price?.trim() || "Prix sur demande";
           return (
             <button
               key={destination.id}
@@ -71,7 +72,7 @@ export function DestinationSelector({
                     {destination.title}
                   </h4>
                   <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700">
-                    {destination.price}
+                    {displayPrice}
                   </span>
                 </div>
                 <p className="line-clamp-2 text-xs leading-5 text-slate-600">

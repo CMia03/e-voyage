@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CalendarDays, ListChecks, Users } from "lucide-react";
 import { loadAuth } from "@/lib/auth";
 import { getErrorMessage } from "@/lib/api/client";
 import { deleteMyReservation, getReservationById } from "@/lib/api/reservations";
@@ -544,69 +545,70 @@ export default function ReservationDetailPage() {
             </Card>
 
             {reservationElements.length > 0 ? (
-              <Card className="border-border/50 overflow-hidden">
-                <CardHeader className="bg-gradient-to-r from-emerald-50 to-emerald-100/30 border-b border-emerald-200">
+              <Card className="overflow-hidden border-slate-200 bg-white shadow-sm">
+                <CardHeader className="border-b border-slate-100 bg-white">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <CardTitle className="text-emerald-900 flex items-center gap-2">
-                        <span className="text-2xl">📋</span>
+                    <div className="space-y-1">
+                      <CardTitle className="flex items-center gap-2 text-slate-950">
+                        <ListChecks className="h-5 w-5 text-emerald-600" />
                         Elements selectionnes
                       </CardTitle>
-                      <CardDescription className="text-emerald-700">
-                        Blocs retenus pour l&apos;ensemble de la reservation.
+                      <CardDescription>
+                        Les prestations retenues dans votre demande de reservation.
                       </CardDescription>
                     </div>
                     {reservation.source === "SIMULATION" ? (
                       <Button 
                         type="button" 
-                        className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white border-2 border-emerald-400 shadow-lg transition-all duration-300 hover:scale-105"
+                        variant="outline"
+                        className="h-10 gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
                         onClick={() => setIsPlanningOpen(true)}
                       >
-                        <span className="mr-2">📅</span>
+                        <CalendarDays className="h-4 w-4" />
                         Voir le planning journalier
                       </Button>
                     ) : null}
                   </div>
                 </CardHeader>
-                <CardContent className="p-6 bg-gradient-to-b from-emerald-50/20 to-transparent">
-                  <div className="space-y-6">
+                <CardContent className="p-0">
+                  <div className="divide-y divide-slate-100">
                     {Array.from(elementsByDay.entries())
                       .sort(([dayA], [dayB]) => dayA - dayB)
                       .map(([dayNumber, elements]) => (
-                        <div key={dayNumber} className="space-y-3">
-                          <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white font-bold shadow-lg">
-                              📅
-                            </div>
+                        <div key={dayNumber} className="px-5 py-4">
+                          <div className="mb-3 flex items-center justify-between gap-3">
                             <div>
-                              <h3 className="text-lg font-bold text-emerald-900">Jour {dayNumber}</h3>
-                              <p className="text-sm text-emerald-700">
-                                {elements.length} bloc{elements.length > 1 ? 's' : ''}
+                              <h3 className="text-sm font-semibold text-slate-950">Jour {dayNumber}</h3>
+                              <p className="mt-0.5 text-xs text-slate-500">
+                                {elements.length} prestation{elements.length > 1 ? "s" : ""}
                               </p>
                             </div>
+                            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+                              {elements.length}
+                            </span>
                           </div>
                           
-                          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                          <div className="grid gap-2 md:grid-cols-2">
                             {elements.map((element) => (
                               <div
                                 key={`${element.elementId}-${element.quantite}`}
-                                className="group relative overflow-hidden rounded-2xl border-2 bg-gradient-to-br from-white via-emerald-50/20 to-emerald-50/40 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.03] hover:-translate-y-1 border-emerald-200"
+                                className="rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3"
                               >
                                 {/* Header avec icône */}
-                                <div className="relative p-4 pb-3">
+                                <div>
                                  
 
                                   <div className="flex items-start gap-3">
                                     <div className="flex-1 min-w-0">
                                      
                                       
-                                      <h4 className="text-base font-bold text-slate-900 leading-tight group-hover:text-emerald-700 transition-colors line-clamp-2">
-                                        {elementNameMap.get(element.elementId) ?? element.elementId}
+                                      <h4 className="line-clamp-2 text-sm font-medium leading-tight text-slate-900">
+                                        {element.nomElement || elementNameMap.get(element.elementId) || element.elementId}
                                       </h4>
                                       
                                       <div className="mt-2 flex items-center gap-2">
-                                        <div className="inline-flex items-center gap-1 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-3 py-1 text-xs font-medium shadow-lg">
-                                          <span className="text-xs">👥</span>
+                                        <div className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">
+                                          <Users className="h-3.5 w-3.5" />
                                           <span>{element.quantite} pers</span>
                                         </div>
                                       </div>
