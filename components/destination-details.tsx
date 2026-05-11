@@ -517,9 +517,9 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
                   </div>
                 )}
               </div>
-              <Button className="w-full mt-4" size="lg">
+              {/* <Button className="w-full mt-4" size="lg">
                 Réserver maintenant
-              </Button>
+              </Button> */}
             </CardContent>
           </Card>
         )}

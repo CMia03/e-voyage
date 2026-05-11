@@ -263,7 +263,7 @@ export function PlanningJournalier({
         </div>
       ) : null}
 
-      <div className="flex gap-6 overflow-x-auto px-4 pb-4 [scrollbar-width:thin]">
+      <div className="flex gap-5 overflow-x-auto px-2 pb-4 [scrollbar-width:thin]">
         {jours.map((jour) => {
           const totalElements = jour.elements.length;
           const totalSelectionnes = jour.elements.filter(
@@ -273,35 +273,35 @@ export function PlanningJournalier({
           return (
             <section
               key={jour.numeroJour}
-              className="min-w-[900px] max-w-[900px] shrink-0 snap-start rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_16px_50px_-40px_rgba(15,23,42,0.45)]"
+              className="min-w-[900px] max-w-[900px] shrink-0 snap-start rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
             >
               <div className="flex items-start justify-between gap-3 mb-4">
                 <div className="min-w-0 space-y-2">
-                  <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600">
                     <CalendarDays className="h-3.5 w-3.5 text-emerald-600" />
                     Jour {jour.numeroJour}
                   </div>
                   <div>
-                    <h3 className="text-2xl font-semibold tracking-tight text-slate-900">
+                    {/* <h3 className="text-xl font-semibold tracking-tight text-slate-900">
                       {getDayHeading(jour)}
-                    </h3>
+                    </h3> */}
                     <p className="mt-1 text-sm text-slate-600">
                       {totalSelectionnes} selectionne(s) sur {totalElements} bloc(s)
                     </p>
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-right">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                {/* <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-right">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                     Total du jour
                   </p>
-                  <p className="mt-1 text-sm font-semibold text-emerald-900">
+                  <p className="mt-1 text-sm font-semibold text-slate-900">
                     {formatAr(jour.totalJour)}
                   </p>
-                </div>
+                </div> */}
               </div>
 
-              <div className="max-h-[400px] overflow-y-auto">
+              <div className="max-h-[400px] overflow-y-auto pr-1">
                   <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                     {jour.elements.map((element: ElementSimulation) => {
                   const quantiteCourante = Math.max(
@@ -314,51 +314,43 @@ export function PlanningJournalier({
                   return (
                     <article
                       key={element.id}
-                      className={`group relative overflow-hidden rounded-3xl border-2 bg-gradient-to-br from-white via-slate-50/20 to-slate-50/40 shadow-xl transition-all duration-500 hover:shadow-2xl hover:scale-[1.03] hover:-translate-y-1 ${
+                      className={`group relative flex min-h-[230px] flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
                         estSelectionne
-                          ? "border-emerald-400 bg-gradient-to-br from-emerald-50 via-emerald-100/30 to-emerald-100/60 ring-2 ring-emerald-300/40 shadow-emerald-200/20"
-                          : "border-slate-300/60 bg-gradient-to-br from-white via-slate-50/10 to-slate-50/20 hover:border-slate-400/60"
+                          ? "border-emerald-300"
+                          : "border-slate-200 hover:border-slate-300"
                       }`}
                     >
                       {/* Header avec badge de statut et icône */}
-                      <div className="p-6 pb-4">
+                      <div className="flex flex-1 flex-col p-5 pb-4">
 
-                        <div className="flex items-start gap-4">
+                        <div className="flex flex-1 items-start gap-4">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-3 mb-3">
-                              <span className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold tracking-wide ${
+                              <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${
                                 estSelectionne
-                                  ? "bg-emerald-500 text-white shadow-lg border-2 border-emerald-400"
-                                  : "bg-slate-400 text-white shadow-lg border-2 border-slate-400"
+                                  ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100"
+                                  : "bg-slate-100 text-slate-600"
                               }`}>
                                 {element.obligatoire ? (
-                                  <><span className="w-2 h-2 bg-white rounded-full mr-1"></span><span>Essentiel</span></>
+                                  <><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /><span>Essentiel</span></>
                                 ) : (
-                                  <><span className="w-2 h-2 bg-white rounded-full mr-1"></span><span>Option</span></>
+                                  <><span className="h-1.5 w-1.5 rounded-full bg-slate-400" /><span>Option</span></>
                                 )}
                               </span>
                                                           </div>
-                            <h4 className="text-xl font-bold text-slate-900 leading-tight group-hover:text-emerald-700 transition-colors">
+                            <h4 className="text-lg font-semibold leading-tight text-slate-900">
                               {element.titre}
                             </h4>
-                            <p className="text-sm text-slate-600 mt-2 font-medium">
+                            <p className="mt-2 text-sm font-medium text-slate-500">
                               {getTypeLabel(element.type)}
                             </p>
                           </div>
                         </div>
 
                         {/* Prix et quantité avec meilleur alignement */}
-                        <div className="flex items-end justify-between gap-6 mt-4">
-                          <div className="flex-1">
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                              Prix par personne
-                            </p>
-                            <p className="text-2xl font-black text-slate-900 group-hover:text-emerald-700 transition-colors">
-                              {formatAr(element.prix)}
-                            </p>
-                          </div>
-                          <div className="w-24">
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 text-center">
+                        <div className="mt-5">
+                          <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                               Quantité
                             </p>
                             <input
@@ -377,9 +369,9 @@ export function PlanningJournalier({
                                   )
                                 )
                               }
-                              className={`h-12 w-full rounded-xl border-2 text-center text-lg font-bold transition-all ${
+                              className={`h-9 w-20 rounded-lg border text-center text-sm font-semibold transition-all ${
                                 estSelectionne
-                                  ? "border-emerald-400 bg-emerald-50 text-emerald-700 placeholder-emerald-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-300"
+                                  ? "border-emerald-200 bg-white text-emerald-700 placeholder-emerald-300 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
                                   : "border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-300"
                               } outline-none`}
                             />
@@ -388,17 +380,17 @@ export function PlanningJournalier({
                       </div>
 
                       {/* Détails et actions avec design amélioré */}
-                      <div className="px-6 pb-6 bg-gradient-to-b from-slate-50/20 to-transparent">
-                        <div className="flex flex-wrap items-center gap-3">
+                      <div className="border-t border-slate-100 px-5 pb-5 pt-4">
+                        <div className="flex flex-wrap items-center gap-2">
                           {element.details?.duree && (
-                            <div className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-4 py-2 font-medium shadow-lg">
+                            <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700">
                               <Clock3 className="h-4 w-4" />
                               <span>{element.details.duree}</span>
                             </div>
                           )}
 
                           {element.details?.capacite && (
-                            <div className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-4 py-2 font-medium shadow-lg">
+                            <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700">
                               <Users className="h-4 w-4" />
                               <span>Capacité : {element.details.capacite} pers</span>
                             </div>
@@ -414,9 +406,8 @@ export function PlanningJournalier({
                                   activeIndex: 0,
                                 })
                               }
-                              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-4 py-2 font-medium shadow-lg hover:from-emerald-600 hover:to-emerald-700 transition-all duration-300 hover:scale-105"
+                              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
                             >
-                              <span className="text-lg">📸</span>
                               <span>Voir les photos</span>
                             </button>
                           )}

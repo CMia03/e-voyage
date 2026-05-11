@@ -18,7 +18,7 @@ interface StarRatingProps {
 }
 
 export function StarRating({
-  rating,
+  rating: _rating,
   destinationId,
   destinationName,
   maxRating = 5,
@@ -26,6 +26,7 @@ export function StarRating({
   className = "",
   isAuthenticated = false,
 }: StarRatingProps) {
+  void _rating;
   const [currentRating, setCurrentRating] = useState(0); // Commence à 0 (gris)
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hoveredRating, setHoveredRating] = useState(0);

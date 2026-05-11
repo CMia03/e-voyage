@@ -1,5 +1,4 @@
-import { apiRequest, ApiEnvelope } from "@/lib/api/client";
-import axios from "axios";
+import { apiRequest } from "@/lib/api/client";
 import { AllNotationsResponse, NotationData, NotationResponse } from "../type/notation";
 
 export async function getUserRating(destinationId: string, userId: string): Promise<NotationResponse> {
@@ -26,7 +25,7 @@ export async function saveUserRating(destinationId: string, userId: string, rati
 
 export async function getDestinationNotations(destinationId: string): Promise<AllNotationsResponse> {
   return apiRequest<AllNotationsResponse>(
-    `/api/notations/destination/${destinationId}`
+    `/api/notations/destination/${destinationId}/active`
   );
 }
 

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { Bell, MessageCircle, Check, Trash2, ExternalLink, X, Eye } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Bell, MessageCircle, Trash2, ExternalLink, X, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ import {
   listAdminNotifications,
   markAdminNotificationAsRead,
 } from "@/lib/api/admin-notifications";
+import { getAllCommentairesAdmin } from "@/lib/api/commentaires";
 import { AdminNotification } from "@/lib/type/admin-notification";
 import { CommentaireData } from "@/lib/type/commentaire";
 
@@ -20,23 +21,33 @@ export function AdminNotifications() {
   const session = loadAuth();
   const token = session?.accessToken;
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
+  const [pendingCommentaires, setPendingCommentaires] = useState<CommentaireData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
 
-  const loadNotifications = async () => {
+  const loadNotifications = useCallback(async () => {
     if (!token) return;
 
     try {
       setIsLoading(true);
-      const response = await listAdminNotifications(token);
-      setNotifications(response.data?.notifications ?? []);
+      const [notificationsResponse, commentairesResponse] = await Promise.all([
+        listAdminNotifications(token),
+        getAllCommentairesAdmin(token),
+      ]);
+
+      setNotifications(notificationsResponse.data?.notifications ?? []);
+      setPendingCommentaires(
+        commentairesResponse.success
+          ? commentairesResponse.data?.filter((commentaire) => commentaire.status !== true) ?? []
+          : []
+      );
     } catch (error) {
       console.error("Erreur lors du chargement des notifications admin:", error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     void loadNotifications();
@@ -44,9 +55,10 @@ export function AdminNotifications() {
       void loadNotifications();
     }, 30000);
     return () => clearInterval(interval);
-  }, [token]);
+  }, [loadNotifications]);
 
-  const unreadCount = notifications.filter((notification) => !notification.read).length;
+  const unreadCount =
+    notifications.filter((notification) => !notification.read).length + pendingCommentaires.length;
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
@@ -102,6 +114,11 @@ export function AdminNotifications() {
     setIsOpen(false);
   };
 
+  const handleOpenCommentaires = () => {
+    router.push("/admin?section=commentaires");
+    setIsOpen(false);
+  };
+
   const handleDeleteNotification = async (notificationId: string) => {
     if (!token) return;
 
@@ -125,7 +142,7 @@ export function AdminNotifications() {
             {unreadCount > 99 ? "99+" : unreadCount}
           </Badge>
         ) : null}
-        <span className="sr-only">Notifications de reservations</span>
+        <span className="sr-only">Notifications admin</span>
       </Button>
 
       {isOpen && (
@@ -143,13 +160,61 @@ export function AdminNotifications() {
           <CardContent className="p-0">
             {isLoading ? (
               <div className="p-4 text-center text-sm text-muted-foreground">Chargement...</div>
-            ) : notifications.length === 0 ? (
+            ) : notifications.length === 0 && pendingCommentaires.length === 0 ? (
               <div className="p-4 text-center text-sm text-muted-foreground">
                 <Bell className="mx-auto mb-2 h-8 w-8 opacity-50" />
-                Aucune notification de reservation
+                Aucune notification
               </div>
             ) : (
               <div className="max-h-80 overflow-y-auto">
+                {pendingCommentaires.length > 0 ? (
+                  <div className="border-b bg-amber-50/60 p-4">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <MessageCircle className="h-4 w-4 text-amber-700" />
+                        <p className="text-sm font-semibold text-amber-900">
+                          Commentaires en attente
+                        </p>
+                      </div>
+                      <Badge className="bg-red-600 text-white hover:bg-red-600">
+                        {pendingCommentaires.length > 99 ? "99+" : pendingCommentaires.length}
+                      </Badge>
+                    </div>
+
+                    <div className="space-y-2">
+                      {pendingCommentaires.slice(0, 3).map((commentaire) => (
+                        <button
+                          key={`${commentaire.idDestination}-${commentaire.idUser}`}
+                          type="button"
+                          onClick={handleOpenCommentaires}
+                          className="w-full rounded-md border bg-white px-3 py-2 text-left text-sm transition-colors hover:bg-amber-50"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-medium text-foreground">
+                              {commentaire.nomUser || commentaire.idUser}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {commentaire.nomDestination || "Destination"}
+                            </span>
+                          </div>
+                          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                            {commentaire.contenu}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleOpenCommentaires}
+                      className="mt-3 h-8 w-full text-amber-800 hover:bg-amber-100 hover:text-amber-900"
+                    >
+                      Voir les commentaires
+                    </Button>
+                  </div>
+                ) : null}
+
                 {notifications.slice(0, 8).map((notification) => (
                   <div key={notification.id} className="border-b p-4 last:border-b-0">
                     <div className="flex items-start gap-3">

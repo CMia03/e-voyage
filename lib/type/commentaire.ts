@@ -4,6 +4,7 @@ export interface CommentaireData {
   contenu: string;
   dateCreation: string;
   nomUser?: string;
+  nomDestination?: string;
   status?: boolean; 
 }
 

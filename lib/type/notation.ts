@@ -6,7 +6,7 @@ export interface NotationData {
   nomDestination: string;
   dateCreation: string;
   dateModification: string;
-  status: string;
+  status: boolean;
   nombreEtoiles: number;
 }
 

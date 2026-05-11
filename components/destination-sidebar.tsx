@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,6 +21,22 @@ export function DestinationSidebar({ destinationId, destinationName, averageRati
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [notations, setNotations] = useState<NotationData[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const ratingStats = useMemo(() => {
+    const approvedNotations = notations.filter((notation) => notation.status === true);
+    const total = approvedNotations.length;
+    const distribution = [5, 4, 3, 2, 1].map((rating) => ({
+      rating,
+      count: approvedNotations.filter((notation) => notation.nombreEtoiles === rating).length,
+    }));
+    const average =
+      total > 0
+        ? approvedNotations.reduce((sum, notation) => sum + notation.nombreEtoiles, 0) / total
+        : averageRating;
+    const maxCount = Math.max(...distribution.map((item) => item.count), 1);
+
+    return { average, total, distribution, maxCount };
+  }, [averageRating, notations]);
 
   // Charger les notations et commentaires
   useEffect(() => {
@@ -48,19 +64,7 @@ export function DestinationSidebar({ destinationId, destinationName, averageRati
               userId: commentaire.idUser
             }));
           
-          // Ajouter les notations transformées en commentaires
-          const notationComments: Comment[] = notationsResponse.data
-            ?.filter(notation => notation.status === "APPROVED")
-            ?.map(notation => ({
-              id: notation.idAvis,
-              user: notation.nomUser,
-              content: `A noté cette destination ${notation.nombreEtoiles} étoiles`,
-              date: new Date(notation.dateCreation).toLocaleDateString('fr-FR'),
-              rating: notation.nombreEtoiles
-            })) || [];
-          
-          // Combiner commentaires et notations, trier par date
-          const allComments = [...transformedComments, ...notationComments].sort((a, b) => 
+          const allComments = transformedComments.sort((a, b) => 
             new Date(b.date).getTime() - new Date(a.date).getTime()
           );
           
@@ -101,46 +105,58 @@ export function DestinationSidebar({ destinationId, destinationName, averageRati
     }
   };
 
-  const calculateAverageRating = () => {
-    if (notations.length === 0) return averageRating;
-    const sum = notations.reduce((acc, notation) => acc + notation.nombreEtoiles, 0);
-    return sum / notations.length;
-  };
-
   return (
     <div className="w-full lg:w-80 space-y-6">
       <Card className="sticky top-6">
-        <CardHeader className="pb-0">
-          <CardTitle className="flex items-center gap-2">
-            <Star className="h-5 w-5 text-yellow-500" />
-            Notation
-          </CardTitle>
+        <CardHeader className="pb-3">
+          <CardTitle>Evaluations et avis</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-1">
-          <div className="text-center p-1 bg-muted/50 rounded-lg">
-            <div className="text-2xl font-bold text-primary mb-0">
-              {calculateAverageRating().toFixed(1)}/5
+        <CardContent className="space-y-5">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4">
+            <div className="flex items-end gap-3">
+              <p className="text-5xl font-semibold leading-none tracking-tight text-slate-900">
+                {ratingStats.average.toFixed(1)}
+              </p>
+              <div className="pb-1">
+                <div className="flex gap-0.5">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`h-4 w-4 ${
+                        i < Math.round(ratingStats.average)
+                          ? "fill-amber-400 text-amber-400"
+                          : "fill-slate-200 text-slate-200"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <p className="mt-1 text-xs text-slate-500">
+                  {ratingStats.total} avis client{ratingStats.total > 1 ? "s" : ""}
+                </p>
+              </div>
             </div>
-            <div className="flex justify-center mb-0">
-              {[...Array(5)].map((_, i) => (
-                <Star
-                  key={i}
-                  className={`h-4 w-4 ${
-                    i < calculateAverageRating()
-                      ? "fill-yellow-400 text-yellow-400"
-                      : "fill-gray-300 text-gray-300"
-                  }`}
-                />
+
+            <div className="mt-5 space-y-2.5">
+              {ratingStats.distribution.map((item) => (
+                <div key={item.rating} className="grid grid-cols-[28px_1fr_34px] items-center gap-2">
+                  <div className="flex items-center gap-1 text-xs font-medium text-slate-600">
+                    {item.rating}
+                    <Star className="h-3 w-3 fill-slate-400 text-slate-400" />
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                    <div
+                      className="h-full rounded-full bg-amber-400"
+                      style={{ width: `${(item.count / ratingStats.maxCount) * 100}%` }}
+                    />
+                  </div>
+                  <p className="text-right text-xs text-slate-500">{item.count}</p>
+                </div>
               ))}
             </div>
-            <p className="text-sm text-muted-foreground">
-              {notations.length} avis
-            </p>
           </div>
 
-          {/* Interface de notation */}
-          <div className="border-t pt-1">
-            <p className="text-sm font-medium mb-0">Votre avis :</p>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+            <p className="mb-2 text-sm font-medium text-slate-900">Noter cette destination</p>
             <StarRating
               rating={0}
               destinationId={destinationId}
@@ -149,9 +165,13 @@ export function DestinationSidebar({ destinationId, destinationName, averageRati
               size="lg"
               className="justify-center"
             />
-            {!isAuthenticated && (
-              <p className="text-xs text-muted-foreground mt-0 text-center">
-                Connectez-vous pour noter
+            {!isAuthenticated ? (
+              <p className="mt-2 text-center text-xs text-muted-foreground">
+                Connectez-vous pour ajouter votre evaluation.
+              </p>
+            ) : (
+              <p className="mt-2 text-center text-xs text-muted-foreground">
+                Votre note est affichee directement dans la moyenne.
               </p>
             )}
           </div>

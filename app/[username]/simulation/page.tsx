@@ -657,9 +657,12 @@ export default function SimulationPage() {
             <span className="block text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
               Message
             </span>
-            <span className="mt-1 block text-sm font-medium text-slate-900">
-              Voir l&apos;ajustement recommande
-            </span>
+
+            <p className="mt-2 text-sm leading-6 text-amber-900/85">
+              Il manque <span className="font-semibold">{formatAr(depassement)}</span>{" "}
+              pour couvrir <br /> toutes les quantités sélectionnées.
+            </p>
+
           </span>
         </button>
       ) : null}
@@ -678,9 +681,12 @@ export default function SimulationPage() {
             <span className="block text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
               Suggestion
             </span>
+
             <span className="mt-1 block text-sm font-medium text-slate-900">
+              Il vous reste <span className="font-semibold">{formatAr(resteDisponible)}</span>{" "} <br />
               Voir les blocs encore disponibles
             </span>
+
           </span>
         </button>
       ) : null}
@@ -719,10 +725,13 @@ export default function SimulationPage() {
 
           <div className="mt-4 rounded-2xl border border-amber-300 bg-white/75 px-4 py-3">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-700">
-              Total suggere
+              Economie proposee
             </p>
             <p className="mt-1 text-lg font-semibold text-amber-950">
               {formatAr(totalSuggestions)}
+            </p>
+            <p className="mt-1 text-xs leading-5 text-amber-900/80">
+              Montant que vous pouvez economiser en appliquant les retraits proposes.
             </p>
           </div>
 
@@ -753,7 +762,7 @@ export default function SimulationPage() {
                       Prix par personne : <span className="font-semibold">{formatAr(element.prixParPersonne)}</span>
                     </p>
                     <p>
-                      Reduction suggeree : <span className="font-semibold">{element.quantiteRetiree}</span> personne(s)
+                      Economie sur ce bloc : <span className="font-semibold">{formatAr(element.economieSuggeree)}</span>
                     </p>
                     <p>
                       Suggestion : passer a <span className="font-semibold">{element.quantiteSuggeree}</span> personne(s)
@@ -815,13 +824,16 @@ export default function SimulationPage() {
 
           <div className="mt-4 rounded-2xl border border-emerald-300 bg-white/75 px-4 py-3">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
-              Total suggere
+              Option ajoutable
             </p>
             <p className="mt-1 text-lg font-semibold text-emerald-950">
               {formatAr(totalSuggestionsDisponibles)}
             </p>
+            <p className="mt-1 text-xs leading-5 text-emerald-800/80">
+              Vous pouvez ajouter ces options sans depasser votre budget.
+            </p>
             <p className="mt-1 text-xs text-emerald-800/80">
-              Reste apres suggestion : {formatAr(resteApresSuggestions)}
+              Budget restant apres ajout : {formatAr(resteApresSuggestions)}
             </p>
           </div>
 
