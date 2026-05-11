@@ -634,6 +634,7 @@ export default function ReservationsPage() {
   const isSimulationPrefill = form.source === "SIMULATION";
   const isDirectForfaitPrefill = form.source === "PRIX_DIRECT" && !!prefill.destinationId && !!prefill.planificationVoyageId;
   const isLockedPrefill = isSimulationPrefill || isDirectForfaitPrefill;
+  const canEditVoyageurProfiles = form.source === "PRIX_DIRECT";
   const isEditMode = !!prefill.editReservationId;
   const simulationElementCards = useMemo<SimulationElementCard[]>(() => {
     const quantitiesByElement = new Map(
@@ -1079,7 +1080,7 @@ export default function ReservationsPage() {
                       Melangez plusieurs categories et plusieurs gammes dans une seule reservation.
                     </p>
                   </div>
-                  {!isLockedPrefill ? (
+                  {canEditVoyageurProfiles ? (
                     <Button
                       type="button"
                       variant="outline"
@@ -1136,7 +1137,7 @@ export default function ReservationsPage() {
                           return (
                             <tr key={`${profile.categorieClientId || "profil"}-${index}`} className="hover:bg-slate-50/50 transition-colors">
                               <td className="px-6 py-4">
-                                {isLockedPrefill ? (
+                                {!canEditVoyageurProfiles ? (
                                   <div className="rounded-lg border border-border/30 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700">
                                     {profileCategory?.nom ?? `Catégorie ${index + 1}`}
                                   </div>
@@ -1169,7 +1170,7 @@ export default function ReservationsPage() {
                               </td>
 
                               <td className="px-6 py-4">
-                                {isLockedPrefill ? (
+                                {!canEditVoyageurProfiles ? (
                                   <div className="rounded-lg border border-border/30 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700">
                                     {normalizeGamme(profile.gamme)}
                                   </div>
@@ -1204,7 +1205,7 @@ export default function ReservationsPage() {
                                 <Input
                                   type="number"
                                   min={1}
-                                  readOnly={isLockedPrefill}
+                                  readOnly={!canEditVoyageurProfiles}
                                   value={profile.nombrePersonnes}
                                   onChange={(event) =>
                                     setForm((current) => ({
@@ -1236,7 +1237,7 @@ export default function ReservationsPage() {
                               )}
 
                               <td className="px-6 py-4 text-center">
-                                {!isLockedPrefill ? (
+                                {canEditVoyageurProfiles ? (
                                   <Button
                                     type="button"
                                     variant="ghost"
