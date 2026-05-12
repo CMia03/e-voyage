@@ -41,6 +41,7 @@ import {
 } from "@/lib/api/hebergements";
 import { loadAuth } from "@/lib/auth";
 import { Hebergement, SaveTarifHebergementPayload, SaveTarifPhotoPayload, TarifHebergement, TypeChambre, TypeSalle } from "@/lib/type/hebergement";
+import { useAdminNavigation } from "../../contexts/admin-navigation-context";
 
 type Props = { hebergementId: string };
 type PhotoFormState = { idTypeSalle: string; imageFiles: File[] };
@@ -82,6 +83,7 @@ function formatDate(value: string | null | undefined) {
 
 export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
   const router = useRouter();
+  const { setActive } = useAdminNavigation();
   const [accessToken, setAccessToken] = useState("");
   const [role, setRole] = useState("");
   const [hebergement, setHebergement] = useState<Hebergement | null>(null);
@@ -170,6 +172,11 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
     if (!accessToken || role !== "ADMIN") return;
     void loadPage();
   }, [accessToken, role, hebergementId]);
+
+  useEffect(() => {
+    // Synchroniser la section active avec la navigation admin
+    setActive("hebergements-view");
+  }, [setActive]);
 
   useEffect(() => {
     if (!successMessage) {

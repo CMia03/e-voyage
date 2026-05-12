@@ -5,16 +5,15 @@ import { Bell, MessageCircle, Trash2, ExternalLink, X, Eye, ArrowRight } from "l
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { loadAuth } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import {
   deleteAdminNotification,
   listAdminNotifications,
   markAdminNotificationAsRead,
 } from "@/lib/api/admin-notifications";
-import { getAllCommentairesAdmin } from "@/lib/api/commentaires";
+import { CommentaireData, getAllCommentairesAdmin } from "@/lib/api/commentaires";
 import { AdminNotification } from "@/lib/type/admin-notification";
-import { CommentaireData } from "@/lib/type/commentaire";
+import { loadAuth } from "@/lib/auth";
 
 export function AdminNotifications() {
   const router = useRouter();
@@ -90,20 +89,28 @@ export function AdminNotifications() {
     return date.toLocaleDateString("fr-FR");
   };
 
-  const handleOpenReservation = async (notification: AdminNotification) => {
-    if (!token) return;
+  const markNotificationAsRead = async (notification: AdminNotification) => {
+    if (!token || notification.read) return;
+
+    setNotifications((current) =>
+      current.map((item) =>
+        item.id === notification.id ? { ...item, read: true } : item
+      )
+    );
 
     try {
-      if (!notification.read) {
-        await markAdminNotificationAsRead(notification.id, token);
-        setNotifications((current) =>
-          current.map((item) => (item.id === notification.id ? { ...item, read: true } : item))
-        );
-      }
+      await markAdminNotificationAsRead(notification.id, token);
     } catch (error) {
       console.error("Erreur lecture notification:", error);
     }
+  };
 
+  const handleOpenCommentaires = () => {
+    router.push("/admin?section=commentaires");
+    setIsOpen(false);
+  };
+
+  const openNotificationTarget = (notification: AdminNotification) => {
     if (notification.reservationId) {
       router.push(`/admin/reservations/liste?reservationId=${encodeURIComponent(notification.reservationId)}`);
     } else if (notification.actionUrl) {
@@ -114,10 +121,19 @@ export function AdminNotifications() {
     setIsOpen(false);
   };
 
-  const handleOpenCommentaires = () => {
-    router.push("/admin?section=commentaires");
-    setIsOpen(false);
+  const handleMarkAsRead = async (notification: AdminNotification) => {
+    await markNotificationAsRead(notification);
+    openNotificationTarget(notification);
   };
+
+  const handleOpenReservation = async (notification: AdminNotification) => {
+    await markNotificationAsRead(notification);
+    openNotificationTarget(notification);
+  };
+
+
+
+
 
   const handleDeleteNotification = async (notificationId: string) => {
     if (!token) return;
@@ -253,7 +269,7 @@ export function AdminNotifications() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => void handleOpenReservation(notification)}
+                              onClick={() => void handleMarkAsRead(notification)}
                               className="h-6 px-2 text-xs"
                             >
                               <ExternalLink className="mr-1 h-3 w-3" />

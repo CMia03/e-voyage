@@ -12,7 +12,11 @@ interface BreadcrumbItem {
   isActive?: boolean;
 }
 
-export function AdminBreadcrumbs() {
+interface AdminBreadcrumbsProps {
+  noMargin?: boolean;
+}
+
+export function AdminBreadcrumbs({ noMargin = false }: AdminBreadcrumbsProps = {}) {
   const { active, setActive } = useAdminNavigation();
   const { breadcrumbs: customBreadcrumbs, resetBreadcrumbs } = useBreadcrumbs();
 
@@ -65,68 +69,68 @@ export function AdminBreadcrumbs() {
       case "hebergements":
         return [
           ...baseBreadcrumbs,
-          { label: "HÃ©bergements", isActive: true }
+          { label: "Hébergements", isActive: true }
         ];
 
       case "hebergements-create":
         return [
           ...baseBreadcrumbs,
-          { label: "HÃ©bergements", href: "/admin?section=hebergements" },
-          { label: "Ajouter hÃ©bergement", isActive: true }
+          { label: "Hébergements", href: "/admin?section=hebergements" },
+          { label: "Ajouter Hébergements", isActive: true }
         ];
 
       case "hebergements-edit":
         return [
           ...baseBreadcrumbs,
-          { label: "HÃ©bergements", href: "/admin?section=hebergements" },
-          { label: "Modifier hÃ©bergement", isActive: true }
+          { label: "Hébergements", href: "/admin?section=hebergements" },
+          { label: "Modifier Hébergements", isActive: true }
         ];
 
       case "hebergements-tarifs":
         return [
           ...baseBreadcrumbs,
-          { label: "HÃ©bergements", href: "/admin?section=hebergements" },
+          { label: "Hébergements", href: "/admin?section=hebergements" },
           { label: "Tarifs", isActive: true }
         ];
 
       case "hebergements-types":
         return [
           ...baseBreadcrumbs,
-          { label: "HÃ©bergements", href: "/admin?section=hebergements" },
+          { label: "Hébergements", href: "/admin?section=hebergements" },
           { label: "Types", isActive: true }
         ];
 
       case "hebergements-equipements":
         return [
           ...baseBreadcrumbs,
-          { label: "HÃ©bergements", href: "/admin?section=hebergements" },
+          { label: "Hébergements", href: "/admin?section=hebergements" },
           { label: "Ã‰quipements", isActive: true }
         ];
 
       case "activites":
         return [
           ...baseBreadcrumbs,
-          { label: "ActivitÃ©s", isActive: true }
+          { label: "Activités", isActive: true }
         ];
 
       case "activites-create":
         return [
           ...baseBreadcrumbs,
-          { label: "ActivitÃ©s", href: "/admin?section=activites" },
+          { label: "Activités", href: "/admin?section=activites" },
           { label: "Ajouter activitÃ©", isActive: true }
         ];
 
       case "activites-edit":
         return [
           ...baseBreadcrumbs,
-          { label: "ActivitÃ©s", href: "/admin?section=activites" },
+          { label: "Activités", href: "/admin?section=activites" },
           { label: "Modifier activitÃ©", isActive: true }
         ];
 
       case "activites-categories":
         return [
           ...baseBreadcrumbs,
-          { label: "ActivitÃ©s", href: "/admin?section=activites" },
+          { label: "Activités", href: "/admin?section=activites" },
           { label: "CatÃ©gories", isActive: true }
         ];
 
@@ -194,7 +198,7 @@ export function AdminBreadcrumbs() {
   const breadcrumbs = getBreadcrumbs();
 
   return (
-    <nav className="flex items-center space-x-1 text-sm text-muted-foreground mb-6">
+    <nav className={`flex items-center space-x-1 text-sm text-muted-foreground ${noMargin ? '' : 'mb-6'}`}>
       {breadcrumbs.map((item, index) => (
         <div key={index} className="flex items-center">
           {index === 0 && <Home className="h-4 w-4 mr-1" />}

@@ -29,10 +29,14 @@ import type {
   SaveDestinationMarketingPayload,
   SavePhotoDestinationBulkPayload,
 } from "@/lib/type/destination";
+import { useBreadcrumbs } from "../../contexts/breadcrumbs-context";
+import { useExtraActions } from "../../contexts/extra-actions-context";
+import { useAdminNavigation } from "../../contexts/admin-navigation-context";
 
 import { AdminDestinationAssociationsContent } from "./associations/associations-content";
 import { AdminDestinationPlanningContentNext } from "./planning/planning-content-admin";
 import { PhotoDestinationForm, PhotoDestinationFormState } from "./photo-form";
+import { AdminBreadcrumbs } from "../../components/breadcrumbs";
 
 const initialPhotoForm: PhotoDestinationFormState = {
   titre: "",
@@ -80,6 +84,9 @@ export function AdminDestinationDetailContent({
   initialSection = "marketing",
 }: AdminDestinationDetailContentProps) {
   const router = useRouter();
+  const { setBreadcrumbs } = useBreadcrumbs();
+  const { setExtraActions, clearExtraActions } = useExtraActions();
+  const { setActive } = useAdminNavigation();
   const imageSectionRef = useRef<HTMLDivElement | null>(null);
   const photoScrollerRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [accessToken, setAccessToken] = useState("");
@@ -126,6 +133,69 @@ export function AdminDestinationDetailContent({
   useEffect(() => {
     setActiveSection(initialSection);
   }, [initialSection]);
+
+  useEffect(() => {
+    // Synchroniser la section active avec la navigation admin
+    setActive("destinations-view");
+  }, [setActive]);
+
+  useEffect(() => {
+    setBreadcrumbs([
+      { label: "Admin", href: "/admin" },
+      { label: "Destinations", href: "/admin?section=destinations" },
+      { label: "Détail destination", isActive: true }
+    ]);
+  }, [setBreadcrumbs]);
+
+  useEffect(() => {
+    const actions = (
+      <>
+        <Button
+          type="button"
+          size="sm"
+          variant={activeSection === "marketing" ? "default" : "outline"}
+          className={sectionButtonClass(activeSection === "marketing")}
+          onClick={() => setActiveSection("marketing")}
+        >
+          Ajouter Marketing
+        </Button>
+        <Button
+          type="button"
+          variant={activeSection === "gallery" ? "default" : "outline"}
+          size="sm"
+          className={sectionButtonClass(activeSection === "gallery")}
+          onClick={handleOpenGallery}
+        >
+          Galerie
+        </Button>
+        <Button
+          type="button"
+          variant={activeSection === "planning" ? "default" : "outline"}
+          size="sm"
+          className={sectionButtonClass(activeSection === "planning")}
+          onClick={() => setActiveSection("planning")}
+        >
+          Planning voyage
+        </Button>
+        <Button
+          type="button"
+          variant={activeSection === "settings" ? "default" : "outline"}
+          size="sm"
+          className={sectionButtonClass(activeSection === "settings")}
+          onClick={handleOpenManagement}
+        >
+          <Settings className="mr-2 h-4 w-4" />
+          Paramétrage
+        </Button>
+      </>
+    );
+    
+    setExtraActions(actions);
+    
+    return () => {
+      clearExtraActions();
+    };
+  }, [activeSection, setExtraActions, clearExtraActions]);
 
   useEffect(() => {
     const session = loadAuth();
@@ -356,59 +426,6 @@ export function AdminDestinationDetailContent({
     <div className={`bg-gradient-to-b from-background via-muted/30 to-background text-foreground ${greenButtonScopeClass}`}>
       <main className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6 sm:py-8">
         <div className="space-y-8">
-          {/* En-tÃªte avec actions rapides */}
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div className="space-y-3">
-             
-
-              {/* <div>
-                <h1 className="text-3xl font-semibold tracking-tight">
-                  {destination?.nom ?? "DÃ©tail destination"}
-                </h1>
-              </div> */}
-
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                size="sm"
-                variant={activeSection === "marketing" ? "default" : "outline"}
-                className={sectionButtonClass(activeSection === "marketing")}
-                onClick={() => setActiveSection("marketing")}
-              >
-                Ajouter Marketing
-              </Button>
-              <Button
-                type="button"
-                variant={activeSection === "gallery" ? "default" : "outline"}
-                size="sm"
-                className={sectionButtonClass(activeSection === "gallery")}
-                onClick={handleOpenGallery}
-              >
-                Galerie
-              </Button>
-              <Button
-                type="button"
-                variant={activeSection === "planning" ? "default" : "outline"}
-                size="sm"
-                className={sectionButtonClass(activeSection === "planning")}
-                onClick={() => setActiveSection("planning")}
-              >
-                Planning voyage
-              </Button>
-              <Button
-                type="button"
-                variant={activeSection === "settings" ? "default" : "outline"}
-                size="sm"
-                className={sectionButtonClass(activeSection === "settings")}
-                onClick={handleOpenManagement}
-              >
-                <Settings className="mr-2 h-4 w-4" />
-                Paramétrage
-              </Button>
-            </div>
-          </div>
 
           {/* Messages d'alerte */}
           {error && !isDialogOpen && !isMarketingDialogOpen ? (

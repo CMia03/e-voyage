@@ -207,7 +207,7 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
                   <h4 className="text-sm font-medium">Voyageurs par destination</h4>
                   <p className="text-xs text-muted-foreground">Toutes les réservations avec voyageurs.</p>
                 </div>
-                <div className="rounded-md bg-emerald-50 px-2 py-1 text-right text-xs text-emerald-800">
+                <div className="rounded-md bg-emerald-50 px-2 py-1 text-center text-xs text-emerald-800">
                   <p className="font-semibold">{totalTravelers}</p>
                   <p>personne(s)</p>
                 </div>

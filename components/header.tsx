@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Menu, X, User, LogOut, Settings } from "lucide-react";
+import { Menu, X, User, LogOut, Settings, Search } from "lucide-react";
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { SearchDropdown } from "@/components/search-dropdown";
+import { DestinationDetails } from "@/lib/type/destination";
 import {
   Sheet,
   SheetContent,
@@ -25,6 +28,15 @@ import { useAuth } from "@/hooks/useAuth";
 export function Header() {
   const [open, setOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
+  // Initialiser la recherche depuis l'URL au chargement du composant
+  const [searchQuery, setSearchQuery] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('search') || '';
+    }
+    return '';
+  });
   const pathname = usePathname();
   const router = useRouter();
   const { session, isAuthenticated, logout } = useAuth();
@@ -46,6 +58,37 @@ export function Header() {
     router.push("/");
   };
 
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    
+    // Ouvrir le dropdown s'il y a du texte
+    if (query.trim()) {
+      setSearchDropdownOpen(true);
+    } else {
+      setSearchDropdownOpen(false);
+    }
+    
+    // Mettre à jour l'URL avec le paramètre de recherche
+    const url = new URL(window.location.href);
+    if (query.trim()) {
+      url.searchParams.set('search', query.trim());
+    } else {
+      url.searchParams.delete('search');
+    }
+    
+    // Remplacer l'URL sans recharger la page
+    window.history.replaceState({}, '', url.toString());
+    
+    // Émettre un événement pour notifier la page d'accueil du changement de recherche
+    window.dispatchEvent(new CustomEvent('searchChange', { detail: { query: query.trim() } }));
+  };
+
+  const handleDestinationSelect = (destination: DestinationDetails) => {
+    // Rediriger vers la page de destination
+    router.push(`/destinations/${destination.id}`);
+    setSearchDropdownOpen(false);
+  };
+
   const getUserDisplayName = () => {
     if (!session) return "";
     return session.prenom && session.nom 
@@ -53,6 +96,7 @@ export function Header() {
       : session.userId || session.login || "Utilisateur";
   };
 
+  
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between px-4">
@@ -62,6 +106,24 @@ export function Header() {
         
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Rechercher une destination..."
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              onFocus={() => searchQuery.trim() && setSearchDropdownOpen(true)}
+              className="pl-10 w-64 lg:w-80 bg-background/50 border-border/50 focus:border-primary/50"
+            />
+            {searchDropdownOpen && (
+              <SearchDropdown
+                searchQuery={searchQuery}
+                onSelect={handleDestinationSelect}
+                onClose={() => setSearchDropdownOpen(false)}
+              />
+            )}
+          </div>
           <Link 
             href="/#destinations" 
             onClick={(e) => handleClick(e, "#destinations")}
@@ -150,6 +212,18 @@ export function Header() {
               
               {/* Navigation */}
               <nav className="flex-1 px-6 py-6 space-y-2">
+                {/* Zone de recherche mobile */}
+                <div className="relative mb-4">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="Rechercher une destination..."
+                    value={searchQuery}
+                    onChange={(e) => handleSearch(e.target.value)}
+                    className="pl-10 w-full bg-background/50 border-border/50 focus:border-primary/50"
+                  />
+                </div>
+                
                 <Link 
                   href="/#destinations" 
                   onClick={(e) => handleClick(e, "#destinations")}

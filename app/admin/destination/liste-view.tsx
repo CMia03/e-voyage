@@ -58,11 +58,11 @@ type AdminDestinationListeProps = {
 type ViewMode = "cards" | "list" | "map";
 
 const viewModeButtonClass =
-  "text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 data-[state=on]:bg-gradient-to-r data-[state=on]:from-emerald-600 data-[state=on]:to-teal-600 data-[state=on]:text-white data-[state=on]:shadow-md data-[state=on]:shadow-emerald-500/20";
+  "text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 data-[state=on]:bg-gradient-to-r data-[state=on]:from-emerald-600 data-[state=on]:to-teal-600 data-[state=on]:text-white data-[state=on]:shadow-md data-[state=on]:shadow-emerald-500/20 h-10 min-w-[100px]";
 const greenOutlineButtonClass =
-  "border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100 hover:text-emerald-800";
+  "border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100 hover:text-emerald-800 h-10 min-w-[100px]";
 const greenPrimaryButtonClass =
-  "border-transparent bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/20 hover:from-emerald-700 hover:to-teal-700";
+  "border-transparent bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/20 hover:from-emerald-700 hover:to-teal-700 h-10 min-w-[100px]";
 
 export function AdminDestinationListe({
   destinations,
@@ -271,7 +271,7 @@ export function AdminDestinationListe({
             type="single"
             value={viewMode}
             onValueChange={(value) => value && setViewMode(value as ViewMode)}
-            className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-1"
+            className="rounded-lg border border-emerald-200 bg-emerald-50/60"
           >
             <ToggleGroupItem value="cards" aria-label="Vue en cartes" className={viewModeButtonClass}>
               <LayoutGrid className="size-4" />

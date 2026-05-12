@@ -1532,6 +1532,7 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
             onToggleActive={(planification, nextValue) =>
               void handleTogglePlanificationVisibility(planification, nextValue)
             }
+            onAddPlanification={openCreatePlanificationDialog}
           />
 
           <Card className="border-border/50">

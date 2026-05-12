@@ -59,6 +59,7 @@ import {
   SaveTarifActivitePayload,
   TarifActivite,
 } from "@/lib/type/activite";
+import { useAdminNavigation } from "../../contexts/admin-navigation-context";
 
 type Props = { activiteId: string };
 
@@ -132,6 +133,7 @@ function formatTarifLabel(tarif: TarifActivite) {
 
 export function AdminActiviteDetailContent({ activiteId }: Props) {
   const router = useRouter();
+  const { setActive } = useAdminNavigation();
   const [accessToken, setAccessToken] = useState("");
   const [role, setRole] = useState("");
   const [activite, setActivite] = useState<Activite | null>(null);
@@ -209,6 +211,11 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
     if (!accessToken || role !== "ADMIN") return;
     void loadPage();
   }, [accessToken, role, activiteId]);
+
+  useEffect(() => {
+    // Synchroniser la section active avec la navigation admin
+    setActive("activites-view");
+  }, [setActive]);
 
   useEffect(() => {
     if (!successMessage) {

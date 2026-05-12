@@ -84,8 +84,8 @@ function isNamedClientCategory(value: string | null | undefined): value is strin
 }
 
 const CATEGORY_LABELS: Record<BudgetCategory, string> = {
-  activite: "Activité",
-  hebergement: "Hébergement",
+  activite: "ActivitÃ©",
+  hebergement: "Hébergements",
   transport: "Transport",
   autre: "Autre",
 };
