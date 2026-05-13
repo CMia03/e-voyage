@@ -28,6 +28,17 @@ export interface DashboardData {
     nombrePersonnes: number;
     pourcentage: number;
   }[];
+  performancePlanifications?: {
+    destinationId: string;
+    destinationName: string;
+    planificationId: string;
+    planificationName: string;
+    periodMonth: string;
+    validees: number;
+    enAttente: number;
+    annulees: number;
+    total: number;
+  }[];
 
   monthlyActivity?: ActivityData[];
 }

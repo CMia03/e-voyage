@@ -18,6 +18,7 @@ interface ReservationEditModalProps {
   open: boolean;
   onClose: () => void;
   onSave: (id: string, data: ReservationStatusUpdatePayload) => Promise<void>;
+  initialStatus?: ReservationStatus;
 }
 
 const statuses: ReservationStatus[] = [
@@ -30,7 +31,7 @@ function formatStatus(status: ReservationStatus) {
   return status.replaceAll("_", " ");
 }
 
-export function ReservationEditModal({ reservation, open, onClose, onSave }: ReservationEditModalProps) {
+export function ReservationEditModal({ reservation, open, onClose, onSave, initialStatus }: ReservationEditModalProps) {
   const [formData, setFormData] = useState<ReservationStatusUpdatePayload>({
     status: "EN_ATTENTE",
     commentaireAdmin: "",
@@ -40,11 +41,11 @@ export function ReservationEditModal({ reservation, open, onClose, onSave }: Res
   useEffect(() => {
     if (reservation) {
       setFormData({
-        status: reservation.status,
+        status: initialStatus ?? reservation.status,
         commentaireAdmin: reservation.commentaireAdmin ?? "",
       });
     }
-  }, [reservation]);
+  }, [initialStatus, reservation]);
 
   if (!reservation) return null;
 

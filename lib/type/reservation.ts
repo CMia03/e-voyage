@@ -94,3 +94,17 @@ export interface ReservationStatusUpdatePayload {
   status: ReservationStatus;
   commentaireAdmin?: string;
 }
+
+export interface PaginatedReservations {
+  content: Reservation[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  first: boolean;
+  last: boolean;
+  totalCount?: number;
+  enAttenteCount?: number;
+  valideeCount?: number;
+  annuleeCount?: number;
+}

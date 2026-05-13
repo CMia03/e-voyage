@@ -227,6 +227,17 @@ export type PlanificationVoyage = {
   jours: JourPlanificationVoyage[];
 };
 
+export type PaginatedPlanifications = {
+  content: PlanificationVoyage[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  first: boolean;
+  last: boolean;
+  totalCount?: number;
+};
+
 export type SaveDestinationPayload = {
   nom: string;
   slug: string;

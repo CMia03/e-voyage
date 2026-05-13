@@ -27,7 +27,7 @@ export default function ForgotPasswordPage() {
       
       setSuccessMessage("Un email de réinitialisation a été envoyé à votre adresse email. Veuillez vérifier votre boîte de réception.");
       setEmailValue("");
-      
+      // api de réinitialisation de mot de passe réussie, afficher un message de succès et rediriger vers la page de connexion après 3 secondes
       // Redirection vers login après 3 secondes
       setTimeout(() => {
         router.push("/login?message=Veuillez vérifier votre email pour réinitialiser votre mot de passe");

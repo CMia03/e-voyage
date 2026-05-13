@@ -4,11 +4,12 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Pencil, Plus, Settings, Trash2, X } from "lucide-react";
+import { CalendarDays, CheckCircle2, FileText, Info, MapPin, Pencil, Plus, Save, Settings, Trash2, Wallet, X } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -1459,14 +1460,8 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
         }
       >
         <div className="space-y-6">
-          {embedded ? (
-            <div className="flex justify-end">
-              <Button onClick={openCreatePlanificationDialog} size="sm" className={greenPrimaryButtonClass}>
-                <Plus className="size-4" />
-                Ajouter planification
-              </Button>
-            </div>
-          ) : (
+          {embedded ? null :
+          (
           <div className="space-y-10">
             <div className="flex flex-wrap justify-end gap-2">
               <Button
@@ -1501,12 +1496,12 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
                 Paramétrage
               </Button>
             </div>
-            <div className="flex justify-end">
+            {/* <div className="flex justify-end">
               <Button onClick={openCreatePlanificationDialog} size="sm" className={greenPrimaryButtonClass}>
                 <Plus className="size-4" />
                 Ajouter planification
               </Button>
-            </div>
+            </div> */}
           </div>
           )}
 
@@ -1615,45 +1610,187 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
         </div>
       </main>
       <Dialog open={isPlanificationDialogOpen} onOpenChange={setIsPlanificationDialogOpen}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{editingPlanificationId ? "Modifier la planification" : "Ajouter une planification"}</DialogTitle>
-            <DialogDescription>Renseigne les informations globales du voyage.</DialogDescription>
-          </DialogHeader>
-          <form className="space-y-4" onSubmit={handleSubmitPlanification}>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2 sm:col-span-2">
-                <label className="text-sm font-medium">Nom</label>
-                <Input value={planificationForm.nomPlanification} onChange={(event) => updatePlanificationForm("nomPlanification", event.target.value)} required />
-              </div>
+        <DialogContent className="overflow-hidden p-0 sm:max-w-5xl">
+          <form onSubmit={handleSubmitPlanification}>
+            <div className="border-b bg-white px-6 py-5">
+              <DialogHeader>
+                <div className="flex items-start gap-4">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+                    <CalendarDays className="h-7 w-7" />
+                  </div>
+                  <div className="min-w-0">
+                    <DialogTitle className="text-2xl font-semibold text-slate-950">
+                      {editingPlanificationId ? "Modifier la planification" : "Ajouter une planification"}
+                    </DialogTitle>
+                    <DialogDescription className="mt-1 text-sm text-slate-500">
+                      Renseignez les informations principales de la planification.
+                    </DialogDescription>
+                  </div>
+                </div>
+              </DialogHeader>
+            </div>
+
+            <div className="max-h-[72vh] space-y-6 overflow-y-auto px-6 py-6">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Budget total</label>
-                <Input type="number" min="0" step="0.01" value={planificationForm.budgetTotal} onChange={(event) => updatePlanificationForm("budgetTotal", event.target.value)} />
+                <label className="text-sm font-semibold text-slate-900">
+                  Nom de la planification <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <Input
+                    value={planificationForm.nomPlanification}
+                    onChange={(event) => updatePlanificationForm("nomPlanification", event.target.value)}
+                    required
+                    placeholder="Ex. Circuit Sainte-Marie 2 jours"
+                    className="h-12 border-emerald-300 pr-11 text-base focus-visible:ring-emerald-200"
+                  />
+                  <FileText className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Devise</label>
-                <Input value={planificationForm.deviseBudget} onChange={(event) => updatePlanificationForm("deviseBudget", event.target.value)} />
+
+              <div className="grid gap-5 lg:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-900">
+                    Destination <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex h-12 items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700">
+                    <MapPin className="h-5 w-5 text-emerald-600" />
+                    <span className="font-medium">{destination?.nom ?? "Destination actuelle"}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-900">
+                    Budget total <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex h-12 overflow-hidden rounded-md border border-slate-200 bg-white focus-within:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-100">
+                    <div className="flex min-w-24 items-center justify-center border-r bg-emerald-50 px-4 text-sm font-semibold text-slate-800">
+                      {planificationForm.deviseBudget || "MGA"}
+                    </div>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={planificationForm.budgetTotal}
+                      onChange={(event) => updatePlanificationForm("budgetTotal", event.target.value)}
+                      placeholder="0"
+                      className="h-full border-0 text-base shadow-none focus-visible:ring-0"
+                    />
+                    <div className="flex items-center px-3 text-slate-400">
+                      <Wallet className="h-5 w-5" />
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Date/heure debut</label>
-                <Input type="datetime-local" value={planificationForm.dateHeureDebut} onChange={(event) => updatePlanificationForm("dateHeureDebut", event.target.value)} />
+
+              <div className="flex items-start gap-3">
+                <Checkbox
+                  id="planification-visible-client"
+                  checked={planificationForm.estVisibleClient}
+                  onCheckedChange={(checked) => updatePlanificationForm("estVisibleClient", checked === true)}
+                  className="mt-1 h-5 w-5"
+                />
+                <div>
+                  <label htmlFor="planification-visible-client" className="text-sm font-semibold text-slate-900">
+                    Visible par les clients
+                  </label>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Rendre cette planification visible pour vos clients.
+                  </p>
+                </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Depart</label>
-                <Input value={planificationForm.depart} onChange={(event) => updatePlanificationForm("depart", event.target.value)} required />
+
+              <div className="grid gap-5 lg:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-900">
+                    Départ <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <MapPin className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-emerald-600" />
+                    <Input
+                      value={planificationForm.depart}
+                      onChange={(event) => updatePlanificationForm("depart", event.target.value)}
+                      required
+                      placeholder="Ex. Antananarivo"
+                      className="h-12 pl-11 text-base"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-900">
+                    Arrivée <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <MapPin className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-emerald-600" />
+                    <Input
+                      value={planificationForm.arriver}
+                      onChange={(event) => updatePlanificationForm("arriver", event.target.value)}
+                      required
+                      placeholder="Ex. Sainte-Marie"
+                      className="h-12 pl-11 text-base"
+                    />
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Date/heure fin</label>
-                <Input type="datetime-local" value={planificationForm.dateHeureFin} onChange={(event) => updatePlanificationForm("dateHeureFin", event.target.value)} />
+
+              <div className="grid gap-5 lg:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-900">
+                    Date et heure de début <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <CalendarDays className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+                    <Input
+                      type="datetime-local"
+                      value={planificationForm.dateHeureDebut}
+                      onChange={(event) => updatePlanificationForm("dateHeureDebut", event.target.value)}
+                      className="h-12 pl-11 text-base"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-900">
+                    Date et heure de fin <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <CalendarDays className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+                    <Input
+                      type="datetime-local"
+                      value={planificationForm.dateHeureFin}
+                      onChange={(event) => updatePlanificationForm("dateHeureFin", event.target.value)}
+                      className="h-12 pl-11 text-base"
+                    />
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Arrivee</label>
-                <Input value={planificationForm.arriver} onChange={(event) => updatePlanificationForm("arriver", event.target.value)} required />
+
+              <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+                <Info className="mt-0.5 h-5 w-5 shrink-0" />
+                <p>
+                  <span className="font-semibold">Astuce</span>{" "}
+                  Vous pourrez ajouter les détails, les activités et les services après l&apos;enregistrement.
+                </p>
               </div>
             </div>
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setIsPlanificationDialogOpen(false)}>Annuler</Button>
-              <Button type="submit" disabled={isSavingPlanification}>{isSavingPlanification ? "Enregistrement..." : editingPlanificationId ? "Enregistrer" : "Ajouter"}</Button>
+
+            <div className="flex justify-end gap-3 border-t bg-white px-6 py-4">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 min-w-32"
+                onClick={() => setIsPlanificationDialogOpen(false)}
+              >
+                Annuler
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSavingPlanification}
+                className="h-11 min-w-40 gap-2 bg-emerald-600 shadow-lg shadow-emerald-500/20 hover:bg-emerald-700"
+              >
+                <Save className="h-5 w-5" />
+                {isSavingPlanification ? "Enregistrement..." : "Enregistrer"}
+              </Button>
             </div>
           </form>
         </DialogContent>

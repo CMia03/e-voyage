@@ -2,7 +2,9 @@ import { apiRequest, ApiEnvelope } from "@/lib/api/client";
 import {
   Reservation,
   ReservationCreatePayload,
+  PaginatedReservations,
   ReservationQuote,
+  ReservationSource,
   ReservationStatus,
   ReservationStatusUpdatePayload,
 } from "@/lib/type/reservation";
@@ -16,6 +18,33 @@ export function listMyReservations(token?: string) {
 export function listAdminReservations(token?: string, status?: ReservationStatus | "") {
   const query = status ? `?status=${encodeURIComponent(status)}` : "";
   return apiRequest<ApiEnvelope<Reservation[]>>(`/api/reservations${query}`, {
+    token,
+  });
+}
+
+export type AdminReservationPageParams = {
+  planificationId?: string;
+  search?: string;
+  status?: ReservationStatus | "ALL";
+  source?: ReservationSource | "ALL";
+  dateFrom?: string;
+  dateTo?: string;
+  amountMin?: string;
+  amountMax?: string;
+  page?: number;
+  size?: number;
+};
+
+export function listAdminReservationsPage(params: AdminReservationPageParams, token?: string) {
+  const query = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === "" || value === "ALL") return;
+    query.set(key, String(value));
+  });
+
+  const suffix = query.toString() ? `?${query.toString()}` : "";
+  return apiRequest<ApiEnvelope<PaginatedReservations>>(`/api/reservations/page${suffix}`, {
     token,
   });
 }

@@ -1,5 +1,4 @@
 import { apiRequest, ApiEnvelope } from "@/lib/api/client";
-import axios from "axios";
 import {
   AdminDestination,
   DestinationDetails,
@@ -7,6 +6,7 @@ import {
   DestinationAssociations,
   ElementJourPlanification,
   JourPlanificationVoyage,
+  PaginatedPlanifications,
   PlanificationVoyage,
   SavePhotoDestinationBulkPayload,
   SaveElementJourPlanificationPayload,
@@ -327,6 +327,36 @@ export function createTypeElementJour(payload: SaveTypeElementJourPayload, token
 
 export function listPlanificationsByDestination(destinationId: string, token?: string) {
   return apiRequest<ApiEnvelope<PlanificationVoyage[]>>(`/api/destinations/${destinationId}/planifications`, {
+    token,
+  });
+}
+
+export type ListAdminPlanificationsPageParams = {
+  destinationId?: string;
+  search?: string;
+  visibility?: "all" | "visible" | "hidden";
+  dateFrom?: string;
+  dateTo?: string;
+  budgetMin?: string | number;
+  budgetMax?: string | number;
+  page?: number;
+  size?: number;
+};
+
+export function listAdminPlanificationsPage(
+  params: ListAdminPlanificationsPageParams,
+  token?: string
+) {
+  const searchParams = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && String(value).trim() !== "") {
+      searchParams.set(key, String(value));
+    }
+  });
+
+  const suffix = searchParams.toString() ? `?${searchParams.toString()}` : "";
+  return apiRequest<ApiEnvelope<PaginatedPlanifications>>(`/api/destinations/planifications/page${suffix}`, {
     token,
   });
 }
