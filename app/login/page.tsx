@@ -124,12 +124,12 @@ function LoginContent() {
               <div className="space-y-4">
                 <div className="space-y-2">
                   <label htmlFor="login" className="text-sm font-medium block text-white/90 drop-shadow-md">
-                    Identifiant
+                    Email ou identifiant
                   </label>
                   <input
                     id="login"
                     type="text"
-                    placeholder="Votre identifiant"
+                    placeholder="Email ou identifiant"
                     value={loginValue}
                     onChange={(event) => setLoginValue(event.target.value)}
                     className="w-full h-12 rounded-md bg-white/20 border border-white/30 px-3 py-2 text-sm text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all duration-200 backdrop-blur-sm"

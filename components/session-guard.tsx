@@ -32,7 +32,7 @@ export function SessionGuard({
         if (requireAuth && !authenticated) {
           // Vérifier si on est déjà sur une page publique pour éviter les boucles
           const currentPath = window.location.pathname;
-          const publicPaths = ['/login', '/register', '/forgot-password', '/'];
+          const publicPaths = ['/login', '/register', '/forgot-password', '/reset-password', '/'];
           
           if (!publicPaths.includes(currentPath)) {
             router.push(redirectTo);
@@ -57,7 +57,7 @@ export function SessionGuard({
         // Ne rediriger que si c'est une route strictement protégée
         if (requireAuth && !authenticated) {
           const currentPath = window.location.pathname;
-          const publicPaths = ['/login', '/register', '/forgot-password', '/'];
+          const publicPaths = ['/login', '/register', '/forgot-password', '/reset-password', '/'];
           
           if (!publicPaths.includes(currentPath)) {
             router.push(redirectTo);

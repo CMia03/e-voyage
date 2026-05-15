@@ -69,8 +69,19 @@ export function updateProfile(token: string, profileData: {
 }
 
 export function forgotPassword(email: string) {
-  return apiRequest<{ message: string }>("/api/auth/forgot-password", {
+  return apiRequest<{ success?: boolean; message?: string }>("/api/auth/forgot-password", {
     method: "POST",
     body: { email },
+  });
+}
+
+export function resetPassword(payload: {
+  token: string;
+  nouveauMotDePasse: string;
+  confirmationMotDePasse: string;
+}) {
+  return apiRequest<{ success?: boolean; message?: string }>("/api/auth/reset-password", {
+    method: "POST",
+    body: payload,
   });
 }
