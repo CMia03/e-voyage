@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Select,
   SelectContent,
@@ -27,6 +28,16 @@ export function AdminAvis() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDestination, setSelectedDestination] = useState("all");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!feedback) return;
+    const timeout = window.setTimeout(() => setFeedback(null), 3000);
+    return () => window.clearTimeout(timeout);
+  }, [feedback]);
 
   const fetchNotations = useCallback(async () => {
     try {
@@ -55,7 +66,7 @@ export function AdminAvis() {
 
   const handleDeleteAvis = async (avi: NotationData) => {
     if (!session?.accessToken) {
-      alert("Vous devez être authentifié pour supprimer un avis");
+      setFeedback({ type: "error", message: "Vous devez etre authentifie pour supprimer un avis." });
       return;
     }
 
@@ -66,10 +77,11 @@ export function AdminAvis() {
     try {
       setDeletingId(avi.idAvis);
       await deleteUserRating(avi.idDestination, avi.idUser, session.accessToken);
+      setFeedback({ type: "success", message: "Avis supprime avec succes." });
       fetchNotations();
     } catch (error) {
       console.error("Error deleting avis:", error);
-      alert("Erreur lors de la suppression de l'avis");
+      setFeedback({ type: "error", message: "Erreur lors de la suppression de l'avis." });
     } finally {
       setDeletingId(null);
     }
@@ -138,6 +150,12 @@ export function AdminAvis() {
 
   return (
     <div className="space-y-8">
+      {feedback ? (
+        <Alert variant={feedback.type === "success" ? "success" : "destructive"}>
+          <AlertTitle>{feedback.type === "success" ? "Success" : "Erreur"}</AlertTitle>
+          <AlertDescription>{feedback.message}</AlertDescription>
+        </Alert>
+      ) : null}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">

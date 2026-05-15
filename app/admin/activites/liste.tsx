@@ -81,7 +81,7 @@ export function AdminActivitesListe({
     setShowSuccessAlert(true);
     const timeout = window.setTimeout(() => {
       setShowSuccessAlert(false);
-    }, 4500);
+    }, 3000);
 
     return () => window.clearTimeout(timeout);
   }, [successMessage]);
@@ -96,7 +96,7 @@ export function AdminActivitesListe({
     setShowErrorAlert(true);
     const timeout = window.setTimeout(() => {
       setShowErrorAlert(false);
-    }, 5000);
+    }, 3000);
 
     return () => window.clearTimeout(timeout);
   }, [error]);
@@ -299,7 +299,10 @@ export function AdminActivitesListe({
             <CardDescription>Visualiser les activites sur OpenStreetMap</CardDescription>
           </CardHeader>
           <CardContent>
-            <HebergementsOverviewMap items={activites} />
+            <HebergementsOverviewMap
+              items={activites}
+              getDetailHref={(item) => `/admin/activites/${item.id}`}
+            />
           </CardContent>
         </Card>
       </section>

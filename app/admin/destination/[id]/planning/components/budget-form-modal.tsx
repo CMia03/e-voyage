@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Select,
   SelectContent,
@@ -145,9 +146,10 @@ export function BudgetFormModal({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {submitError ? (
-            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {submitError}
-            </div>
+            <Alert variant="destructive">
+              <AlertTitle>Erreur</AlertTitle>
+              <AlertDescription>{submitError}</AlertDescription>
+            </Alert>
           ) : null}
 
           <div className="space-y-2">

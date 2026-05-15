@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Select,
   SelectContent,
@@ -29,6 +30,16 @@ export function AdminCommentaires() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!feedback) return;
+    const timeout = window.setTimeout(() => setFeedback(null), 3000);
+    return () => window.clearTimeout(timeout);
+  }, [feedback]);
 
   const fetchCommentaires = useCallback(async () => {
     try {
@@ -57,17 +68,18 @@ export function AdminCommentaires() {
 
   const handleValidateCommentaire = async (commentaire: CommentaireData) => {
     if (!session?.accessToken) {
-      alert("Vous devez être authentifié pour valider un commentaire");
+      setFeedback({ type: "error", message: "Vous devez etre authentifie pour valider un commentaire." });
       return;
     }
 
     try {
       setActionLoading(`validate-${commentaire.idUser}-${commentaire.idDestination}`);
       await validateCommentaire(commentaire.idDestination, commentaire.idUser, session.accessToken);
+      setFeedback({ type: "success", message: "Commentaire valide avec succes." });
       fetchCommentaires();
     } catch (error) {
       console.error("Error validating commentaire:", error);
-      alert("Erreur lors de la validation du commentaire");
+      setFeedback({ type: "error", message: "Erreur lors de la validation du commentaire." });
     } finally {
       setActionLoading(null);
     }
@@ -75,7 +87,7 @@ export function AdminCommentaires() {
 
   const handleDeleteCommentaire = async (commentaire: CommentaireData) => {
     if (!session?.accessToken) {
-      alert("Vous devez être authentifié pour supprimer un commentaire");
+      setFeedback({ type: "error", message: "Vous devez etre authentifie pour supprimer un commentaire." });
       return;
     }
 
@@ -86,10 +98,11 @@ export function AdminCommentaires() {
     try {
       setActionLoading(`delete-${commentaire.idUser}-${commentaire.idDestination}`);
       await deleteCommentaire(commentaire.idDestination, commentaire.idUser, session.accessToken);
+      setFeedback({ type: "success", message: "Commentaire supprime avec succes." });
       fetchCommentaires();
     } catch (error) {
       console.error("Error deleting commentaire:", error);
-      alert("Erreur lors de la suppression du commentaire");
+      setFeedback({ type: "error", message: "Erreur lors de la suppression du commentaire." });
     } finally {
       setActionLoading(null);
     }
@@ -165,6 +178,12 @@ export function AdminCommentaires() {
 
   return (
     <div className="space-y-8">
+      {feedback ? (
+        <Alert variant={feedback.type === "success" ? "success" : "destructive"}>
+          <AlertTitle>{feedback.type === "success" ? "Success" : "Erreur"}</AlertTitle>
+          <AlertDescription>{feedback.message}</AlertDescription>
+        </Alert>
+      ) : null}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">

@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   CheckCircle2,
   LayoutGrid,
@@ -11,6 +11,8 @@ import {
   Pencil,
   Plus,
   RefreshCcw,
+  Search,
+  SlidersHorizontal,
   Timer,
   Trash2,
   Users,
@@ -26,6 +28,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Activite } from "@/lib/type/activite";
 
@@ -57,6 +60,8 @@ type AdminActivitesListeProps = {
 };
 
 type ViewMode = "cards" | "list" | "map";
+type StatusFilter = "ALL" | "ACTIVE" | "INACTIVE";
+const pageSizeOptions = [4, 8, 12] as const;
 
 const viewModeButtonClass =
   "text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 data-[state=on]:bg-gradient-to-r data-[state=on]:from-emerald-600 data-[state=on]:to-teal-600 data-[state=on]:text-white data-[state=on]:shadow-md data-[state=on]:shadow-emerald-500/20";
@@ -64,6 +69,10 @@ const greenOutlineButtonClass =
   "border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100 hover:text-emerald-800";
 const greenPrimaryButtonClass =
   "border-transparent bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/20 hover:from-emerald-700 hover:to-teal-700";
+
+function normalizeSearch(value: string | number | null | undefined) {
+  return String(value ?? "").trim().toLowerCase();
+}
 
 export function AdminActivitesListe({
   activites,
@@ -79,6 +88,15 @@ export function AdminActivitesListe({
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [showErrorAlert, setShowErrorAlert] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
+  const [showFilters, setShowFilters] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
+  const [difficultyFilter, setDifficultyFilter] = useState("ALL");
+  const [durationMinFilter, setDurationMinFilter] = useState("");
+  const [durationMaxFilter, setDurationMaxFilter] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState<(typeof pageSizeOptions)[number]>(4);
 
   useEffect(() => {
     if (!successMessage) {
@@ -90,7 +108,7 @@ export function AdminActivitesListe({
     setShowSuccessAlert(true);
     const timeout = window.setTimeout(() => {
       setShowSuccessAlert(false);
-    }, 4500);
+    }, 3000);
 
     return () => window.clearTimeout(timeout);
   }, [successMessage]);
@@ -105,10 +123,91 @@ export function AdminActivitesListe({
     setShowErrorAlert(true);
     const timeout = window.setTimeout(() => {
       setShowErrorAlert(false);
-    }, 5000);
+    }, 3000);
 
     return () => window.clearTimeout(timeout);
   }, [error]);
+
+  const categories = useMemo(() => {
+    return Array.from(
+      new Set(activites.map((activite) => activite.nomCategorie).filter(Boolean))
+    ).sort((a, b) => a.localeCompare(b));
+  }, [activites]);
+
+  const difficulties = useMemo(() => {
+    return Array.from(
+      new Set(activites.map((activite) => activite.niveauxDeDifficulte).filter(Boolean))
+    ).sort((a, b) => a.localeCompare(b));
+  }, [activites]);
+
+  const filteredActivites = useMemo(() => {
+    const normalizedSearch = normalizeSearch(searchTerm);
+    const minDuration = durationMinFilter ? Number(durationMinFilter) : null;
+    const maxDuration = durationMaxFilter ? Number(durationMaxFilter) : null;
+
+    return activites.filter((activite) => {
+      const searchable = [
+        activite.nom,
+        activite.slug,
+        activite.description,
+        activite.nomCategorie,
+        activite.niveauxDeDifficulte,
+        activite.dureeHeures,
+        activite.participantMin,
+        activite.participantsMax,
+        activite.latitude,
+        activite.longitude,
+        activite.estActif ? "actif active visible" : "inactif inactive masque",
+        ...(activite.equipementsFournis ?? []),
+        ...(activite.tarifs ?? []).flatMap((tarif) => [
+          tarif.nomCategorieClient,
+          tarif.devise,
+          tarif.prixParPersonne,
+          tarif.prixParHeur,
+          tarif.estActif ? "tarif actif" : "tarif inactif",
+        ]),
+      ]
+        .map(normalizeSearch)
+        .join(" ");
+
+      if (normalizedSearch && !searchable.includes(normalizedSearch)) return false;
+      if (categoryFilter !== "ALL" && activite.nomCategorie !== categoryFilter) return false;
+      if (difficultyFilter !== "ALL" && activite.niveauxDeDifficulte !== difficultyFilter) return false;
+      if (statusFilter === "ACTIVE" && !activite.estActif) return false;
+      if (statusFilter === "INACTIVE" && activite.estActif) return false;
+      if (minDuration !== null && !Number.isNaN(minDuration) && Number(activite.dureeHeures || 0) < minDuration) return false;
+      if (maxDuration !== null && !Number.isNaN(maxDuration) && Number(activite.dureeHeures || 0) > maxDuration) return false;
+      return true;
+    });
+  }, [
+    activites,
+    categoryFilter,
+    difficultyFilter,
+    durationMaxFilter,
+    durationMinFilter,
+    searchTerm,
+    statusFilter,
+  ]);
+
+  const resetFilters = () => {
+    setSearchTerm("");
+    setCategoryFilter("ALL");
+    setStatusFilter("ALL");
+    setDifficultyFilter("ALL");
+    setDurationMinFilter("");
+    setDurationMaxFilter("");
+    setCurrentPage(1);
+  };
+
+  const totalPages = Math.max(Math.ceil(filteredActivites.length / pageSize), 1);
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginationStart = filteredActivites.length === 0 ? 0 : (safeCurrentPage - 1) * pageSize + 1;
+  const paginationEnd = Math.min(safeCurrentPage * pageSize, filteredActivites.length);
+  const paginatedActivites = filteredActivites.slice(paginationStart - 1, paginationEnd);
+  const visiblePages = Array.from({ length: Math.min(totalPages, 5) }, (_, index) => {
+    const start = Math.min(Math.max(safeCurrentPage - 2, 1), Math.max(totalPages - 4, 1));
+    return start + index;
+  });
 
   const renderActiviteCard = (activite: Activite) => (
     <div
@@ -280,27 +379,40 @@ export function AdminActivitesListe({
       );
     }
 
+    if (filteredActivites.length === 0) {
+      return (
+        <p className="text-sm text-muted-foreground">
+          Aucune activite ne correspond aux criteres de recherche.
+        </p>
+      );
+    }
+
     if (viewMode === "cards") {
-      return <div className="grid gap-4 md:grid-cols-2">{activites.map(renderActiviteCard)}</div>;
+      return <div className="grid gap-4 md:grid-cols-2">{paginatedActivites.map(renderActiviteCard)}</div>;
     }
 
     if (viewMode === "list") {
-      return <div className="divide-y divide-border/50">{activites.map(renderActiviteListItem)}</div>;
+      return <div className="divide-y divide-border/50">{paginatedActivites.map(renderActiviteListItem)}</div>;
     }
 
-    return <HebergementsOverviewMap items={activites} />;
+    return (
+      <HebergementsOverviewMap
+        items={paginatedActivites}
+        getDetailHref={(item) => `/admin/activites/${item.id}`}
+      />
+    );
   }
 
   function getCardDescription() {
     if (viewMode === "cards") {
-      return `${activites.length} activite(s) en mode cartes`;
+      return `${filteredActivites.length} activite(s) sur ${activites.length} en mode cartes`;
     }
 
     if (viewMode === "list") {
-      return `${activites.length} activite(s) en mode liste`;
+      return `${filteredActivites.length} activite(s) sur ${activites.length} en mode liste`;
     }
 
-    return `Visualisation des ${activites.length} activites sur la carte`;
+    return `Visualisation de ${paginatedActivites.length} activite(s) sur ${filteredActivites.length} resultat(s) sur la carte`;
   }
 
   return (
@@ -313,10 +425,26 @@ export function AdminActivitesListe({
         </div>
 
         <div className="flex flex-wrap gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={() => setShowFilters((current) => !current)}
+            className={greenOutlineButtonClass}
+            title="Recherche multi-critere"
+          >
+            <SlidersHorizontal className="size-4" />
+            <span className="sr-only">Afficher la recherche multi-critere</span>
+          </Button>
+
           <ToggleGroup
             type="single"
             value={viewMode}
-            onValueChange={(value) => value && setViewMode(value as ViewMode)}
+            onValueChange={(value) => {
+              if (!value) return;
+              setViewMode(value as ViewMode);
+              setCurrentPage(1);
+            }}
             className="rounded-lg border border-emerald-200 bg-emerald-50/60"
           >
             <ToggleGroupItem value="cards" aria-label="Vue en cartes" className={viewModeButtonClass}>
@@ -389,6 +517,113 @@ export function AdminActivitesListe({
         </Alert>
       ) : null}
 
+      {showFilters ? (
+        <Card className="border-border/50">
+          <CardHeader>
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <CardTitle>Recherche multi-critere</CardTitle>
+                <CardDescription>
+                  Nom, categorie, statut, difficulte, duree, equipements ou tarifs.
+                </CardDescription>
+              </div>
+              <Button type="button" variant="outline" onClick={resetFilters} className={greenOutlineButtonClass}>
+                Reinitialiser
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={searchTerm}
+                onChange={(event) => {
+                  setSearchTerm(event.target.value);
+                  setCurrentPage(1);
+                }}
+                placeholder="Nom, categorie, equipement, tarif, devise..."
+                className="h-11 pl-9"
+              />
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_0.7fr_0.7fr]">
+              <select
+                value={categoryFilter}
+                onChange={(event) => {
+                  setCategoryFilter(event.target.value);
+                  setCurrentPage(1);
+                }}
+                className="h-11 rounded-md border border-input bg-background px-3 text-sm outline-none transition focus:border-emerald-500"
+              >
+                <option value="ALL">Toutes les categories</option>
+                {categories.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={statusFilter}
+                onChange={(event) => {
+                  setStatusFilter(event.target.value as StatusFilter);
+                  setCurrentPage(1);
+                }}
+                className="h-11 rounded-md border border-input bg-background px-3 text-sm outline-none transition focus:border-emerald-500"
+              >
+                <option value="ALL">Tous les statuts</option>
+                <option value="ACTIVE">Actif</option>
+                <option value="INACTIVE">Inactif</option>
+              </select>
+
+              <select
+                value={difficultyFilter}
+                onChange={(event) => {
+                  setDifficultyFilter(event.target.value);
+                  setCurrentPage(1);
+                }}
+                className="h-11 rounded-md border border-input bg-background px-3 text-sm outline-none transition focus:border-emerald-500"
+              >
+                <option value="ALL">Toutes les difficultes</option>
+                {difficulties.map((difficulty) => (
+                  <option key={difficulty} value={difficulty}>
+                    {difficulty}
+                  </option>
+                ))}
+              </select>
+
+              <Input
+                type="number"
+                min={0}
+                value={durationMinFilter}
+                onChange={(event) => {
+                  setDurationMinFilter(event.target.value);
+                  setCurrentPage(1);
+                }}
+                placeholder="Duree min"
+                className="h-11"
+              />
+
+              <Input
+                type="number"
+                min={0}
+                value={durationMaxFilter}
+                onChange={(event) => {
+                  setDurationMaxFilter(event.target.value);
+                  setCurrentPage(1);
+                }}
+                placeholder="Duree max"
+                className="h-11"
+              />
+            </div>
+
+            <p className="text-sm text-muted-foreground">
+              {filteredActivites.length} resultat(s) sur {activites.length} activite(s).
+            </p>
+          </CardContent>
+        </Card>
+      ) : null}
+
       <Card className="border-border/50">
         <CardHeader>
           <CardTitle>
@@ -398,7 +633,75 @@ export function AdminActivitesListe({
           </CardTitle>
           <CardDescription>{getCardDescription()}</CardDescription>
         </CardHeader>
-        <CardContent>{renderContent()}</CardContent>
+        <CardContent className="space-y-4">
+          {renderContent()}
+
+          {filteredActivites.length > 0 ? (
+            <div className="flex flex-col gap-3 rounded-xl border border-border/50 bg-card px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>Afficher</span>
+                <select
+                  value={pageSize}
+                  onChange={(event) => {
+                    setPageSize(Number(event.target.value) as (typeof pageSizeOptions)[number]);
+                    setCurrentPage(1);
+                  }}
+                  className="h-9 rounded-md border border-input bg-background px-2 text-sm outline-none transition focus:border-emerald-500"
+                >
+                  {pageSizeOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+                <span>par page</span>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9"
+                  disabled={safeCurrentPage <= 1}
+                  onClick={() => setCurrentPage((page) => Math.max(page - 1, 1))}
+                >
+                  {"<"}
+                </Button>
+                {visiblePages.map((page) => (
+                  <Button
+                    key={page}
+                    type="button"
+                    variant={page === safeCurrentPage ? "default" : "outline"}
+                    size="icon"
+                    className={`h-9 w-9 ${
+                      page === safeCurrentPage
+                        ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                        : ""
+                    }`}
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </Button>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9"
+                  disabled={safeCurrentPage >= totalPages}
+                  onClick={() => setCurrentPage((page) => Math.min(page + 1, totalPages))}
+                >
+                  {">"}
+                </Button>
+              </div>
+
+              <p className="text-sm text-muted-foreground sm:text-right">
+                {paginationStart} - {paginationEnd} sur {filteredActivites.length}
+              </p>
+            </div>
+          ) : null}
+        </CardContent>
       </Card>
     </div>
   );

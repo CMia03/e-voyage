@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { StarRating } from "@/components/ui/star-rating";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/useAuth";
 import { getDestinationNotations } from "@/lib/api/notations";
 import { NotationData } from "@/lib/type/notation";
@@ -21,6 +22,20 @@ export function DestinationSidebar({ destinationId, destinationName, averageRati
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [notations, setNotations] = useState<NotationData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [feedback, setFeedback] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!feedback) return;
+
+    const timeout = window.setTimeout(() => {
+      setFeedback(null);
+    }, 3000);
+
+    return () => window.clearTimeout(timeout);
+  }, [feedback]);
 
   const ratingStats = useMemo(() => {
     const approvedNotations = notations.filter((notation) => notation.status === true);
@@ -93,13 +108,23 @@ export function DestinationSidebar({ destinationId, destinationName, averageRati
       
       if (response.success) {
         setNewComment("");
-        alert("Votre commentaire a été soumis et est en attente de validation par l'administrateur.");
+        setFeedback({
+          type: "success",
+          message: "Votre commentaire a ete soumis et attend la validation de l'administrateur.",
+        });
       } else {
         console.error('Error adding comment:', response.message);
-        alert("Erreur lors de l'ajout du commentaire. Veuillez réessayer.");
+        setFeedback({
+          type: "error",
+          message: "Erreur lors de l'ajout du commentaire. Veuillez reessayer.",
+        });
       }
     } catch (error) {
       console.error('Error submitting comment:', error);
+      setFeedback({
+        type: "error",
+        message: "Erreur lors de l'ajout du commentaire. Veuillez reessayer.",
+      });
     } finally {
       setIsSubmittingComment(false);
     }
@@ -107,6 +132,12 @@ export function DestinationSidebar({ destinationId, destinationName, averageRati
 
   return (
     <div className="w-full lg:w-80 space-y-6">
+      {feedback ? (
+        <Alert variant={feedback.type === "success" ? "success" : "destructive"}>
+          <AlertTitle>{feedback.type === "success" ? "Success" : "Erreur"}</AlertTitle>
+          <AlertDescription>{feedback.message}</AlertDescription>
+        </Alert>
+      ) : null}
       <Card className="sticky top-6">
         <CardHeader className="pb-3">
           <CardTitle>Evaluations et avis</CardTitle>

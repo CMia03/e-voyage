@@ -78,24 +78,24 @@ export function AdminDestinationListe({
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
   const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
 
-  // Auto-dismiss success message after 4.5 seconds
+  // Auto-dismiss success message after 3 seconds
   useEffect(() => {
     if (!successMessage) return;
 
     const timeout = window.setTimeout(() => {
       setDismissedAlerts(prev => new Set(prev).add(`success-${successMessage}`));
-    }, 4500);
+    }, 3000);
 
     return () => window.clearTimeout(timeout);
   }, [successMessage]);
 
-  // Auto-dismiss error message after 5 seconds
+  // Auto-dismiss error message after 3 seconds
   useEffect(() => {
     if (!error) return;
 
     const timeout = window.setTimeout(() => {
       setDismissedAlerts(prev => new Set(prev).add(`error-${error}`));
-    }, 5000);
+    }, 3000);
 
     return () => window.clearTimeout(timeout);
   }, [error]);
@@ -242,7 +242,12 @@ export function AdminDestinationListe({
       return <div className="divide-y divide-border/50">{destinations.map(renderListItem)}</div>;
     }
 
-    return <HebergementsOverviewMap items={destinations} />;
+    return (
+      <HebergementsOverviewMap
+        items={destinations}
+        getDetailHref={(item) => `/admin/destination/${item.id}`}
+      />
+    );
   }
 
   function getCardDescription() {

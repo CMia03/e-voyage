@@ -187,7 +187,7 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
     setShowSuccessAlert(true);
     const timeout = window.setTimeout(() => {
       setShowSuccessAlert(false);
-    }, 4500);
+    }, 3000);
 
     return () => window.clearTimeout(timeout);
   }, [successMessage]);
@@ -201,7 +201,7 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
     setShowErrorAlert(true);
     const timeout = window.setTimeout(() => {
       setShowErrorAlert(false);
-    }, 5000);
+    }, 3000);
 
     return () => window.clearTimeout(timeout);
   }, [error]);
@@ -862,8 +862,9 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
       </div>
 
       <Dialog open={isTarifDialogOpen} onOpenChange={setIsTarifDialogOpen}>
-        <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] max-w-5xl overflow-y-auto">
-          <DialogHeader><DialogTitle>Ajouter un tarif</DialogTitle><DialogDescription>Cree une nouvelle offre de chambre pour cet hebergement.</DialogDescription></DialogHeader>
+        <DialogContent className="!top-4 !w-[min(1120px,calc(100vw-2rem))] !max-w-none !translate-y-0 overflow-hidden rounded-2xl p-0 sm:!max-w-[1120px]">
+          <div className="px-5 py-4">
+          <DialogHeader className="mb-4 pr-10"><DialogTitle className="text-xl">Ajouter un tarif</DialogTitle><DialogDescription>Cree une nouvelle offre de chambre pour cet hebergement.</DialogDescription></DialogHeader>
           <FormTarifHebergement
             form={tarifForm}
             typeChambres={typeChambres}
@@ -875,6 +876,7 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
             onNewTypeChambreNameChange={setNewTypeChambreName}
             onCreateTypeChambre={handleCreateTypeChambre}
           />
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -888,9 +890,10 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
           }
         }}
       >
-        <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] max-w-5xl overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Modifier un tarif</DialogTitle>
+        <DialogContent className="!top-4 !w-[min(1120px,calc(100vw-2rem))] !max-w-none !translate-y-0 overflow-hidden rounded-2xl p-0 sm:!max-w-[1120px]">
+          <div className="px-5 py-4">
+          <DialogHeader className="mb-4 pr-10">
+            <DialogTitle className="text-xl">Modifier un tarif</DialogTitle>
             <DialogDescription>Met a jour les informations de ce tarif d hebergement.</DialogDescription>
           </DialogHeader>
           <FormTarifHebergement
@@ -904,6 +907,7 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
             onNewTypeChambreNameChange={setNewTypeChambreName}
             onCreateTypeChambre={handleCreateTypeChambre}
           />
+          </div>
         </DialogContent>
       </Dialog>
 

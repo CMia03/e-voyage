@@ -1,16 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   CalendarDays,
+  ChevronLeft,
+  ChevronRight,
   CircleDollarSign,
-  Edit,
   Eye,
   Layers,
-  Mail,
   MapPin,
+  MoreHorizontal,
   Plus,
   RefreshCw,
   Search,
@@ -19,12 +20,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useBreadcrumbs } from "@/app/admin/contexts/breadcrumbs-context";
 import { loadAuth } from "@/lib/auth";
 import { getErrorMessage } from "@/lib/api/client";
-import { listAdminReservations, updateReservationStatus } from "@/lib/api/reservations";
+import { getReservationById, listAdminReservationsPage, updateReservationStatus } from "@/lib/api/reservations";
 import {
   Reservation,
   ReservationSource,
@@ -51,10 +54,6 @@ const sourceLabels: Record<ReservationSource, string> = {
   SIMULATION: "Simulation",
 };
 
-function formatCurrency(amount: number, devise = "MGA") {
-  return `${Math.round(amount || 0).toLocaleString("fr-MG")} ${devise}`;
-}
-
 function formatDate(value: string | null | undefined) {
   if (!value) return "-";
   const date = new Date(value);
@@ -68,6 +67,17 @@ function formatDate(value: string | null | undefined) {
   });
 }
 
+function formatDateOnly(value: string | null | undefined) {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
 function getClientName(reservation: Reservation) {
   const name = `${reservation.prenomUtilisateur ?? ""} ${reservation.nomUtilisateur ?? ""}`.trim();
   return name || "Client non renseigne";
@@ -77,51 +87,8 @@ function getMainDetail(reservation: Reservation) {
   return reservation.details?.[0] ?? null;
 }
 
-function getPeopleSummary(reservation: Reservation) {
-  const details = reservation.details ?? [];
-  const totalPeople = details.reduce((sum, detail) => sum + (detail.nombrePersonnes || 0), 0);
-
-  if (details.length > 1) {
-    return `${details.length} profil(s) - ${totalPeople} voyageur(s)`;
-  }
-
-  const detail = details[0];
-  if (!detail) return "Aucun profil voyageur";
-
-  return `${detail.nomCategorieClient || "Categorie"} - ${detail.gamme || "Gamme"} - ${detail.nombrePersonnes} voyageur(s)`;
-}
-
-function getElementCount(reservation: Reservation) {
-  const detailCount = (reservation.details ?? []).reduce(
-    (sum, detail) => sum + (detail.elementsSelectionnes?.length ?? 0),
-    0
-  );
-  return detailCount || reservation.elementsSelectionnes?.length || 0;
-}
-
-function reservationMatchesQuery(reservation: Reservation, query: string) {
-  if (!query.trim()) return true;
-  const detail = getMainDetail(reservation);
-  const normalized = query.trim().toLowerCase();
-  const searchable = [
-    reservation.reference,
-    getClientName(reservation),
-    reservation.emailUtilisateur,
-    reservation.commentaireClient,
-    reservation.commentaireAdmin,
-    sourceLabels[reservation.source],
-    statusLabels[reservation.status],
-    detail?.nomDestination,
-    detail?.nomPlanification,
-    detail?.nomCategorieClient,
-    detail?.gamme,
-    formatCurrency(reservation.montantTotal, reservation.devise),
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
-
-  return searchable.includes(normalized);
+function getTotalPeople(reservation: Reservation) {
+  return (reservation.details ?? []).reduce((sum, detail) => sum + (detail.nombrePersonnes || 0), 0);
 }
 
 function StatCard({
@@ -150,14 +117,27 @@ function StatCard({
   );
 }
 
+const pageSizeOptions = [5, 10, 15] as const;
+
 export function ReservationListContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setBreadcrumbs } = useBreadcrumbs();
 
   const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [totalReservations, setTotalReservations] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState<(typeof pageSizeOptions)[number]>(5);
+  const [stats, setStats] = useState({
+    total: 0,
+    enAttente: 0,
+    annulees: 0,
+    validees: 0,
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<ReservationStatus | "ALL">("ALL");
   const [sourceFilter, setSourceFilter] = useState<ReservationSource | "ALL">("ALL");
@@ -179,14 +159,44 @@ export function ReservationListContent() {
         return;
       }
 
-      const response = await listAdminReservations(auth.accessToken);
-      setReservations(response.data ?? []);
+      const response = await listAdminReservationsPage(
+        {
+          search: searchTerm.trim(),
+          status: statusFilter,
+          source: sourceFilter,
+          amountMin: amountMinFilter,
+          amountMax: amountMaxFilter,
+          page: currentPage - 1,
+          size: pageSize,
+        },
+        auth.accessToken
+      );
+      const data = response.data;
+
+      setReservations(data?.content ?? []);
+      setTotalReservations(data?.totalElements ?? 0);
+      setTotalPages(Math.max(data?.totalPages ?? 1, 1));
+      setStats({
+        total: data?.totalCount ?? data?.totalElements ?? 0,
+        enAttente: data?.enAttenteCount ?? 0,
+        annulees: data?.annuleeCount ?? 0,
+        validees: data?.valideeCount ?? 0,
+      });
     } catch (err) {
       setError(getErrorMessage(err, "Erreur lors du chargement des reservations"));
     } finally {
       setIsLoading(false);
     }
-  }, [router]);
+  }, [
+    amountMaxFilter,
+    amountMinFilter,
+    currentPage,
+    pageSize,
+    router,
+    searchTerm,
+    sourceFilter,
+    statusFilter,
+  ]);
 
   useEffect(() => {
     setBreadcrumbs([
@@ -202,37 +212,49 @@ export function ReservationListContent() {
 
   useEffect(() => {
     const reservationId = searchParams.get("reservationId");
-    if (!reservationId || reservations.length === 0 || selectedReservation) return;
+    if (!reservationId || selectedReservation) return;
 
-    const reservation = reservations.find((item) => item.id === reservationId);
-    if (reservation) {
-      setSelectedReservation(reservation);
+    const reservationFromPage = reservations.find((item) => item.id === reservationId);
+    if (reservationFromPage) {
+      setSelectedReservation(reservationFromPage);
       setIsViewModalOpen(true);
+      return;
     }
+
+    const auth = loadAuth();
+    if (!auth) return;
+
+    let active = true;
+    const loadReservation = async () => {
+      try {
+        const response = await getReservationById(reservationId, auth.accessToken);
+        if (active && response.data) {
+          setSelectedReservation(response.data);
+          setIsViewModalOpen(true);
+        }
+      } catch (err) {
+        setError(getErrorMessage(err, "Reservation introuvable."));
+      }
+    };
+
+    void loadReservation();
+
+    return () => {
+      active = false;
+    };
   }, [reservations, searchParams, selectedReservation]);
 
-  const filteredReservations = useMemo(() => {
-    const minAmount = amountMinFilter ? Number(amountMinFilter) : null;
-    const maxAmount = amountMaxFilter ? Number(amountMaxFilter) : null;
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginationStart = totalReservations === 0 ? 0 : (safeCurrentPage - 1) * pageSize + 1;
+  const paginationEnd = Math.min(safeCurrentPage * pageSize, totalReservations);
+  const visiblePages = Array.from({ length: Math.min(totalPages, 5) }, (_, index) => {
+    const start = Math.min(Math.max(safeCurrentPage - 2, 1), Math.max(totalPages - 4, 1));
+    return start + index;
+  });
 
-    return reservations.filter((reservation) => {
-      if (!reservationMatchesQuery(reservation, searchTerm)) return false;
-      if (statusFilter !== "ALL" && reservation.status !== statusFilter) return false;
-      if (sourceFilter !== "ALL" && reservation.source !== sourceFilter) return false;
-      if (minAmount !== null && !Number.isNaN(minAmount) && reservation.montantTotal < minAmount) return false;
-      if (maxAmount !== null && !Number.isNaN(maxAmount) && reservation.montantTotal > maxAmount) return false;
-      return true;
-    });
-  }, [amountMaxFilter, amountMinFilter, reservations, searchTerm, sourceFilter, statusFilter]);
-
-  const stats = useMemo(() => {
-    return {
-      total: reservations.length,
-      enAttente: reservations.filter((reservation) => reservation.status === "EN_ATTENTE").length,
-      annulees: reservations.filter((reservation) => reservation.status === "ANNULEE").length,
-      validees: reservations.filter((reservation) => reservation.status === "VALIDEE").length,
-    };
-  }, [reservations]);
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [amountMaxFilter, amountMinFilter, pageSize, searchTerm, sourceFilter, statusFilter]);
 
   const resetFilters = () => {
     setSearchTerm("");
@@ -240,6 +262,7 @@ export function ReservationListContent() {
     setSourceFilter("ALL");
     setAmountMinFilter("");
     setAmountMaxFilter("");
+    setCurrentPage(1);
   };
 
   const closeReservationModals = useCallback(() => {
@@ -288,13 +311,15 @@ export function ReservationListContent() {
 
         setIsEditModalOpen(false);
         setSelectedReservation(null);
+        setSuccessMessage(`Reservation ${statusLabels[data.status].toLowerCase()} avec succes.`);
+        await loadReservations();
       } catch (err) {
         setError(getErrorMessage(err, "Erreur lors de la mise a jour de la reservation"));
       } finally {
         setUpdatingStatus(null);
       }
     },
-    [router]
+    [loadReservations, router]
   );
 
   if (isLoading) {
@@ -337,9 +362,16 @@ export function ReservationListContent() {
       </div>
 
       {error ? (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-          {error}
-        </div>
+        <Alert variant="destructive">
+          <AlertTitle>Erreur</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
+      {successMessage ? (
+        <Alert variant="success">
+          <AlertTitle>Success</AlertTitle>
+          <AlertDescription>{successMessage}</AlertDescription>
+        </Alert>
       ) : null}
 
       <Card className="border-slate-200 shadow-sm">
@@ -348,12 +380,19 @@ export function ReservationListContent() {
             <div>
               <CardTitle>Recherche et tri</CardTitle>
               <p className="mt-1 text-sm text-slate-500">
-                {filteredReservations.length} resultat(s) sur {reservations.length}
+                {totalReservations === 0
+                  ? "0 resultat sur 0"
+                  : `${paginationStart}-${paginationEnd} sur ${totalReservations} resultat(s)`}
               </p>
             </div>
-            <Button variant="outline" onClick={resetFilters}>
-              Reinitialiser
-            </Button>
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-sm text-slate-500">
+                Trie par : <span className="font-semibold text-slate-700">Plus recent</span>
+              </span>
+              <Button variant="outline" onClick={resetFilters}>
+                Reinitialiser
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -410,131 +449,206 @@ export function ReservationListContent() {
         </CardContent>
       </Card>
 
-      <div className="space-y-3">
-        {filteredReservations.length === 0 ? (
-          <Card className="border-dashed border-slate-300">
-            <CardContent className="py-12 text-center text-slate-500">
-              {reservations.length === 0
-                ? "Aucune reservation pour le moment."
-                : "Aucune reservation ne correspond aux filtres."}
-            </CardContent>
-          </Card>
-        ) : (
-          filteredReservations.map((reservation) => {
-            const detail = getMainDetail(reservation);
-            const elementCount = getElementCount(reservation);
+      <Card className="overflow-hidden border-slate-200 shadow-sm">
+        <CardHeader className="border-b bg-white px-4 py-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm font-semibold text-slate-700">
+              {totalReservations} reservation{totalReservations > 1 ? "s" : ""}
+            </p>
+            <p className="text-xs text-slate-500">
+              Trie par : <span className="font-semibold text-slate-700">Plus recent</span>
+            </p>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[980px] border-collapse text-sm">
+              <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                <tr className="border-b border-slate-200">
+                  <th className="w-10 px-4 py-3 text-left">
+                    <Checkbox aria-label="Selectionner toutes les reservations" />
+                  </th>
+                  <th className="px-4 py-3 text-left">Reference</th>
+                  <th className="px-4 py-3 text-left">Client</th>
+                  <th className="px-4 py-3 text-left">Destination</th>
+                  <th className="px-4 py-3 text-left">Statut</th>
+                  <th className="px-4 py-3 text-left">Periode</th>
+                  <th className="px-4 py-3 text-right">Montant</th>
+                  <th className="px-4 py-3 text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {reservations.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="px-4 py-12 text-center text-slate-500">
+                      {stats.total === 0
+                        ? "Aucune reservation pour le moment."
+                        : "Aucune reservation ne correspond aux filtres."}
+                    </td>
+                  </tr>
+                ) : (
+                  reservations.map((reservation) => {
+                    const detail = getMainDetail(reservation);
+                    const totalPeople = getTotalPeople(reservation);
 
-            return (
-              <Card key={reservation.id} className="border-slate-200 shadow-sm transition hover:border-emerald-200 hover:shadow-md">
-                <CardContent className="p-0">
-                  <div className="grid gap-0 lg:grid-cols-[1fr_auto]">
-                    <div className="space-y-5 p-5">
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Badge variant="outline">{sourceLabels[reservation.source]}</Badge>
-                            <Badge variant="outline" className={statusStyles[reservation.status]}>
-                              {statusLabels[reservation.status]}
-                            </Badge>
-                            {elementCount > 0 ? <Badge variant="secondary">{elementCount} element(s)</Badge> : null}
-                          </div>
-                          <h2 className="mt-3 text-xl font-bold text-slate-950">{reservation.reference}</h2>
-                          <p className="mt-1 text-sm font-medium text-slate-700">
-                            {detail ? `${detail.nomDestination} - ${detail.nomPlanification}` : "Destination non renseignee"}
-                          </p>
-                          <p className="mt-1 text-sm text-slate-500">{getPeopleSummary(reservation)}</p>
-                        </div>
-                        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left sm:text-right">
-                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Montant</p>
-                          <p className="mt-1 text-xl font-bold text-slate-950">
-                            {formatCurrency(reservation.montantTotal, reservation.devise)}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="grid gap-3 md:grid-cols-4">
-                        <div className="rounded-xl border border-slate-200 bg-white p-3">
-                          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                            <UserRound className="h-4 w-4 text-emerald-600" />
-                            Client
-                          </div>
-                          <p className="mt-2 font-semibold text-slate-950">{getClientName(reservation)}</p>
-                        </div>
-                        <div className="rounded-xl border border-slate-200 bg-white p-3">
-                          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                            <Mail className="h-4 w-4 text-emerald-600" />
-                            Contact
-                          </div>
-                          <p className="mt-2 truncate font-medium text-slate-800">
-                            {reservation.emailUtilisateur || "Email non renseigne"}
-                          </p>
-                        </div>
-                        <div className="rounded-xl border border-slate-200 bg-white p-3">
-                          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                            <CalendarDays className="h-4 w-4 text-emerald-600" />
-                            Creee le
-                          </div>
-                          <p className="mt-2 font-medium text-slate-800">{formatDate(reservation.dateReservation)}</p>
-                        </div>
-                        <div className="rounded-xl border border-slate-200 bg-white p-3">
-                          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                            <MapPin className="h-4 w-4 text-emerald-600" />
-                            Mise a jour
-                          </div>
-                          <p className="mt-2 font-medium text-slate-800">{formatDate(reservation.dateModification)}</p>
-                        </div>
-                      </div>
-
-                      {reservation.commentaireClient || reservation.commentaireAdmin ? (
-                        <div className="grid gap-3 md:grid-cols-2">
-                          {reservation.commentaireClient ? (
-                            <div className="rounded-xl bg-slate-50 p-3 text-sm text-slate-600">
-                              <span className="font-semibold text-slate-900">Commentaire client: </span>
-                              {reservation.commentaireClient}
-                            </div>
-                          ) : null}
-                          {reservation.commentaireAdmin ? (
-                            <div className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">
-                              <span className="font-semibold">Note admin: </span>
-                              {reservation.commentaireAdmin}
-                            </div>
-                          ) : null}
-                        </div>
-                      ) : null}
-                    </div>
-
-                    <div className="flex items-center gap-2 border-t border-slate-100 p-4 lg:flex-col lg:justify-center lg:border-l lg:border-t-0">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        title="Voir le detail"
-                        onClick={() => {
-                          setSelectedReservation(reservation);
-                          setIsViewModalOpen(true);
-                        }}
+                    return (
+                      <tr
+                        key={reservation.id}
+                        className="border-b border-slate-100 transition hover:bg-emerald-50/30"
                       >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        title="Modifier le suivi"
-                        disabled={updatingStatus === reservation.id}
-                        onClick={() => {
-                          setSelectedReservation(reservation);
-                          setIsEditModalOpen(true);
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })
-        )}
-      </div>
+                        <td className="px-4 py-4 align-middle">
+                          <Checkbox aria-label={`Selectionner ${reservation.reference}`} />
+                        </td>
+                        <td className="px-4 py-4 align-middle">
+                          <p className="font-bold text-slate-950">{reservation.reference}</p>
+                          <p className="mt-1 text-xs text-slate-500">{formatDate(reservation.dateReservation)}</p>
+                        </td>
+                        <td className="px-4 py-4 align-middle">
+                          <div className="flex items-start gap-2">
+                            <UserRound className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+                            <div className="min-w-0">
+                              <p className="font-semibold text-slate-950">{getClientName(reservation)}</p>
+                              <p className="truncate text-xs text-slate-500">{reservation.emailUtilisateur || "Email non renseigne"}</p>
+                              <Badge variant="secondary" className="mt-2 rounded-md bg-slate-100 text-xs text-slate-600">
+                                {totalPeople} voyageur(s)
+                              </Badge>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 align-middle">
+                          <div className="flex items-start gap-2">
+                            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                            <div>
+                              <p className="font-semibold text-slate-950">{detail?.nomDestination || "Destination"}</p>
+                              <p className="mt-1 text-xs text-slate-500">{detail?.nomCategorieClient || "Categorie"}</p>
+                              <Badge variant="secondary" className="mt-2 rounded-md bg-sky-50 text-xs text-sky-700">
+                                {sourceLabels[reservation.source]}
+                              </Badge>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 align-middle">
+                          <Badge variant="outline" className={`gap-1 rounded-md ${statusStyles[reservation.status]}`}>
+                            {statusLabels[reservation.status]}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-4 align-middle">
+                          <div className="flex items-start gap-2 text-slate-700">
+                            <CalendarDays className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+                            <div className="space-y-1 text-sm">
+                              <p>{formatDateOnly(reservation.dateReservation)}</p>
+                              <p className="text-xs text-slate-400">-</p>
+                              <p>{formatDateOnly(reservation.dateModification)}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 text-right align-middle">
+                          <p className="font-bold text-slate-950">
+                            {Math.round(reservation.montantTotal || 0).toLocaleString("fr-MG")}
+                          </p>
+                          <p className="text-xs text-slate-500">{reservation.devise || "MGA"}</p>
+                        </td>
+                        <td className="px-4 py-4 align-middle">
+                          <div className="flex justify-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-9 w-9"
+                              title="Voir le detail"
+                              onClick={() => {
+                                setSelectedReservation(reservation);
+                                setIsViewModalOpen(true);
+                              }}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-9 w-9"
+                              title="Modifier le suivi"
+                              disabled={updatingStatus === reservation.id}
+                              onClick={() => {
+                                setSelectedReservation(reservation);
+                                setIsEditModalOpen(true);
+                              }}
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {totalReservations > 0 ? (
+        <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-2 text-sm text-slate-500">
+            <span>Afficher</span>
+            <Select
+              value={String(pageSize)}
+              onValueChange={(value) => setPageSize(Number(value) as (typeof pageSizeOptions)[number])}
+            >
+              <SelectTrigger className="h-9 w-[76px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {pageSizeOptions.map((option) => (
+                  <SelectItem key={option} value={String(option)}>
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <span>par page</span>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9"
+              disabled={safeCurrentPage <= 1 || isLoading}
+              onClick={() => setCurrentPage((page) => Math.max(page - 1, 1))}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            {visiblePages.map((page) => (
+              <Button
+                key={page}
+                variant={page === safeCurrentPage ? "default" : "outline"}
+                size="icon"
+                className={`h-9 w-9 ${
+                  page === safeCurrentPage
+                    ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                    : ""
+                }`}
+                onClick={() => setCurrentPage(page)}
+                disabled={isLoading}
+              >
+                {page}
+              </Button>
+            ))}
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9"
+              disabled={safeCurrentPage >= totalPages || isLoading}
+              onClick={() => setCurrentPage((page) => Math.min(page + 1, totalPages))}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="text-sm text-slate-500 lg:text-right">
+            {paginationStart} - {paginationEnd} sur {totalReservations}
+          </div>
+        </div>
+      ) : null}
 
       {selectedReservation ? (
         <>

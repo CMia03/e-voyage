@@ -384,7 +384,7 @@ export function AdminDestinationAssociationsContent({
       return;
     }
 
-    const timeout = window.setTimeout(() => setSuccessMessage(""), 3500);
+    const timeout = window.setTimeout(() => setSuccessMessage(""), 3000);
     return () => window.clearTimeout(timeout);
   }, [successMessage]);
 

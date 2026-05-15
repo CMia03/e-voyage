@@ -11,8 +11,10 @@ const alertVariants = cva(
     variants: {
       variant: {
         default: "border-border bg-card text-foreground",
-        success: "border-emerald-200 bg-emerald-50 text-emerald-700",
-        destructive: "border-red-200 bg-red-50 text-red-700",
+        success:
+          "fixed right-6 top-24 z-[80] w-[min(520px,calc(100vw-2rem))] border-emerald-300 bg-emerald-50 text-emerald-800 shadow-xl shadow-emerald-900/10 animate-in fade-in-50 slide-in-from-top-3",
+        destructive:
+          "fixed right-6 top-24 z-[80] w-[min(520px,calc(100vw-2rem))] border-red-300 bg-red-50 text-red-800 shadow-xl shadow-red-900/10 animate-in fade-in-50 slide-in-from-top-3",
       },
     },
     defaultVariants: {
@@ -26,10 +28,37 @@ function Alert({
   variant,
   ...props
 }: React.ComponentProps<"div"> & VariantProps<typeof alertVariants>) {
+  const effectiveVariant =
+    variant ??
+    (typeof className === "string" && className.includes("emerald")
+      ? "success"
+      : typeof className === "string" && className.includes("red")
+        ? "destructive"
+        : undefined);
+  const [visible, setVisible] = React.useState(true);
+
+  React.useEffect(() => {
+    setVisible(true);
+
+    if (effectiveVariant !== "success" && effectiveVariant !== "destructive") {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      setVisible(false);
+    }, 3000);
+
+    return () => window.clearTimeout(timeout);
+  }, [effectiveVariant, props.children]);
+
+  if (!visible) {
+    return null;
+  }
+
   return (
     <div
       role="alert"
-      className={cn(alertVariants({ variant }), className)}
+      className={cn(alertVariants({ variant: effectiveVariant }), className)}
       {...props}
     />
   );

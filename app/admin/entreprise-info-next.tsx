@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ApiError, getErrorMessage } from "@/lib/api/client";
 import { getEntrepriseInfoAdmin, getEntrepriseInfoPublic, updateEntrepriseInfo } from "@/lib/api/entreprise-info";
 import { EntrepriseInfo } from "@/lib/type/entreprise-info";
@@ -57,7 +58,7 @@ export function AdminEntrepriseInfo({ accessToken }: Props) {
 
   useEffect(() => {
     if (!success) return;
-    const timeout = window.setTimeout(() => setSuccess(""), 3500);
+    const timeout = window.setTimeout(() => setSuccess(""), 3000);
     return () => window.clearTimeout(timeout);
   }, [success]);
 
@@ -134,12 +135,13 @@ export function AdminEntrepriseInfo({ accessToken }: Props) {
   return (
     <div className="space-y-6">
       {success ? (
-        <div className="fixed right-6 top-20 z-50 rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 shadow-lg">
-          {success}
-        </div>
+        <Alert variant="success">
+          <AlertTitle>Success</AlertTitle>
+          <AlertDescription>{success}</AlertDescription>
+        </Alert>
       ) : null}
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Info d'entreprise</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Info d&apos;entreprise</h1>
         <p className="text-sm text-muted-foreground">
           Configurez la presentation et les contacts affiches sur votre plateforme.
         </p>
@@ -157,7 +159,7 @@ export function AdminEntrepriseInfo({ accessToken }: Props) {
             ) : (
               <form className="space-y-4" onSubmit={handleSubmit}>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Nom de l'entreprise</label>
+                  <label className="text-sm font-medium">Nom de l&apos;entreprise</label>
                   <Input value={form.nomEntreprise} onChange={(e) => updateField("nomEntreprise", e.target.value)} required />
                 </div>
                 <div className="space-y-2">
@@ -189,7 +191,7 @@ export function AdminEntrepriseInfo({ accessToken }: Props) {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Plus d'infos (telephone)</label>
+                  <label className="text-sm font-medium">Plus d&apos;infos (telephone)</label>
                   <Input value={form.contactPlusInfos} onChange={(e) => updateField("contactPlusInfos", e.target.value)} placeholder="+261 34 ..." />
                 </div>
                 <div className="space-y-2">
@@ -197,7 +199,12 @@ export function AdminEntrepriseInfo({ accessToken }: Props) {
                   <Input value={form.adresse} onChange={(e) => updateField("adresse", e.target.value)} placeholder="Antananarivo, Madagascar" />
                 </div>
 
-                {error ? <p className="text-sm text-red-600">{error}</p> : null}
+                {error ? (
+                  <Alert variant="destructive">
+                    <AlertTitle>Erreur</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                ) : null}
                 <div className="flex justify-end">
                   <Button type="submit" disabled={isSaving}>
                     {isSaving ? "Enregistrement..." : "Enregistrer"}
@@ -226,7 +233,7 @@ export function AdminEntrepriseInfo({ accessToken }: Props) {
               <p>Orange : {form.contactOrange || "-"}</p>
               <p>Airtel : {form.contactAirtel || "-"}</p>
               <p>Gmail : {form.contactGmail || "-"}</p>
-              <p>Plus d'infos : {form.contactPlusInfos || "-"}</p>
+              <p>Plus d&apos;infos : {form.contactPlusInfos || "-"}</p>
               <p>Adresse : {form.adresse || "-"}</p>
             </div>
           </CardContent>

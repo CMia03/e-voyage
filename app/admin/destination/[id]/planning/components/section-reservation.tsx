@@ -8,7 +8,6 @@ import {
   ChevronRight,
   Edit,
   Eye,
-  Mail,
   MapPin,
   MoreVertical,
   RotateCcw,
@@ -20,7 +19,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -57,12 +58,6 @@ const statusClasses: Record<ReservationStatus, string> = {
   ANNULEE: "border-rose-200 bg-rose-50 text-rose-700",
 };
 
-const statusCardClasses: Record<ReservationStatus, string> = {
-  EN_ATTENTE: "border-l-amber-400 bg-amber-50/20",
-  VALIDEE: "border-l-emerald-500 bg-emerald-50/20",
-  ANNULEE: "border-l-rose-500 bg-rose-50/20",
-};
-
 const sourceClasses: Record<ReservationSource, string> = {
   PRIX_DIRECT: "border-sky-200 bg-sky-50 text-sky-700",
   SIMULATION: "border-violet-200 bg-violet-50 text-violet-700",
@@ -75,7 +70,7 @@ const sourceLabels: Record<ReservationSource, string> = {
 
 type StatusFilter = ReservationStatus | "ALL";
 type SourceFilter = ReservationSource | "ALL";
-const pageSizeOptions = [5, 10, 20] as const;
+const pageSize = 3;
 
 function formatDate(value: string | null | undefined) {
   if (!value) return "-";
@@ -90,8 +85,15 @@ function formatDate(value: string | null | undefined) {
   });
 }
 
-function formatCurrency(value: number, devise: string) {
-  return `${Number(value || 0).toLocaleString("fr-FR")} ${devise || "MGA"}`;
+function formatDateOnly(value: string | null | undefined) {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 }
 
 function getClientName(reservation: Reservation) {
@@ -117,7 +119,6 @@ export function SectionReservation({ planification }: Props) {
   const [selectedViewReservation, setSelectedViewReservation] = useState<Reservation | null>(null);
   const [selectedEditReservation, setSelectedEditReservation] = useState<Reservation | null>(null);
   const [editInitialStatus, setEditInitialStatus] = useState<ReservationStatus | undefined>();
-  const [updatingReservationId, setUpdatingReservationId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -128,7 +129,6 @@ export function SectionReservation({ planification }: Props) {
   const [minAmountFilter, setMinAmountFilter] = useState("");
   const [maxAmountFilter, setMaxAmountFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState<(typeof pageSizeOptions)[number]>(5);
 
   useEffect(() => {
     const session = loadAuth();
@@ -194,7 +194,6 @@ export function SectionReservation({ planification }: Props) {
     endDateFilter,
     maxAmountFilter,
     minAmountFilter,
-    pageSize,
     planification.id,
     searchTerm,
     sourceFilter,
@@ -215,6 +214,10 @@ export function SectionReservation({ planification }: Props) {
   const safeCurrentPage = Math.min(currentPage, totalPages);
   const paginationStart = totalReservations === 0 ? 0 : (safeCurrentPage - 1) * pageSize + 1;
   const paginationEnd = Math.min(safeCurrentPage * pageSize, totalReservations);
+  const visiblePages = Array.from({ length: Math.min(totalPages, 5) }, (_, index) => {
+    const start = Math.min(Math.max(safeCurrentPage - 2, 1), Math.max(totalPages - 4, 1));
+    return start + index;
+  });
 
   useEffect(() => {
     setCurrentPage(1);
@@ -226,7 +229,6 @@ export function SectionReservation({ planification }: Props) {
     sourceFilter,
     startDateFilter,
     statusFilter,
-    pageSize,
   ]);
 
   function resetFilters() {
@@ -259,7 +261,6 @@ export function SectionReservation({ planification }: Props) {
     }
 
     try {
-      setUpdatingReservationId(id);
       setError("");
       const response = await updateReservationStatus(id, data, token);
       const updatedReservation = response.data;
@@ -289,7 +290,6 @@ export function SectionReservation({ planification }: Props) {
     } catch (requestError) {
       setError(getErrorMessage(requestError, "Impossible de modifier le statut de la reservation."));
     } finally {
-      setUpdatingReservationId(null);
     }
   }
 
@@ -408,29 +408,11 @@ export function SectionReservation({ planification }: Props) {
                 </Button>
               </div>
 
-              <div className="flex flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-                <p>
-                  {totalReservations === 0
-                    ? "Aucun resultat"
-                    : `${paginationStart}-${paginationEnd} sur ${totalReservations} resultat(s)`}
-                </p>
-                <div className="flex items-center gap-2">
-                  <span>Par page</span>
-                  <select
-                    value={pageSize}
-                    onChange={(event) =>
-                      setPageSize(Number(event.target.value) as (typeof pageSizeOptions)[number])
-                    }
-                    className="h-8 rounded-md border border-input bg-background px-2 text-xs outline-none transition focus:border-emerald-500"
-                  >
-                    {pageSizeOptions.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+              <p className="text-xs text-muted-foreground">
+                {totalReservations === 0
+                  ? "Aucun resultat"
+                  : `${paginationStart}-${paginationEnd} sur ${totalReservations} resultat(s)`}
+              </p>
             </div>
           </div>
 
@@ -439,7 +421,12 @@ export function SectionReservation({ planification }: Props) {
               Chargement des reservations...
             </div>
           ) : error ? (
-            <div className="px-4 py-8 text-center text-sm text-red-600">{error}</div>
+            <div className="px-4 py-6">
+              <Alert variant="destructive">
+                <AlertTitle>Erreur</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            </div>
           ) : planificationReservations.length === 0 ? (
             <div className="px-4 py-8 text-center text-sm text-muted-foreground">
               Aucune reservation liee a cette planification pour le moment.
@@ -449,170 +436,177 @@ export function SectionReservation({ planification }: Props) {
               Aucune reservation ne correspond aux filtres.
             </div>
           ) : (
-            <div className="space-y-3 bg-slate-50/60 p-3">
-              {filteredReservations.map((reservation) => {
-                const details = getPlanificationDetails(reservation, planification.id);
-                const voyageurs = details.reduce((sum, detail) => sum + detail.nombrePersonnes, 0);
-                const categories = details
-                  .map((detail) => `${detail.nomCategorieClient} - ${detail.gamme}`)
-                  .filter(Boolean)
-                  .join(", ");
+            <div className="bg-white">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[980px] border-collapse text-sm">
+                  <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                    <tr className="border-b border-slate-200">
+                      <th className="w-12 px-5 py-4 text-left">
+                        <Checkbox aria-label="Selectionner toutes les reservations" />
+                      </th>
+                      <th className="px-5 py-4 text-left">Reference</th>
+                      <th className="px-5 py-4 text-left">Client</th>
+                      <th className="px-5 py-4 text-left">Destination</th>
+                      <th className="px-5 py-4 text-left">Statut</th>
+                      <th className="px-5 py-4 text-left">Periode</th>
+                      <th className="px-5 py-4 text-right">Montant</th>
+                      <th className="px-5 py-4 text-center">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredReservations.map((reservation) => {
+                      const details = getPlanificationDetails(reservation, planification.id);
+                      const mainDetail = details[0];
+                      const voyageurs = details.reduce((sum, detail) => sum + detail.nombrePersonnes, 0);
+                      const categorie = mainDetail?.nomCategorieClient || "Categorie";
 
-                return (
-                  <div
-                    key={reservation.id}
-                    className={`rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300 hover:shadow-md ${statusCardClasses[reservation.status]}`}
-                  >
-                    <div className="grid gap-4 xl:grid-cols-[minmax(230px,0.9fr)_minmax(390px,1.35fr)_minmax(245px,0.78fr)] xl:items-stretch">
-                      <div className="flex min-w-0 flex-col justify-center space-y-3 xl:border-r xl:border-slate-200 xl:pr-5">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Badge variant="outline" className={sourceClasses[reservation.source]}>
-                            {sourceLabels[reservation.source]}
-                          </Badge>
-                          <Badge variant="outline" className={statusClasses[reservation.status]}>
-                            {statusLabels[reservation.status]}
-                          </Badge>
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-base font-semibold text-slate-950">{reservation.reference}</p>
-                          <p className="mt-1 line-clamp-2 text-xs text-slate-500">
-                            {categories || "Profil voyageur non renseigne"}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="grid min-w-0 gap-x-6 gap-y-4 md:grid-cols-2 xl:border-r xl:border-slate-200 xl:px-5">
-                        <div className="min-w-0">
-                          <span className="mb-1 flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500">
-                            <Users className="h-4 w-4 text-sky-600" />
-                            Voyageurs
-                          </span>
-                          <p className="text-sm font-semibold text-slate-950">{voyageurs} personne(s)</p>
-                        </div>
-                        <div className="min-w-0">
-                          <span className="mb-1 flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500">
-                            <CalendarDays className="h-4 w-4 text-violet-600" />
-                            Date
-                          </span>
-                          <p className="text-sm font-semibold text-slate-950">{formatDate(reservation.dateReservation)}</p>
-                        </div>
-                        <div className="min-w-0">
-                          <span className="mb-1 flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500">
-                            <MapPin className="h-4 w-4 text-emerald-600" />
-                            Client
-                          </span>
-                          <p className="truncate text-sm font-semibold text-slate-950">{getClientName(reservation)}</p>
-                        </div>
-                        <div className="min-w-0">
-                          <span className="mb-1 flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500">
-                            <Mail className="h-4 w-4 text-orange-500" />
-                            Contact
-                          </span>
-                          <p className="break-all text-sm font-semibold text-slate-950">
-                            {reservation.emailUtilisateur || "Email non renseigne"}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="grid gap-3 sm:grid-cols-[1fr_auto] xl:grid-cols-[1fr_34px] xl:pl-2">
-                        <div className="flex flex-col justify-between gap-4">
-                          <div>
-                            <p className="text-xs uppercase tracking-wide text-slate-500">Montant</p>
-                            <p className="mt-1 text-2xl font-semibold text-emerald-700">
-                              {formatCurrency(reservation.montantTotal, reservation.devise)}
-                            </p>
-                            <div className="mt-2 flex items-center gap-2 text-xs font-medium text-slate-600">
-                              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
-                                <CheckCircle2 className="h-4 w-4" />
-                              </span>
-                              {statusLabels[reservation.status]}
+                      return (
+                        <tr key={reservation.id} className="border-b border-slate-100 transition hover:bg-emerald-50/30">
+                          <td className="px-5 py-5 align-middle">
+                            <Checkbox aria-label={`Selectionner ${reservation.reference}`} />
+                          </td>
+                          <td className="px-5 py-5 align-middle">
+                            <p className="font-bold text-slate-950">{reservation.reference}</p>
+                            <p className="mt-1 text-xs text-slate-500">{formatDate(reservation.dateReservation)}</p>
+                          </td>
+                          <td className="px-5 py-5 align-middle">
+                            <div className="flex items-start gap-2">
+                              <Users className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+                              <div className="min-w-0">
+                                <p className="font-semibold text-slate-950">{getClientName(reservation)}</p>
+                                <p className="truncate text-xs text-slate-500">{reservation.emailUtilisateur || "Email non renseigne"}</p>
+                                <Badge variant="secondary" className="mt-2 rounded-md bg-slate-100 text-xs text-slate-600">
+                                  {voyageurs} voyageur(s)
+                                </Badge>
+                              </div>
                             </div>
-                          </div>
+                          </td>
+                          <td className="px-5 py-5 align-middle">
+                            <div className="flex items-start gap-2">
+                              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                              <div>
+                                <p className="font-semibold text-slate-950">{mainDetail?.nomDestination || planification.destinationNom || "Destination"}</p>
+                                <p className="mt-1 text-xs text-slate-500">{categorie}</p>
+                                <Badge variant="secondary" className={`mt-2 rounded-md text-xs ${sourceClasses[reservation.source]}`}>
+                                  {sourceLabels[reservation.source]}
+                                </Badge>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-5 py-5 align-middle">
+                            <Badge variant="outline" className={`rounded-md ${statusClasses[reservation.status]}`}>
+                              {statusLabels[reservation.status]}
+                            </Badge>
+                          </td>
+                          <td className="px-5 py-5 align-middle">
+                            <div className="flex items-start gap-2">
+                              <CalendarDays className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+                              <div className="space-y-1">
+                                <p className="text-slate-800">{formatDateOnly(reservation.dateReservation)}</p>
+                                <p className="text-slate-400">-</p>
+                                <p className="text-slate-800">{formatDateOnly(reservation.dateModification)}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-5 py-5 text-right align-middle">
+                            <p className="font-bold text-slate-950">{Number(reservation.montantTotal || 0).toLocaleString("fr-FR")}</p>
+                            <p className="text-xs text-slate-500">{reservation.devise || "MGA"}</p>
+                          </td>
+                          <td className="px-5 py-5 align-middle">
+                            <div className="flex justify-center gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                className="h-10 w-10"
+                                onClick={() => setSelectedViewReservation(reservation)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button type="button" variant="outline" size="icon" className="h-10 w-10">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-44">
+                                  {reservation.status !== "VALIDEE" ? (
+                                    <DropdownMenuItem onClick={() => openEditReservation(reservation, "VALIDEE")}>
+                                      <CheckCircle2 className="mr-2 h-4 w-4" />
+                                      Valider
+                                    </DropdownMenuItem>
+                                  ) : null}
+                                  <DropdownMenuItem onClick={() => openEditReservation(reservation)}>
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    Commenter
+                                  </DropdownMenuItem>
+                                  {reservation.status !== "ANNULEE" ? (
+                                    <>
+                                      <DropdownMenuSeparator />
+                                      <DropdownMenuItem
+                                        className="text-rose-700 focus:text-rose-700"
+                                        onClick={() => openEditReservation(reservation, "ANNULEE")}
+                                      >
+                                        <XCircle className="mr-2 h-4 w-4" />
+                                        Annuler
+                                      </DropdownMenuItem>
+                                    </>
+                                  ) : null}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
 
-                          <div className="grid grid-cols-2 gap-3">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="gap-2 border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800"
-                            onClick={() => setSelectedViewReservation(reservation)}
-                          >
-                            <Eye className="h-4 w-4" />
-                            Voir
-                          </Button>
-                          {reservation.status !== "VALIDEE" ? (
-                            <Button
-                              type="button"
-                              className="gap-2 bg-emerald-600 hover:bg-emerald-700"
-                              disabled={updatingReservationId === reservation.id}
-                              onClick={() => openEditReservation(reservation, "VALIDEE")}
-                            >
-                              <CheckCircle2 className="h-4 w-4" />
-                              Valider
-                            </Button>
-                          ) : null}
-                          
-                          </div>
-                        </div>
-
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button type="button" variant="ghost" size="icon" className="self-start text-slate-600">
-                              <MoreVertical className="h-5 w-5" />
-                              <span className="sr-only">Actions reservation</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-44">
-                            <DropdownMenuItem onClick={() => openEditReservation(reservation)}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Commenter
-                            </DropdownMenuItem>
-                            {reservation.status !== "ANNULEE" ? (
-                              <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  className="text-rose-700 focus:text-rose-700"
-                                  onClick={() => openEditReservation(reservation, "ANNULEE")}
-                                >
-                                  <XCircle className="mr-2 h-4 w-4" />
-                                  Annuler
-                                </DropdownMenuItem>
-                              </>
-                            ) : null}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-
-              <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-xs text-muted-foreground">
-                  Page {safeCurrentPage} sur {totalPages} - {totalReservations} resultat(s)
-                </p>
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-3 border-t px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="text-sm text-muted-foreground">
+                  Afficher <span className="font-semibold text-slate-700">{pageSize}</span> par page
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-2">
                   <Button
                     type="button"
                     variant="outline"
-                    size="sm"
-                    className="gap-1"
+                    size="icon"
+                    className="h-9 w-9"
                     disabled={safeCurrentPage <= 1}
                     onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
                   >
                     <ChevronLeft className="h-4 w-4" />
-                    Precedent
                   </Button>
+                  {visiblePages.map((page) => (
+                    <Button
+                      key={page}
+                      type="button"
+                      variant={page === safeCurrentPage ? "default" : "outline"}
+                      size="icon"
+                      className={`h-9 w-9 ${
+                        page === safeCurrentPage
+                          ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                          : ""
+                      }`}
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </Button>
+                  ))}
                   <Button
                     type="button"
                     variant="outline"
-                    size="sm"
-                    className="gap-1"
+                    size="icon"
+                    className="h-9 w-9"
                     disabled={safeCurrentPage >= totalPages}
                     onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
                   >
-                    Suivant
                     <ChevronRight className="h-4 w-4" />
                   </Button>
+                </div>
+                <div className="text-sm text-muted-foreground lg:text-right">
+                  {paginationStart} - {paginationEnd} sur {totalReservations}
                 </div>
               </div>
             </div>

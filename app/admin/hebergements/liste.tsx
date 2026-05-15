@@ -2,13 +2,15 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { 
   CheckCircle2, 
   Eye,
   Pencil, 
   Plus, 
   RefreshCcw, 
+  Search,
+  SlidersHorizontal,
   Star, 
   Trash2, 
   X,
@@ -26,6 +28,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Hebergement } from "@/lib/type/hebergement";
 
@@ -57,6 +60,8 @@ type AdminHebergementsListeProps = {
 };
 
 type ViewMode = "cards" | "list" | "map";
+type StatusFilter = "ALL" | "ACTIVE" | "INACTIVE";
+const pageSizeOptions = [4, 8, 12] as const;
 
 const viewModeButtonClass =
   "text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 data-[state=on]:bg-gradient-to-r data-[state=on]:from-emerald-600 data-[state=on]:to-teal-600 data-[state=on]:text-white data-[state=on]:shadow-md data-[state=on]:shadow-emerald-500/20";
@@ -64,6 +69,30 @@ const greenOutlineButtonClass =
   "border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100 hover:text-emerald-800";
 const greenPrimaryButtonClass =
   "border-transparent bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/20 hover:from-emerald-700 hover:to-teal-700";
+
+function normalizeSearch(value: string | number | null | undefined) {
+  return String(value ?? "").trim().toLowerCase();
+}
+
+function getDistanceKm(
+  from: { latitude: number; longitude: number },
+  to: { latitude: number; longitude: number }
+) {
+  const earthRadiusKm = 6371;
+  const toRadians = (value: number) => (value * Math.PI) / 180;
+  const deltaLat = toRadians(to.latitude - from.latitude);
+  const deltaLng = toRadians(to.longitude - from.longitude);
+  const startLat = toRadians(from.latitude);
+  const endLat = toRadians(to.latitude);
+  const a =
+    Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+    Math.cos(startLat) *
+      Math.cos(endLat) *
+      Math.sin(deltaLng / 2) *
+      Math.sin(deltaLng / 2);
+
+  return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
 export function AdminHebergementsListe({
   hebergements,
@@ -79,6 +108,19 @@ export function AdminHebergementsListe({
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [showErrorAlert, setShowErrorAlert] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
+  const [showFilters, setShowFilters] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [typeFilter, setTypeFilter] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
+  const [priceMinFilter, setPriceMinFilter] = useState("");
+  const [priceMaxFilter, setPriceMaxFilter] = useState("");
+  const [distanceRadiusFilter, setDistanceRadiusFilter] = useState("");
+  const [mapReferencePoint, setMapReferencePoint] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState<(typeof pageSizeOptions)[number]>(4);
 
   useEffect(() => {
     if (!successMessage) {
@@ -90,7 +132,7 @@ export function AdminHebergementsListe({
     setShowSuccessAlert(true);
     const timeout = window.setTimeout(() => {
       setShowSuccessAlert(false);
-    }, 4500);
+    }, 3000);
 
     return () => window.clearTimeout(timeout);
   }, [successMessage]);
@@ -105,10 +147,107 @@ export function AdminHebergementsListe({
     setShowErrorAlert(true);
     const timeout = window.setTimeout(() => {
       setShowErrorAlert(false);
-    }, 5000);
+    }, 3000);
 
     return () => window.clearTimeout(timeout);
   }, [error]);
+
+  const types = useMemo(() => {
+    return Array.from(
+      new Set(hebergements.map((hebergement) => hebergement.nomTypeHebergement).filter(Boolean))
+    ).sort((a, b) => a.localeCompare(b));
+  }, [hebergements]);
+
+  const filteredHebergements = useMemo(() => {
+    const normalizedSearch = normalizeSearch(searchTerm);
+    const minPrice = priceMinFilter ? Number(priceMinFilter) : null;
+    const maxPrice = priceMaxFilter ? Number(priceMaxFilter) : null;
+    const distanceRadius = distanceRadiusFilter ? Number(distanceRadiusFilter) : null;
+
+    return hebergements.filter((hebergement) => {
+      const prices = (hebergement.tarifs ?? []).flatMap((tarif) => [
+        tarif.prixParNuit,
+        tarif.prixReservation,
+      ]).filter((price): price is number => typeof price === "number");
+      const minHebergementPrice = prices.length > 0 ? Math.min(...prices) : null;
+      const searchable = [
+        hebergement.nom,
+        hebergement.slug,
+        hebergement.description,
+        hebergement.adresse,
+        hebergement.nomTypeHebergement,
+        hebergement.telephone,
+        hebergement.email,
+        hebergement.siteWeb,
+        hebergement.latitude,
+        hebergement.longitude,
+        hebergement.nombreEtoiles,
+        hebergement.estActif ? "actif active visible" : "inactif inactive masque",
+        ...(hebergement.equipements ?? []),
+        ...(hebergement.tarifs ?? []).flatMap((tarif) => [
+          tarif.nomTypeChambre,
+          tarif.devise,
+          tarif.gamme,
+          tarif.prixParNuit,
+          tarif.prixReservation,
+          tarif.capacite,
+          tarif.petitDejeunerInclus ? "petit dejeuner inclus" : "petit dejeuner non inclus",
+          tarif.estActif ? "tarif actif" : "tarif inactif",
+        ]),
+      ]
+        .map(normalizeSearch)
+        .join(" ");
+
+      if (normalizedSearch && !searchable.includes(normalizedSearch)) return false;
+      if (typeFilter !== "ALL" && hebergement.nomTypeHebergement !== typeFilter) return false;
+      if (statusFilter === "ACTIVE" && !hebergement.estActif) return false;
+      if (statusFilter === "INACTIVE" && hebergement.estActif) return false;
+      if (minPrice !== null && !Number.isNaN(minPrice) && (minHebergementPrice === null || minHebergementPrice < minPrice)) return false;
+      if (maxPrice !== null && !Number.isNaN(maxPrice) && (minHebergementPrice === null || minHebergementPrice > maxPrice)) return false;
+      if (
+        mapReferencePoint &&
+        distanceRadius !== null &&
+        !Number.isNaN(distanceRadius) &&
+        getDistanceKm(mapReferencePoint, {
+          latitude: Number(hebergement.latitude),
+          longitude: Number(hebergement.longitude),
+        }) > distanceRadius
+      ) {
+        return false;
+      }
+      return true;
+    });
+  }, [
+    distanceRadiusFilter,
+    hebergements,
+    mapReferencePoint,
+    priceMaxFilter,
+    priceMinFilter,
+    searchTerm,
+    statusFilter,
+    typeFilter,
+  ]);
+
+  const resetFilters = () => {
+    setSearchTerm("");
+    setTypeFilter("ALL");
+    setStatusFilter("ALL");
+    setPriceMinFilter("");
+    setPriceMaxFilter("");
+    setDistanceRadiusFilter("");
+    setMapReferencePoint(null);
+    setCurrentPage(1);
+  };
+
+  const totalPages = Math.max(Math.ceil(filteredHebergements.length / pageSize), 1);
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginationStart = filteredHebergements.length === 0 ? 0 : (safeCurrentPage - 1) * pageSize + 1;
+  const paginationEnd = Math.min(safeCurrentPage * pageSize, filteredHebergements.length);
+  const paginatedHebergements = filteredHebergements.slice(paginationStart - 1, paginationEnd);
+  const visiblePages = Array.from({ length: Math.min(totalPages, 5) }, (_, index) => {
+    const start = Math.min(Math.max(safeCurrentPage - 2, 1), Math.max(totalPages - 4, 1));
+    return start + index;
+  });
 
   const renderHebergementCard = (hebergement: Hebergement) => (
     <div
@@ -283,21 +422,40 @@ export function AdminHebergementsListe({
       );
     }
 
+    if (filteredHebergements.length === 0) {
+      return (
+        <p className="text-sm text-muted-foreground">
+          Aucun hebergement ne correspond aux criteres de recherche.
+        </p>
+      );
+    }
+
     switch (viewMode) {
       case "cards":
         return (
           <div className="grid gap-4 md:grid-cols-2">
-            {hebergements.map(renderHebergementCard)}
+            {paginatedHebergements.map(renderHebergementCard)}
           </div>
         );
       case "list":
         return (
           <div className="divide-y divide-border/50">
-            {hebergements.map(renderHebergementListItem)}
+            {paginatedHebergements.map(renderHebergementListItem)}
           </div>
         );
       case "map":
-        return <HebergementsOverviewMap items={hebergements} />;
+        return (
+          <HebergementsOverviewMap
+            items={paginatedHebergements}
+            getDetailHref={(item) => `/admin/hebergements/${item.id}`}
+            referencePoint={mapReferencePoint}
+            onReferencePointChange={(coords) => {
+              setMapReferencePoint(coords);
+              setDistanceRadiusFilter((current) => current || "10");
+              setCurrentPage(1);
+            }}
+          />
+        );
       default:
         return null;
     }
@@ -316,6 +474,18 @@ export function AdminHebergementsListe({
     }
   };
 
+  const getFilteredCardDescription = () => {
+    if (viewMode === "cards") {
+      return `${filteredHebergements.length} hebergement(s) sur ${hebergements.length} en mode cartes`;
+    }
+
+    if (viewMode === "list") {
+      return `${filteredHebergements.length} hebergement(s) sur ${hebergements.length} en mode liste`;
+    }
+
+    return `Visualisation de ${paginatedHebergements.length} hebergement(s) sur ${filteredHebergements.length} resultat(s) sur la carte`;
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -329,10 +499,26 @@ export function AdminHebergementsListe({
         </div>
 
         <div className="flex flex-wrap gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={() => setShowFilters((current) => !current)}
+            className={greenOutlineButtonClass}
+            title="Recherche multi-critere"
+          >
+            <SlidersHorizontal className="size-4" />
+            <span className="sr-only">Afficher la recherche multi-critere</span>
+          </Button>
+
           <ToggleGroup
             type="single" 
             value={viewMode} 
-            onValueChange={(value) => value && setViewMode(value as ViewMode)}
+            onValueChange={(value) => {
+              if (!value) return;
+              setViewMode(value as ViewMode);
+              setCurrentPage(1);
+            }}
             className="rounded-lg border border-emerald-200 bg-emerald-50/60"
           >
             <ToggleGroupItem value="cards" aria-label="Vue en cartes" className={viewModeButtonClass}>
@@ -405,6 +591,137 @@ export function AdminHebergementsListe({
         </Alert>
       ) : null}
 
+      {showFilters ? (
+        <Card className="border-border/50">
+          <CardHeader>
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <CardTitle>Recherche multi-critere</CardTitle>
+                <CardDescription>
+                  Nom, type, statut, prix, equipements ou tarifs.
+                </CardDescription>
+              </div>
+              <Button type="button" variant="outline" onClick={resetFilters} className={greenOutlineButtonClass}>
+                Reinitialiser
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={searchTerm}
+                onChange={(event) => {
+                  setSearchTerm(event.target.value);
+                  setCurrentPage(1);
+                }}
+                placeholder="Nom, adresse, type, equipement, tarif, email..."
+                className="h-11 pl-9"
+              />
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[1fr_1fr_0.8fr_0.8fr]">
+              <select
+                value={typeFilter}
+                onChange={(event) => {
+                  setTypeFilter(event.target.value);
+                  setCurrentPage(1);
+                }}
+                className="h-11 rounded-md border border-input bg-background px-3 text-sm outline-none transition focus:border-emerald-500"
+              >
+                <option value="ALL">Tous les types</option>
+                {types.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={statusFilter}
+                onChange={(event) => {
+                  setStatusFilter(event.target.value as StatusFilter);
+                  setCurrentPage(1);
+                }}
+                className="h-11 rounded-md border border-input bg-background px-3 text-sm outline-none transition focus:border-emerald-500"
+              >
+                <option value="ALL">Tous les statuts</option>
+                <option value="ACTIVE">Actif</option>
+                <option value="INACTIVE">Inactif</option>
+              </select>
+
+              <Input
+                type="number"
+                min={0}
+                value={priceMinFilter}
+                onChange={(event) => {
+                  setPriceMinFilter(event.target.value);
+                  setCurrentPage(1);
+                }}
+                placeholder="Prix min"
+                className="h-11"
+              />
+
+              <Input
+                type="number"
+                min={0}
+                value={priceMaxFilter}
+                onChange={(event) => {
+                  setPriceMaxFilter(event.target.value);
+                  setCurrentPage(1);
+                }}
+                placeholder="Prix max"
+                className="h-11"
+              />
+            </div>
+
+            {viewMode === "map" ? (
+              <div className="grid gap-3 rounded-xl border border-amber-200 bg-amber-50/45 p-3 md:grid-cols-[1fr_180px_auto] md:items-center">
+                <div>
+                  <p className="text-sm font-medium text-slate-900">
+                    Recherche par distance
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Cliquez sur la carte pour choisir le point de depart.
+                    {mapReferencePoint
+                      ? ` Point: ${mapReferencePoint.latitude}, ${mapReferencePoint.longitude}`
+                      : ""}
+                  </p>
+                </div>
+                <Input
+                  type="number"
+                  min={1}
+                  value={distanceRadiusFilter}
+                  onChange={(event) => {
+                    setDistanceRadiusFilter(event.target.value);
+                    setCurrentPage(1);
+                  }}
+                  placeholder="Rayon en km"
+                  className="h-10 bg-white"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setMapReferencePoint(null);
+                    setDistanceRadiusFilter("");
+                    setCurrentPage(1);
+                  }}
+                  className="h-10 border-amber-200 bg-white text-amber-800 hover:bg-amber-100"
+                  disabled={!mapReferencePoint && !distanceRadiusFilter}
+                >
+                  Effacer
+                </Button>
+              </div>
+            ) : null}
+
+            <p className="text-sm text-muted-foreground">
+              {filteredHebergements.length} resultat(s) sur {hebergements.length} hebergement(s).
+            </p>
+          </CardContent>
+        </Card>
+      ) : null}
+
       <Card className="border-border/50">
         <CardHeader>
           <CardTitle>
@@ -412,10 +729,76 @@ export function AdminHebergementsListe({
             {viewMode === "list" && "Vue en liste"}
             {viewMode === "map" && "Vue carte"}
           </CardTitle>
-          <CardDescription>{getCardDescription()}</CardDescription>
+          <CardDescription>{getFilteredCardDescription() || getCardDescription()}</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           {renderContent()}
+
+          {filteredHebergements.length > 0 ? (
+            <div className="flex flex-col gap-3 rounded-xl border border-border/50 bg-card px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>Afficher</span>
+                <select
+                  value={pageSize}
+                  onChange={(event) => {
+                    setPageSize(Number(event.target.value) as (typeof pageSizeOptions)[number]);
+                    setCurrentPage(1);
+                  }}
+                  className="h-9 rounded-md border border-input bg-background px-2 text-sm outline-none transition focus:border-emerald-500"
+                >
+                  {pageSizeOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+                <span>par page</span>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9"
+                  disabled={safeCurrentPage <= 1}
+                  onClick={() => setCurrentPage((page) => Math.max(page - 1, 1))}
+                >
+                  {"<"}
+                </Button>
+                {visiblePages.map((page) => (
+                  <Button
+                    key={page}
+                    type="button"
+                    variant={page === safeCurrentPage ? "default" : "outline"}
+                    size="icon"
+                    className={`h-9 w-9 ${
+                      page === safeCurrentPage
+                        ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                        : ""
+                    }`}
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </Button>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9"
+                  disabled={safeCurrentPage >= totalPages}
+                  onClick={() => setCurrentPage((page) => Math.min(page + 1, totalPages))}
+                >
+                  {">"}
+                </Button>
+              </div>
+
+              <p className="text-sm text-muted-foreground sm:text-right">
+                {paginationStart} - {paginationEnd} sur {filteredHebergements.length}
+              </p>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
     </div>

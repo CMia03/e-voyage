@@ -17,6 +17,7 @@ import {
 } from "@/lib/api/destinations";
 import { getErrorMessage } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -447,6 +448,15 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
   const safeListCurrentPage = Math.min(listCurrentPage, listTotalPages);
   const listPaginationStart = listTotalElements === 0 ? 0 : (safeListCurrentPage - 1) * listPageSize + 1;
   const listPaginationEnd = Math.min(safeListCurrentPage * listPageSize, listTotalElements);
+  const listPageNumbers = useMemo(() => {
+    const maxVisiblePages = 5;
+    const total = Math.max(1, listTotalPages);
+    const half = Math.floor(maxVisiblePages / 2);
+    const start = Math.max(1, Math.min(safeListCurrentPage - half, total - maxVisiblePages + 1));
+    const end = Math.min(total, start + maxVisiblePages - 1);
+
+    return Array.from({ length: end - start + 1 }, (_, index) => start + index);
+  }, [listTotalPages, safeListCurrentPage]);
 
   useEffect(() => {
     setListCurrentPage(1);
@@ -694,9 +704,10 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
         </CardHeader>
         <CardContent className="space-y-4 px-6 pb-6">
           {error ? (
-            <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error}
-            </div>
+            <Alert variant="destructive">
+              <AlertTitle>Erreur</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           ) : null}
 
           {loading ? (
@@ -904,29 +915,13 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
                     </div>
                   </div>
                 </div>
-                <div className="mt-3 flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+                <div className="mt-3 text-sm text-muted-foreground">
                   <p>
                     {listTotalElements === 0
                       ? "Aucun resultat"
                       : `${listPaginationStart}-${listPaginationEnd} sur ${listTotalElements} resultat(s)`}
                     {" "}sur {listTotalItems} planification(s).
                   </p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs">Par page</span>
-                    <select
-                      value={listPageSize}
-                      onChange={(event) =>
-                        setListPageSize(Number(event.target.value) as (typeof listPageSizeOptions)[number])
-                      }
-                      className="h-8 rounded-md border border-input bg-background px-2 text-xs outline-none transition focus:border-emerald-500"
-                    >
-                      {listPageSizeOptions.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
                 </div>
               </div>
 
@@ -1045,34 +1040,73 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
                 </table>
                 </div>
                 {listTotalElements > 0 ? (
-                  <div className="flex flex-col gap-3 border-t bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-xs text-muted-foreground">
-                      Page {safeListCurrentPage} sur {listTotalPages} - {listTotalElements} resultat(s)
-                    </p>
+                  <div className="grid gap-3 border-t bg-white px-4 py-4 text-sm text-muted-foreground lg:grid-cols-[1fr_auto_1fr] lg:items-center">
                     <div className="flex items-center gap-2">
+                      <span>Afficher</span>
+                      <Select
+                        value={String(listPageSize)}
+                        onValueChange={(value) => {
+                          setListPageSize(Number(value) as (typeof listPageSizeOptions)[number]);
+                          setListCurrentPage(1);
+                        }}
+                      >
+                        <SelectTrigger className="h-10 w-[82px] rounded-xl">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {listPageSizeOptions.map((option) => (
+                            <SelectItem key={option} value={String(option)}>
+                              {option}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <span>par page</span>
+                    </div>
+
+                    <div className="flex items-center justify-center gap-2">
                       <Button
                         type="button"
                         variant="outline"
-                        size="sm"
-                        className="gap-1"
+                        size="icon"
+                        className="h-10 w-10 rounded-xl border-emerald-100 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-40"
                         disabled={listLoading || safeListCurrentPage <= 1}
                         onClick={() => setListCurrentPage((page) => Math.max(1, page - 1))}
                       >
                         <ChevronLeft className="h-4 w-4" />
-                        Precedent
                       </Button>
+                      {listPageNumbers.map((pageNumber) => (
+                        <Button
+                          key={pageNumber}
+                          type="button"
+                          variant={pageNumber === safeListCurrentPage ? "default" : "outline"}
+                          size="icon"
+                          onClick={() => setListCurrentPage(pageNumber)}
+                          disabled={listLoading}
+                          className={`h-10 w-10 rounded-xl ${
+                            pageNumber === safeListCurrentPage
+                              ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-100"
+                              : "border-emerald-100 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                          }`}
+                        >
+                          {pageNumber}
+                        </Button>
+                      ))}
                       <Button
                         type="button"
                         variant="outline"
-                        size="sm"
-                        className="gap-1"
+                        size="icon"
+                        className="h-10 w-10 rounded-xl border-emerald-100 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-40"
                         disabled={listLoading || safeListCurrentPage >= listTotalPages}
                         onClick={() => setListCurrentPage((page) => Math.min(listTotalPages, page + 1))}
                       >
-                        Suivant
                         <ChevronRight className="h-4 w-4" />
                       </Button>
                     </div>
+
+                    <span className="text-left lg:text-right">
+                      {listPaginationStart} - {listPaginationEnd} sur {listTotalElements}
+                    </span>
                   </div>
                 ) : null}
               </div>
@@ -1114,9 +1148,10 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
 
             <CardContent className="max-h-[72vh] space-y-6 overflow-y-auto px-6 py-6">
               {error ? (
-                <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                  {error}
-                </div>
+                <Alert variant="destructive">
+                  <AlertTitle>Erreur</AlertTitle>
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
               ) : null}
 
               <div className="space-y-2">

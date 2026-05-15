@@ -1,7 +1,18 @@
 ﻿"use client";
 
 import { useState } from "react";
-import { BedDouble, CalendarDays, CheckCircle2, CreditCard, Plus, Users, Utensils } from "lucide-react";
+import {
+  BedDouble,
+  CalendarDays,
+  CheckCircle2,
+  ClipboardList,
+  Info,
+  Plus,
+  Save,
+  Tag,
+  Users,
+  Utensils,
+} from "lucide-react";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
@@ -55,80 +66,57 @@ export function FormTarifHebergement({
   const selectedTypeChambre = typeChambres.find((type) => type.id === form.idTypeChambre);
   const prixParNuit = Number(form.prixParNuit) || 0;
   const prixReservation = Number(form.prixReservation) || 0;
-  const isEditMode = submitLabel.toLowerCase().includes("modification") || submitLabel.toLowerCase().includes("enregistrer");
+  const dateDebutLabel = form.dateValiditeDebut
+    ? new Date(`${form.dateValiditeDebut}T00:00:00`).toLocaleDateString("fr-FR")
+    : "Debut non defini";
+  const dateFinLabel = form.dateValiditeFin
+    ? new Date(`${form.dateValiditeFin}T00:00:00`).toLocaleDateString("fr-FR")
+    : "Fin non definie";
 
   return (
-    <form className="space-y-6" onSubmit={onSubmit}>
-      {/* <div className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50/90 to-white p-5">
-        <div className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_280px] 2xl:items-center">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">
-              {isEditMode ? "Modification du tarif" : "Nouvelle offre de chambre"}
-            </p>
-            <h3 className="mt-2 text-xl font-semibold text-slate-950">
-              {selectedTypeChambre?.nom || "Type de chambre a definir"}
-            </h3>
-            <p className="mt-1 text-sm leading-6 text-slate-600">
-              Renseigne la chambre, la periode, le prix et les options qui seront affiches dans les disponibilites.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-emerald-200 bg-white/90 p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-              Apercu tarif
-            </p>
-            <p className="mt-2 text-2xl font-bold text-slate-950">
-              {prixParNuit > 0 ? `${prixParNuit.toLocaleString("fr-FR")} ${form.devise || "MGA"}` : "-"}
-              <span className="text-sm font-normal text-slate-500"> / nuit</span>
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-600">
-              <span className="rounded-full bg-slate-100 px-2.5 py-1">{form.gamme}</span>
-              <span className="rounded-full bg-slate-100 px-2.5 py-1">{form.capacite || 0} hote(s)</span>
-              <span className="rounded-full bg-slate-100 px-2.5 py-1">{form.estActif ? "Actif" : "Inactif"}</span>
-            </div>
-          </div>
-        </div>
-      </div> */}
-
-      <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="space-y-6">
-          <div className="rounded-2xl border border-border/50 bg-white p-5 shadow-sm">
-            <div className="mb-5 flex items-start gap-3">
-              <span className="rounded-xl bg-emerald-100 p-2 text-emerald-700">
-                <BedDouble className="size-5" />
+    <form className="space-y-2.5" onSubmit={onSubmit}>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="space-y-2.5">
+          <section className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+            <div className="mb-3 flex items-start gap-2.5">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                <BedDouble className="size-4" />
               </span>
               <div>
-                <h3 className="text-base font-semibold">Chambre</h3>
-                <p className="text-sm text-muted-foreground">Type de chambre et capacite maximale.</p>
+                <h3 className="text-base font-semibold text-slate-950">1. Chambre</h3>
+                <p className="text-[11px] text-slate-500">Type de chambre et capacite maximale.</p>
               </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_180px]">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Type de chambre *</label>
-            <div className="flex gap-2">
-              <Select value={form.idTypeChambre} onValueChange={(value) => onUpdate("idTypeChambre", value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Choisir un type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {typeChambres.map((type) => (
-                    <SelectItem key={type.id} value={type.id}>
-                      {type.nom}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={() => setShowTypeCreator((current) => !current)}
-                aria-label="Ajouter un type de chambre"
-              >
-                <Plus className="size-4" />
-              </Button>
-            </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-slate-900">
+                  Type de chambre <span className="text-red-500">*</span>
+                </label>
+                <div className="flex gap-3">
+                  <Select value={form.idTypeChambre} onValueChange={(value) => onUpdate("idTypeChambre", value)}>
+                    <SelectTrigger className="h-9 w-full rounded-lg border-slate-200 bg-white">
+                      <SelectValue placeholder="Choisir un type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {typeChambres.map((type) => (
+                        <SelectItem key={type.id} value={type.id}>
+                          {type.nom}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="size-9 shrink-0 rounded-lg"
+                    onClick={() => setShowTypeCreator((current) => !current)}
+                    aria-label="Ajouter un type de chambre"
+                  >
+                    <Plus className="size-4" />
+                  </Button>
+                </div>
 
                 {showTypeCreator ? (
                   <div className="mt-2 rounded-xl border border-dashed border-emerald-300 bg-emerald-50/40 p-3">
@@ -144,186 +132,255 @@ export function FormTarifHebergement({
                     </div>
                   </div>
                 ) : null}
-          </div>
+              </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Capacite *</label>
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-slate-900">
+                  Capacite <span className="text-red-500">*</span>
+                </label>
                 <div className="relative">
-                  <Users className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
-            <Input
-              type="number"
-              min="1"
-              value={form.capacite}
-              onChange={(event) => onUpdate("capacite", event.target.value)}
-                    className="pl-9"
-              required
-            />
+                  <Users className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                  <Input
+                    type="number"
+                    min="1"
+                    value={form.capacite}
+                    onChange={(event) => onUpdate("capacite", event.target.value)}
+                    className="h-9 rounded-lg border-slate-200 pl-10"
+                    required
+                  />
                 </div>
               </div>
             </div>
-          </div>
-          </div>
+          </section>
 
-          <div className="rounded-2xl border border-border/50 bg-white p-5 shadow-sm">
-            <div className="mb-5 flex items-start gap-3">
-              <span className="rounded-xl bg-emerald-100 p-2 text-emerald-700">
-                <CalendarDays className="size-5" />
+          <section className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+            <div className="mb-3 flex items-start gap-2.5">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                <CalendarDays className="size-4" />
               </span>
               <div>
-                <h3 className="text-base font-semibold">Periode de validite</h3>
-                <p className="text-sm text-muted-foreground">Dates pendant lesquelles ce tarif est disponible.</p>
+                <h3 className="text-base font-semibold text-slate-950">2. Periode de validite</h3>
+                <p className="text-[11px] text-slate-500">Dates pendant lesquelles ce tarif est disponible.</p>
               </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Date debut</label>
-            <Input
-              type="date"
-              value={form.dateValiditeDebut}
-              onChange={(event) => onUpdate("dateValiditeDebut", event.target.value)}
-            />
-          </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-slate-900">
+                  Date de debut <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  type="date"
+                  value={form.dateValiditeDebut}
+                  onChange={(event) => onUpdate("dateValiditeDebut", event.target.value)}
+                  className="h-9 rounded-lg border-slate-200"
+                />
+              </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Date fin</label>
-            <Input
-              type="date"
-              value={form.dateValiditeFin}
-              onChange={(event) => onUpdate("dateValiditeFin", event.target.value)}
-            />
-          </div>
-        </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-slate-900">Date de fin</label>
+                <Input
+                  type="date"
+                  value={form.dateValiditeFin}
+                  onChange={(event) => onUpdate("dateValiditeFin", event.target.value)}
+                  className="h-9 rounded-lg border-slate-200"
+                />
+              </div>
+            </div>
 
-          <div className="rounded-2xl border border-border/50 bg-white p-5 shadow-sm">
-            <div className="mb-5 flex items-start gap-3">
-              <span className="rounded-xl bg-emerald-100 p-2 text-emerald-700">
-                <CreditCard className="size-5" />
+            <div className="mt-2 flex items-center gap-3">
+              <Checkbox
+                id="dateFinIllimitee"
+                checked={!form.dateValiditeFin}
+                onCheckedChange={(checked) => {
+                  if (checked === true) {
+                    onUpdate("dateValiditeFin", "");
+                  }
+                }}
+              />
+              <label htmlFor="dateFinIllimitee" className="text-sm font-medium text-slate-700">
+                Pas de date de fin (tarif sans limite)
+              </label>
+            </div>
+          </section>
+
+          <section className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+            <div className="mb-3 flex items-start gap-2.5">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                <Tag className="size-4" />
               </span>
               <div>
-                <h3 className="text-base font-semibold">Tarification</h3>
-                <p className="text-sm text-muted-foreground">Prix par nuit, prix de reservation, devise et gamme.</p>
+                <h3 className="text-base font-semibold text-slate-950">3. Tarification</h3>
+                <p className="text-[11px] text-slate-500">Prix par nuit, prix de reservation, devise et gamme.</p>
               </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-                <label className="text-sm font-medium">Prix / nuit *</label>
-            <Input
-              type="number"
-              min="0"
-              step="0.01"
-              value={form.prixParNuit}
-              onChange={(event) => onUpdate("prixParNuit", event.target.value)}
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Prix reservation</label>
-            <Input
-              type="number"
-              min="0"
-              step="0.01"
-              value={form.prixReservation}
-              onChange={(event) => onUpdate("prixReservation", event.target.value)}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Devise</label>
-            <Input
-              value={form.devise}
-              onChange={(event) => onUpdate("devise", event.target.value)}
-              placeholder="MGA, EUR, USD..."
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Gamme</label>
-            <Select value={form.gamme} onValueChange={(value) => onUpdate("gamme", value as GammeTarif)}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Choisir une gamme" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="MOYENNE">Moyenne</SelectItem>
-                <SelectItem value="LUXE">Luxe</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <div className="flex items-center gap-3 rounded-xl border border-emerald-100 bg-emerald-50/50 px-4 py-3">
-            <Checkbox
-              id="petitDejeunerInclus"
-              checked={form.petitDejeunerInclus}
-              onCheckedChange={(checked) => onUpdate("petitDejeunerInclus", checked === true)}
-            />
-            <label htmlFor="petitDejeunerInclus" className="text-sm font-medium">
-                  <span className="inline-flex items-center gap-2">
-                    <Utensils className="size-4 text-emerald-700" />
-              Petit dejeuner inclus
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-slate-900">
+                  Prix / nuit <span className="text-red-500">*</span>
+                </label>
+                <div className="flex overflow-hidden rounded-lg border border-slate-200 bg-white">
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.prixParNuit}
+                    onChange={(event) => onUpdate("prixParNuit", event.target.value)}
+                    className="h-9 rounded-none border-0"
+                    required
+                  />
+                  <span className="flex h-9 min-w-14 items-center justify-center border-l bg-slate-50 px-3 text-sm text-slate-600">
+                    {form.devise || "MGA"}
                   </span>
-            </label>
-          </div>
+                </div>
+              </div>
 
-              <div className="flex items-center gap-3 rounded-xl border border-emerald-100 bg-emerald-50/50 px-4 py-3">
-            <Checkbox
-              id="tarifActif"
-              checked={form.estActif}
-              onCheckedChange={(checked) => onUpdate("estActif", checked === true)}
-            />
-            <label htmlFor="tarifActif" className="text-sm font-medium">
-                  <span className="inline-flex items-center gap-2">
-                    <CheckCircle2 className="size-4 text-emerald-700" />
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-slate-900">
+                  Prix reservation <span className="text-red-500">*</span>
+                </label>
+                <div className="flex overflow-hidden rounded-lg border border-slate-200 bg-white">
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.prixReservation}
+                    onChange={(event) => onUpdate("prixReservation", event.target.value)}
+                    className="h-9 rounded-none border-0"
+                  />
+                  <span className="flex h-9 min-w-14 items-center justify-center border-l bg-slate-50 px-3 text-sm text-slate-600">
+                    {form.devise || "MGA"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-slate-900">
+                  Devise <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  value={form.devise}
+                  onChange={(event) => onUpdate("devise", event.target.value)}
+                  placeholder="MGA, EUR, USD..."
+                  className="h-9 rounded-lg border-slate-200"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-slate-900">
+                  Gamme <span className="text-red-500">*</span>
+                </label>
+                <Select value={form.gamme} onValueChange={(value) => onUpdate("gamme", value as GammeTarif)}>
+                  <SelectTrigger className="h-9 w-full rounded-lg border-slate-200">
+                    <SelectValue placeholder="Choisir une gamme" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="MOYENNE">Moyenne</SelectItem>
+                    <SelectItem value="LUXE">Luxe</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="mt-3 grid gap-3 border-t border-slate-100 pt-3 md:grid-cols-2">
+              <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2">
+                <Checkbox
+                  id="petitDejeunerInclus"
+                  checked={form.petitDejeunerInclus}
+                  onCheckedChange={(checked) => onUpdate("petitDejeunerInclus", checked === true)}
+                />
+                <Utensils className="size-4 text-emerald-700" />
+                <label htmlFor="petitDejeunerInclus" className="text-sm font-semibold text-slate-900">
+                  Petit dejeuner inclus
+                </label>
+              </div>
+
+              <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2">
+                <Checkbox
+                  id="tarifActif"
+                  checked={form.estActif}
+                  onCheckedChange={(checked) => onUpdate("estActif", checked === true)}
+                />
+                <CheckCircle2 className="size-4 text-emerald-700" />
+                <label htmlFor="tarifActif" className="text-sm font-semibold text-emerald-800">
                     Tarif actif
-                  </span>
-            </label>
+                </label>
               </div>
             </div>
-          </div>
+          </section>
         </div>
 
-        <aside className="space-y-4">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm 2xl:sticky 2xl:top-20">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Validation</p>
-            <div className="mt-4 space-y-3 text-sm">
-              <div className="grid gap-1 sm:grid-cols-[120px_minmax(0,1fr)] sm:items-center">
-                <span className="text-slate-500">Chambre</span>
-                <span className="font-medium text-slate-900 sm:text-right">{selectedTypeChambre?.nom || "-"}</span>
+        <aside className="lg:sticky lg:top-2 lg:self-start">
+          <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+            <div className="mb-3 flex items-center gap-2.5">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                <ClipboardList className="size-4" />
+              </span>
+              <h3 className="text-base font-semibold text-slate-950">Resume du tarif</h3>
+            </div>
+
+            <div className="divide-y divide-slate-200 text-xs">
+              <div className="py-2 first:pt-0">
+                <p className="text-slate-500">Chambre</p>
+                <p className="mt-1 font-semibold text-slate-950">{selectedTypeChambre?.nom || "-"}</p>
               </div>
-              <div className="grid gap-1 sm:grid-cols-[120px_minmax(0,1fr)] sm:items-center">
-                <span className="text-slate-500">Prix nuit</span>
-                <span className="font-medium text-slate-900 sm:text-right">
+              <div className="py-2">
+                <p className="text-slate-500">Capacite</p>
+                <p className="mt-1 inline-flex items-center gap-2 font-semibold text-slate-950">
+                  <Users className="size-4 text-slate-500" />
+                  {form.capacite || "0"}
+                </p>
+              </div>
+              <div className="py-2">
+                <p className="text-slate-500">Prix / nuit</p>
+                <p className="mt-1 font-semibold text-slate-950">
                   {prixParNuit > 0 ? `${prixParNuit.toLocaleString("fr-FR")} ${form.devise || "MGA"}` : "-"}
-                </span>
+                </p>
               </div>
-              <div className="grid gap-1 sm:grid-cols-[120px_minmax(0,1fr)] sm:items-center">
-                <span className="text-slate-500">Reservation</span>
-                <span className="font-medium text-slate-900 sm:text-right">
+              <div className="py-2">
+                <p className="text-slate-500">Prix reservation</p>
+                <p className="mt-1 font-semibold text-slate-950">
                   {prixReservation > 0 ? `${prixReservation.toLocaleString("fr-FR")} ${form.devise || "MGA"}` : "-"}
-                </span>
+                </p>
               </div>
-              <div className="grid gap-1 sm:grid-cols-[120px_minmax(0,1fr)] sm:items-start">
-                <span className="text-slate-500">Periode</span>
-                <span className="font-medium text-slate-900 sm:text-right">
-                  {form.dateValiditeDebut || "Debut non defini"} - {form.dateValiditeFin || "Fin non definie"}
-                </span>
+              <div className="py-2">
+                <p className="text-slate-500">Devise</p>
+                <p className="mt-1 font-semibold text-slate-950">{form.devise || "-"}</p>
+              </div>
+              <div className="py-2">
+                <p className="text-slate-500">Gamme</p>
+                <p className="mt-1 font-semibold text-slate-950">
+                  {form.gamme === "MOYENNE" ? "Moyenne" : "Luxe"}
+                </p>
+              </div>
+              <div className="py-2">
+                <p className="text-slate-500">Periode</p>
+                <p className="mt-1 font-semibold text-slate-950">
+                  {dateDebutLabel} - {dateFinLabel}
+                </p>
               </div>
             </div>
 
-            <div className="mt-5 rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-500">
-              Les champs marques d&apos;un asterisque sont necessaires pour publier correctement cette disponibilite.
+            <div className="mt-3 flex items-start gap-2 rounded-xl border border-blue-200 bg-blue-50 p-2.5 text-[11px] leading-5 text-blue-800">
+              <Info className="mt-0.5 size-4 shrink-0" />
+              <p>
+                Les champs marques d&apos;un asterisque (<span className="text-red-500">*</span>) sont necessaires
+                pour publier correctement cette disponibilite.
+              </p>
             </div>
 
-            <Button type="submit" disabled={isSubmitting} className="mt-5 w-full bg-emerald-600 text-white hover:bg-emerald-700">
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="mt-3 h-10 w-full gap-2 rounded-lg bg-emerald-600 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 hover:bg-emerald-700"
+            >
+              <Save className="size-4" />
               {isSubmitting ? "Enregistrement..." : submitLabel}
             </Button>
           </div>
         </aside>
       </div>
-
     </form>
   );
 }
