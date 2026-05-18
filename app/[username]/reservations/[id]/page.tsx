@@ -8,10 +8,26 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CalendarDays, ListChecks, Users } from "lucide-react";
+import {
+  ArrowLeft,
+  BadgeCheck,
+  CalendarDays,
+  Clock,
+  CreditCard,
+  Download,
+  FileText,
+  ListChecks,
+  MessageSquare,
+  Monitor,
+  PieChart,
+  TrendingUp,
+  UserRound,
+  UserRoundCog,
+  Users,
+} from "lucide-react";
 import { loadAuth } from "@/lib/auth";
 import { getErrorMessage } from "@/lib/api/client";
-import { deleteMyReservation, getReservationById } from "@/lib/api/reservations";
+import { deleteMyReservation, downloadReservationPdf, getReservationById } from "@/lib/api/reservations";
 import { simulerPlanification } from "@/lib/api/simulationService";
 import { Reservation, ReservationStatus, VoyageurProfile, ElementSelection } from "@/lib/type/reservation";
 import { JourSimulation } from "@/lib/type/simulation.types";
@@ -193,6 +209,68 @@ function parseSummaryLines(summary: string | null | undefined) {
     });
 }
 
+function getSummaryValue(
+  items: Array<{ label: string; value: string }>,
+  label: string,
+  fallback = "-"
+) {
+  const normalizedLabel = label.toLowerCase();
+  return (
+    items.find((item) => item.label.toLowerCase() === normalizedLabel)?.value ??
+    fallback
+  );
+}
+
+function DetailInfoTile({
+  icon: Icon,
+  label,
+  value,
+  description,
+  accent = false,
+}: {
+  icon: typeof Monitor;
+  label: string;
+  value: string;
+  description?: string;
+  accent?: boolean;
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+      <div className="flex items-center gap-3">
+        <Icon className={accent ? "h-5 w-5 text-emerald-700" : "h-5 w-5 text-slate-700"} />
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{label}</p>
+      </div>
+      <p className={accent ? "mt-3 font-semibold text-emerald-700" : "mt-3 font-semibold text-slate-950"}>
+        {value}
+      </p>
+      {description ? <p className="mt-1 truncate text-sm text-slate-600">{description}</p> : null}
+    </div>
+  );
+}
+
+function SummaryLine({
+  label,
+  value,
+  highlight = false,
+  muted = false,
+}: {
+  label: string;
+  value: string;
+  highlight?: boolean;
+  muted?: boolean;
+}) {
+  return (
+    <div
+      className={`grid grid-cols-[1fr_1fr] gap-4 border-b border-slate-100 px-4 py-3 text-sm last:border-b-0 ${
+        highlight ? "bg-emerald-50 text-emerald-800" : muted ? "bg-slate-50" : "bg-white"
+      }`}
+    >
+      <span className="font-medium text-slate-700">{label}</span>
+      <span className="font-semibold text-slate-950">{value}</span>
+    </div>
+  );
+}
+
 export default function ReservationDetailPage() {
   const params = useParams<{ username: string; id: string }>();
   const router = useRouter();
@@ -204,6 +282,7 @@ export default function ReservationDetailPage() {
   const [reservation, setReservation] = useState<Reservation | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
   const [planningPreview, setPlanningPreview] = useState<JourSimulation[]>([]);
   const [loadingPlanningPreview, setLoadingPlanningPreview] = useState(false);
   const [planningPreviewError, setPlanningPreviewError] = useState<string | null>(null);
@@ -217,6 +296,14 @@ export default function ReservationDetailPage() {
     () => groupElementsByDay(reservationElements, planningPreview),
     [reservationElements, planningPreview]
   );
+  const visibleElementsByDay = useMemo(() => {
+    const grouped = Array.from(elementsByDay.entries())
+      .sort(([dayA], [dayB]) => dayA - dayB)
+      .filter(([, elements]) => elements.length > 0);
+
+    if (grouped.length > 0) return grouped;
+    return reservationElements.length > 0 ? ([[1, reservationElements]] as Array<[number, ElementSelection[]]>) : [];
+  }, [elementsByDay, reservationElements]);
   const mergedDetails = useMemo(
     () => (reservation ? mergeReservationDetails(reservation) : []),
     [reservation]
@@ -361,6 +448,25 @@ export default function ReservationDetailPage() {
     }
   };
 
+  const handleExportPdf = async () => {
+    if (!reservation || !token) return;
+
+    try {
+      setExportError(null);
+      const { blob, filename } = await downloadReservationPdf(reservation.id, token);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (requestError) {
+      setExportError(getErrorMessage(requestError, "Impossible de telecharger le PDF de la reservation."));
+    }
+  };
+
   const simulationEditHref = useMemo(() => {
     if (!reservation || !detail || reservation.source !== "SIMULATION") return null;
     const voyageurProfiles = buildVoyageurProfiles(reservation);
@@ -395,31 +501,61 @@ export default function ReservationDetailPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Detail de reservation</h1>
-          <p className="text-sm text-muted-foreground">
-            Consultez le statut de votre demande et tous les details du voyage reserve.
-          </p>
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex items-start gap-4">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-900">
+            <FileText className="h-7 w-7" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
+              Detail de reservation
+            </h1>
+            <p className="mt-1 text-sm text-slate-600">
+              Consultez le statut de votre demande et tous les details du voyage reserve.
+            </p>
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
+          {reservation ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 gap-2 rounded-lg border-slate-200 px-5 font-semibold"
+              onClick={() => void handleExportPdf()}
+            >
+              <Download className="h-4 w-4" />
+              Exporter PDF
+            </Button>
+          ) : null}
           {reservation?.status === "EN_ATTENTE" ? (
-            <Button type="button" variant="destructive" onClick={() => void handleDeleteReservation()}>
+            <Button
+              type="button"
+              variant="destructive"
+              className="h-11 rounded-lg"
+              onClick={() => void handleDeleteReservation()}
+            >
               Supprimer la reservation
             </Button>
           ) : null}
           {reservation?.status === "EN_ATTENTE" && simulationEditHref ? (
-            <Button asChild variant="outline">
+            <Button asChild variant="outline" className="h-11 rounded-lg">
               <Link href={simulationEditHref}>Modifier via simulation</Link>
             </Button>
           ) : null}
           {reservation?.status === "EN_ATTENTE" && editHref ? (
-            <Button asChild>
+            <Button asChild className="h-11 rounded-lg">
               <Link href={editHref}>Modifier la reservation</Link>
             </Button>
           ) : null}
-          <Button asChild variant="outline">
-            <Link href={`/${username}/reservations`}>Retour a mes reservations</Link>
+          <Button
+            asChild
+            variant="outline"
+            className="h-11 gap-2 rounded-lg border-emerald-200 px-5 font-semibold text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
+          >
+            <Link href={`/${username}/reservations`}>
+              <ArrowLeft className="h-4 w-4" />
+              Retour a mes reservations
+            </Link>
           </Button>
         </div>
       </div>
@@ -439,51 +575,71 @@ export default function ReservationDetailPage() {
         </Alert>
       ) : null}
 
-      {!loading && !error && reservation ? (
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_340px]">
+      {!loading && exportError ? (
+        <Alert variant="destructive">
+          <AlertTitle>Export PDF</AlertTitle>
+          <AlertDescription>{exportError}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      {!loading && reservation ? (
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_390px]">
           <div className="space-y-6">
-            <Card className="border-border/50">
-              <CardHeader>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <CardTitle>{reservation.reference}</CardTitle>
-                    <CardDescription>
-                      Reservation creee le {formatDate(reservation.dateReservation)}
-                    </CardDescription>
+            <Card className="overflow-hidden rounded-2xl border-slate-200 bg-white shadow-sm">
+              <CardContent className="p-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-700 text-white shadow-sm">
+                      <FileText className="h-7 w-7" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-semibold tracking-tight text-slate-950">
+                        {reservation.reference}
+                      </h2>
+                      <p className="mt-1 text-sm text-slate-600">
+                        Reservation creee le {formatDate(reservation.dateReservation)}
+                      </p>
+                    </div>
                   </div>
-                  <Badge className={statusStyles[reservation.status]}>
+                  <Badge className={`${statusStyles[reservation.status]} w-fit gap-2 rounded-lg px-4 py-2 text-sm font-semibold uppercase`}>
+                    <BadgeCheck className="h-4 w-4" />
                     {formatStatus(reservation.status)}
                   </Badge>
                 </div>
-              </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-xl bg-muted/40 p-4">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Source</p>
-                  <p className="mt-2 font-medium">{formatSource(reservation.source)}</p>
-                </div>
-                <div className="rounded-xl bg-muted/40 p-4">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Montant total</p>
-                  <p className="mt-2 font-medium">
-                    {formatCurrency(reservation.montantTotal, reservation.devise)}
-                  </p>
-                </div>
-                <div className="rounded-xl bg-muted/40 p-4">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Derniere mise a jour</p>
-                  <p className="mt-2 font-medium">{formatDate(reservation.dateModification)}</p>
-                </div>
-                <div className="rounded-xl bg-muted/40 p-4">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Client</p>
-                  <p className="mt-2 font-medium">
-                    {reservation.prenomUtilisateur} {reservation.nomUtilisateur}
-                  </p>
-                  <p className="text-sm text-muted-foreground">{reservation.emailUtilisateur}</p>
+
+                <div className="mt-7 grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
+                  <DetailInfoTile
+                    icon={Monitor}
+                    label="Source"
+                    value={formatSource(reservation.source)}
+                  />
+                  <DetailInfoTile
+                    icon={CreditCard}
+                    label="Montant total"
+                    value={formatCurrency(reservation.montantTotal, reservation.devise)}
+                    accent
+                  />
+                  <DetailInfoTile
+                    icon={Clock}
+                    label="Derniere mise a jour"
+                    value={formatDate(reservation.dateModification)}
+                  />
+                  <DetailInfoTile
+                    icon={UserRound}
+                    label="Client"
+                    value={`${reservation.prenomUtilisateur} ${reservation.nomUtilisateur}`}
+                    description={reservation.emailUtilisateur}
+                  />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-border/50">
-              <CardHeader>
-                <CardTitle>Profils voyageurs reserves</CardTitle>
+            <Card className="rounded-2xl border-slate-200 bg-white shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-3 text-xl text-slate-950">
+                  <Users className="h-5 w-5 text-indigo-700" />
+                  Profils voyageurs reserves
+                </CardTitle>
                 <CardDescription>
                   {detail?.nomDestination ?? "-"} - {detail?.nomPlanification ?? "-"}
                 </CardDescription>
@@ -491,9 +647,12 @@ export default function ReservationDetailPage() {
               <CardContent className="space-y-4">
                 <div className="grid gap-3">
                   {mergedDetails.map((detail, index) => (
-                    <div key={detail.id} className="overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+                    <div key={detail.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                       <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                        <p className="text-base font-semibold text-slate-900">Profil {index + 1}</p>
+                        <p className="flex items-center gap-2 text-base font-semibold text-slate-900">
+                          <UserRoundCog className="h-4 w-4 text-emerald-700" />
+                          Profil {index + 1}
+                        </p>
                         <p className="text-xs text-slate-500">
                           Cree le {formatDate(detail.dateCreation)}
                         </p>
@@ -535,7 +694,7 @@ export default function ReservationDetailPage() {
                   ))}
                 </div>
 
-                <div className="rounded-xl border border-emerald-200 bg-emerald-100/70 px-4 py-4">
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">
                     Grand total
                   </p>
@@ -547,7 +706,7 @@ export default function ReservationDetailPage() {
             </Card>
 
             {reservationElements.length > 0 ? (
-              <Card className="overflow-hidden border-slate-200 bg-white shadow-sm">
+              <Card className="overflow-hidden rounded-2xl border-slate-200 bg-white shadow-sm">
                 <CardHeader className="border-b border-slate-100 bg-white">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="space-y-1">
@@ -574,9 +733,7 @@ export default function ReservationDetailPage() {
                 </CardHeader>
                 <CardContent className="p-0">
                   <div className="divide-y divide-slate-100">
-                    {Array.from(elementsByDay.entries())
-                      .sort(([dayA], [dayB]) => dayA - dayB)
-                      .map(([dayNumber, elements]) => (
+                    {visibleElementsByDay.map(([dayNumber, elements]) => (
                         <div key={dayNumber} className="px-5 py-4">
                           <div className="mb-3 flex items-center justify-between gap-3">
                             <div>
@@ -629,85 +786,87 @@ export default function ReservationDetailPage() {
               </Card>
             ) : null}
 
-            {reservationSummary ? (
-              <Card className="border-border/50">
-                <CardHeader>
-                  <CardTitle>Resume de simulation</CardTitle>
-                  <CardDescription>
-                    Resume global conserve pour cette reservation.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4">
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      {reservationSummaryItems.map((item, index) => (
-                        <div
-                          key={`${item.label || "summary"}-${index}`}
-                          className="rounded-xl border border-emerald-100 bg-white/90 p-3"
-                        >
-                          {item.label ? (
-                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                              {item.label}
-                            </p>
-                          ) : null}
-                          <p className={`text-sm font-medium text-slate-900 ${item.label ? "mt-1.5" : ""}`}>
-                            {item.value}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : null}
           </div>
 
           <div className="space-y-6">
-            <Card className="border-border/50">
+            <Card className="rounded-2xl border-slate-200 bg-white shadow-sm">
               <CardHeader>
-                <CardTitle>Suivi de demande</CardTitle>
+                <CardTitle className="flex items-center gap-3 text-xl text-slate-950">
+                  <TrendingUp className="h-5 w-5 text-emerald-700" />
+                  Suivi de demande
+                </CardTitle>
                 <CardDescription>
                   Votre reservation est suivie par l&apos;administration Cool Voyage.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4 text-sm text-muted-foreground">
-                <div className="rounded-xl border border-dashed border-border/70 p-4">
-                  <p className="font-medium text-foreground">Statut actuel</p>
-                  <p className="mt-2">{formatStatus(reservation.status)}</p>
+              <CardContent>
+                <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-5">
+                  <p className="text-sm font-semibold text-emerald-900">Statut actuel</p>
+                  <Badge className={`${statusStyles[reservation.status]} mt-4 gap-2 rounded-lg px-4 py-2 text-sm font-semibold uppercase`}>
+                    <BadgeCheck className="h-4 w-4" />
+                    {formatStatus(reservation.status)}
+                  </Badge>
                 </div>
-                {/* <div className="rounded-xl border border-dashed border-border/70 p-4">
-                  <p className="font-medium text-foreground">Ce que cela signifie</p>
-                  <p className="mt-2">
-                    {reservation.status === "EN_ATTENTE"
-                      ? "Votre demande a bien ete enregistree et attend le traitement de l'admin."
-                      : reservation.status === "VALIDEE"
-                        ? "Votre reservation est confirmee."
-                        : "La reservation a ete annulee."}
-                  </p>
-                </div> */}
               </CardContent>
             </Card>
 
-            <Card className="border-border/50">
+            <Card className="rounded-2xl border-slate-200 bg-white shadow-sm">
               <CardHeader>
-                <CardTitle>Commentaires</CardTitle>
+                <CardTitle className="flex items-center gap-3 text-xl text-slate-950">
+                  <MessageSquare className="h-5 w-5 text-indigo-700" />
+                  Commentaires
+                </CardTitle>
                 <CardDescription>Informations associees a votre demande.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="rounded-xl bg-muted/40 p-4">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Commentaire client</p>
-                  <p className="mt-2 text-sm text-foreground">
+                <div className="flex gap-4 rounded-xl border border-slate-200 bg-white p-4">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-500">
+                    <UserRound className="h-5 w-5" />
+                  </div>
+                  <p className="min-w-0 text-sm text-slate-700">
+                    <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                      Commentaire client
+                    </span>
                     {reservation.commentaireClient?.trim() || "Aucun commentaire client."}
                   </p>
                 </div>
-                <div className="rounded-xl bg-muted/40 p-4">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Commentaire admin</p>
-                  <p className="mt-2 text-sm text-foreground">
+                <div className="flex gap-4 rounded-xl border border-slate-200 bg-white p-4">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
+                    <UserRoundCog className="h-5 w-5" />
+                  </div>
+                  <p className="min-w-0 text-sm text-slate-700">
+                    <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                      Commentaire admin
+                    </span>
                     {reservation.commentaireAdmin?.trim() || "Aucun commentaire admin pour le moment."}
                   </p>
                 </div>
               </CardContent>
             </Card>
+
+            {reservationSummary ? (
+              <Card className="rounded-2xl border-slate-200 bg-white shadow-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-3 text-xl text-slate-950">
+                    <PieChart className="h-5 w-5 text-indigo-700" />
+                    Resume de simulation
+                  </CardTitle>
+                  <CardDescription>
+                    Resume global conserve pour cette reservation.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-hidden rounded-xl border border-slate-200">
+                    <SummaryLine label="Destination" value={getSummaryValue(reservationSummaryItems, "Destination", detail?.nomDestination ?? "-")} />
+                    <SummaryLine label="Planification" value={getSummaryValue(reservationSummaryItems, "Planification", detail?.nomPlanification ?? "-")} />
+                    <SummaryLine label="Nombre de personnes" value={getSummaryValue(reservationSummaryItems, "Nombre de personnes", String(totalVoyageurs(reservation)))} />
+                    <SummaryLine label="Budget client" value={getSummaryValue(reservationSummaryItems, "Budget client", formatCurrency(reservation.montantTotal, reservation.devise))} />
+                    <SummaryLine label="Total selectionne" value={getSummaryValue(reservationSummaryItems, "Total selectionne", formatCurrency(reservation.montantTotal, reservation.devise))} highlight />
+                    <SummaryLine label="Reste budgetaire" value={getSummaryValue(reservationSummaryItems, "Reste budgetaire", "-")} muted />
+                  </div>
+                </CardContent>
+              </Card>
+            ) : null}
           </div>
         </div>
       ) : null}

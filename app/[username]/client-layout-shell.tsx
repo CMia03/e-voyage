@@ -5,6 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 
 import { clearAuth, loadAuth, type AuthSession } from "@/lib/auth";
 import { resolvePostLoginPath } from "@/lib/auth-redirect";
+import { listDestinations } from "@/lib/api/destinations";
+import type { DestinationDetails } from "@/lib/type/destination";
 
 import { ClientHeader } from "./components/client-header";
 import { ClientFooter } from "./components/client-footer";
@@ -27,6 +29,7 @@ export function ClientLayoutShell({
   const router = useRouter();
   const pathname = usePathname();
   const [session] = useState<AuthSession | null>(() => loadAuth());
+  const [destinations, setDestinations] = useState<DestinationDetails[]>([]);
 
   const displayName = useMemo(() => {
     if (!session) return username;
@@ -59,6 +62,27 @@ export function ClientLayoutShell({
     }
   }, [router, username]);
 
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadHeaderDestinations() {
+      try {
+        const data = await listDestinations();
+        if (mounted) {
+          setDestinations(data);
+        }
+      } catch (error) {
+        console.error("Erreur chargement destinations header:", error);
+      }
+    }
+
+    void loadHeaderDestinations();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   function handleLogout() {
     clearAuth();
     router.replace("/login");
@@ -68,7 +92,12 @@ export function ClientLayoutShell({
 
   return (
     <div className="min-h-screen bg-muted/30">
-      <ClientHeader username={displayName} onLogout={handleLogout} />
+      <ClientHeader
+        username={displayName}
+        profilePath={`/${username}/profile`}
+        onLogout={handleLogout}
+        destinations={destinations}
+      />
       <div className="mx-auto flex w-full max-w-[1400px] px-0 sm:px-6">
         <ClientSidebar active={activeSection} username={username} />
         <main className="min-w-0 min-h-[70vh] flex-1 overflow-hidden p-4 sm:p-6">{children}</main>

@@ -27,14 +27,22 @@ type DestinationApiResponse =
   | DestinationDetails
   | { data?: DestinationDetails[] | DestinationDetails };
 
+function cleanImageList(images: Array<string | null | undefined>) {
+  return images
+    .filter((image): image is string => typeof image === "string" && image.trim().length > 0)
+    .map((image) => image.trim())
+    .filter((image, index, all) => all.indexOf(image) === index);
+}
+
 function normalizeDestination(item: DestinationDetails): DestinationDetails {
-  const galleryAll = item.galleryAll?.length ? item.galleryAll : item.gallery ?? [];
+  const galleryAll = cleanImageList(item.galleryAll?.length ? item.galleryAll : item.gallery ?? []);
   const galleryPrimary = item.galleryPrimary?.length
-    ? item.galleryPrimary
-    : (item.gallery?.length ? item.gallery : (item.image ? [item.image] : []));
+    ? cleanImageList(item.galleryPrimary)
+    : cleanImageList(item.gallery?.length ? item.gallery : [item.image]);
 
   return {
     ...item,
+    image: typeof item.image === "string" ? item.image.trim() : "",
     marketing: item.marketing?.length ? item.marketing : item.features ?? [],
     galleryPrimary,
     galleryAll,

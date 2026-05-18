@@ -20,9 +20,10 @@ interface SearchResult {
 
 type SearchBarProps = {
   destinations?: DestinationDetails[];
+  compact?: boolean;
 };
 
-export function SearchBar({ destinations }: SearchBarProps) {
+export function SearchBar({ destinations, compact = false }: SearchBarProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -173,7 +174,7 @@ export function SearchBar({ destinations }: SearchBarProps) {
           value={query}
           onChange={handleInputChange}
           onKeyPress={handleKeyPress}
-          className="pr-20 h-11 text-sm"
+          className={`${compact ? "h-10 rounded-xl bg-white/90" : "h-11"} pr-20 text-sm`}
         />
         <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1">
           {query && (

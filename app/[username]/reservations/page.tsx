@@ -15,11 +15,10 @@ import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
-  CircleDollarSign,
   Eye,
   SlidersHorizontal,
-  Layers,
-  MessageSquare,
+  MapPin,
+  MoreHorizontal,
   Plus,
   Trash2,
 } from "lucide-react";
@@ -347,6 +346,8 @@ export default function ReservationsPage() {
   const [amountMinFilter, setAmountMinFilter] = useState("");
   const [amountMaxFilter, setAmountMaxFilter] = useState("");
   const [showReservationFilters, setShowReservationFilters] = useState(false);
+  const [reservationPage, setReservationPage] = useState(1);
+  const [reservationPageSize, setReservationPageSize] = useState(5);
   const selectedElementsScrollRef = useRef<HTMLDivElement | null>(null);
 
   const session = useMemo(() => loadAuth(), []);
@@ -737,14 +738,9 @@ export default function ReservationsPage() {
       (reservation) => reservation.status === "EN_ATTENTE"
     ).length;
     const confirmees = reservations.filter((reservation) => reservation.status === "VALIDEE").length;
-    const montantTotal = reservations.reduce(
-      (sum, reservation) => sum + (reservation.montantTotal ?? 0),
-      0
-    );
 
-    return { total, enCours, confirmees, montantTotal };
+    return { total, enCours, confirmees };
   }, [reservations]);
-  const recentReservations = useMemo(() => reservations.slice(0, 3), [reservations]);
   const filteredReservations = useMemo(() => {
     const query = reservationSearch.trim().toLowerCase();
     const amountMin = amountMinFilter.trim() ? Number(amountMinFilter) : null;
@@ -782,6 +778,22 @@ export default function ReservationsPage() {
       return matchesStatus && matchesSource && matchesMin && matchesMax && matchesQuery;
     });
   }, [amountMaxFilter, amountMinFilter, reservations, reservationSearch, sourceFilter, statusFilter]);
+  const totalReservationPages = Math.max(1, Math.ceil(filteredReservations.length / reservationPageSize));
+  const paginatedReservations = useMemo(() => {
+    const start = (reservationPage - 1) * reservationPageSize;
+    return filteredReservations.slice(start, start + reservationPageSize);
+  }, [filteredReservations, reservationPage, reservationPageSize]);
+  const reservationStartIndex =
+    filteredReservations.length === 0 ? 0 : (reservationPage - 1) * reservationPageSize + 1;
+  const reservationEndIndex = Math.min(reservationPage * reservationPageSize, filteredReservations.length);
+
+  useEffect(() => {
+    setReservationPage(1);
+  }, [amountMaxFilter, amountMinFilter, reservationPageSize, reservationSearch, sourceFilter, statusFilter]);
+
+  useEffect(() => {
+    setReservationPage((current) => Math.min(current, totalReservationPages));
+  }, [totalReservationPages]);
 
   const handleCreateReservation = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -1445,45 +1457,11 @@ export default function ReservationsPage() {
       {activeReservationSection === "list" ? (
       <>
 
-      {/* <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Card className="border-border/50 bg-white/90">
-          <CardContent className="p-5">
-            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-              Total reservations
-            </p>
-            <p className="mt-3 text-2xl font-semibold">{reservationStats.total}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-border/50 bg-white/90">
-          <CardContent className="p-5">
-            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-              En cours
-            </p>
-            <p className="mt-3 text-2xl font-semibold">{reservationStats.enCours}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-border/50 bg-white/90">
-          <CardContent className="p-5">
-            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-              Confirmees
-            </p>
-            <p className="mt-3 text-2xl font-semibold">{reservationStats.confirmees}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-border/50 bg-white/90">
-          <CardContent className="p-5">
-            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-              Montant cumule
-            </p>
-            <p className="mt-3 text-2xl font-semibold">
-              {formatCurrency(reservationStats.montantTotal)}
-            </p>
-          </CardContent>
-        </Card>
-      </div> */}
-
-      
-
+      <div className="grid gap-4 md:grid-cols-3">
+        <ClientReservationStatCard label="Total reservations" value={reservationStats.total} />
+        <ClientReservationStatCard label="En cours" value={reservationStats.enCours} />
+        <ClientReservationStatCard label="Confirmees" value={reservationStats.confirmees} />
+      </div>
 
       <Card className="border-border/50">
         <CardHeader className="flex flex-row items-start justify-between gap-4">
@@ -1613,7 +1591,18 @@ export default function ReservationsPage() {
               Aucune reservation n&apos;a encore ete enregistree.
             </div>
           ) : (
-            filteredReservations.map((reservation) => {
+            <>
+              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                <div className="hidden grid-cols-[1.25fr_1.3fr_0.75fr_0.9fr_0.8fr_auto] gap-4 border-b border-slate-200 bg-slate-50 px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 lg:grid">
+                  <span>Reference</span>
+                  <span>Destination</span>
+                  <span>Statut</span>
+                  <span>Periode</span>
+                  <span className="text-right">Montant</span>
+                  <span className="text-right">Actions</span>
+                </div>
+                <div className="divide-y divide-slate-100">
+            {paginatedReservations.map((reservation) => {
               const detail = reservation.details[0];
               const totalElements = countUniqueSelectedElements(reservation);
               const showElementsCount = reservation.source === "SIMULATION";
@@ -1776,7 +1765,20 @@ export default function ReservationsPage() {
                   </div>
                 </article>
               );
-            })
+            })}
+                </div>
+              </div>
+            <ReservationPagination
+              page={reservationPage}
+              pageSize={reservationPageSize}
+              totalItems={filteredReservations.length}
+              totalPages={totalReservationPages}
+              startIndex={reservationStartIndex}
+              endIndex={reservationEndIndex}
+              onPageChange={setReservationPage}
+              onPageSizeChange={setReservationPageSize}
+            />
+            </>
           )}
         </CardContent>
       </Card>
@@ -1790,8 +1792,6 @@ function ReservationListCard({
   reservation,
   username,
   detail,
-  totalElements,
-  showElementsCount,
   onDelete,
 }: {
   reservation: Reservation;
@@ -1801,118 +1801,190 @@ function ReservationListCard({
   showElementsCount: boolean;
   onDelete: (reservationId: string) => Promise<void>;
 }) {
+  const createdAt = formatDate(reservation.dateReservation);
+  const updatedAt = reservation.dateModification ? formatDate(reservation.dateModification) : "-";
+  const statusBorder =
+    reservation.status === "VALIDEE"
+      ? "border-l-emerald-500"
+      : reservation.status === "ANNULEE"
+        ? "border-l-rose-500"
+        : "border-l-amber-400";
+
   return (
-    <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-emerald-200 hover:shadow-md">
-      <div className="border-b border-slate-100 p-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0 space-y-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-600">
-                {formatSource(reservation.source)}
-              </Badge>
-              <Badge className={statusStyles[reservation.status]}>
-                {formatStatus(reservation.status)}
-              </Badge>
-            </div>
+    <article
+      className={`grid gap-4 border-l-4 ${statusBorder} bg-white px-4 py-4 transition hover:bg-slate-50/70 lg:grid-cols-[1.25fr_1.3fr_0.75fr_0.9fr_0.8fr_auto] lg:items-center`}
+    >
+      <div className="space-y-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge className="bg-cyan-50 text-cyan-700 hover:bg-cyan-50">
+            {formatSource(reservation.source)}
+          </Badge>
+        </div>
+        <div>
+          <h3 className="text-base font-semibold tracking-tight text-slate-950">
+            {reservation.reference}
+          </h3>
+          <p className="mt-1 text-xs text-slate-500">{createdAt}</p>
+        </div>
+        <span className="inline-flex rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+          {getReservationProfilesSummary(reservation)}
+        </span>
+      </div>
 
-            <div className="space-y-1">
-              <h3 className="text-xl font-semibold tracking-tight text-slate-950">
-                {reservation.reference}
-              </h3>
-              <p className="text-base font-medium text-slate-800">
-                {detail?.nomDestination ?? "-"} - {detail?.nomPlanification ?? "-"}
-              </p>
-              <p className="text-sm text-slate-500">
-                {getReservationProfilesSummary(reservation)}
-              </p>
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 lg:text-right">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-              Derniere mise a jour
+      <div className="space-y-2">
+        <div className="flex items-start gap-2">
+          <MapPin className="mt-0.5 size-4 shrink-0 text-emerald-600" />
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-slate-950">
+              {detail?.nomDestination ?? "-"}
             </p>
-            <p className="mt-1 font-medium text-slate-800">
-              {formatDate(reservation.dateModification ?? reservation.dateReservation)}
+            <p className="truncate text-xs text-slate-500">
+              {detail?.nomPlanification ?? "-"}
             </p>
           </div>
+        </div>
+        
+      </div>
+
+      <div>
+        <Badge className={statusStyles[reservation.status]}>{formatStatus(reservation.status)}</Badge>
+      </div>
+
+      <div className="flex items-start gap-2 text-sm text-slate-700">
+        <CalendarDays className="mt-0.5 size-4 shrink-0 text-slate-500" />
+        <div>
+          <p>{createdAt}</p>
+          <p className="text-slate-400">-</p>
+          <p>{updatedAt}</p>
         </div>
       </div>
 
-      <div className="p-5">
-        <div className={`grid gap-3 sm:grid-cols-2 ${showElementsCount ? "xl:grid-cols-[repeat(4,minmax(0,1fr))_auto]" : "xl:grid-cols-[repeat(3,minmax(0,1fr))_auto]"}`}>
-          <ReservationInfoTile
-            icon={CircleDollarSign}
-            label="Montant"
-            value={formatCurrency(reservation.montantTotal, reservation.devise)}
-          />
-          <ReservationInfoTile
-            icon={CalendarDays}
-            label="Creee le"
-            value={formatDate(reservation.dateReservation)}
-          />
-          {showElementsCount ? (
-            <ReservationInfoTile icon={Layers} label="Elements" value={String(totalElements)} />
-          ) : null}
-          <ReservationInfoTile
-            icon={MessageSquare}
-            label="Commentaire"
-            value={reservation.commentaireClient?.trim() || "Aucun commentaire"}
-            muted
-          />
+      <div className="text-left lg:text-right">
+        <p className="text-base font-semibold text-slate-950">
+          {formatCurrency(reservation.montantTotal, reservation.devise)}
+        </p>
+      </div>
 
-          <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/50 p-4 xl:min-w-[72px]">
-            <Button
-              asChild
-              size="icon"
-              className="bg-emerald-600 text-white hover:bg-emerald-700"
-              title="Voir detail"
-            >
-              <Link href={`/${username}/reservations/${reservation.id}`} aria-label="Voir detail">
-                <Eye className="size-4" />
-              </Link>
-            </Button>
-
-            {reservation.status === "EN_ATTENTE" ? (
-              <Button
-                type="button"
-                variant="destructive"
-                size="icon"
-                onClick={() => void onDelete(reservation.id)}
-                title="Supprimer"
-                aria-label="Supprimer"
-              >
-                <Trash2 className="size-4" />
-              </Button>
-            ) : null}
-          </div>
-        </div>
+      <div className="flex items-center gap-2 lg:justify-end">
+        <Button asChild variant="outline" size="icon" title="Voir detail">
+          <Link href={`/${username}/reservations/${reservation.id}`} aria-label="Voir detail">
+            <Eye className="size-4" />
+          </Link>
+        </Button>
+        {reservation.status === "EN_ATTENTE" ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={() => void onDelete(reservation.id)}
+            title="Supprimer"
+            aria-label="Supprimer"
+            className="text-red-600 hover:bg-red-50 hover:text-red-700"
+          >
+            <Trash2 className="size-4" />
+          </Button>
+        ) : (
+          <Button type="button" variant="outline" size="icon" aria-label="Actions" disabled>
+            <MoreHorizontal className="size-4" />
+          </Button>
+        )}
       </div>
     </article>
   );
 }
 
-function ReservationInfoTile({
-  icon: Icon,
-  label,
-  value,
-  muted = false,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: string;
-  muted?: boolean;
-}) {
+function ClientReservationStatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-4">
-      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-        <span className="flex size-8 items-center justify-center rounded-full bg-white text-emerald-700 shadow-sm">
-          <Icon className="size-4" />
-        </span>
-        {label}
+    <Card className="rounded-2xl border-emerald-100 bg-white shadow-sm">
+      <CardContent className="px-4 py-3">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+          {label}
+        </p>
+        <p className="mt-2 text-2xl font-semibold tracking-tight text-emerald-700">
+          {value}
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ReservationPagination({
+  page,
+  pageSize,
+  totalItems,
+  totalPages,
+  startIndex,
+  endIndex,
+  onPageChange,
+  onPageSizeChange,
+}: {
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+  startIndex: number;
+  endIndex: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
+}) {
+  const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
+
+  return (
+    <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 md:flex-row md:items-center md:justify-between">
+      <div className="flex items-center gap-2 text-sm text-slate-600">
+        <span>Afficher</span>
+        <Select
+          value={String(pageSize)}
+          onValueChange={(value) => onPageSizeChange(Number(value))}
+        >
+          <SelectTrigger className="h-9 w-20">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {[5, 10, 15].map((size) => (
+              <SelectItem key={size} value={String(size)}>
+                {size}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <span>par page</span>
       </div>
-      <p className={`${muted ? "line-clamp-2 text-sm font-medium" : "text-lg font-semibold"} text-slate-950`}>
-        {value}
+
+      <div className="flex items-center justify-center gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          disabled={page <= 1}
+          onClick={() => onPageChange(Math.max(1, page - 1))}
+        >
+          <ChevronLeft className="size-4" />
+        </Button>
+        {pages.map((item) => (
+          <Button
+            key={item}
+            type="button"
+            variant={item === page ? "default" : "outline"}
+            className={item === page ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-100" : ""}
+            onClick={() => onPageChange(item)}
+          >
+            {item}
+          </Button>
+        ))}
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          disabled={page >= totalPages}
+          onClick={() => onPageChange(Math.min(totalPages, page + 1))}
+        >
+          <ChevronRight className="size-4" />
+        </Button>
+      </div>
+
+      <p className="text-sm text-slate-600 md:text-right">
+        {startIndex} - {endIndex} sur {totalItems}
       </p>
     </div>
   );

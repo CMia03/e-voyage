@@ -7,19 +7,14 @@ import { useParams } from "next/navigation";
 import { CreditCard, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { SearchBar } from "@/components/search-bar";
 import { listDestinations } from "@/lib/api/destinations";
-import { listMyReservations } from "@/lib/api/reservations";
-import { loadAuth } from "@/lib/auth";
 import { destinationsData as fallbackDestinations } from "@/lib/destinations";
 import type { DestinationDetails } from "@/lib/type/destination";
-import type { Reservation } from "@/lib/type/reservation";
 
 export default function UserHomePage() {
   const params = useParams<{ username: string }>();
   const username = typeof params?.username === "string" ? params.username : "client";
   const [destinations, setDestinations] = useState<DestinationDetails[]>(fallbackDestinations);
-  const [reservations, setReservations] = useState<Reservation[]>([]);
 
   useEffect(() => {
     const loadDestinations = async () => {
@@ -36,32 +31,7 @@ export default function UserHomePage() {
     void loadDestinations();
   }, []);
 
-  useEffect(() => {
-    const loadReservationStats = async () => {
-      const session = loadAuth();
-      if (!session?.accessToken) return;
-
-      try {
-        const response = await listMyReservations(session.accessToken);
-        setReservations(response.data ?? []);
-      } catch (error) {
-        console.error("Erreur chargement reservations:", error);
-      }
-    };
-
-    void loadReservationStats();
-  }, []);
-
   const featuredDestinations = useMemo(() => destinations.slice(0, 3), [destinations]);
-  const reservationStats = useMemo(() => {
-    const total = reservations.length;
-    const enCours = reservations.filter(
-      (reservation) => reservation.status === "EN_ATTENTE"
-    ).length;
-    const confirmees = reservations.filter((reservation) => reservation.status === "VALIDEE").length;
-
-    return { total, enCours, confirmees };
-  }, [reservations]);
 
   return (
     <div className="space-y-8">
@@ -105,33 +75,19 @@ export default function UserHomePage() {
                 Ajustez les profils voyageurs, les blocs du planning et le budget avant de confirmer.
               </p>
             </div>
-            <div className="rounded-[24px] border border-white/80 bg-white/90 p-4 shadow-sm">
+
+            {/* <div className="rounded-[24px] border border-white/80 bg-white/90 p-4 shadow-sm">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Suivi simple</p>
               <p className="mt-2 text-sm leading-6 text-slate-700">
                 Retrouvez ensuite toutes vos reservations et leurs details dans un seul espace.
               </p>
-            </div>
+            </div> */}
+
           </div>
         </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-3">
-        <ReservationStatCard label="Total reservations" value={reservationStats.total} />
-        <ReservationStatCard label="En cours" value={reservationStats.enCours} />
-        <ReservationStatCard label="Confirmees" value={reservationStats.confirmees} />
-      </section>
-
-      <section className="rounded-[28px] border border-emerald-100 bg-white p-5 shadow-sm">
-        <div className="mb-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">
-            Recherche rapide
-          </p>
-          <h2 className="mt-2 text-xl font-semibold text-slate-900">
-            Trouvez une destination
-          </h2>
-        </div>
-        <SearchBar destinations={destinations} />
-      </section>
+      
 
       <section className="space-y-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -155,15 +111,13 @@ export default function UserHomePage() {
                 ) : (
                   <div className="absolute inset-0 bg-[linear-gradient(135deg,_rgba(16,185,129,0.22),_rgba(15,23,42,0.08))]" />
                 )}
+                <span className="absolute right-4 top-4 z-10 max-w-[calc(100%-2rem)] rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-emerald-700 shadow-sm ring-1 ring-emerald-100 backdrop-blur">
+                  {destination.price?.trim() || "Prix sur demande"}
+                </span>
               </div>
               <div className="space-y-4 p-5">
                 <div className="space-y-2">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <h3 className="text-xl font-semibold text-slate-900">{destination.title}</h3>
-                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">
-                      {destination.price?.trim() || "Prix sur demande"}
-                    </span>
-                  </div>
+                  <h3 className="text-xl font-semibold text-slate-900">{destination.title}</h3>
                   <p className="line-clamp-3 text-sm leading-6 text-slate-600">{destination.description}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -178,19 +132,6 @@ export default function UserHomePage() {
           ))}
         </div>
       </section>
-    </div>
-  );
-}
-
-function ReservationStatCard({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-[24px] border border-emerald-100 bg-white p-5 shadow-sm">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-        {label}
-      </p>
-      <p className="mt-3 text-3xl font-semibold tracking-tight text-emerald-700">
-        {value}
-      </p>
     </div>
   );
 }
