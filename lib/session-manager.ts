@@ -1,16 +1,24 @@
 import { AuthSession, saveAuth, clearAuth, loadAuth } from "@/lib/auth";
 import { refreshToken } from "@/lib/api/auth";
 
-const TOKEN_LIFETIME = 15 * 60;
 const REFRESH_MARGIN = 5 * 60;
 
 let refreshPromise: Promise<AuthSession> | null = null;
 let logoutCallback: (() => void) | null = null;
+let sessionIntervalId: ReturnType<typeof setInterval> | null = null;
 
 function getTokenExpiration(token: string): number | null {
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    return payload.exp ? payload.exp * 1000 : null;
+    const payload = token.split(".")[1];
+    if (!payload) return null;
+
+    const normalizedPayload = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const paddedPayload = normalizedPayload.padEnd(
+      normalizedPayload.length + ((4 - (normalizedPayload.length % 4)) % 4),
+      "="
+    );
+    const decodedPayload = JSON.parse(atob(paddedPayload)) as { exp?: number };
+    return decodedPayload.exp ? decodedPayload.exp * 1000 : null;
   } catch {
     return null;
   }
@@ -44,11 +52,11 @@ async function refreshSession(): Promise<AuthSession> {
       const newSession: AuthSession = {
         accessToken: response.accessToken,
         refreshToken: response.refreshToken || currentSession.refreshToken,
-        role: response.role,
-        userId: response.userId,
-        login: response.login,
-        nom: response.nom,
-        prenom: response.prenom,
+        role: response.role || currentSession.role,
+        userId: response.userId || currentSession.userId,
+        login: response.login || currentSession.login,
+        nom: response.nom || currentSession.nom,
+        prenom: response.prenom || currentSession.prenom,
       };
 
       saveAuth(newSession);
@@ -100,7 +108,7 @@ export function isAuthenticated(): boolean {
   const session = loadAuth();
   if (!session) return false;
   
-  return !isTokenExpired(session.accessToken);
+  return !!session.refreshToken || !isTokenExpired(session.accessToken);
 }
 
 export async function forceRefreshToken(): Promise<AuthSession | null> {
@@ -112,8 +120,11 @@ export async function forceRefreshToken(): Promise<AuthSession | null> {
 }
 
 export function initializeSessionManager() {
-  setInterval(async () => {
-    if (isAuthenticated()) {
+  if (sessionIntervalId) return;
+
+  sessionIntervalId = setInterval(async () => {
+    const session = loadAuth();
+    if (session?.refreshToken || session?.accessToken) {
       await getValidToken();
     }
   }, 60000);
@@ -125,9 +136,14 @@ export async function withTokenRefresh<T>(
   try {
     return await apiCall();
   } catch (error: unknown) {
-    if (error && typeof error === 'object' && 'status' in error && error.status === 401) {
-      const newToken = await getValidToken();
-      if (newToken) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "status" in error &&
+      (error.status === 401 || error.status === 403)
+    ) {
+      const refreshedSession = await forceRefreshToken();
+      if (refreshedSession?.accessToken) {
         return await apiCall();
       }
     }

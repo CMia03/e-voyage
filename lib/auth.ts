@@ -11,12 +11,33 @@ export type AuthSession = {
 
 const STORAGE_KEY = "cool_voyage_auth";
 
+function getTokenExpiration(token?: string): number | null {
+  if (!token) return null;
+
+  try {
+    const [, payload] = token.split(".");
+    if (!payload) return null;
+
+    const normalizedPayload = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const paddedPayload = normalizedPayload.padEnd(
+      normalizedPayload.length + ((4 - (normalizedPayload.length % 4)) % 4),
+      "="
+    );
+    const decodedPayload = JSON.parse(atob(paddedPayload)) as { exp?: number };
+    return decodedPayload.exp ? decodedPayload.exp * 1000 : null;
+  } catch {
+    return null;
+  }
+}
+
 export function saveAuth(session: AuthSession) {
   if (typeof window === "undefined") return;
+
+  const tokenExpiration = getTokenExpiration(session.accessToken);
   
   const sessionWithExpiry = {
     ...session,
-    expiresAt: session.expiresAt || Date.now() + (60 * 60 * 1000)
+    expiresAt: session.expiresAt || tokenExpiration || Date.now() + 60 * 60 * 1000,
   };
   
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(sessionWithExpiry));
@@ -27,14 +48,7 @@ export function loadAuth(): AuthSession | null {
   const raw = window.localStorage.getItem(STORAGE_KEY);
   if (!raw) return null;
   try {
-    const session = JSON.parse(raw) as AuthSession;
-    
-    if (session.expiresAt && Date.now() > session.expiresAt) {
-      clearAuth();
-      return null;
-    }
-    
-    return session;
+    return JSON.parse(raw) as AuthSession;
   } catch {
     return null;
   }

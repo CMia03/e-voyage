@@ -1,6 +1,6 @@
 import { API_BASE_URL } from "@/lib/api";
 import axios, { AxiosRequestConfig, AxiosResponse, Method } from 'axios';
-import { getValidToken } from '@/lib/session-manager';
+import { forceRefreshToken, getValidToken } from '@/lib/session-manager';
 
 
 export type ApiEnvelope<T = unknown> = {
@@ -83,13 +83,13 @@ async function buildHeadersWithAuth(options?: RequestOptions): Promise<Record<st
     ...(options?.headers ?? {}),
   };
   
-  if (options?.autoRefresh && !options?.token) {
+  if (options?.autoRefresh || options?.token) {
     const validToken = await getValidToken();
     if (validToken) {
       headers.Authorization = `Bearer ${validToken}`;
+    } else if (options?.token) {
+      headers.Authorization = `Bearer ${options.token}`;
     }
-  } else if (options?.token) {
-    headers.Authorization = `Bearer ${options.token}`;
   }
   
   return headers;
@@ -102,15 +102,21 @@ function shouldJsonStringify(body: unknown) {
   return true;
 }
 
+function isAuthFailure(error: unknown) {
+  if (!error || typeof error !== "object" || !("status" in error)) return false;
+  const status = Number((error as { status?: unknown }).status);
+  return status === 401 || status === 403;
+}
+
 
 export async function apiRequest<T = ApiEnvelope>(
   path: string,
   options: RequestOptions = {}
 ): Promise<T> {
-  const autoRefresh = options.autoRefresh ?? false;
+  const shouldUseRefresh = options.autoRefresh ?? !!options.token;
   let headers: Record<string, string>;
   
-  if (autoRefresh) {
+  if (shouldUseRefresh) {
     headers = await buildHeadersWithAuth(options);
   } else {
     headers = buildHeaders(options);
@@ -158,22 +164,29 @@ export async function apiRequest<T = ApiEnvelope>(
     }
   };
 
-  if (autoRefresh) {
-    return await makeRequestWithRefresh(makeRequest);
+  if (shouldUseRefresh) {
+    return await makeRequestWithRefresh(makeRequest, config);
   }
   
   return await makeRequest();
 }
 
 // Fonction pour gérer le refresh automatique en cas d'erreur 401
-async function makeRequestWithRefresh<T>(requestFn: () => Promise<T>): Promise<T> {
+async function makeRequestWithRefresh<T>(
+  requestFn: () => Promise<T>,
+  config: AxiosRequestConfig
+): Promise<T> {
   try {
     return await requestFn();
   } catch (error: unknown) {
     // Si l'erreur est 401 (Unauthorized), essayer de rafraîchir le token
-    if (error && typeof error === 'object' && 'status' in error && error.status === 401) {
-      const newToken = await getValidToken();
-      if (newToken) {
+    if (isAuthFailure(error)) {
+      const refreshedSession = await forceRefreshToken();
+      if (refreshedSession?.accessToken) {
+        config.headers = {
+          ...(config.headers ?? {}),
+          Authorization: `Bearer ${refreshedSession.accessToken}`,
+        };
         // Mettre à jour les headers avec le nouveau token et réessayer
         // Note: ici vous devriez recréer la requête avec le nouveau token
         // Pour simplifier, on relance la fonction originale

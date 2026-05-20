@@ -13,7 +13,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Appel à votre backend pour rafraîchir le token
-    const backendResponse = await fetch(`${process.env.API_BASE_URL}/api/auth/refresh`, {
+    const apiBaseUrl = process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
+    const backendResponse = await fetch(`${apiBaseUrl}/api/auth/refresh-token`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

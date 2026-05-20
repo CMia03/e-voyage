@@ -121,6 +121,9 @@ export function SectionPlanning({
                               <Pencil className="size-4" />
                               Modifier
                             </Button>
+
+
+
                             <Button
                               type="button"
                               variant="ghost"
@@ -132,6 +135,8 @@ export function SectionPlanning({
                             >
                               Détaille
                             </Button>
+
+
                             <Button
                               type="button"
                               variant="ghost"
@@ -145,6 +150,8 @@ export function SectionPlanning({
                               <Trash2 className="size-4" />
                               {isDeletingId === jour.id ? "Suppression..." : "Supprimer"}
                             </Button>
+
+                            
                           </div>
                         ) : null}
                       </div>

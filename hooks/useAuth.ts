@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { AuthSession, saveAuth, clearAuth, loadAuth } from "@/lib/auth";
-import { 
-  getValidToken, 
-  isAuthenticated, 
-  forceRefreshToken, 
+import { useCallback, useEffect, useState } from "react";
+import { AuthSession, clearAuth, loadAuth, saveAuth } from "@/lib/auth";
+import {
+  forceRefreshToken,
+  getValidToken,
   initializeSessionManager,
-  withTokenRefresh 
+  isAuthenticated,
+  withTokenRefresh,
 } from "@/lib/session-manager";
 import { checkAndLoadGoogleUserProfile, hasPreviousGoogleSession } from "@/lib/auto-auth";
 
@@ -26,45 +26,45 @@ export function useAuth(): UseAuthReturn {
   const [session, setSession] = useState<AuthSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const logout = useCallback(() => {
+    clearAuth();
+    setSession(null);
+  }, []);
+
   useEffect(() => {
+    const syncSession = async () => {
+      const currentSession = loadAuth();
+
+      if (!currentSession) {
+        setSession(null);
+        return;
+      }
+
+      const validToken = await getValidToken();
+      if (validToken) {
+        setSession(loadAuth());
+        return;
+      }
+
+      clearAuth();
+      setSession(null);
+    };
+
     const initSession = async () => {
       try {
         const savedSession = loadAuth();
-        
+
         if (savedSession) {
           if (hasPreviousGoogleSession()) {
-            try {
-              const googleResult = await checkAndLoadGoogleUserProfile();
-              if (googleResult.session) {
-                setSession(googleResult.session);
-              } else {
-                clearAuth();
-                setSession(null);
-              }
-            } catch (error) {
-              console.error("Erreur lors du chargement du profil Google:", error);
+            const googleResult = await checkAndLoadGoogleUserProfile();
+            if (googleResult.session) {
+              setSession(googleResult.session);
+            } else {
               clearAuth();
               setSession(null);
             }
           } else {
-            // Vérifier si le token est valide
-            if (isAuthenticated()) {
-              const validToken = await getValidToken();
-              if (validToken) {
-                setSession(savedSession);
-              } else {
-                  clearAuth();
-                setSession(null);
-              }
-            } else {
-                const refreshedSession = await forceRefreshToken();
-              if (refreshedSession) {
-                setSession(refreshedSession);
-              } else {
-                clearAuth();
-                setSession(null);
-              }
-            }
+            await syncSession();
           }
         }
       } catch (error) {
@@ -76,20 +76,11 @@ export function useAuth(): UseAuthReturn {
       }
     };
 
-    initSession();
-    
+    void initSession();
     initializeSessionManager();
-    
+
     const checkSessionInterval = setInterval(() => {
-      const currentSession = loadAuth();
-      const isCurrentlyAuthenticated = isAuthenticated();
-      
-      if (session && !isCurrentlyAuthenticated) {
-        console.log("Session expirée, déconnexion automatique");
-        clearAuth();
-        setSession(null);
-        
-              }
+      void syncSession();
     }, 2000);
 
     return () => clearInterval(checkSessionInterval);
@@ -98,11 +89,6 @@ export function useAuth(): UseAuthReturn {
   const login = useCallback((newSession: AuthSession) => {
     saveAuth(newSession);
     setSession(newSession);
-  }, []);
-
-  const logout = useCallback(() => {
-    clearAuth();
-    setSession(null);
   }, []);
 
   const refreshToken = useCallback(async (): Promise<boolean> => {
@@ -114,7 +100,7 @@ export function useAuth(): UseAuthReturn {
       }
       return false;
     } catch (error) {
-      console.error("Erreur lors du rafraîchissement du token:", error);
+      console.error("Erreur lors du rafraichissement du token:", error);
       logout();
       return false;
     }
@@ -122,7 +108,11 @@ export function useAuth(): UseAuthReturn {
 
   const getValidTokenCallback = useCallback(async (): Promise<string | null> => {
     try {
-      return await getValidToken();
+      const token = await getValidToken();
+      if (token) {
+        setSession(loadAuth());
+      }
+      return token;
     } catch (error) {
       console.error("Erreur lors de l'obtention du token valide:", error);
       logout();
@@ -140,13 +130,13 @@ export function useAuth(): UseAuthReturn {
       logout();
       return false;
     } catch (error) {
-      console.error("Erreur lors du rafraîchissement forcé:", error);
+      console.error("Erreur lors du rafraichissement force:", error);
       logout();
       return false;
     }
   }, [logout]);
 
-  const authResult = {
+  return {
     session,
     isLoading,
     isAuthenticated: !!session && isAuthenticated(),
@@ -156,18 +146,18 @@ export function useAuth(): UseAuthReturn {
     getValidToken: getValidTokenCallback,
     forceRefresh: forceRefreshCallback,
   };
-  
-  return authResult;
 }
 
 export function useAuthenticatedApi() {
-  const { getValidToken } = useAuth();
+  const { getValidToken: getToken } = useAuth();
 
-  const apiCallWithToken = useCallback(async <T>(
-    apiCall: () => Promise<T>
-  ): Promise<T> => {
-    return withTokenRefresh(apiCall);
-  }, [getValidToken]);
+  const apiCallWithToken = useCallback(
+    async <T,>(apiCall: () => Promise<T>): Promise<T> => {
+      await getToken();
+      return withTokenRefresh(apiCall);
+    },
+    [getToken]
+  );
 
   return { apiCallWithToken };
 }
