@@ -174,35 +174,28 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
                 <CardDescription>{DASHBOARD_TEXTS.DESTINATIONS}</CardDescription>
                 <CardTitle className="text-2xl">{dashboardData?.data.destinations.count || 0}</CardTitle>
               </CardHeader>
-              <CardContent className="text-xs text-muted-foreground">
-                {DASHBOARD_TEXTS.LAST_UPDATE}:{" "}
-                {dashboardData?.data.destinations.lastUpdate || DASHBOARD_TEXTS.NO_DATA}
-              </CardContent>
+             
             </Card>
             <Card className="border-border/50">
               <CardHeader>
                 <CardDescription>{DASHBOARD_TEXTS.HEBERGEMENTS}</CardDescription>
                 <CardTitle className="text-2xl">{dashboardData?.data.hebergements.count || 0}</CardTitle>
               </CardHeader>
-              <CardContent className="text-xs text-muted-foreground">
-                {dashboardData?.data.hebergements.pendingReviews || 0} {DASHBOARD_TEXTS.PENDING_REVIEWS}
-              </CardContent>
+             
             </Card>
             <Card className="border-border/50">
               <CardHeader>
                 <CardDescription>{DASHBOARD_TEXTS.ACTIVITES}</CardDescription>
                 <CardTitle className="text-2xl">{dashboardData?.data.activites.count || 0}</CardTitle>
               </CardHeader>
-              <CardContent className="text-xs text-muted-foreground">
-                {dashboardData?.data.activites.newThisMonth || 0} {DASHBOARD_TEXTS.NEW_THIS_MONTH}
-              </CardContent>
+             
             </Card>
             <Card className="border-border/50">
               <CardHeader>
                 <CardDescription>{DASHBOARD_TEXTS.AVIS_EN_ATTENTE}</CardDescription>
                 <CardTitle className="text-2xl">{dashboardData?.data.notations.totalCount || 0}</CardTitle>
               </CardHeader>
-              <CardContent className="text-xs text-muted-foreground">Vos avis</CardContent>
+              
             </Card>
           </section>
 

@@ -58,8 +58,8 @@ export function CategoryGammeSelector({
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="rounded-full border border-emerald-200 bg-white px-4 py-2 text-xs font-medium text-emerald-800">
+        <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto sm:justify-end">
+          <div className="min-w-[150px] rounded-full border border-emerald-200 bg-white px-5 py-2 text-center text-xs font-medium text-emerald-800">
             {totalVoyageurs} voyageur(s)
 
              {/* {profiles.length} profil(s)  */}
@@ -68,10 +68,9 @@ export function CategoryGammeSelector({
             type="button"
             onClick={addProfile}
             disabled={disabled || categories.length === 0}
-            className="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+            className="inline-flex  items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
           >
             <Plus className="h-4 w-4" />
-            Ajouter un profil
           </button>
         </div>
       </div>

@@ -6,7 +6,15 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DestinationDetails, PublicDestinationPlanification } from "@/lib/type/destination";
-import { Check, X, Phone, Calendar, MapPin, Clock } from "lucide-react";
+import {
+  Calculator,
+  Calendar,
+  Check,
+  Clock,
+  MapPin,
+  Phone,
+  X,
+} from "lucide-react";
 import { ImageLightbox } from "@/components/image-lightbox";
 import { DestinationSidebar } from "@/components/destination-sidebar";
 import { ModalMap } from "@/components/modal-map";
@@ -254,7 +262,7 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                💰 Tarifs
+                Tarifs
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -277,163 +285,186 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
           </Card>
         </div>
 
-        <div className="mb-6 sm:mb-8 grid gap-4 sm:gap-6 sm:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-primary" />
-                Duree
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {isLoadingPlanifications ? (
-                <p className="text-sm text-muted-foreground">Chargement des dates disponibles...</p>
-              ) : publicPlanifications.length > 0 ? (
-                <>
-                  <div className="space-y-2">
-                    {publicPlanifications.map((planification) => {
-                      const isSelected = selectedPlanification?.id === planification.id;
+        <div className="mb-6 grid gap-5 sm:mb-8 xl:grid-cols-2">
+          <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <div className="mb-5 flex items-start justify-between gap-4 border-b border-slate-100 pb-5">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Voyage</p>
+                <h2 className="mt-2 text-xl font-semibold text-slate-950">Période du voyage</h2>
+              </div>
+              <Calendar className="mt-1 h-5 w-5 text-slate-400" />
+            </div>
+
+            {isLoadingPlanifications ? (
+              <div className="rounded-2xl border border-slate-200 px-5 py-8 text-sm text-muted-foreground">
+                Chargement des dates disponibles...
+              </div>
+            ) : publicPlanifications.length > 0 ? (
+              <div className="space-y-3">
+                {publicPlanifications.map((planification) => {
+                  const isSelected = selectedPlanification?.id === planification.id;
+
+                  return (
+                    <button
+                      key={planification.id}
+                      type="button"
+                      onClick={() => setSelectedPlanificationId(planification.id)}
+                      className={`relative w-full rounded-xl border px-4 py-4 text-left transition sm:px-5 ${
+                        isSelected
+                          ? "border-emerald-600 bg-white shadow-sm"
+                          : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
+                      }`}
+                    >
+                      {isSelected ? <span className="absolute inset-y-4 left-0 w-1 rounded-r-full bg-emerald-600" /> : null}
+                      <span className="flex items-start justify-between gap-4">
+                        <span className="min-w-0">
+                          <span className="block text-base font-semibold text-slate-950">{planification.nomPlanification}</span>
+                          <span className="mt-2 block text-sm font-medium text-emerald-700">
+                            {formatDateRange(planification.dateHeureDebut, planification.dateHeureFin)}
+                          </span>
+                        </span>
+                        {isSelected ? (
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white">
+                            <Check className="h-4 w-4" />
+                          </span>
+                        ) : null}
+                      </span>
+                      {planification.dureeJours ? (
+                        <span className="mt-3 flex items-center gap-2 text-sm text-slate-500">
+                          <Calendar className="h-4 w-4" />
+                          <span>{planification.dureeJours} jour(s)</span>
+                        </span>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-slate-200 px-5 py-6">
+                <p className="text-2xl font-bold text-primary">{destination.duration || "Non renseignée"}</p>
+                {destination.dates ? (
+                  <p className="mt-2 text-sm text-muted-foreground">Dates : {destination.dates}</p>
+                ) : null}
+                {planificationError ? (
+                  <p className="mt-3 text-sm text-red-600">{planificationError}</p>
+                ) : null}
+              </div>
+            )}
+          </section>
+
+          <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <div className="mb-5 flex items-start justify-between gap-4 border-b border-slate-100 pb-5">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Tarification</p>
+                <h2 className="mt-2 text-xl font-semibold text-slate-950">Tarifs du forfait</h2>
+                <p className="mt-1 text-sm text-slate-500">Détail par catégorie de voyageur</p>
+              </div>
+              <Calculator className="mt-1 h-5 w-5 text-slate-400" />
+            </div>
+
+            {selectedPlanification ? (
+              <div className="space-y-5">
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-950">{selectedPlanification.nomPlanification}</h3>
+                  <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-slate-500">
+                    <span>{formatDateRange(selectedPlanification.dateHeureDebut, selectedPlanification.dateHeureFin)}</span>
+                    {selectedPlanification.dureeJours ? (
+                      <span className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        {selectedPlanification.dureeJours} jour(s)
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="mt-3 text-sm text-slate-600">
+                    <span className="font-medium text-slate-900">Départ</span>
+                    <span>/</span>
+                    <span className="font-semibold text-emerald-700">{selectedPlanification.depart || "-"}</span>
+                    <span className="mx-2 text-slate-300">•</span>
+                    <span className="font-medium text-slate-900">Arrivée</span>
+                    <span>/</span>
+                    <span className="font-semibold text-emerald-700">{selectedPlanification.arriver || "-"}</span>
+                  </p>
+                </div>
+
+                {selectedPlanification.budgets.length > 0 ? (
+                  <div className="divide-y divide-slate-100 rounded-xl border border-slate-200">
+                    {selectedPlanification.budgets.map((budget) => {
+                      const devise = selectedPlanification.deviseBudget || "MGA";
+                      const price = budget.prixAvecReduction ?? budget.prixNormal;
+                      const categoryName = budget.nomCategorieClient || "Catégorie client";
 
                       return (
                         <button
-                          key={planification.id}
+                          key={budget.id}
                           type="button"
-                          onClick={() => setSelectedPlanificationId(planification.id)}
-                          className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
-                            isSelected
-                              ? "border-emerald-400 bg-emerald-50 shadow-sm"
-                              : "border-slate-200 bg-white hover:border-emerald-200 hover:bg-emerald-50/50"
+                          onClick={() => setSelectedBudgetId(budget.id)}
+                          className={`w-full px-4 py-4 text-left transition first:rounded-t-xl last:rounded-b-xl sm:px-5 ${
+                            selectedBudget?.id === budget.id ? "bg-emerald-50/70" : "bg-white hover:bg-slate-50"
                           }`}
                         >
-                          <p className="text-sm font-semibold text-slate-900">
-                            {planification.nomPlanification}
-                          </p>
-                          <p className="mt-1 text-sm text-emerald-700">
-                            {formatDateRange(planification.dateHeureDebut, planification.dateHeureFin)}
-                          </p>
-                          {planification.dureeJours ? (
-                            <p className="mt-1 text-xs text-muted-foreground">
-                              {planification.dureeJours} jour(s)
+                          <span className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <span className="min-w-0 flex-1">
+                              <span className="block text-base font-semibold text-slate-950">{categoryName}</span>
+                              <span className="mt-1 block text-xs font-medium uppercase tracking-wide text-slate-500">
+                                {budget.gamme || "Gamme"} - {budget.nombrePersonnes || 1} personne(s)
+                              </span>
+                            </span>
+                            <span className="flex items-center justify-between gap-4 sm:justify-end">
+                              {selectedBudget?.id === budget.id ? (
+                                <Check className="h-4 w-4 text-emerald-700" />
+                              ) : null}
+                              <span className="text-lg font-semibold text-emerald-700 sm:text-right">
+                                {formatMoney(price, devise)}
+                              </span>
+                            </span>
+                          </span>
+                          {budget.reduction && budget.reduction > 0 ? (
+                            <p className="mt-3 text-sm text-muted-foreground">
+                              Prix normal : {formatMoney(budget.prixNormal, devise)} - Réduction : {budget.reduction}%
                             </p>
                           ) : null}
                         </button>
                       );
                     })}
                   </div>
-                  {selectedPlanification ? (
-                    <p className="text-xs text-muted-foreground">
-                      Depart : {selectedPlanification.depart || "-"} - Arrivee : {selectedPlanification.arriver || "-"}
-                    </p>
-                  ) : null}
-                </>
-              ) : (
-                <>
-                  <p className="text-2xl font-bold text-primary">{destination.duration || "Non renseignee"}</p>
-                  {destination.dates ? (
-                    <p className="mt-2 text-sm text-muted-foreground">Dates : {destination.dates}</p>
-                  ) : null}
-                  {planificationError ? (
-                    <p className="text-sm text-red-600">{planificationError}</p>
-                  ) : null}
-                </>
-              )}
-            </CardContent>
-          </Card>
+                ) : (
+                  <p className="rounded-2xl border border-emerald-100 bg-emerald-50/60 px-4 py-5 text-sm text-muted-foreground">
+                    Aucun tarif public n&apos;est encore configuré pour cette date.
+                  </p>
+                )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                💰 Tarifs
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {selectedPlanification ? (
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">{selectedPlanification.nomPlanification}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatDateRange(selectedPlanification.dateHeureDebut, selectedPlanification.dateHeureFin)}
-                    </p>
-                  </div>
-
-                  {selectedPlanification.budgets.length > 0 ? (
-                    <div className="grid gap-2">
-                      {selectedPlanification.budgets.map((budget) => {
-                        const devise = selectedPlanification.deviseBudget || "Ar";
-                        const price = budget.prixAvecReduction ?? budget.prixNormal;
-
-                        return (
-                          <button
-                            key={budget.id}
-                            type="button"
-                            onClick={() => setSelectedBudgetId(budget.id)}
-                            className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
-                              selectedBudget?.id === budget.id
-                                ? "border-emerald-400 bg-emerald-50 shadow-sm"
-                                : "border-emerald-100 bg-emerald-50/70 hover:border-emerald-300"
-                            }`}
-                          >
-                            <div className="flex flex-wrap items-start justify-between gap-3">
-                              <div>
-                                <p className="text-sm font-semibold text-slate-900">
-                                  {budget.nomCategorieClient || "Categorie client"}
-                                </p>
-                                <p className="mt-1 text-xs uppercase tracking-[0.16em] text-emerald-700">
-                                  {budget.gamme || "Gamme"} - {budget.nombrePersonnes || 1} personne(s)
-                                </p>
-                              </div>
-                              <p className="text-base font-bold text-emerald-700">
-                                {formatMoney(price, devise)}
-                              </p>
-                            </div>
-                            {budget.reduction && budget.reduction > 0 ? (
-                              <p className="mt-2 text-xs text-muted-foreground">
-                                Prix normal : {formatMoney(budget.prixNormal, devise)} - Reduction : {budget.reduction}%
-                              </p>
-                            ) : null}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      Aucun tarif public n&apos;est encore configure pour cette date.
-                    </p>
-                  )}
-                </div>
-              ) : destination.priceDetails ? (
-                <div className="space-y-2">
-                  {destination.priceDetails.shared4 ? <p className="font-semibold">{destination.priceDetails.shared4}</p> : null}
-                  {destination.priceDetails.shared2 ? <p className="font-semibold">{destination.priceDetails.shared2}</p> : null}
-                  {destination.priceDetails.children ? (
-                    <p className="font-semibold text-primary">{destination.priceDetails.children}</p>
-                  ) : null}
-                </div>
-              ) : (
-                <p className="text-2xl font-bold text-primary">{destination.price}</p>
-              )}
-
-              {selectedPlanification ? (
-                <div className="grid gap-2 pt-2 sm:grid-cols-2">
+                <div className="grid gap-3 pt-2 sm:grid-cols-2">
                   <Button
                     type="button"
                     onClick={() => handleClientAction("simulation")}
-                    className="bg-emerald-600 text-white hover:bg-emerald-700"
+                    className="h-12 border border-emerald-600 bg-white font-semibold text-emerald-700 shadow-none hover:bg-emerald-50"
                   >
+                    <Calculator className="mr-2 h-4 w-4" />
                     Simuler
                   </Button>
                   <Button
                     type="button"
                     onClick={() => handleClientAction("reservation")}
                     disabled={!selectedBudget}
-                    className="bg-emerald-600 text-white hover:bg-emerald-700 disabled:bg-slate-300"
+                    className="h-12 bg-emerald-700 font-semibold text-white hover:bg-emerald-800 disabled:bg-slate-300"
                   >
-                    Reserver
+                    <Calendar className="mr-2 h-4 w-4" />
+                    Réserver
                   </Button>
                 </div>
-              ) : null}
-            </CardContent>
-          </Card>
+              </div>
+            ) : destination.priceDetails ? (
+              <div className="space-y-2">
+                {destination.priceDetails.shared4 ? <p className="font-semibold">{destination.priceDetails.shared4}</p> : null}
+                {destination.priceDetails.shared2 ? <p className="font-semibold">{destination.priceDetails.shared2}</p> : null}
+                {destination.priceDetails.children ? (
+                  <p className="font-semibold text-primary">{destination.priceDetails.children}</p>
+                ) : null}
+              </div>
+            ) : (
+              <p className="text-2xl font-bold text-primary">{destination.price}</p>
+            )}
+          </section>
         </div>
 
         {/* Point de départ */}

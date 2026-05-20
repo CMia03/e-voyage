@@ -74,10 +74,7 @@ export default function ForgotPasswordPage() {
           </CardHeader>
           <CardContent>
             <form className="space-y-6" onSubmit={handleSubmit}>
-              <div className="rounded-2xl border border-white/20 bg-white/10 p-4 text-sm leading-6 text-white/80">
-                Cette recuperation concerne les comptes crees avec un mot de passe. Si vous utilisez Google,
-                connectez-vous avec le bouton Google sur la page de connexion.
-              </div>
+
 
               <div className="space-y-2">
                 <label htmlFor="email" className="block text-sm font-medium text-white/90 drop-shadow-md">

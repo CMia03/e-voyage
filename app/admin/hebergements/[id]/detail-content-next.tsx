@@ -599,9 +599,7 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
 
                 <aside className="space-y-6">
                   <div className="flex items-center justify-between gap-4">
-                    <button type="button" className="rounded-full border border-slate-200 p-2 text-slate-500 hover:bg-slate-50" aria-label="Partager">
-                      <Share2 className="size-4" />
-                    </button>
+                    
                     <div className="text-right">
                       <p className="text-sm text-slate-500">A partir de</p>
                       <p className="text-3xl font-bold text-slate-950">
@@ -611,10 +609,7 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
                     </div>
                   </div>
 
-                  {/* <Button type="button" onClick={openTarifDialog} className="h-14 w-full justify-between rounded-xl bg-yellow-400 px-6 text-base font-semibold text-slate-950 hover:bg-yellow-300">
-                    Ajouter disponibilite
-                    <ChevronRight className="size-6" />
-                  </Button> */}
+
 
                   <div>
                     <h2 className="text-xl font-bold text-slate-950">Ou se trouve le logement ?</h2>

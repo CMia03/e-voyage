@@ -12,9 +12,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
+  Calculator,
   CalendarDays,
   ChevronLeft,
   ChevronRight,
+  ClipboardList,
   Eye,
   SlidersHorizontal,
   MapPin,
@@ -613,6 +615,18 @@ export default function ReservationsPage() {
     () => parseSummaryLines(form.resumeSimulation),
     [form.resumeSimulation]
   );
+  const displayedSimulationSummaryItems = useMemo(
+    () =>
+      simulationSummaryItems.filter((item) => {
+        const label = item.label
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase();
+
+        return label !== "destination" && label !== "planification";
+      }),
+    [simulationSummaryItems]
+  );
   const destinationLabel = getSelectLabel(
     form.destinationId,
     selectedDestination?.title ?? prefill.destinationTitle,
@@ -1090,10 +1104,10 @@ export default function ReservationsPage() {
               <div className="space-y-4 rounded-2xl border border-border/60 bg-muted/20 p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <Label className="text-base">Profils voyageurs</Label>
-                    <p className="mt-1 text-sm text-muted-foreground">
+                    <Label className="text-base">Profils des voyageurs</Label>
+                    {/* <p className="mt-1 text-sm text-muted-foreground">
                       Melangez plusieurs categories et plusieurs gammes dans une seule reservation.
-                    </p>
+                    </p> */}
                   </div>
                   {canEditVoyageurProfiles ? (
                     <Button
@@ -1120,16 +1134,7 @@ export default function ReservationsPage() {
                 </div>
 
                 <div className="overflow-hidden rounded-2xl border border-border/60 bg-white shadow-sm">
-                  <div className="bg-gradient-to-r from-slate-50 to-slate-100 px-6 py-4 border-b border-border/60">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-semibold text-slate-900">Profils des voyageurs</h3>
-                      <div className="text-sm text-slate-600">
-
-                        {ensureValidProfiles(form.voyageurProfiles, categories, form.categorieClientId || undefined).reduce((sum, p) => sum + p.nombrePersonnes, 0)} personne{ensureValidProfiles(form.voyageurProfiles, categories, form.categorieClientId || undefined).reduce((sum, p) => sum + p.nombrePersonnes, 0) > 1 ? 's' : ''} au total
-                        
-                      </div>
-                    </div>
-                  </div>
+                 
                   
                   <div className="overflow-x-auto">
                     <table className="w-full">
@@ -1287,20 +1292,47 @@ export default function ReservationsPage() {
                   </div>
                 </div>
 
-                <div className="rounded-xl bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
-                  Total voyageurs : <span className="font-medium text-foreground">{totalVoyageurs(form.voyageurProfiles)}</span>
-                </div>
+                <div className={`grid gap-4 ${form.source === "PRIX_DIRECT" && quote ? "lg:grid-cols-[minmax(0,1fr)_360px]" : ""}`}>
+                  <div className="rounded-xl border border-slate-200 bg-white px-5 py-4">
+                    <div className="mb-3 flex items-center gap-3 text-emerald-700">
+                      <ClipboardList className="h-5 w-5" />
+                      <p className="font-semibold">Résumé rapide</p>
+                    </div>
+                    <div className="space-y-2">
+                      {ensureValidProfiles(form.voyageurProfiles, categories, form.categorieClientId || undefined).map((profile, index) => {
+                        const profileCategory = categories.find((categorie) => categorie.id === profile.categorieClientId);
+                        const gamme = normalizeGamme(profile.gamme);
+                        const gammeLabel = gamme === "MOYENNE" ? "Moyenne" : gamme;
 
-                {form.source === "PRIX_DIRECT" && quote ? (
-                  <div className="rounded-xl border border-emerald-200 bg-emerald-100/70 px-4 py-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">
-                      Grand total
-                    </p>
-                    <p className="mt-2 text-2xl font-semibold text-slate-900">
-                      {formatCurrency(quote.prixTotal, quote.devise)}
-                    </p>
+                        return (
+                          <p key={`${profile.categorieClientId || "summary"}-${index}`} className="flex items-center gap-3 text-sm text-slate-700">
+                            <span className="h-2.5 w-2.5 rounded-full bg-emerald-600" />
+                            <span>
+                              <span className="font-semibold text-slate-950">{profile.nombrePersonnes} {profileCategory?.nom ?? `Voyageur ${index + 1}`}</span>
+                              <span className="text-slate-500"> — Gamme {gammeLabel}</span>
+                            </span>
+                          </p>
+                        );
+                      })}
+                    </div>
                   </div>
-                ) : null}
+
+                  {form.source === "PRIX_DIRECT" && quote ? (
+                    <div className="rounded-xl border border-amber-100 bg-amber-50/35 px-6 py-4">
+                      <div className="flex items-start gap-4">
+                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white text-emerald-700 shadow-sm">
+                          <Calculator className="h-5 w-5" />
+                        </span>
+                        <div>
+                          <p className="text-sm font-semibold text-slate-700">Sous-total de la réservation</p>
+                          <p className="mt-3 text-2xl font-semibold text-slate-950">
+                            {formatCurrency(quote.prixTotal, quote.devise)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
               </div>
 
               {form.source === "SIMULATION" ? (
@@ -1391,9 +1423,9 @@ export default function ReservationsPage() {
                     <div className="space-y-2">
                       <Label>Resume simulation</Label>
                       <div className="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-4">
-                        {simulationSummaryItems.length > 0 ? (
+                        {displayedSimulationSummaryItems.length > 0 ? (
                           <div className="grid gap-3 sm:grid-cols-2">
-                            {simulationSummaryItems.map((item, index) => (
+                            {displayedSimulationSummaryItems.map((item, index) => (
                               <div
                                 key={`${item.label || "summary"}-${index}`}
                                 className="rounded-xl border border-emerald-100 bg-white/90 p-3"

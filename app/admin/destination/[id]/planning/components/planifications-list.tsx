@@ -102,9 +102,9 @@ onAddPlanification,
         </div>
 
         <div className="flex shrink-0 flex-nowrap items-center gap-2 md:justify-end">
-          <div className="min-w-[86px] rounded-2xl border border-white/80 bg-white/90 px-3 py-2 shadow-sm">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Total</p>
-            <p className="mt-1 text-base font-semibold text-slate-900">{planifications.length}</p>
+          <div className="flex gap-2 min-w-[86px] rounded-2xl border border-white/80 bg-white/90 px-3 py-2 shadow-sm">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] justifiy-center text-slate-500">Total</p>
+            <p className="text-base font-semibold text-slate-900">{planifications.length}</p>
           </div>
           <div className="min-w-[86px] rounded-2xl border border-white/80 bg-white/90 px-3 py-2 shadow-sm">
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Active</p>

@@ -138,7 +138,7 @@ export function DestinationSidebar({ destinationId, destinationName, averageRati
           <AlertDescription>{feedback.message}</AlertDescription>
         </Alert>
       ) : null}
-      <Card className="sticky top-6">
+      <Card className="top-6">
         <CardHeader className="pb-3">
           <CardTitle>Evaluations et avis</CardTitle>
         </CardHeader>
