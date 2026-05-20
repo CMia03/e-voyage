@@ -40,7 +40,7 @@ export function UserStatsChart({ data, updatedAt }: UserStatsChartProps) {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="min-w-0 space-y-7 overflow-hidden">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-4">
           <Globe2 className="mt-1 h-7 w-7 shrink-0 text-emerald-600" />
@@ -52,14 +52,14 @@ export function UserStatsChart({ data, updatedAt }: UserStatsChartProps) {
           </div>
         </div>
 
-        <div className="w-fit rounded-2xl bg-emerald-50 px-7 py-5 text-center text-emerald-700">
+        <div className="w-fit shrink-0 rounded-2xl bg-emerald-50 px-6 py-4 text-center text-emerald-700">
           <p className="text-3xl font-semibold leading-none">{totalTravelers}</p>
           <p className="mt-2 text-base font-medium">voyageurs</p>
         </div>
       </div>
 
-      <div className="grid items-center gap-8 xl:grid-cols-[minmax(220px,1fr)_minmax(220px,0.9fr)]">
-        <div className="h-[280px] min-w-0">
+      <div className="grid min-w-0 grid-cols-[minmax(160px,0.95fr)_minmax(150px,0.85fr)] items-center gap-5">
+        <div className="h-[230px] min-w-0">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
@@ -81,22 +81,22 @@ export function UserStatsChart({ data, updatedAt }: UserStatsChartProps) {
           </ResponsiveContainer>
         </div>
 
-        <div className="min-w-0 space-y-5">
+        <div className="min-w-0 space-y-4 overflow-hidden">
           {data.map((item) => {
             const count = item.count ?? 0;
             const percentage = Number(item.value || 0);
 
             return (
-              <div key={item.name} className="flex min-w-0 items-start gap-4">
+              <div key={item.name} className="flex min-w-0 items-start gap-3">
                 <span
-                  className="mt-1.5 h-6 w-6 shrink-0 rounded-full"
+                  className="mt-1.5 h-5 w-5 shrink-0 rounded-full"
                   style={{ backgroundColor: item.color }}
                 />
                 <div className="min-w-0">
-                  <p className="truncate text-lg font-semibold text-slate-950" title={item.name}>
+                  <p className="max-w-full truncate text-sm font-semibold text-slate-950" title={item.name}>
                     {item.name}
                   </p>
-                  <p className="mt-2 text-base text-slate-500">
+                  <p className="mt-1 truncate text-xs text-slate-500">
                     {count} voyageurs
                     <span className="mx-2 text-emerald-600">•</span>
                     {percentage.toLocaleString("fr-FR", { maximumFractionDigits: 1 })} %
@@ -108,17 +108,7 @@ export function UserStatsChart({ data, updatedAt }: UserStatsChartProps) {
         </div>
       </div>
 
-      {updateLabel ? (
-        <>
-          <div className="border-t border-slate-200" />
-          <div className="flex items-center gap-4 rounded-2xl border border-emerald-100 bg-emerald-50/50 px-5 py-4 text-slate-500">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white">
-              <Info className="h-5 w-5" />
-            </span>
-            <p className="text-sm">Donnees mises a jour le {updateLabel}</p>
-          </div>
-        </>
-      ) : null}
+      
     </div>
   );
 }

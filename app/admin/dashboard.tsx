@@ -241,18 +241,6 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
             </Card>
 
             <Card className="rounded-3xl border-slate-200 bg-white shadow-sm">
-              <CardHeader className="pb-6">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
-                    <UsersRound className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-xl font-semibold tracking-tight text-slate-950">
-                      {DASHBOARD_TEXTS.SHORTCUTS}
-                    </CardTitle>
-                  </div>
-                </div>
-              </CardHeader>
               <CardContent>
                 <UserStatsChart data={destinationTravelerData} updatedAt={dashboardData?.timestamp} />
               </CardContent>

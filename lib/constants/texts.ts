@@ -29,11 +29,7 @@ export const DASHBOARD_TEXTS = {
     SIX_HOURS: "il y a 6h",
     YESTERDAY: "Hier"
   },
-  
-  // Raccourcis
-  SHORTCUTS: "Répartition des voyageurs",
-  // COMMON_TASKS: "Nombre total de voyageurs par destination",
-  
+
   BUTTONS: {
     ADD_DESTINATION: "+ Destination",
     ADD_HEBERGEMENT: "+ Hébergement", 
