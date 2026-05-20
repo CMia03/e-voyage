@@ -99,13 +99,13 @@ export function Header() {
   
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between px-4">
-        <Link href="/" className="flex items-center space-x-2">
+      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-6 px-6 lg:px-8">
+        <Link href="/" className="flex shrink-0 items-center space-x-2">
           <span className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent sm:text-2xl">🌴 Cool Voyage</span>
         </Link>
         
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-6">
+        <nav className="hidden min-w-0 flex-1 items-center justify-center gap-6 md:flex">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -114,7 +114,7 @@ export function Header() {
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               onFocus={() => searchQuery.trim() && setSearchDropdownOpen(true)}
-              className="pl-10 w-64 lg:w-80 bg-background/50 border-border/50 focus:border-primary/50"
+              className="w-64 bg-background/50 pl-10 border-border/50 focus:border-primary/50 lg:w-80"
             />
             {searchDropdownOpen && (
               <SearchDropdown
@@ -158,7 +158,9 @@ export function Header() {
           >
             Contact
           </Link>
+        </nav>
 
+        <div className="hidden shrink-0 md:block">
           {isAuthenticated ? (
             <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
               <DropdownMenuTrigger asChild>
@@ -186,7 +188,7 @@ export function Header() {
               <Link href="/login">Se connecter</Link>
             </Button>
           )}
-        </nav>
+        </div>
 
         {/* Mobile Navigation */}
         <Sheet open={open} onOpenChange={setOpen}>
