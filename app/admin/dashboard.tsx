@@ -7,7 +7,7 @@ import { getDashboardData } from "@/lib/api/dashboard";
 import { getUsers, UserSummary } from "@/lib/api/users";
 import { DASHBOARD_TEXTS } from "@/lib/constants/texts";
 import { DashboardResponse } from "@/lib/type/dashboard";
-import { Loader2 } from "lucide-react";
+import { Loader2, UsersRound } from "lucide-react";
 import { PlanificationPerformanceChart } from "@/components/ui/planification-performance-chart";
 import { UserStatsChart } from "@/components/ui/user-stats-chart";
 
@@ -52,7 +52,6 @@ function isInSelectedPeriod(periodMonth: string | null | undefined, filter: Peri
 
 export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
   const [users, setUsers] = useState<UserSummary[]>([]);
-  const [usersError, setUsersError] = useState("");
   const [dashboardData, setDashboardData] = useState<DashboardResponse | null>(null);
   const [dashboardError, setDashboardError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -70,10 +69,7 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
     [dashboardData?.data.voyageursParDestination]
   );
 
-  const totalTravelers = (dashboardData?.data.voyageursParDestination ?? []).reduce(
-    (sum, item) => sum + item.nombrePersonnes,
-    0
-  );
+  const totalClients = users.filter((user) => user.role === "USER").length;
 
   const performancePlanifications = useMemo(
     () => dashboardData?.data.performancePlanifications ?? [],
@@ -109,7 +105,7 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
         }
       } catch (error) {
         if (active) {
-          setUsersError(getErrorMessage(error, "Network error while loading users"));
+          console.error(getErrorMessage(error, "Network error while loading users"));
         }
       }
     };
@@ -193,14 +189,14 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
             <Card className="border-border/50">
               <CardHeader>
                 <CardDescription>{DASHBOARD_TEXTS.AVIS_EN_ATTENTE}</CardDescription>
-                <CardTitle className="text-2xl">{dashboardData?.data.notations.totalCount || 0}</CardTitle>
+                <CardTitle className="text-2xl">{totalClients}</CardTitle>
               </CardHeader>
               
             </Card>
           </section>
 
-          <section className="grid gap-4 lg:grid-cols-3">
-            <Card className="lg:col-span-2">
+          <section className="grid gap-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(420px,0.9fr)]">
+            <Card>
               <CardHeader>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
@@ -244,62 +240,25 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>{DASHBOARD_TEXTS.SHORTCUTS}</CardTitle>
-                <CardDescription>{DASHBOARD_TEXTS.COMMON_TASKS}</CardDescription>
+            <Card className="rounded-3xl border-slate-200 bg-white shadow-sm">
+              <CardHeader className="pb-6">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                    <UsersRound className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl font-semibold tracking-tight text-slate-950">
+                      {DASHBOARD_TEXTS.SHORTCUTS}
+                    </CardTitle>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
-                <div>
-                  <div className="mb-3 flex items-start justify-between gap-3">
-                    <div>
-                      <h4 className="text-sm font-medium">Voyageurs par destination</h4>
-                      <p className="text-xs text-muted-foreground">Toutes les reservations avec voyageurs.</p>
-                    </div>
-                    <div className="rounded-md bg-emerald-50 px-2 py-1 text-center text-xs text-emerald-800">
-                      <p className="font-semibold">{totalTravelers}</p>
-                      <p>personne(s)</p>
-                    </div>
-                  </div>
-                  <UserStatsChart data={destinationTravelerData} />
-                </div>
+                <UserStatsChart data={destinationTravelerData} updatedAt={dashboardData?.timestamp} />
               </CardContent>
             </Card>
           </section>
 
-          {role === "ADMIN" ? (
-            <section className="grid gap-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Utilisateurs</CardTitle>
-                  <CardDescription>Liste de tous les utilisateurs (admin uniquement).</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {usersError ? <p className="text-sm text-red-600">{usersError}</p> : null}
-                  <div className="space-y-2 text-sm">
-                    {users.length === 0 && !usersError ? (
-                      <p className="text-muted-foreground">Aucun utilisateur charge.</p>
-                    ) : null}
-                    {users.map((user) => (
-                      <div
-                        key={user.id}
-                        className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/50 bg-card/50 px-3 py-2"
-                      >
-                        <div className="min-w-[180px] font-medium">
-                          {user.nom} {user.prenom}
-                        </div>
-                        <div className="min-w-[180px] text-muted-foreground">{user.email}</div>
-                        <div className="text-xs uppercase text-muted-foreground">{user.role}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {user.estActif ? "Actif" : "Inactif"}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </section>
-          ) : null}
         </>
       )}
     </div>

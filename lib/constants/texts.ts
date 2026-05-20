@@ -7,7 +7,7 @@ export const DASHBOARD_TEXTS = {
   DESTINATIONS: "Destinations",
   HEBERGEMENTS: "Hébergements", 
   ACTIVITES: "Activités",
-  AVIS_EN_ATTENTE: "Avis en attente",
+  AVIS_EN_ATTENTE: "Nombre de client",
   
   LAST_UPDATE: "Dernière mise à jour",
   PENDING_REVIEWS: "avis en attente",
@@ -31,8 +31,8 @@ export const DASHBOARD_TEXTS = {
   },
   
   // Raccourcis
-  SHORTCUTS: "Raccourcis",
-  COMMON_TASKS: "Tâches administratives courantes",
+  SHORTCUTS: "Répartition des voyageurs",
+  // COMMON_TASKS: "Nombre total de voyageurs par destination",
   
   BUTTONS: {
     ADD_DESTINATION: "+ Destination",
