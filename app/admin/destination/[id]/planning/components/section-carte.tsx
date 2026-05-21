@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { DestinationAssociationItem, ElementJourPlanification, JourPlanificationVoyage, PlanificationVoyage } from "@/lib/type/destination";
 
 const PlanningVoyageDayMap = dynamic(
@@ -33,11 +33,7 @@ export function SectionCarte({
 }: Props) {
   return (
     <Card className="border-border/50">
-      <CardHeader>
-        <CardTitle>Carte du voyage</CardTitle>
-        <CardDescription>Visualisation des trajets et du planning par jour dans une vue combinee.</CardDescription>
-      </CardHeader>
-      <CardContent>
+      <CardContent className="p-6">
         <PlanningVoyageDayMap
           planification={planification}
           activites={activites}

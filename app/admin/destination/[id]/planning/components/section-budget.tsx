@@ -5,7 +5,7 @@
 // + Budgets enregistrÃ©s (CRUD admin / lecture publique)
 
 import { useMemo, useState } from "react";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Bed, Crown, Pencil, Plus, RefreshCw, Route, Trash2, UsersRound, WalletCards } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -65,9 +65,21 @@ function formatMoney(value: number, devise: string): string {
   return `${formatAmount(value)} ${devise}`;
 }
 
+function formatMetricValue(value: string | number) {
+  if (typeof value === "number") return value.toString();
+  return value.replace(" jour(s)", "\njour(s)").replace(" activité(s)", "\nactivité(s)").replace(" hébergement(s)", "\nhébergement(s)");
+}
+
 function formatMoneySafe(value: number | null | undefined, devise: string): string {
   if (value === null || value === undefined) return `- ${devise}`;
   return `${formatAmount(value)} ${devise}`;
+}
+
+function formatGamme(value: string | null | undefined): string {
+  const normalized = normalizeGamme(value);
+  if (normalized === "luxe") return "LUXE";
+  if (normalized === "moyenne") return "MOYENNE";
+  return normalized.toUpperCase();
 }
 
 function normalizeText(value: string | null | undefined): string {
@@ -399,74 +411,82 @@ function BudgetBadgeList({
   onDeleteBudget,
 }: BudgetBadgeListProps) {
   return (
-    <div className="rounded-2xl border border-border/50 bg-background/80 overflow-hidden">
-      <div className="flex flex-col gap-3 border-b border-border/50 bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h3 className="font-semibold">Budgets enregistrés</h3>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-slate-500">
             Budgets saisis par l&apos;administrateur pour cette planification.
           </p>
         </div>
 
         {isAdmin ? (
-          <Button size="sm" onClick={onAddBudget}>
+          <Button size="sm" variant="outline" className="h-10 border-emerald-200 bg-emerald-50 text-emerald-800 shadow-sm hover:bg-emerald-100" onClick={onAddBudget}>
             <Plus className="size-4" />
             Ajouter un budget
           </Button>
         ) : null}
       </div>
 
-      <div className="p-4">
+      <div className="mt-5">
         {budgetsPlanification.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border/60 px-4 py-8 text-center text-sm text-muted-foreground">
+          <div className="rounded-2xl border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500">
             Aucun budget enregistré pour cette planification.
           </div>
         ) : (
-          <div className="flex flex-wrap gap-3">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {budgetsPlanification.map((budget) => (
               <div
                 key={budget.id}
-                className="flex flex-wrap items-center gap-2 rounded-full border border-border bg-card px-3 py-2 shadow-sm"
+                className="flex min-h-[150px] flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
               >
-                <Badge variant="secondary">{budget.nomCategorieClient}</Badge>
-                <Badge variant="outline">{budget.gamme}</Badge>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="secondary" className="bg-slate-100 text-slate-800 hover:bg-slate-100">
+                    {budget.nomCategorieClient}
+                  </Badge>
+                  <Badge variant="outline" className="bg-white font-semibold text-slate-800">
+                    {formatGamme(budget.gamme)}
+                  </Badge>
+                </div>
 
-                <span className="text-xs text-muted-foreground">{budget.nombrePersonnes} pers</span>
+                <p className="mt-3 text-xs text-slate-500">{budget.nombrePersonnes} personne(s)</p>
 
-                {budget.reduction > 0 ? (
-                  <span className="text-xs text-muted-foreground line-through">
-                    {formatMoneySafe(budget.prixNormal, devise)}
-                  </span>
-                ) : null}
-
-                <span className="text-sm font-medium text-emerald-600">
+                <p className="mt-2 break-words text-xl font-semibold leading-tight text-emerald-700">
                   {formatMoneySafe(budget.prixAvecReduction, devise)}
-                </span>
+                </p>
 
-                {budget.reduction > 0 ? (
-                  <Badge variant="outline">-{budget.reduction}%</Badge>
-                ) : null}
+                <div className="mt-1 min-h-5">
+                  {budget.reduction > 0 ? (
+                    <p className="text-xs text-slate-500">
+                      Avant remise: <span className="line-through">{formatMoneySafe(budget.prixNormal, devise)}</span>
+                    </p>
+                  ) : null}
+                </div>
 
                 {isAdmin ? (
-                  <div className="ml-1 flex items-center gap-1">
+                  <div className="mt-auto flex items-center gap-2 pt-3">
                     <Button
                       type="button"
-                      size="icon"
-                      variant="ghost"
-                      className="size-8"
+                      size="sm"
+                      variant="outline"
+                      className="h-8 border-slate-200 bg-white px-3 text-xs text-slate-700 hover:bg-slate-50"
                       onClick={() => onEditBudget?.(budget)}
+                      aria-label="Modifier le budget"
                     >
-                      <Pencil className="size-4" />
+                      <Pencil className="size-3.5" />
+                      Modifier
                     </Button>
 
                     <Button
                       type="button"
-                      size="icon"
-                      variant="ghost"
-                      className="size-8 text-destructive hover:text-destructive"
+                      size="sm"
+                      variant="outline"
+                      className="h-8 border-red-200 bg-white px-3 text-xs text-red-700 hover:bg-red-50"
                       onClick={() => onDeleteBudget?.(budget.id)}
+                      aria-label="Supprimer le budget"
                     >
-                      <Trash2 className="size-4" />
+                      <Trash2 className="size-3.5" />
+                      Supprimer
                     </Button>
                   </div>
                 ) : null}
@@ -657,10 +677,10 @@ function RecapTable({ sortedDays, tarifsActivites, tarifsHebergements, devise, p
   }
 
   return (
-    <div className="rounded-2xl border border-border/50 bg-background/80 overflow-hidden mb-6">
-      <div className="bg-muted/20 px-4 py-3 border-b border-border/50">
+    <div className="overflow-hidden rounded-2xl border border-blue-200 bg-blue-50/30 shadow-sm">
+      <div className="border-b border-blue-100 bg-white/70 px-4 py-3">
         <h3 className="font-semibold">Récapitulatif des tarifs</h3>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-slate-500">
           Gammes vs catégories client (prix par personne)
         </p>
       </div>
@@ -883,6 +903,327 @@ function DayBudgetTable({
 
 // ====== COMPOSANT PRINCIPAL - SectionBudget ======
 
+function BudgetOverview({
+  sortedDays,
+  budgetsPlanification,
+  devise,
+}: {
+  sortedDays: JourPlanificationVoyage[];
+  budgetsPlanification: BudgetisationPlanificationVoyage[];
+  devise: string;
+}) {
+  const prices = budgetsPlanification
+    .map((budget) => budget.prixAvecReduction)
+    .filter((value) => Number.isFinite(value));
+  const minBudget = prices.length > 0 ? Math.min(...prices) : null;
+  const maxBudget = prices.length > 0 ? Math.max(...prices) : null;
+  const totalActivites = sortedDays.reduce(
+    (sum, day) => sum + (day.elements?.filter((element) => element.codeTypeElementJour === "ACTIVITE").length ?? 0),
+    0
+  );
+  const totalHebergements = sortedDays.reduce(
+    (sum, day) => sum + (day.elements?.filter((element) => element.codeTypeElementJour === "HEBERGEMENT").length ?? 0),
+    0
+  );
+
+  const cards = [
+    {
+      label: "Budget minimum",
+      value: minBudget === null ? "-" : formatMoney(minBudget, devise),
+      caption: "Estimation la plus basse",
+      icon: WalletCards,
+      className: "bg-emerald-50 text-emerald-700",
+    },
+    {
+      label: "Budget maximum",
+      value: maxBudget === null ? "-" : formatMoney(maxBudget, devise),
+      caption: "Estimation la plus élevée",
+      icon: Crown,
+      className: "bg-purple-50 text-purple-700",
+    },
+    {
+      label: "Nombre de jours",
+      value: `${sortedDays.length} jour(s)`,
+      caption: "Durée du voyage",
+      icon: Route,
+      className: "bg-slate-50 text-slate-700",
+    },
+    {
+      label: "Nombre d'activités",
+      value: `${totalActivites} activité(s)`,
+      caption: "Planifiées",
+      icon: UsersRound,
+      className: "bg-orange-50 text-orange-700",
+    },
+    {
+      label: "Nombre d'hébergements",
+      value: `${totalHebergements} hébergement(s)`,
+      caption: "Sélectionnés",
+      icon: Bed,
+      className: "bg-emerald-50 text-emerald-700",
+    },
+  ];
+
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 className="text-lg font-semibold text-slate-950">Vue d&apos;ensemble du budget</h2>
+      <div className="mt-4 grid overflow-hidden rounded-xl border border-slate-200 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        {cards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <div key={card.label} className="border-b border-slate-200 bg-white p-4 last:border-b-0 sm:border-r sm:last:border-r-0 xl:border-b-0">
+              <div className="flex items-center gap-2">
+                <span className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${card.className}`}>
+                  <Icon className="size-4" />
+                </span>
+                <p className="min-w-0 text-sm font-medium leading-5 text-slate-700">{card.label}</p>
+              </div>
+              <p className="mt-4 whitespace-pre-line text-xl font-semibold leading-tight text-emerald-700">
+                {formatMetricValue(card.value)}
+              </p>
+              <p className="mt-2 text-xs text-slate-500">{card.caption}</p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function getSelectedBudget(line: BudgetLine, selections: { gamme: string; categorieClient: string }) {
+  if (!selections.gamme && !selections.categorieClient) return null;
+
+  if (line.categorie === "hebergement") {
+    if (selections.gamme === "luxe") return line.luxe;
+    if (selections.gamme === "moyenne") return line.moyenne;
+    return null;
+  }
+
+  if (line.categorie === "activite") {
+    return selections.categorieClient ? line.moyenne : null;
+  }
+
+  if (line.categorie === "transport") {
+    return selections.gamme || selections.categorieClient ? line.moyenne : null;
+  }
+
+  return line.moyenne;
+}
+
+function getBudgetTotal(lines: BudgetLine[], selections: { gamme: string; categorieClient: string }) {
+  return lines.reduce((sum, line) => sum + (getSelectedBudget(line, selections) || 0), 0);
+}
+
+function getBudgetLineIcon(category: BudgetCategory) {
+  if (category === "transport") return Route;
+  if (category === "hebergement") return Bed;
+  if (category === "activite") return UsersRound;
+  return WalletCards;
+}
+
+function getBudgetLineTone(category: BudgetCategory) {
+  if (category === "transport") return "bg-emerald-50 text-emerald-700";
+  if (category === "hebergement") return "bg-purple-50 text-purple-700";
+  if (category === "activite") return "bg-orange-50 text-orange-700";
+  return "bg-slate-100 text-slate-600";
+}
+
+function BudgetDetailsPanel({
+  dayBudgets,
+  devise,
+  globalSelections,
+  updateGlobalSelection,
+  availableGammes,
+  availableCategories,
+}: {
+  dayBudgets: Array<{ day: JourPlanificationVoyage; lines: BudgetLine[] }>;
+  devise: string;
+  globalSelections: { gamme: string; categorieClient: string };
+  updateGlobalSelection: (type: "gamme" | "categorieClient", value: string) => void;
+  availableGammes: string[];
+  availableCategories: string[];
+}) {
+  const [selectedDayId, setSelectedDayId] = useState(dayBudgets[0]?.day.id ?? "");
+  const selected = dayBudgets.find((item) => item.day.id === selectedDayId) ?? dayBudgets[0] ?? null;
+  const activeSelections = {
+    gamme: globalSelections.gamme || availableGammes[0] || "",
+    categorieClient: globalSelections.categorieClient || availableCategories[0] || "",
+  };
+  const tripTotal = dayBudgets.reduce((sum, item) => sum + getBudgetTotal(item.lines, activeSelections), 0);
+
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <h2 className="text-lg font-semibold text-slate-950">Détails par jour</h2>
+      <p className="mt-1 text-sm text-slate-500">
+        Le budget est calculé automatiquement selon la gamme et la catégorie client sélectionnées.
+      </p>
+
+      <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-end">
+        <label className="grid flex-1 gap-1 text-sm font-medium text-slate-700">
+          Gamme
+          <select
+            className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm"
+            value={activeSelections.gamme}
+            onChange={(event) => updateGlobalSelection("gamme", event.target.value)}
+          >
+            <option value="">Sélectionner une gamme</option>
+            {availableGammes.map((gamme) => (
+              <option key={gamme} value={gamme}>
+                {formatGamme(gamme)}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="grid flex-1 gap-1 text-sm font-medium text-slate-700">
+          Catégorie client
+          <select
+            className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm"
+            value={activeSelections.categorieClient}
+            onChange={(event) => updateGlobalSelection("categorieClient", event.target.value)}
+          >
+            <option value="">Sélectionner une catégorie</option>
+            {availableCategories.map((categorie) => (
+              <option key={categorie} value={categorie}>
+                {categorie}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <Button
+          type="button"
+          variant="outline"
+          className="h-10 border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+          onClick={() => {
+            updateGlobalSelection("gamme", "");
+            updateGlobalSelection("categorieClient", "");
+          }}
+        >
+          <RefreshCw className="size-4" />
+          Réinitialiser
+        </Button>
+      </div>
+
+      {dayBudgets.length === 0 ? (
+        <div className="mt-5 rounded-2xl border border-dashed border-slate-300 px-4 py-10 text-center text-sm text-slate-500">
+          Aucun jour disponible pour la budgétisation.
+        </div>
+      ) : (
+        <div className="mt-5 space-y-4">
+          <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white px-4 py-5">
+            <div
+              className="grid min-w-[720px] items-start"
+              style={{ gridTemplateColumns: `repeat(${dayBudgets.length}, minmax(120px, 1fr))` }}
+            >
+            {dayBudgets.map(({ day }, index) => {
+              const active = selected?.day.id === day.id;
+              return (
+                <button
+                  key={day.id}
+                  type="button"
+                  className="group relative px-3 pb-1 pt-1 text-center text-sm"
+                  onClick={() => setSelectedDayId(day.id)}
+                >
+                  <span
+                    className="absolute left-0 right-0 top-4 h-0.5 bg-slate-200"
+                    aria-hidden="true"
+                  />
+                  <span
+                    className={[
+                      "relative z-10 mx-auto flex size-8 items-center justify-center rounded-full text-xs font-bold shadow-sm transition-colors",
+                      active ? "bg-emerald-700 text-white" : "bg-slate-100 text-slate-700 group-hover:bg-emerald-50",
+                    ].join(" ")}
+                  >
+                    {day.numeroJour ?? index + 1}
+                  </span>
+                  <span className="mt-2 block font-semibold text-slate-950">Jour {day.numeroJour ?? index + 1}</span>
+                  <span className="mt-0.5 block truncate text-xs text-slate-500">{day.titre || "Sans titre"}</span>
+                </button>
+              );
+            })}
+            </div>
+          </div>
+
+          {selected ? (
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+              <div className="border-b border-slate-200 px-5 py-4">
+                <h3 className="text-base font-bold uppercase text-slate-950">
+                  Jour {selected.day.numeroJour ?? "-"} - {selected.day.titre || "Sans titre"}
+                </h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  {selected.day.description || "Aucune description pour ce jour."}
+                </p>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[760px] text-sm">
+                  <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                    <tr>
+                      <th className={`${TABLE_HEADER_CELL_CLASS} text-left`}>Bloc</th>
+                      <th className={`${TABLE_HEADER_CELL_CLASS} text-left`}>Catégorie</th>
+                      <th className={`${TABLE_HEADER_CELL_CLASS} text-left`}>Détails</th>
+                      <th className={`${TABLE_HEADER_CELL_CLASS} text-right`}>Coût estimé</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selected.lines.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className={`${TABLE_CELL_CLASS} text-center text-slate-500`}>
+                          Aucun bloc budget pour ce jour.
+                        </td>
+                      </tr>
+                    ) : (
+                      selected.lines.map((line) => {
+                        const amount = getSelectedBudget(line, activeSelections);
+                        const Icon = getBudgetLineIcon(line.categorie);
+                        return (
+                          <tr key={line.id} className="border-t border-slate-200 align-top">
+                            <td className={`${TABLE_CELL_CLASS} font-semibold text-slate-950`}>
+                              <div className="flex items-center gap-3">
+                                <span className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${getBudgetLineTone(line.categorie)}`}>
+                                  <Icon className="size-4" />
+                                </span>
+                                <span>{line.titre}</span>
+                              </div>
+                            </td>
+                            <td className={`${TABLE_CELL_CLASS} text-slate-600`}>{getCategoryLabel(line.categorie)}</td>
+                            <td className={`${TABLE_CELL_CLASS} whitespace-pre-line text-xs text-slate-500`}>
+                              {line.tarifsDisplay}
+                            </td>
+                            <td className={`${TABLE_CELL_CLASS} text-right font-semibold text-emerald-700`}>
+                              {amount && amount > 0 ? formatMoney(amount, devise) : "-"}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                  <tfoot className="border-t border-emerald-200 bg-emerald-50/70">
+                    <tr>
+                      <td colSpan={2} className={`${TABLE_CELL_CLASS} font-semibold text-emerald-800`}>
+                        Total sélectionné pour ce jour
+                      </td>
+                      <td colSpan={2} className={`${TABLE_CELL_CLASS} text-right text-lg font-bold text-emerald-700`}>
+                        {formatMoney(getBudgetTotal(selected.lines, activeSelections), devise)}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-4">
+            <span className="font-semibold text-emerald-800">Total du voyage ({dayBudgets.length} jour(s))</span>
+            <span className="text-xl font-bold text-emerald-700">{formatMoney(tripTotal, devise)}</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function SectionBudget({
   planification,
   sortedDays,
@@ -942,8 +1283,8 @@ export function SectionBudget({
   );
 
   return (
-    <Card className="overflow-hidden border-border/60 bg-gradient-to-br from-background via-background to-muted/20">
-      <CardHeader className="border-b border-border/50 bg-muted/20">
+    <Card className="overflow-hidden border-slate-200 bg-slate-50/60 shadow-sm">
+      <CardHeader className="border-b border-slate-200 bg-white">
         <CardTitle>Budgétisation</CardTitle>
         <CardDescription>
           Vue d&apos;ensemble et détails journaliers de la budgétisation du voyage.
@@ -951,24 +1292,70 @@ export function SectionBudget({
       </CardHeader>
 
       <CardContent className="space-y-6 p-6">
-        <BudgetBadgeList
+        <BudgetOverview
+          sortedDays={sortedDays}
           budgetsPlanification={budgetsPlanification}
           devise={devise}
-          isAdmin={isAdmin}
-          onAddBudget={onAddBudget}
-          onEditBudget={onEditBudget}
-          onDeleteBudget={onDeleteBudget}
         />
 
-        <RecapTable
-          planification={planification}
-          sortedDays={sortedDays}
-          tarifsActivites={tarifsActivites}
-          tarifsHebergements={tarifsHebergements}
+        <BudgetDetailsPanel
+          dayBudgets={dayBudgets}
           devise={devise}
+          globalSelections={globalSelections}
+          updateGlobalSelection={updateGlobalSelection}
+          availableGammes={availableGammes}
+          availableCategories={availableCategories}
         />
 
-        <div className="space-y-4">
+        <div className="hidden">
+          <h2 className="text-lg font-semibold text-slate-950">Détails par jour</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Le budget est calculé automatiquement selon la gamme et la catégorie client sélectionnées.
+          </p>
+          <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-end">
+            <label className="grid gap-1 text-sm font-medium text-slate-700">
+              Gamme
+              <select
+                className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm"
+                value={globalSelections.gamme}
+                onChange={(e) => updateGlobalSelection("gamme", e.target.value)}
+              >
+                <option value="">Sélectionner une gamme</option>
+                {availableGammes.map((gamme) => (
+                  <option key={gamme} value={gamme}>
+                    {formatGamme(gamme)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="grid gap-1 text-sm font-medium text-slate-700">
+              Catégorie client
+              <select
+                className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm"
+                value={globalSelections.categorieClient}
+                onChange={(e) => updateGlobalSelection("categorieClient", e.target.value)}
+              >
+                <option value="">Sélectionner une catégorie</option>
+                {availableCategories.map((categorie) => (
+                  <option key={categorie} value={categorie}>
+                    {categorie}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-10 border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+              onClick={() => setGlobalSelections({ gamme: "", categorieClient: "" })}
+            >
+              <RefreshCw className="size-4" />
+              Réinitialiser
+            </Button>
+          </div>
+        </div>
+
+        <div className="hidden">
           <h2 className="text-xl font-semibold">Détails par jour</h2>
 
           {dayBudgets.length === 0 ? (
@@ -990,6 +1377,23 @@ export function SectionBudget({
             ))
           )}
         </div>
+
+        <RecapTable
+          planification={planification}
+          sortedDays={sortedDays}
+          tarifsActivites={tarifsActivites}
+          tarifsHebergements={tarifsHebergements}
+          devise={devise}
+        />
+
+        <BudgetBadgeList
+          budgetsPlanification={budgetsPlanification}
+          devise={devise}
+          isAdmin={isAdmin}
+          onAddBudget={onAddBudget}
+          onEditBudget={onEditBudget}
+          onDeleteBudget={onDeleteBudget}
+        />
       </CardContent>
     </Card>
   );

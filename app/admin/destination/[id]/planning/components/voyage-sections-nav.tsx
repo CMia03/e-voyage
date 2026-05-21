@@ -33,7 +33,11 @@ export function VoyageSectionsNav({ selectedSection, description, onSelectSectio
               key={section.id}
               asChild
               variant={selectedSection === section.id ? "default" : "outline"}
-              className="justify-start"
+              className={
+                selectedSection === section.id
+                  ? "justify-start bg-emerald-700 text-white shadow-md hover:bg-emerald-800"
+                  : "justify-start border-slate-200 bg-white text-slate-900 hover:bg-emerald-50 hover:text-emerald-800"
+              }
             >
               <Link href={href} onClick={() => onSelectSection(section.id)}>
                 <Icon className="size-4" />

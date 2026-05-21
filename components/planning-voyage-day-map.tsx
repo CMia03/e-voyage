@@ -2,11 +2,11 @@
 
 import "leaflet/dist/leaflet.css";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { GeoJSON, MapContainer, Marker, Polyline, Popup, TileLayer } from "react-leaflet";
 import L from "leaflet";
 import type { GeoJsonObject } from "geojson";
-import { MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
+import { MapPinned, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -79,6 +79,34 @@ function formatDayDate(dateJour?: string | null) {
   });
 }
 
+function getElementTitle(element: ElementJourPlanification) {
+  return element.titre || element.nomTransport || element.nomActivite || element.nomHebergement || element.nomTypeElementJour || "Bloc";
+}
+
+function getElementMeta(element: ElementJourPlanification) {
+  const parts = [
+    element.nomTypeElementJour || "Element",
+    element.nomTransport,
+    element.nomActivite,
+    element.nomHebergement,
+  ].filter((part): part is string => Boolean(part));
+
+  return parts.join(" • ");
+}
+
+function getElementTone(element: ElementJourPlanification) {
+  if (element.idTransport || element.codeTypeElementJour?.includes("TRANSPORT")) {
+    return "bg-orange-50 text-orange-700";
+  }
+  if (element.idHebergement || element.codeTypeElementJour === "HEBERGEMENT") {
+    return "bg-purple-50 text-purple-700";
+  }
+  if (element.idActivite || element.codeTypeElementJour === "ACTIVITE") {
+    return "bg-emerald-50 text-emerald-700";
+  }
+  return "bg-slate-100 text-slate-600";
+}
+
 export function PlanningVoyageDayMap({
   planification,
   activites,
@@ -97,16 +125,6 @@ export function PlanningVoyageDayMap({
   const [selectedDayId, setSelectedDayId] = useState<string>(sortedDays[0]?.id ?? "");
   const [openActionMenuKey, setOpenActionMenuKey] = useState<string | null>(null);
   const [detailDialogContent, setDetailDialogContent] = useState<{ title: string; description: string } | null>(null);
-
-  useEffect(() => {
-    if (!sortedDays.length) {
-      setSelectedDayId("");
-      return;
-    }
-    if (!sortedDays.some((day) => day.id === selectedDayId)) {
-      setSelectedDayId(sortedDays[0].id);
-    }
-  }, [sortedDays, selectedDayId]);
 
   const selectedDay = useMemo(
     () => sortedDays.find((day) => day.id === selectedDayId) ?? sortedDays[0] ?? null,
@@ -254,14 +272,14 @@ export function PlanningVoyageDayMap({
   }
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,1fr)]">
-      <div className="overflow-hidden rounded-2xl border border-border/60">
+    <div className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,1fr)]">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         {validSegments.length === 0 && dayPlaceMarkers.length === 0 ? (
-          <div className="flex h-[620px] items-center justify-center bg-muted/20 px-6 text-center text-sm text-muted-foreground">
+          <div className="flex h-[380px] items-center justify-center bg-slate-50 px-6 text-center text-sm text-slate-500">
             Aucun point geographique lie au jour selectionne. Ajoute un transport, une activite ou un hebergement.
           </div>
         ) : (
-          <MapContainer center={mapCenter} zoom={7} className="h-[620px] w-full" preferCanvas>
+          <MapContainer center={mapCenter} zoom={7} className="h-[380px] w-full" preferCanvas>
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -342,12 +360,12 @@ export function PlanningVoyageDayMap({
         )}
       </div>
 
-      <div className="rounded-2xl border border-border/60 bg-card/60 p-4">
-        <div className="mb-4">
-          <h3 className="text-base font-semibold">Planning par jour</h3>
-          <p className="text-sm text-muted-foreground">{planification.nomPlanification}</p>
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="mb-5">
+          <h3 className="text-lg font-semibold text-slate-950">Planning par jour</h3>
+          <p className="text-sm text-slate-500">Détail des trajets, hébergements et activités par jour.</p>
         </div>
-        <div className="max-h-[620px] space-y-3 overflow-y-auto pr-1">
+        <div className="max-h-[520px] space-y-4 overflow-y-auto pr-1">
           {sortedDays.map((day) => {
             const isActive = day.id === (selectedDay?.id ?? "");
             const sortedElements = [...(day.elements ?? [])].sort((a, b) => (a.ordreAffichage ?? 9999) - (b.ordreAffichage ?? 9999));
@@ -363,22 +381,34 @@ export function PlanningVoyageDayMap({
                     setSelectedDayId(day.id);
                   }
                 }}
-                className={`w-full rounded-2xl border p-3 text-left transition ${
+                className={`relative w-full rounded-2xl border p-4 text-left transition ${
                   isActive
-                    ? "border-emerald-300 bg-emerald-50/70"
-                    : "border-border/60 bg-background hover:border-emerald-200 hover:bg-emerald-50/30"
+                    ? "border-emerald-200 bg-white shadow-sm"
+                    : "border-slate-200 bg-white hover:border-emerald-200 hover:bg-emerald-50/20"
                 }`}
               >
+                <span
+                  className={`absolute -left-[5px] top-5 size-3 rounded-full ${
+                    isActive ? "bg-emerald-600" : "bg-slate-300"
+                  }`}
+                />
                 <div className="flex items-center justify-between gap-2">
-                  <Badge variant="secondary">Jour {day.numeroJour ?? "-"}</Badge>
+                  <div>
+                    <Badge className="bg-emerald-50 text-emerald-800 hover:bg-emerald-50">
+                      Jour {day.numeroJour ?? "-"}
+                    </Badge>
+                    <p className="mt-2 text-sm font-semibold text-slate-950">
+                      {day.titre || `Jour ${day.numeroJour ?? ""}`}
+                    </p>
+                  </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">{formatDayDate(day.dateJour)}</span>
+                    <span className="text-xs text-slate-500">{formatDayDate(day.dateJour)}</span>
                     <div className="relative">
                       <Button
                         type="button"
                         size="icon"
                         variant="outline"
-                        className="size-7"
+                        className="size-8 rounded-xl border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
                         onClick={(event) => {
                           event.stopPropagation();
                           setOpenActionMenuKey((current) => (current === `day-${day.id}` ? null : `day-${day.id}`));
@@ -387,7 +417,7 @@ export function PlanningVoyageDayMap({
                         <MoreVertical className="size-3.5" />
                       </Button>
                       {openActionMenuKey === `day-${day.id}` ? (
-                        <div className="absolute right-0 top-8 z-20 w-40 rounded-xl border border-border bg-background p-1.5 shadow-lg">
+                        <div className="absolute right-0 top-9 z-20 w-40 rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg">
                           <Button
                             type="button"
                             variant="ghost"
@@ -431,44 +461,29 @@ export function PlanningVoyageDayMap({
                     </div>
                   </div>
                 </div>
-                <p className="mt-2 text-sm font-medium">{day.titre || `Jour ${day.numeroJour ?? ""}`}</p>
-                <div className="mt-2 flex justify-center">
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="outline"
-                    className="size-8 rounded-full"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onAddElement(day, 0);
-                    }}
-                  >
-                    <Plus className="size-4" />
-                  </Button>
-                </div>
                 <div className="mt-3 space-y-2">
                   {sortedElements.length === 0 ? (
                     <p className="text-xs text-muted-foreground">Aucun bloc pour ce jour.</p>
                   ) : (
                     sortedElements.map((element, index) => (
                       <div key={element.id} className="space-y-2">
-                        <div className="rounded-lg border border-border/50 bg-card/70 px-2.5 py-2">
+                        <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-xs">
                           <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <p className="text-xs font-medium">{element.titre || element.nomTypeElementJour || "Bloc"}</p>
-                              <p className="text-[11px] text-muted-foreground">
-                                {element.nomTypeElementJour || "Element"}
-                                {element.nomTransport ? ` • ${element.nomTransport}` : ""}
-                                {element.nomActivite ? ` • ${element.nomActivite}` : ""}
-                                {element.nomHebergement ? ` • ${element.nomHebergement}` : ""}
-                              </p>
+                            <div className="flex min-w-0 gap-3">
+                              <span className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${getElementTone(element)}`}>
+                                <MapPinned className="size-4" />
+                              </span>
+                              <div className="min-w-0">
+                                <p className="truncate text-xs font-semibold text-slate-950">{getElementTitle(element)}</p>
+                                <p className="truncate text-[11px] text-slate-500">{getElementMeta(element)}</p>
+                              </div>
                             </div>
                             <div className="relative">
                               <Button
                                 type="button"
                                 size="icon"
                                 variant="outline"
-                                className="size-6"
+                                className="size-7 rounded-lg border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
                                 onClick={(event) => {
                                   event.stopPropagation();
                                   setOpenActionMenuKey((current) =>
@@ -479,7 +494,7 @@ export function PlanningVoyageDayMap({
                                 <MoreVertical className="size-3" />
                               </Button>
                               {openActionMenuKey === `element-${element.id}` ? (
-                                <div className="absolute right-0 top-7 z-20 w-40 rounded-xl border border-border bg-background p-1.5 shadow-lg">
+                                <div className="absolute right-0 top-8 z-20 w-40 rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg">
                                   <Button
                                     type="button"
                                     variant="ghost"
@@ -523,24 +538,38 @@ export function PlanningVoyageDayMap({
                             </div>
                           </div>
                         </div>
-                        <div className="flex justify-center">
-                          <Button
-                            type="button"
-                            size="icon"
-                            variant="outline"
-                            className="size-7 rounded-full"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              onAddElement(day, index + 1);
-                            }}
-                          >
-                            <Plus className="size-3.5" />
-                          </Button>
-                        </div>
+                        {index < sortedElements.length - 1 ? (
+                          <div className="flex justify-center">
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="outline"
+                              className="size-8 rounded-full border-emerald-200 bg-white text-emerald-700 shadow-sm hover:bg-emerald-50"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                onAddElement(day, index + 1);
+                              }}
+                            >
+                              <Plus className="size-4" />
+                            </Button>
+                          </div>
+                        ) : null}
                       </div>
                     ))
                   )}
                 </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="mt-3 h-9 justify-start px-0 text-sm font-semibold text-emerald-700 hover:bg-transparent hover:text-emerald-800"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onAddElement(day, sortedElements.length);
+                  }}
+                >
+                  <Plus className="size-4" />
+                  Ajouter une activité / élément
+                </Button>
               </div>
             );
           })}

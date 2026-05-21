@@ -1559,7 +1559,6 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
                   onOpenLinkedDetails={openLinkedDetailsDialog}
                   onToggleElementObligatoire={(element) => void handleToggleElementObligatoire(element)}
                   formatDate={formatDate}
-                  formatDateTime={formatDateTime}
                   getElementDisplayTitle={getElementDisplayTitle}
                   getLinkedLabel={getLinkedLabel}
                 />

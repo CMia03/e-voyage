@@ -1,6 +1,7 @@
 "use client";
 
 import { MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
+import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,6 @@ type Props = {
   onOpenLinkedDetails: (element: ElementJourPlanification) => void;
   onToggleElementObligatoire: (element: ElementJourPlanification) => void;
   formatDate: (value?: string | null) => string;
-  formatDateTime: (value?: string | null) => string;
   getElementDisplayTitle: (element: ElementJourPlanification) => string;
   getLinkedLabel: (element: ElementJourPlanification) => string | null;
 };
@@ -46,10 +46,38 @@ export function SectionPlanning({
   onOpenLinkedDetails,
   onToggleElementObligatoire,
   formatDate,
-  formatDateTime,
   getElementDisplayTitle,
   getLinkedLabel,
 }: Props) {
+  const formatTimeOnly = (value?: string | null) => {
+    if (!value) return "";
+
+    const timeMatch = value.match(/(?:T|\s)(\d{2}:\d{2})(?::\d{2})?/);
+    if (timeMatch?.[1]) return timeMatch[1];
+
+    const date = new Date(value);
+    if (!Number.isNaN(date.getTime())) {
+      return date.toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
+
+    return value;
+  };
+
+  const getLinkedHref = (element: ElementJourPlanification) => {
+    if (element.idHebergement) {
+      return `/admin/hebergements/${element.idHebergement}`;
+    }
+
+    if (element.idActivite) {
+      return `/admin/activites/${element.idActivite}`;
+    }
+
+    return null;
+  };
+
   return (
     <Card className="border-border/50">
       <CardHeader>
@@ -101,59 +129,61 @@ export function SectionPlanning({
                           type="button"
                           size="icon"
                           variant="outline"
+                          className="border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                           onClick={() =>
                             setOpenActionMenuKey((current) => (current === `jour-${jour.id}` ? null : `jour-${jour.id}`))
                           }
                         >
                           <MoreVertical className="size-4" />
                         </Button>
+
+                        
                         {openActionMenuKey === `jour-${jour.id}` ? (
-                          <div className="absolute right-0 top-10 z-20 w-44 rounded-xl border border-border bg-background p-1.5 shadow-lg">
-                            <Button
+                          <div className="absolute right-0 top-10 z-20 w-44 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl shadow-slate-200/70">
+                            <button
                               type="button"
-                              variant="ghost"
-                              className="w-full justify-start"
+                              className="flex h-9 w-full items-center px-3 text-left text-[13px] font-medium text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
                               onClick={() => {
                                 setOpenActionMenuKey(null);
                                 onEditJour(jour);
                               }}
                             >
-                              <Pencil className="size-4" />
+                              <Pencil className="mr-2 size-3.5 text-slate-500" />
                               Modifier
-                            </Button>
+                            </button>
 
 
-
-                            <Button
+                            <button
                               type="button"
-                              variant="ghost"
-                              className="w-full justify-start"
+                              className="flex h-9 w-full items-center px-3 pl-9 text-left text-[13px] font-medium text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
                               onClick={() => {
                                 setOpenActionMenuKey(null);
                                 onJourDetails(jour);
                               }}
                             >
                               Détaille
-                            </Button>
+                            </button>
 
 
-                            <Button
+                            <div className="my-1 h-px bg-slate-100" />
+                            <button
                               type="button"
-                              variant="ghost"
-                              className="w-full justify-start text-destructive hover:text-destructive"
+                              className="flex h-9 w-full items-center px-3 text-left text-[13px] font-medium text-red-600 transition-colors hover:bg-red-50 hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-200 disabled:pointer-events-none disabled:opacity-50"
                               onClick={() => {
                                 setOpenActionMenuKey(null);
                                 onDeleteJour(jour.id);
                               }}
                               disabled={isDeletingId === jour.id}
                             >
-                              <Trash2 className="size-4" />
+                              <Trash2 className="mr-2 size-3.5 text-red-500" />
                               {isDeletingId === jour.id ? "Suppression..." : "Supprimer"}
-                            </Button>
+                            </button>
 
-                            
+
                           </div>
                         ) : null}
+
+
                       </div>
                     </div>
 
@@ -174,7 +204,11 @@ export function SectionPlanning({
                           Aucun bloc pour ce jour.
                         </div>
                       ) : (
-                        sortedElements.map((element, index) => (
+                        sortedElements.map((element, index) => {
+                          const linkedLabel = getLinkedLabel(element);
+                          const linkedHref = getLinkedHref(element);
+
+                          return (
                           <div key={element.id} className="space-y-3">
                             <div className="rounded-2xl border border-border/50 bg-background/70 p-3">
                               <div className="flex items-start justify-between gap-2">
@@ -206,19 +240,35 @@ export function SectionPlanning({
                                     <p className="text-xs text-muted-foreground line-clamp-2">{element.description}</p>
                                   ) : null}
                                   <div className="flex flex-wrap gap-1.5 text-[10px] text-muted-foreground">
-                                    <span className="rounded-full bg-muted px-2 py-0.5">Début: {formatDateTime(element.heureDebut)}</span>
-                                    <span className="rounded-full bg-muted px-2 py-0.5">Fin: {formatDateTime(element.heureFin)}</span>
-                                    <span className="rounded-full bg-muted px-2 py-0.5">
+                                    {element.heureDebut ? (
+                                      <span className="rounded-full bg-muted px-2 py-0.5">
+                                        Debut: {formatTimeOnly(element.heureDebut)}
+                                      </span>
+                                    ) : null}
+                                    {element.heureFin ? (
+                                      <span className="rounded-full bg-muted px-2 py-0.5">
+                                        Fin: {formatTimeOnly(element.heureFin)}
+                                      </span>
+                                    ) : null}
+                                    {/* <span className="rounded-full bg-muted px-2 py-0.5">
                                       Budget: {element.budgetPrevu ?? "-"} {element.devise || "MGA"}
-                                    </span>
+                                    </span> */}
+
                                   </div>
-                                  {getLinkedLabel(element) ? (
+                                  {linkedLabel && linkedHref ? (
+                                    <Link
+                                      href={linkedHref}
+                                      className="text-left text-[10px] font-medium text-emerald-700 hover:text-emerald-900 hover:underline"
+                                    >
+                                      Lié à: {linkedLabel}
+                                    </Link>
+                                  ) : linkedLabel ? (
                                     <button
                                       type="button"
                                       className="text-left text-[10px] font-medium text-emerald-700 hover:text-emerald-900 hover:underline"
                                       onClick={() => onOpenLinkedDetails(element)}
                                     >
-                                      Lié à: {getLinkedLabel(element)}
+                                      Lié à: {linkedLabel}
                                     </button>
                                   ) : null}
                                 </div>
@@ -227,7 +277,7 @@ export function SectionPlanning({
                                     type="button"
                                     size="icon"
                                     variant="outline"
-                                    className="h-7 w-7"
+                                    className="h-7 w-7 border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                                     onClick={() =>
                                       setOpenActionMenuKey((current) =>
                                         current === `element-${element.id}` ? null : `element-${element.id}`
@@ -237,43 +287,41 @@ export function SectionPlanning({
                                     <MoreVertical className="size-3.5" />
                                   </Button>
                                   {openActionMenuKey === `element-${element.id}` ? (
-                                    <div className="absolute right-0 top-8 z-20 w-40 rounded-xl border border-border bg-background p-1 shadow-lg">
-                                      <Button
+                                    <div className="absolute right-0 top-8 z-20 w-44 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl shadow-slate-200/70">
+                                      <button
                                         type="button"
-                                        variant="ghost"
-                                        className="w-full justify-start text-xs"
+                                        className="flex h-9 w-full items-center px-3 text-left text-[13px] font-medium text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
                                         onClick={() => {
                                           setOpenActionMenuKey(null);
                                           onEditElement(jour.id, element);
                                         }}
                                       >
-                                        <Pencil className="size-3 mr-2" />
+                                        <Pencil className="mr-2 size-3.5 text-slate-500" />
                                         Modifier
-                                      </Button>
-                                      <Button
+                                      </button>
+                                      <button
                                         type="button"
-                                        variant="ghost"
-                                        className="w-full justify-start text-xs"
+                                        className="flex h-9 w-full items-center px-3 pl-9 text-left text-[13px] font-medium text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
                                         onClick={() => {
                                           setOpenActionMenuKey(null);
                                           onElementDetails(jour, element);
                                         }}
                                       >
                                         Détail
-                                      </Button>
-                                      <Button
+                                      </button>
+                                      <div className="my-1 h-px bg-slate-100" />
+                                      <button
                                         type="button"
-                                        variant="ghost"
-                                        className="w-full justify-start text-xs text-destructive hover:text-destructive"
+                                        className="flex h-9 w-full items-center px-3 text-left text-[13px] font-medium text-red-600 transition-colors hover:bg-red-50 hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-200 disabled:pointer-events-none disabled:opacity-50"
                                         onClick={() => {
                                           setOpenActionMenuKey(null);
                                           onDeleteElement(element.id);
                                         }}
                                         disabled={isDeletingId === element.id}
                                       >
-                                        <Trash2 className="size-3 mr-2" />
+                                        <Trash2 className="mr-2 size-3.5 text-red-500" />
                                         {isDeletingId === element.id ? "Suppression..." : "Supprimer"}
-                                      </Button>
+                                      </button>
                                     </div>
                                   ) : null}
                                 </div>
@@ -294,7 +342,8 @@ export function SectionPlanning({
                               </div>
                             )}
                           </div>
-                        ))
+                          );
+                        })
                       )}
                     </div>
                     
