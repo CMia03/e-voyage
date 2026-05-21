@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Mail, ShieldCheck } from "lucide-react";
+import { Mail, ShieldCheck, TreePalm } from "lucide-react";
 
 import { forgotPassword } from "@/lib/api/auth";
 import { getErrorMessage } from "@/lib/api/client";
@@ -57,8 +57,11 @@ export default function ForgotPasswordPage() {
 
       <div className="relative z-50 w-full max-w-md px-4 py-8">
         <div className="mb-8 text-center">
-          <h1 className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-xl font-bold text-transparent sm:text-2xl">
-            Cool Voyage
+          <h1 className="inline-flex items-center justify-center gap-2 text-xl font-bold sm:text-2xl">
+            <TreePalm className="size-7 text-emerald-400 drop-shadow-md" strokeWidth={3} />
+            <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
+              Cool Voyage
+            </span>
           </h1>
           <p className="text-lg text-white/90 drop-shadow-md">Retrouvez l&apos;acces a votre compte.</p>
         </div>

@@ -10,6 +10,7 @@ import { resolvePostLoginPath } from "@/lib/auth-redirect";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnimatedBackground } from "@/components/animated-background";
+import { TreePalm } from "lucide-react";
 
 type RegisterForm = {
   nom: string;
@@ -21,6 +22,16 @@ type RegisterForm = {
   login: string;
   motDePasse: string;
   nationalite: string;
+};
+
+type RegistrationAuthPayload = {
+  accessToken?: string;
+  refreshToken?: string;
+  role?: string;
+  userId?: string;
+  login?: string;
+  nom?: string;
+  prenom?: string;
 };
 
 export default function RegisterPage() {
@@ -71,8 +82,8 @@ export default function RegisterPage() {
       });
       const payload =
         response && typeof response === "object" && "data" in response
-          ? (response as { data?: any }).data ?? {}
-          : response ?? {};
+          ? (response as { data?: RegistrationAuthPayload }).data ?? {}
+          : (response as RegistrationAuthPayload) ?? {};
       const authPayload = {
         accessToken: payload.accessToken,
         refreshToken: payload.refreshToken,
@@ -103,10 +114,15 @@ export default function RegisterPage() {
         {/* En-tête */}
         <div className="text-center mb-8">
           
-          <h1 className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent sm:text-2xl">🌴 Cool Voyage</h1>
+          <h1 className="inline-flex items-center justify-center gap-2 text-xl font-bold sm:text-2xl">
+            <TreePalm className="size-7 text-emerald-400 drop-shadow-md" strokeWidth={3} />
+            <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
+              Cool Voyage
+            </span>
+          </h1>
 
           <p className="text-lg text-white/90 drop-shadow-md">
-            Rejoignez l'aventure malgache
+            Rejoignez l&apos;aventure malgache
           </p>
         </div>
 
