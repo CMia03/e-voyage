@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { clearAuth } from "@/lib/auth";
+import { TreePalm } from "lucide-react";
 
 export function AdminHeader() {
   const { session } = useAuth();
@@ -16,9 +17,10 @@ export function AdminHeader() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between px-4">
-        <Link href="/admin" className="flex items-center space-x-2">
-          <span className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent sm:text-2xl">
-            Admin Panel
+        <Link href="/admin" className="flex items-center gap-2">
+          <TreePalm className="size-7 text-emerald-600" strokeWidth={3} />
+          <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-xl font-bold text-transparent sm:text-2xl">
+            Cool Voyage
           </span>
         </Link>
         

@@ -9,7 +9,7 @@ import { getProfile } from "@/lib/api/auth";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { Menu, Home, MapPin, Building, Play, ChevronDown, Calendar, Users, Bell, Star, Briefcase } from "lucide-react";
+import { Menu, Home, MapPin, Building, Play, ChevronDown, Calendar, Users, Bell, Star, Briefcase, TreePalm } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -140,8 +140,9 @@ export function AdminHeader() {
             <span className="sr-only">Menu mobile</span>
           </Button>
           
-          <Link href="/" className="flex cursor-pointer items-center gap-3">
-            <span className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent sm:text-2xl">
+          <Link href="/" className="flex cursor-pointer items-center gap-2">
+            <TreePalm className="size-7 text-emerald-600" strokeWidth={3} />
+            <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-xl font-bold text-transparent sm:text-2xl">
               Cool Voyage
             </span>
           </Link>
@@ -338,8 +339,11 @@ export function AdminHeader() {
             {/* Header avec gradient */}
             <div className="bg-gradient-to-br from-emerald-50 to-teal-50 px-6 py-8 border-b">
               <SheetHeader>
-                <SheetTitle className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                  Admin Cool Voyage
+                <SheetTitle className="inline-flex items-center gap-2 text-2xl font-bold">
+                  <TreePalm className="size-8 text-emerald-600" strokeWidth={3} />
+                  <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                    Cool Voyage
+                  </span>
                 </SheetTitle>
                 <p className="text-sm text-muted-foreground mt-2">
                   Menu administration

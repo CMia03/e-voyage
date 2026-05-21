@@ -2,10 +2,18 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
+import { CheckCircle2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { DestinationDetails } from "@/lib/type/destination";
 
 interface DestinationCardProps {
@@ -15,9 +23,19 @@ interface DestinationCardProps {
 const FALLBACK_DESTINATION_IMAGE = "/images/Manbt1.jpg";
 
 export function DestinationCard({ destination }: DestinationCardProps) {
-  const { title, description, image, price, marketing, features, gallery = [], id } = destination;
+  const { title, description, image, price, marketing, marketingDetails, features, gallery = [], id } = destination;
   const displayPrice = price?.trim() || "Prix sur demande";
-  const marketingItems = marketing?.length ? marketing : (features ?? []);
+  const marketingItems = marketingDetails?.length
+    ? marketingDetails
+        .filter((item) => item.estActif !== false)
+        .map((item) => ({
+          label: item.libelle,
+          description: item.description?.trim() || null,
+        }))
+    : (marketing?.length ? marketing : (features ?? [])).map((item) => ({
+        label: item,
+        description: null,
+      }));
   const images = [...gallery, image]
     .filter((src): src is string => typeof src === "string" && src.trim().length > 0)
     .filter((src, index, all) => all.indexOf(src) === index);
@@ -26,22 +44,22 @@ export function DestinationCard({ destination }: DestinationCardProps) {
 
   useEffect(() => {
     if (displayImages.length <= 1) return;
-    
+
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % displayImages.length);
-    }, 3000); 
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [displayImages.length]);
 
   return (
-    <Card className="group flex h-full flex-col overflow-hidden transition-all duration-500 hover:shadow-2xl hover:shadow-emerald-500/20 hover:-translate-y-2 border-border/50 bg-card/50 backdrop-blur-sm">
-      <div className="relative h-48 sm:h-56 md:h-64 w-full flex-shrink-0 overflow-hidden">
+    <Card className="group relative flex h-full flex-col overflow-visible rounded-2xl border-border/50 bg-card/50 backdrop-blur-sm transition-all duration-500 hover:z-30 hover:-translate-y-2 hover:shadow-2xl hover:shadow-emerald-500/20">
+      <div className="relative h-48 w-full flex-shrink-0 overflow-hidden rounded-t-2xl sm:h-56 md:h-64">
         {displayImages.map((img, index) => (
           <div
             key={img}
             className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-              index === currentIndex ? "opacity-100 z-10" : "opacity-0 z-0"
+              index === currentIndex ? "z-10 opacity-100" : "z-0 opacity-0"
             }`}
           >
             <Image
@@ -57,8 +75,7 @@ export function DestinationCard({ destination }: DestinationCardProps) {
         <Badge className="absolute right-4 top-4 z-20 max-w-[calc(100%-2rem)] bg-primary/90 text-white shadow-lg">
           {displayPrice}
         </Badge>
-        {/* Indicateurs de progression */}
-        {displayImages.length > 1 && (
+        {displayImages.length > 1 ? (
           <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 gap-2">
             {displayImages.map((_, index) => (
               <div
@@ -69,34 +86,51 @@ export function DestinationCard({ destination }: DestinationCardProps) {
               />
             ))}
           </div>
-        )}
+        ) : null}
       </div>
       <CardHeader className="flex-shrink-0">
-        <div className="flex justify-between items-start">
+        <div className="flex items-start justify-between">
           <div className="flex-1">
             <CardTitle className="text-xl sm:text-2xl">{title}</CardTitle>
-            <CardDescription className="text-sm sm:text-base line-clamp-2">{description}</CardDescription>
+            <CardDescription className="line-clamp-2 text-sm sm:text-base">{description}</CardDescription>
           </div>
         </div>
       </CardHeader>
       <CardContent className="flex-1">
-        <ul className="space-y-2">
+        <ul className="space-y-2.5">
           {marketingItems.map((feature, index) => (
-            <li key={index} className="flex items-center text-sm text-muted-foreground">
-              <span className="mr-2 text-primary">✓</span>
-              <span className="line-clamp-1">{feature}</span>
+            <li
+              key={`${feature.label}-${index}`}
+              className="group/marketing relative flex w-fit max-w-full items-start gap-2 text-sm text-muted-foreground"
+            >
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <span
+                tabIndex={feature.description ? 0 : -1}
+                className={`line-clamp-1 outline-none ${
+                  feature.description
+                    ? "cursor-help rounded-sm focus-visible:ring-2 focus-visible:ring-emerald-200"
+                    : ""
+                }`}
+              >
+                {feature.label}
+              </span>
+              {feature.description ? (
+                <span className="invisible pointer-events-none absolute left-0 top-full z-50 mt-2 w-72 max-w-[72vw] translate-y-1 scale-95 rounded-2xl border border-emerald-100 bg-white p-3.5 text-left text-xs leading-5 text-slate-600 opacity-0 shadow-2xl shadow-slate-900/15 ring-1 ring-slate-900/5 transition-all delay-300 duration-200 group-hover/marketing:visible group-hover/marketing:translate-y-0 group-hover/marketing:scale-100 group-hover/marketing:opacity-100 group-focus-within/marketing:visible group-focus-within/marketing:translate-y-0 group-focus-within/marketing:scale-100 group-focus-within/marketing:opacity-100 sm:left-full sm:top-1/2 sm:ml-3 sm:mt-0 sm:-translate-y-1/2 sm:group-hover/marketing:-translate-y-1/2 sm:group-focus-within/marketing:-translate-y-1/2">
+                  <span className="mb-1.5 block text-sm font-semibold text-slate-950">
+                    <span className="line-clamp-2">{feature.label}</span>
+                  </span>
+                  <span className="block">{feature.description}</span>
+                </span>
+              ) : null}
             </li>
           ))}
         </ul>
       </CardContent>
       <CardFooter className="flex-shrink-0">
         <Button variant="default" asChild size="sm" className="w-full">
-            <Link href={`/destinations/${id}`}>
-              En savoir plus
-            </Link>
-          </Button>
+          <Link href={`/destinations/${id}`}>En savoir plus</Link>
+        </Button>
       </CardFooter>
     </Card>
   );
 }
-

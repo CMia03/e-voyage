@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, LogOut, User } from "lucide-react";
+import { ChevronDown, LogOut, TreePalm, User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { SearchBar } from "@/components/search-bar";
@@ -80,8 +80,11 @@ export function ClientHeader({
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex min-h-16 w-full max-w-[1400px] flex-col gap-3 px-4 py-3 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
-        <Link href="/" className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent sm:text-2xl">
-          Cool Voyage
+        <Link href="/" className="flex shrink-0 items-center gap-2">
+          <TreePalm className="size-7 text-emerald-600" strokeWidth={3} />
+          <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-xl font-bold text-transparent sm:text-2xl">
+            Cool Voyage
+          </span>
         </Link>
         <div className="w-full max-w-xl lg:mx-6">
           <SearchBar destinations={destinations} compact />

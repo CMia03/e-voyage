@@ -1471,7 +1471,7 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
                 className={greenOutlineButtonClass}
                 onClick={() => router.push(`${detailUrl}?section=marketing`)}
               >
-                Ajouter Marketing
+                Marketing
               </Button>
               <Button
                 type="button"

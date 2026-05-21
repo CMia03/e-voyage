@@ -157,7 +157,7 @@ export function AdminDestinationDetailContent({
           className={sectionButtonClass(activeSection === "marketing")}
           onClick={() => setActiveSection("marketing")}
         >
-          Ajouter Marketing
+          Marketing
         </Button>
         <Button
           type="button"
@@ -447,7 +447,6 @@ export function AdminDestinationDetailContent({
           <Card className="border border-gray-200 shadow-sm">
             <CardHeader className="border-b border-gray-100">
               <CardTitle className="text-lg font-semibold text-gray-900">Informations principales</CardTitle>
-              <CardDescription className="text-gray-600">Vue d&apos;ensemble de la destination</CardDescription>
             </CardHeader>
             <CardContent className="p-6">
               {isLoading ? (
@@ -530,7 +529,7 @@ export function AdminDestinationDetailContent({
                   </CardDescription>
                 </div>
                 <Button type="button" size="sm" onClick={openMarketingDialog}>
-                  Ajouter Marketing
+                 Ajouter Marketing
                 </Button>
               </div>
             </CardHeader>
@@ -851,7 +850,7 @@ export function AdminDestinationDetailContent({
       <Dialog open={isMarketingDialogOpen} onOpenChange={closeMarketingDialog}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Ajouter Marketing</DialogTitle>
+            <DialogTitle>Marketing</DialogTitle>
             <DialogDescription>
               Ajoutez un argument marketing qui sera affiche dans le detail de la destination.
             </DialogDescription>

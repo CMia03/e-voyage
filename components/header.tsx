@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Menu, X, User, LogOut, Settings, Search } from "lucide-react";
+import { Menu, X, User, LogOut, Settings, Search, TreePalm } from "lucide-react";
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
@@ -100,8 +100,11 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-6 px-6 lg:px-8">
-        <Link href="/" className="flex shrink-0 items-center space-x-2">
-          <span className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent sm:text-2xl">🌴 Cool Voyage</span>
+        <Link href="/" className="flex shrink-0 items-center gap-2">
+          <TreePalm className="size-7 text-emerald-600" strokeWidth={3} />
+          <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-xl font-bold text-transparent sm:text-2xl">
+            Cool Voyage
+          </span>
         </Link>
         
         {/* Desktop Navigation */}
@@ -203,8 +206,11 @@ export function Header() {
               {/* Header avec gradient */}
               <div className="bg-gradient-to-br from-emerald-50 to-teal-50 px-6 py-8 border-b">
                 <SheetHeader>
-                  <SheetTitle className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                    🌴 Cool Voyage
+                  <SheetTitle className="inline-flex items-center gap-2 text-2xl font-bold">
+                    <TreePalm className="size-8 text-emerald-600" strokeWidth={3} />
+                    <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                      Cool Voyage
+                    </span>
                   </SheetTitle>
                   <p className="text-sm text-muted-foreground mt-2">
                     Votre agence de voyage à Madagascar

@@ -21,6 +21,7 @@ export interface DestinationDetails {
   included: string[];
   notIncluded: string[];
   marketing: string[];
+  marketingDetails?: DestinationMarketingItem[];
   features?: string[];
   galleryPrimary?: string[];
   galleryAll?: string[];

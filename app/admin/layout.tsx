@@ -3,11 +3,10 @@
 import { useRouter } from "next/navigation";
 import { Suspense } from "react";
 import { AdminHeaderWithNotifications } from "@/components/admin-header-with-notifications";
-import { AdminSidebarWithNotifications } from "@/components/admin-sidebar-with-notifications";
 import { AdminFooter } from "./components/footer";
 import { AdminBreadcrumbs } from "./components/breadcrumbs";
 import { AdminNavigationProvider, useAdminNavigation } from "./contexts/admin-navigation-context";
-import { AdminSection } from "./components/sidebar";
+import { AdminSection, AdminSidebar } from "./components/sidebar";
 import { BreadcrumbsProvider } from "./contexts/breadcrumbs-context";
 import { ExtraActionsProvider, useExtraActions } from "./contexts/extra-actions-context";
 
@@ -37,7 +36,7 @@ function AdminLayoutContent({
         <AdminHeaderWithNotifications />
       </Suspense>
       <div className="mx-auto flex w-full max-w-[1400px] flex-1">
-        <AdminSidebarWithNotifications active={active} onSelect={handleSelectSection} />
+        <AdminSidebar active={active} onSelect={handleSelectSection} />
         <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8 overflow-auto min-h-0">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex-1 min-w-0">

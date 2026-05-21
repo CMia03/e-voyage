@@ -9,7 +9,7 @@ import { getProfile } from "@/lib/api/auth";
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { Menu, Home, MapPin, Building, Play, ChevronDown, Calendar, Users, Bell, Briefcase, MessageCircle, ClipboardList, Settings } from "lucide-react";
+import { Menu, Home, MapPin, Building, Play, ChevronDown, Calendar, Users, Bell, Briefcase, MessageCircle, ClipboardList, Settings, TreePalm } from "lucide-react";
 import {
   Sheet,
   SheetContent, 
@@ -158,8 +158,9 @@ export function AdminHeaderWithNotifications() {
             <span className="sr-only">Menu mobile</span>
           </Button>
           
-          <Link href="/" className="flex cursor-pointer items-center gap-3">
-            <span className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent sm:text-2xl">
+          <Link href="/" className="flex cursor-pointer items-center gap-2">
+            <TreePalm className="size-7 text-emerald-600" strokeWidth={3} />
+            <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-xl font-bold text-transparent sm:text-2xl">
               Cool Voyage
             </span>
           </Link>
@@ -349,8 +350,11 @@ export function AdminHeaderWithNotifications() {
         <SheetContent side="left" className="w-[85vw] sm:w-[400px] p-0">
           <div className="flex flex-col h-full">
             <SheetHeader className="bg-gradient-to-br from-emerald-50 to-teal-50 px-6 py-8 border-b">
-              <SheetTitle className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                Admin Cool Voyage
+              <SheetTitle className="inline-flex items-center gap-2 text-2xl font-bold">
+                <TreePalm className="size-8 text-emerald-600" strokeWidth={3} />
+                <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                  Cool Voyage
+                </span>
               </SheetTitle>
             </SheetHeader>
             
@@ -463,6 +467,42 @@ export function AdminHeaderWithNotifications() {
                 </div>
               )}
 
+              
+
+              <button
+                type="button"
+                onClick={() => toggleSection("reservations")}
+                className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
+              >
+                <div className="flex items-center gap-3">
+                  <ClipboardList className="h-4 w-4" />
+                  Reservations
+                </div>
+                <ChevronDown
+                  className={`h-4 w-4 transition-transform ${expandedSections.includes("reservations") ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              {expandedSections.includes("reservations") && (
+                <div className="ml-4 space-y-1 border-l-2 border-emerald-200 pl-4 dark:border-emerald-800">
+                  <Link
+                    href="/admin?section=reservations-liste"
+                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Liste réservations
+                  </Link>
+                  <Link
+                    href="/admin?section=reservations-ajout"
+                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Ajout réservation
+                  </Link>
+                </div>
+              )}
+
+
               <button
                 type="button"
                 onClick={() => toggleSection("notifications-avis")}
@@ -500,39 +540,6 @@ export function AdminHeaderWithNotifications() {
                   >
                     <MessageCircle className="h-4 w-4" />
                     Commentaires
-                  </Link>
-                </div>
-              )}
-
-              <button
-                type="button"
-                onClick={() => toggleSection("reservations")}
-                className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
-              >
-                <div className="flex items-center gap-3">
-                  <ClipboardList className="h-4 w-4" />
-                  Reservations
-                </div>
-                <ChevronDown
-                  className={`h-4 w-4 transition-transform ${expandedSections.includes("reservations") ? "rotate-180" : ""}`}
-                />
-              </button>
-
-              {expandedSections.includes("reservations") && (
-                <div className="ml-4 space-y-1 border-l-2 border-emerald-200 pl-4 dark:border-emerald-800">
-                  <Link
-                    href="/admin?section=reservations-liste"
-                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    Liste réservations
-                  </Link>
-                  <Link
-                    href="/admin?section=reservations-ajout"
-                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    Ajout réservation
                   </Link>
                 </div>
               )}
