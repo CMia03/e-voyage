@@ -184,6 +184,13 @@ export function updateDestinationPhotoPrincipale(
   });
 }
 
+export function deleteDestinationPhoto(photoId: string, token?: string) {
+  return apiRequest<ApiEnvelope>(`/api/destinations/photos/${photoId}`, {
+    method: "DELETE",
+    token,
+  });
+}
+
 export function getDestinationAssociations(destinationId: string, token?: string) {
   return apiRequest<ApiEnvelope<DestinationAssociations>>(`/api/destinations/${destinationId}/associations`, {
     token,

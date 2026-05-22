@@ -19,6 +19,7 @@ import { loadAuth } from "@/lib/auth";
 import {
   createDestinationMarketing,
   createDestinationPhotosBulk,
+  deleteDestinationPhoto,
   deleteDestinationMarketing,
   getAdminDestination,
   updateDestinationPhotoPrincipale,
@@ -389,11 +390,9 @@ export function AdminDestinationDetailContent({
 
     setError("");
     try {
-      // TODO: Implement API call to delete image
-      // await deleteDestinationImage(imageId, accessToken);
-      console.log("Delete image:", imageId);
+      await deleteDestinationPhoto(imageId, accessToken);
       setSuccessMessage("Image supprimee avec succes.");
-      // await reloadDestination();
+      await reloadDestination();
     } catch (deleteError) {
       setError(getErrorMessage(deleteError, "Impossible de supprimer cette image"));
     }
