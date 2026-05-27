@@ -9,7 +9,7 @@ import { getProfile } from "@/lib/api/auth";
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { Menu, Home, MapPin, Building, Play, ChevronDown, Calendar, Users, Bell, Briefcase, MessageCircle, ClipboardList, Settings, TreePalm } from "lucide-react";
+import { Menu, Home, MapPin, Building, Play, ChevronDown, Calendar, Users, Bell, Briefcase, MessageCircle, ClipboardList, Settings } from "lucide-react";
 import {
   Sheet,
   SheetContent, 
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/sheet";
 import { AdminSearchBar } from "@/components/admin-search-bar";
 import { AdminNotifications } from "@/components/admin-notifications";
+import { BrandLogo } from "@/components/brand-logo";
 
 type UserProfile = {
   id: string;
@@ -158,11 +159,8 @@ export function AdminHeaderWithNotifications() {
             <span className="sr-only">Menu mobile</span>
           </Button>
           
-          <Link href="/" className="flex cursor-pointer items-center gap-2">
-            <TreePalm className="size-7 text-emerald-600" strokeWidth={3} />
-            <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-xl font-bold text-transparent sm:text-2xl">
-              Cool Voyage
-            </span>
+          <Link href="/" className="flex cursor-pointer items-center">
+            <BrandLogo className="h-16 w-44 sm:h-18 sm:w-52" priority />
           </Link>
         </div>
 
@@ -350,11 +348,8 @@ export function AdminHeaderWithNotifications() {
         <SheetContent side="left" className="w-[85vw] sm:w-[400px] p-0">
           <div className="flex flex-col h-full">
             <SheetHeader className="bg-gradient-to-br from-emerald-50 to-teal-50 px-6 py-8 border-b">
-              <SheetTitle className="inline-flex items-center gap-2 text-2xl font-bold">
-                <TreePalm className="size-8 text-emerald-600" strokeWidth={3} />
-                <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                  Cool Voyage
-                </span>
+              <SheetTitle className="inline-flex items-center">
+                <BrandLogo className="h-16 w-44" priority />
               </SheetTitle>
             </SheetHeader>
             

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Trash, Settings, Package } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarDays, Camera, ImageIcon, Star, Trash, Settings, Package } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -305,11 +305,11 @@ export function AdminDestinationDetailContent({
       await createDestinationPhotosBulk(destinationId, payload, accessToken);
       await reloadDestination();
       setPhotoForm(initialPhotoForm);
-      setSuccessMessage("Images ajoutÃ©es avec succÃ¨s.");
+      setSuccessMessage("Images ajoutées avec succès.");
       setIsDialogOpen(false);
       setActiveSection("gallery");
       
-      // Scroll vers la galerie aprÃ¨s ajout rÃ©ussi
+      // Scroll vers la galerie après ajout réussi
       setTimeout(() => {
         const galleryElement = document.getElementById("gallery-section");
         if (galleryElement) {
@@ -436,7 +436,7 @@ export function AdminDestinationDetailContent({
 
           {successMessage ? (
             <Alert variant="success" className="animate-in fade-in-50 slide-in-from-top-5">
-              <AlertTitle>SuccÃ¨s</AlertTitle>
+              <AlertTitle>Succès</AlertTitle>
               <AlertDescription>{successMessage}</AlertDescription>
             </Alert>
           ) : null}
@@ -614,7 +614,9 @@ export function AdminDestinationDetailContent({
               <CardContent>
                 {sortedPhotoGroups.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="mb-4 text-4xl">ðŸ“·</div>
+                    <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+                      <ImageIcon className="h-7 w-7" />
+                    </div>
                     <p className="text-sm text-muted-foreground">
                       Aucune image disponible pour le moment.
                     </p>
@@ -623,7 +625,7 @@ export function AdminDestinationDetailContent({
                       className="mt-4"
                       onClick={openImageDialog}
                     >
-                      Ajouter vos premiÃ¨res images
+                      Ajouter vos premières images
                     </Button>
                   </div>
                 ) : (
@@ -642,8 +644,9 @@ export function AdminDestinationDetailContent({
                                 {photoGroup.titre || "Sans titre"}
                               </h3>
                               {photoGroup.dateObtenir && (
-                                <p className="text-xs text-muted-foreground">
-                                  ðŸ“… {new Date(photoGroup.dateObtenir).toLocaleDateString("fr-FR", {
+                                <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                  <CalendarDays className="h-3.5 w-3.5" />
+                                  {new Date(photoGroup.dateObtenir).toLocaleDateString("fr-FR", {
                                     day: "numeric",
                                     month: "long",
                                     year: "numeric",
@@ -658,7 +661,17 @@ export function AdminDestinationDetailContent({
                                   : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
                               }`}
                             >
-                              {photoGroup.estPrincipale ? "â­ Principale" : "ðŸ“¸ Secondaire"}
+                              {photoGroup.estPrincipale ? (
+                                <span className="inline-flex items-center gap-1">
+                                  <Star className="h-3.5 w-3.5 fill-current" />
+                                  Principale
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1">
+                                  <Camera className="h-3.5 w-3.5" />
+                                  Secondaire
+                                </span>
+                              )}
                             </span>
                           </div>
                           {photoGroup.description && (
@@ -685,7 +698,7 @@ export function AdminDestinationDetailContent({
                                 )
                               }
                             >
-                              â†
+                              <ArrowLeft className="h-4 w-4" />
                             </Button>
                             <Button
                               type="button"
@@ -699,7 +712,7 @@ export function AdminDestinationDetailContent({
                                 )
                               }
                             >
-                              â†’
+                              <ArrowRight className="h-4 w-4" />
                             </Button>
                           </div>
                         <div
@@ -802,8 +815,8 @@ export function AdminDestinationDetailContent({
           <DialogHeader>
             <DialogTitle>Ajouter des images</DialogTitle>
             <DialogDescription>
-              Ajoutez plusieurs images avec les mÃªmes mÃ©tadonnÃ©es (titre, description, date).
-              Les images seront regroupÃ©es automatiquement.
+              Ajoutez plusieurs images avec les mêmes métadonnées (titre, description, date).
+              Les images seront regroupées automatiquement.
             </DialogDescription>
           </DialogHeader>
 

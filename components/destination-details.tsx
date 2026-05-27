@@ -58,6 +58,18 @@ function toCoordinate(value?: number | string | null) {
   return Number.isFinite(coordinate) ? coordinate : null;
 }
 
+function isTodayOrFuture(dateValue?: string | null) {
+  if (!dateValue) return false;
+
+  const date = new Date(dateValue);
+  if (Number.isNaN(date.getTime())) return false;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return date.getTime() >= today.getTime();
+}
+
 export function DestinationDetailsComponent({ destination }: DestinationDetailsProps) {
   const router = useRouter();
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -130,7 +142,13 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
 
       try {
         const response = await listPublicDestinationPlanifications(destination.id);
-        const items = response.data ?? [];
+        const items = (response.data ?? [])
+          .filter((item) => isTodayOrFuture(item.dateHeureDebut))
+          .sort(
+            (a, b) =>
+              new Date(a.dateHeureDebut ?? 0).getTime() -
+              new Date(b.dateHeureDebut ?? 0).getTime()
+          );
         if (!active) return;
 
         setPublicPlanifications(items);

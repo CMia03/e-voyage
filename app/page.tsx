@@ -131,12 +131,11 @@ export default async function Home() {
               </p>
             </div>
             <div className="mx-auto max-w-[95vw] xl:max-w-[1400px]">
-              <div className="grid gap-6 sm:gap-8 md:gap-10 sm:grid-cols-2 lg:grid-cols-4 items-stretch">
+              <div className="-mx-4 flex snap-x snap-mandatory gap-6 overflow-x-auto px-4 pb-6 sm:gap-8 md:gap-10">
                 {destinationsData.map((destination) => (
-                  <DestinationCard 
-                    key={destination.id} 
-                    destination={destination} 
-                  />
+                  <div key={destination.id} className="w-[82vw] min-w-[82vw] snap-start sm:w-[360px] sm:min-w-[360px] lg:w-[390px] lg:min-w-[390px]">
+                    <DestinationCard destination={destination} />
+                  </div>
                 ))}
               </div>
             </div>

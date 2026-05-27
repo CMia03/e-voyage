@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Mail, ShieldCheck, TreePalm } from "lucide-react";
+import { Mail, ShieldCheck } from "lucide-react";
 
 import { forgotPassword } from "@/lib/api/auth";
 import { getErrorMessage } from "@/lib/api/client";
@@ -10,6 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnimatedBackground } from "@/components/animated-background";
+import { BrandLogo } from "@/components/brand-logo";
 
 export default function ForgotPasswordPage() {
   const [emailValue, setEmailValue] = useState("");
@@ -57,11 +58,8 @@ export default function ForgotPasswordPage() {
 
       <div className="relative z-50 w-full max-w-md px-4 py-8">
         <div className="mb-8 text-center">
-          <h1 className="inline-flex items-center justify-center gap-2 text-xl font-bold sm:text-2xl">
-            <TreePalm className="size-7 text-emerald-400 drop-shadow-md" strokeWidth={3} />
-            <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
-              Cool Voyage
-            </span>
+          <h1 className="inline-flex items-center justify-center">
+            <BrandLogo className="h-32 w-32 rounded-full bg-white/90 p-3 shadow-2xl ring-1 ring-white/70" priority />
           </h1>
           <p className="text-lg text-white/90 drop-shadow-md">Retrouvez l&apos;acces a votre compte.</p>
         </div>

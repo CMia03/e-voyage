@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, LogOut, TreePalm, User } from "lucide-react";
+import { ChevronDown, LogOut, User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { BrandLogo } from "@/components/brand-logo";
 import { SearchBar } from "@/components/search-bar";
 import type { DestinationDetails } from "@/lib/type/destination";
 import { getProfile } from "@/lib/api/auth";
@@ -79,14 +80,11 @@ export function ClientHeader({
 
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="mx-auto flex min-h-16 w-full max-w-[1400px] flex-col gap-3 px-4 py-3 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
-        <Link href="/" className="flex shrink-0 items-center gap-2">
-          <TreePalm className="size-7 text-emerald-600" strokeWidth={3} />
-          <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-xl font-bold text-transparent sm:text-2xl">
-            Cool Voyage
-          </span>
+      <div className="mx-auto flex h-16 w-full max-w-[1400px] items-center justify-between gap-4 px-4 sm:px-6">
+        <Link href="/" className="flex shrink-0 items-center">
+          <BrandLogo className="h-16 w-44 sm:h-18 sm:w-52" priority />
         </Link>
-        <div className="w-full max-w-xl lg:mx-6">
+        <div className="hidden w-full max-w-xl lg:mx-6 sm:block">
           <SearchBar destinations={destinations} compact />
         </div>
         <div className="flex shrink-0 items-center gap-4">

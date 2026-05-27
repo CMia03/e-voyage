@@ -92,7 +92,17 @@ export function DestinationCard({ destination }: DestinationCardProps) {
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <CardTitle className="text-xl sm:text-2xl">{title}</CardTitle>
-            <CardDescription className="line-clamp-2 text-sm sm:text-base">{description}</CardDescription>
+            <CardDescription className="text-sm leading-6 sm:text-base">
+              <span className="line-clamp-2">{description}</span>
+              {description && description.length > 90 ? (
+                <Link
+                  href={`/destinations/${id}`}
+                  className="mt-1 inline-flex text-xs font-medium text-muted-foreground underline-offset-4 transition hover:text-emerald-700 hover:underline"
+                >
+                  Lire la suite
+                </Link>
+              ) : null}
+            </CardDescription>
           </div>
         </div>
       </CardHeader>
