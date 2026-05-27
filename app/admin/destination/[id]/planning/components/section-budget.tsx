@@ -65,6 +65,28 @@ function formatMoney(value: number, devise: string): string {
   return `${formatAmount(value)} ${devise}`;
 }
 
+const legacyEncodingMap: Record<string, string> = {
+  "‚": "é",
+  "ƒ": "â",
+  "…": "à",
+  "‡": "ç",
+  "ˆ": "ê",
+  "‰": "ë",
+  "Š": "è",
+  "‹": "ï",
+  "Œ": "î",
+  "“": "ô",
+  "”": "ö",
+  "–": "û",
+  "—": "ù",
+  "×": "Î",
+};
+
+function displayText(value?: string | number | null, fallback = "-") {
+  if (value === null || value === undefined || value === "") return fallback;
+  return String(value).replace(/[‚ƒ…‡ˆ‰Š‹Œ“”–—×]/g, (char) => legacyEncodingMap[char] ?? char);
+}
+
 function formatMetricValue(value: string | number) {
   if (typeof value === "number") return value.toString();
   return value.replace(" jour(s)", "\njour(s)").replace(" activité(s)", "\nactivité(s)").replace(" hébergement(s)", "\nhébergement(s)");
@@ -103,6 +125,8 @@ const CATEGORY_LABELS: Record<BudgetCategory, string> = {
 };
 
 function getCategoryLabel(category: BudgetCategory): string {
+  if (category === "activite") return "Activité";
+  if (category === "hebergement") return "Hébergements";
   return CATEGORY_LABELS[category];
 }
 
@@ -122,7 +146,7 @@ function getUniqueClientCategories(
         );
         tarifs.forEach((tarif) => {
           if (tarif.nomCategorieClient) {
-            categories.add(tarif.nomCategorieClient);
+            categories.add(displayText(tarif.nomCategorieClient));
           }
         });
       }
@@ -157,7 +181,7 @@ function getUniqueGammes(
 // ====== FONCTIONS D'EXTRACTION DE DONNÃ‰ES ======
 
 function getLineTitle(element: JourPlanificationVoyage["elements"][number]): string {
-  return (
+  return displayText(
     element.titre ||
     element.nomActivite ||
     element.nomHebergement ||
@@ -199,7 +223,7 @@ function getActivityTarifsForElement(
       const montant = item.prixParPersonne ?? item.prixParHeur;
       if (montant === null || montant === undefined) return null;
       return {
-        categorieClient: item.nomCategorieClient || "Sans catégorie",
+        categorieClient: displayText(item.nomCategorieClient, "Sans catégorie"),
         montant,
         devise: item.devise || "MGA",
       };
@@ -233,7 +257,7 @@ function getHebergementTarifsForElement(
         montant,
         devise: item.devise || "MGA",
         capacite: item.capacite || 0,
-        nomTypeChambre: item.nomTypeChambre || "Sans type",
+        nomTypeChambre: displayText(item.nomTypeChambre, "Sans type"),
       };
     })
     .filter(
@@ -273,7 +297,7 @@ function buildActivityCell(
 
   for (const tarif of filteredTarifs) {
     const details = formatMoney(tarif.montant, tarif.devise);
-    parts.push(`${tarif.categorieClient || "Sans catégorie"}: ${details}`);
+    parts.push(`${displayText(tarif.categorieClient, "Sans catégorie")}: ${details}`);
     totalMoyenne += tarif.montant;
   }
 
@@ -303,7 +327,7 @@ function buildHebergementCell(
     .map((item) => {
       const prixTotal = item.montant * (item.capacite || 1);
       const gammeLabel = normalizeGamme(item.gamme) === "luxe" ? "Luxe" : "Moyenne";
-      return `${gammeLabel} - ${formatMoney(prixTotal, item.devise)} (${item.nomTypeChambre || "Sans type"} - Cap: ${
+      return `${gammeLabel} - ${formatMoney(prixTotal, item.devise)} (${displayText(item.nomTypeChambre, "Sans type")} - Cap: ${
         item.capacite || 0
       }) - ${formatMoney(item.montant, item.devise)}/pers`;
     })
@@ -442,7 +466,7 @@ function BudgetBadgeList({
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="secondary" className="bg-slate-100 text-slate-800 hover:bg-slate-100">
-                    {budget.nomCategorieClient}
+                    {displayText(budget.nomCategorieClient)}
                   </Badge>
                   <Badge variant="outline" className="bg-white font-semibold text-slate-800">
                     {formatGamme(budget.gamme)}
@@ -789,10 +813,10 @@ function DayBudgetTable({
           Planning journalier
         </p>
         <h3 className="mt-1 text-lg font-semibold">
-          Jour {day.numeroJour ?? "-"} - {day.titre || "Sans titre"}
+          Jour {day.numeroJour ?? "-"} - {displayText(day.titre, "Sans titre")}
         </h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          {day.description || "Aucune description pour ce jour."}
+          {displayText(day.description, "Aucune description pour ce jour.")}
         </p>
       </div>
 
@@ -831,7 +855,7 @@ function DayBudgetTable({
                         <option value="">Sélectionner une catégorie</option>
                         {availableCategories.map((categorie) => (
                           <option key={categorie} value={categorie}>
-                            {categorie}
+                            {displayText(categorie)}
                           </option>
                         ))}
                       </select>
@@ -851,12 +875,12 @@ function DayBudgetTable({
             ) : (
               lines.map((line) => (
                 <tr key={line.id} className="border-t border-border/40 align-top">
-                  <td className={`${TABLE_CELL_CLASS} font-medium`}>{line.titre}</td>
+                  <td className={`${TABLE_CELL_CLASS} font-medium`}>{displayText(line.titre)}</td>
                   <td className={`${TABLE_CELL_CLASS} text-muted-foreground`}>
                     {getCategoryLabel(line.categorie)}
                   </td>
                   <td className={`${TABLE_CELL_CLASS} text-xs text-muted-foreground whitespace-pre-line`}>
-                    {line.tarifsDisplay}
+                    {displayText(line.tarifsDisplay)}
                   </td>
                   <td className={`${TABLE_CELL_CLASS} text-xs`}>
                     {(() => {
@@ -1085,7 +1109,7 @@ function BudgetDetailsPanel({
             <option value="">Sélectionner une catégorie</option>
             {availableCategories.map((categorie) => (
               <option key={categorie} value={categorie}>
-                {categorie}
+                {displayText(categorie)}
               </option>
             ))}
           </select>
@@ -1138,7 +1162,7 @@ function BudgetDetailsPanel({
                     {day.numeroJour ?? index + 1}
                   </span>
                   <span className="mt-2 block font-semibold text-slate-950">Jour {day.numeroJour ?? index + 1}</span>
-                  <span className="mt-0.5 block truncate text-xs text-slate-500">{day.titre || "Sans titre"}</span>
+                  <span className="mt-0.5 block truncate text-xs text-slate-500">{displayText(day.titre, "Sans titre")}</span>
                 </button>
               );
             })}
@@ -1149,10 +1173,10 @@ function BudgetDetailsPanel({
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
               <div className="border-b border-slate-200 px-5 py-4">
                 <h3 className="text-base font-bold uppercase text-slate-950">
-                  Jour {selected.day.numeroJour ?? "-"} - {selected.day.titre || "Sans titre"}
+                  Jour {selected.day.numeroJour ?? "-"} - {displayText(selected.day.titre, "Sans titre")}
                 </h3>
                 <p className="mt-1 text-sm text-slate-500">
-                  {selected.day.description || "Aucune description pour ce jour."}
+                  {displayText(selected.day.description, "Aucune description pour ce jour.")}
                 </p>
               </div>
 
@@ -1184,12 +1208,12 @@ function BudgetDetailsPanel({
                                 <span className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${getBudgetLineTone(line.categorie)}`}>
                                   <Icon className="size-4" />
                                 </span>
-                                <span>{line.titre}</span>
+                                <span>{displayText(line.titre)}</span>
                               </div>
                             </td>
                             <td className={`${TABLE_CELL_CLASS} text-slate-600`}>{getCategoryLabel(line.categorie)}</td>
                             <td className={`${TABLE_CELL_CLASS} whitespace-pre-line text-xs text-slate-500`}>
-                              {line.tarifsDisplay}
+                              {displayText(line.tarifsDisplay)}
                             </td>
                             <td className={`${TABLE_CELL_CLASS} text-right font-semibold text-emerald-700`}>
                               {amount && amount > 0 ? formatMoney(amount, devise) : "-"}

@@ -22,6 +22,28 @@ interface DestinationCardProps {
 
 const FALLBACK_DESTINATION_IMAGE = "/images/Manbt1.jpg";
 
+const legacyEncodingMap: Record<string, string> = {
+  "‚": "é",
+  "ƒ": "â",
+  "…": "à",
+  "‡": "ç",
+  "ˆ": "ê",
+  "‰": "ë",
+  "Š": "è",
+  "‹": "ï",
+  "Œ": "î",
+  "“": "ô",
+  "”": "ö",
+  "–": "û",
+  "—": "ù",
+  "×": "Î",
+};
+
+function displayText(value?: string | null, fallback = "-") {
+  if (!value) return fallback;
+  return value.replace(/[‚ƒ…‡ˆ‰Š‹Œ“”–—×]/g, (char) => legacyEncodingMap[char] ?? char);
+}
+
 export function DestinationCard({ destination }: DestinationCardProps) {
   const { title, description, image, price, marketing, marketingDetails, features, gallery = [], id } = destination;
   const displayPrice = price?.trim() || "Prix sur demande";
@@ -64,7 +86,7 @@ export function DestinationCard({ destination }: DestinationCardProps) {
           >
             <Image
               src={img}
-              alt={`${title} - Image ${index + 1}`}
+              alt={`${displayText(title)} - Image ${index + 1}`}
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-110"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
@@ -91,9 +113,9 @@ export function DestinationCard({ destination }: DestinationCardProps) {
       <CardHeader className="flex-shrink-0">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <CardTitle className="text-xl sm:text-2xl">{title}</CardTitle>
+            <CardTitle className="text-xl sm:text-2xl">{displayText(title)}</CardTitle>
             <CardDescription className="text-sm leading-6 sm:text-base">
-              <span className="line-clamp-2">{description}</span>
+              <span className="line-clamp-2">{displayText(description)}</span>
               {description && description.length > 90 ? (
                 <Link
                   href={`/destinations/${id}`}
@@ -122,14 +144,14 @@ export function DestinationCard({ destination }: DestinationCardProps) {
                     : ""
                 }`}
               >
-                {feature.label}
+                {displayText(feature.label)}
               </span>
               {feature.description ? (
                 <span className="invisible pointer-events-none absolute left-0 top-full z-50 mt-2 w-72 max-w-[72vw] translate-y-1 scale-95 rounded-2xl border border-emerald-100 bg-white p-3.5 text-left text-xs leading-5 text-slate-600 opacity-0 shadow-2xl shadow-slate-900/15 ring-1 ring-slate-900/5 transition-all delay-300 duration-200 group-hover/marketing:visible group-hover/marketing:translate-y-0 group-hover/marketing:scale-100 group-hover/marketing:opacity-100 group-focus-within/marketing:visible group-focus-within/marketing:translate-y-0 group-focus-within/marketing:scale-100 group-focus-within/marketing:opacity-100 sm:left-full sm:top-1/2 sm:ml-3 sm:mt-0 sm:-translate-y-1/2 sm:group-hover/marketing:-translate-y-1/2 sm:group-focus-within/marketing:-translate-y-1/2">
                   <span className="mb-1.5 block text-sm font-semibold text-slate-950">
                     <span className="line-clamp-2">{feature.label}</span>
                   </span>
-                  <span className="block">{feature.description}</span>
+                  <span className="block">{displayText(feature.description)}</span>
                 </span>
               ) : null}
             </li>

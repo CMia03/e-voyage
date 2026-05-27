@@ -43,6 +43,28 @@ const referenceIcon = L.divIcon({
   iconAnchor: [9, 9],
 });
 
+const legacyEncodingMap: Record<string, string> = {
+  "‚": "é",
+  "ƒ": "â",
+  "…": "à",
+  "‡": "ç",
+  "ˆ": "ê",
+  "‰": "ë",
+  "Š": "è",
+  "‹": "ï",
+  "Œ": "î",
+  "“": "ô",
+  "”": "ö",
+  "–": "û",
+  "—": "ù",
+  "×": "Î",
+};
+
+function displayText(value?: string | number | null, fallback = "-") {
+  if (value === null || value === undefined || value === "") return fallback;
+  return String(value).replace(/[‚ƒ…‡ˆ‰Š‹Œ“”–—×]/g, (char) => legacyEncodingMap[char] ?? char);
+}
+
 function MapClickHandler({
   onReferencePointChange,
 }: {
@@ -146,15 +168,15 @@ export function HebergementsOverviewMap({
                   <div className="flex aspect-[4/3] w-full items-center justify-center rounded-md bg-slate-100 p-1">
                     <img
                       src={item.urlImagePrincipale ?? item.imagePrincipale}
-                      alt={item.nom}
+                      alt={displayText(item.nom)}
                       className="h-full w-full rounded object-contain"
                     />
                   </div>
                 ) : null}
-                <p className="font-semibold">{item.nom}</p>
-                {item.adresse ? <p className="text-sm">{item.adresse}</p> : null}
+                <p className="font-semibold">{displayText(item.nom)}</p>
+                {item.adresse ? <p className="text-sm">{displayText(item.adresse)}</p> : null}
                 {item.description ? (
-                  <p className="line-clamp-3 text-sm text-slate-600">{item.description}</p>
+                  <p className="line-clamp-3 text-sm text-slate-600">{displayText(item.description)}</p>
                 ) : null}
                 <p className="text-xs text-slate-500">
                   {item.latitude}, {item.longitude}

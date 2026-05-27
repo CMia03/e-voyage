@@ -30,6 +30,28 @@ const greenOutlineButtonClass =
 const greenPrimaryButtonClass =
   "border-transparent bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/20 hover:from-emerald-700 hover:to-teal-700";
 
+const legacyEncodingMap: Record<string, string> = {
+  "‚": "é",
+  "ƒ": "â",
+  "…": "à",
+  "‡": "ç",
+  "ˆ": "ê",
+  "‰": "ë",
+  "Š": "è",
+  "‹": "ï",
+  "Œ": "î",
+  "“": "ô",
+  "”": "ö",
+  "–": "û",
+  "—": "ù",
+  "×": "Î",
+};
+
+function displayText(value?: string | number | null, fallback = "-") {
+  if (value === null || value === undefined || value === "") return fallback;
+  return String(value).replace(/[‚ƒ…‡ˆ‰Š‹Œ“”–—×]/g, (char) => legacyEncodingMap[char] ?? char);
+}
+
 const HebergementsOverviewMap = dynamic(
   () =>
     import("@/components/hebergements-overview-map").then(
@@ -198,7 +220,7 @@ export function AdminActivitesListe({
                       <div className="w-full h-48 bg-muted/20 p-2">
                         <img
                           src={activite.imagePrincipale}
-                          alt={activite.nom}
+                          alt={displayText(activite.nom)}
                           className="w-full h-full rounded-md object-cover"
                         />
                       </div>
@@ -221,9 +243,9 @@ export function AdminActivitesListe({
                   <div className="p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
-                      <h3 className="text-lg font-semibold">{activite.nom}</h3>
+                      <h3 className="text-lg font-semibold">{displayText(activite.nom)}</h3>
                       <p className="text-sm text-muted-foreground">
-                        {activite.nomCategorie || "Categorie non renseignee"}
+                        {displayText(activite.nomCategorie, "Categorie non renseignee")}
                       </p>
                     </div>
                     <span
@@ -238,12 +260,12 @@ export function AdminActivitesListe({
                   </div>
 
                   <p className="mt-3 line-clamp-3 text-sm text-muted-foreground">
-                    {activite.description || "Aucune description"}
+                    {displayText(activite.description, "Aucune description")}
                   </p>
 
                   <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
                     <span className="rounded-full bg-muted px-2.5 py-1">
-                      {activite.slug}
+                      {displayText(activite.slug)}
                     </span>
                     <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1">
                       <Timer className="size-3.5" />
@@ -262,7 +284,7 @@ export function AdminActivitesListe({
                           key={`${activite.id}-${equipement}`}
                           className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs text-emerald-700"
                         >
-                          {equipement}
+                          {displayText(equipement)}
                         </span>
                       ))}
                     </div>

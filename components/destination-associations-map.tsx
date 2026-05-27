@@ -22,11 +22,37 @@ type DestinationAssociationsMapProps = {
   onFocusChange: (item: MapItem) => void;
 };
 
+const legacyEncodingMap: Record<string, string> = {
+  "‚": "é",
+  "ƒ": "â",
+  "…": "à",
+  "‡": "ç",
+  "ˆ": "ê",
+  "‰": "ë",
+  "Š": "è",
+  "‹": "ï",
+  "Œ": "î",
+  "“": "ô",
+  "”": "ö",
+  "–": "û",
+  "—": "ù",
+  "×": "Î",
+};
+
+function displayText(value?: string | number | null, fallback = "-") {
+  if (value === null || value === undefined || value === "") {
+    return fallback;
+  }
+
+  return String(value).replace(/[‚ƒ…‡ˆ‰Š‹Œ“”–—×]/g, (char) => legacyEncodingMap[char] ?? char);
+}
+
 function getMarkerIcon(item: MapItem) {
   const accent = item.type === "hebergement" ? "#b45309" : "#0f766e";
+  const name = displayText(item.nom);
   const imageHtml = item.image
-    ? `<img src="${item.image}" alt="${item.nom}" style="width:100%;height:100%;object-fit:cover;display:block;" />`
-    : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#e2e8f0;color:#475569;font-size:10px;font-weight:700;">${item.nom.slice(0, 1).toUpperCase()}</div>`;
+    ? `<img src="${item.image}" alt="${name}" style="width:100%;height:100%;object-fit:cover;display:block;" />`
+    : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#e2e8f0;color:#475569;font-size:10px;font-weight:700;">${name.slice(0, 1).toUpperCase()}</div>`;
 
   return L.divIcon({
     className: "",
@@ -156,7 +182,7 @@ export function DestinationAssociationsMap({
             {focusedItem.image ? (
               <img
                 src={focusedItem.image}
-                alt={focusedItem.nom}
+                alt={displayText(focusedItem.nom)}
                 className="h-36 w-full object-cover"
               />
             ) : (
@@ -168,9 +194,9 @@ export function DestinationAssociationsMap({
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                    {focusedItem.type === "hebergement" ? "Hebergement" : "Activite"}
+                    {focusedItem.type === "hebergement" ? "Hébergement" : "Activité"}
                   </p>
-                  <h3 className="text-base font-semibold leading-5">{focusedItem.nom}</h3>
+                  <h3 className="text-base font-semibold leading-5">{displayText(focusedItem.nom)}</h3>
                 </div>
                 <span
                   className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
@@ -179,15 +205,15 @@ export function DestinationAssociationsMap({
                       : "bg-slate-100 text-slate-600"
                   }`}
                 >
-                  {focusedItem.estSelectionne ? "Actif" : "Non associe"}
+                  {focusedItem.estSelectionne ? "Actif" : "Non associé"}
                 </span>
               </div>
 
               {focusedItem.place ? (
-                <p className="text-sm text-foreground/80">{focusedItem.place}</p>
+                <p className="text-sm text-foreground/80">{displayText(focusedItem.place)}</p>
               ) : null}
               {focusedItem.region ? (
-                <p className="text-sm text-muted-foreground">{focusedItem.region}</p>
+                <p className="text-sm text-muted-foreground">{displayText(focusedItem.region)}</p>
               ) : null}
 
               <button
@@ -201,7 +227,7 @@ export function DestinationAssociationsMap({
                 } disabled:cursor-not-allowed disabled:opacity-60`}
               >
                 {pendingKey === `${focusedItem.type}-${focusedItem.id}`
-                  ? "Mise a jour..."
+                  ? "Mise à jour..."
                   : focusedItem.estSelectionne
                     ? "Retirer de la destination"
                     : "Activer pour la destination"}

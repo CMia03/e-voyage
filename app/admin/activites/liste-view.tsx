@@ -71,7 +71,29 @@ const greenPrimaryButtonClass =
   "border-transparent bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/20 hover:from-emerald-700 hover:to-teal-700";
 
 function normalizeSearch(value: string | number | null | undefined) {
-  return String(value ?? "").trim().toLowerCase();
+  return displayText(value, "").trim().toLowerCase();
+}
+
+const legacyEncodingMap: Record<string, string> = {
+  "‚": "é",
+  "ƒ": "â",
+  "…": "à",
+  "‡": "ç",
+  "ˆ": "ê",
+  "‰": "ë",
+  "Š": "è",
+  "‹": "ï",
+  "Œ": "î",
+  "“": "ô",
+  "”": "ö",
+  "–": "û",
+  "—": "ù",
+  "×": "Î",
+};
+
+function displayText(value?: string | number | null, fallback = "-") {
+  if (value === null || value === undefined || value === "") return fallback;
+  return String(value).replace(/[‚ƒ…‡ˆ‰Š‹Œ“”–—×]/g, (char) => legacyEncodingMap[char] ?? char);
 }
 
 export function AdminActivitesListe({
@@ -130,13 +152,13 @@ export function AdminActivitesListe({
 
   const categories = useMemo(() => {
     return Array.from(
-      new Set(activites.map((activite) => activite.nomCategorie).filter(Boolean))
+      new Set(activites.map((activite) => displayText(activite.nomCategorie, "")).filter(Boolean))
     ).sort((a, b) => a.localeCompare(b));
   }, [activites]);
 
   const difficulties = useMemo(() => {
     return Array.from(
-      new Set(activites.map((activite) => activite.niveauxDeDifficulte).filter(Boolean))
+      new Set(activites.map((activite) => displayText(activite.niveauxDeDifficulte, "")).filter(Boolean))
     ).sort((a, b) => a.localeCompare(b));
   }, [activites]);
 
@@ -171,8 +193,8 @@ export function AdminActivitesListe({
         .join(" ");
 
       if (normalizedSearch && !searchable.includes(normalizedSearch)) return false;
-      if (categoryFilter !== "ALL" && activite.nomCategorie !== categoryFilter) return false;
-      if (difficultyFilter !== "ALL" && activite.niveauxDeDifficulte !== difficultyFilter) return false;
+      if (categoryFilter !== "ALL" && displayText(activite.nomCategorie, "") !== categoryFilter) return false;
+      if (difficultyFilter !== "ALL" && displayText(activite.niveauxDeDifficulte, "") !== difficultyFilter) return false;
       if (statusFilter === "ACTIVE" && !activite.estActif) return false;
       if (statusFilter === "INACTIVE" && activite.estActif) return false;
       if (minDuration !== null && !Number.isNaN(minDuration) && Number(activite.dureeHeures || 0) < minDuration) return false;
@@ -218,7 +240,7 @@ export function AdminActivitesListe({
         {activite.imagePrincipale ? (
           <img
             src={activite.imagePrincipale}
-            alt={activite.nom}
+            alt={displayText(activite.nom)}
             className="aspect-[16/9] w-full object-cover"
           />
         ) : (
@@ -240,19 +262,19 @@ export function AdminActivitesListe({
       <div className="p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
-          <h3 className="text-lg font-semibold">{activite.nom}</h3>
+          <h3 className="text-lg font-semibold">{displayText(activite.nom)}</h3>
           <p className="text-sm text-muted-foreground">
-            {activite.nomCategorie || "Categorie non renseignee"}
+            {displayText(activite.nomCategorie, "Categorie non renseignee")}
           </p>
         </div>
       </div>
 
       <p className="mt-3 line-clamp-3 text-sm text-muted-foreground">
-        {activite.description || "Aucune description"}
+        {displayText(activite.description, "Aucune description")}
       </p>
 
       <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
-        <span className="rounded-full bg-muted px-2.5 py-1">{activite.slug}</span>
+        {/* <span className="rounded-full bg-muted px-2.5 py-1">{displayText(activite.slug)}</span> */}
         <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1">
           <Timer className="size-3.5" />
           {activite.dureeHeures} h
@@ -270,7 +292,7 @@ export function AdminActivitesListe({
               key={`${activite.id}-${equipement}`}
               className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs text-emerald-700"
             >
-              {equipement}
+              {displayText(equipement)}
             </span>
           ))}
         </div>
@@ -305,7 +327,7 @@ export function AdminActivitesListe({
     >
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-3">
-          <h3 className="truncate font-semibold">{activite.nom}</h3>
+          <h3 className="truncate font-semibold">{displayText(activite.nom)}</h3>
           <span
             className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
               activite.estActif
@@ -317,7 +339,7 @@ export function AdminActivitesListe({
           </span>
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
-          <span>{activite.nomCategorie || "Categorie non renseignee"}</span>
+          <span>{displayText(activite.nomCategorie, "Categorie non renseignee")}</span>
           <span className="flex items-center gap-1">
             <Timer className="size-3.5" />
             {activite.dureeHeures} h
@@ -326,7 +348,7 @@ export function AdminActivitesListe({
             <Users className="size-3.5" />
             {activite.participantMin} - {activite.participantsMax}
           </span>
-          <span className="max-w-[200px] truncate">{activite.slug}</span>
+          <span className="max-w-[200px] truncate">{displayText(activite.slug)}</span>
         </div>
         {activite.equipementsFournis.length > 0 ? (
           <div className="mt-2 flex flex-wrap gap-1">
@@ -335,7 +357,7 @@ export function AdminActivitesListe({
                 key={`${activite.id}-${equipement}`}
                 className="rounded-full bg-muted px-2 py-0.5 text-xs"
               >
-                {equipement}
+                {displayText(equipement)}
               </span>
             ))}
             {activite.equipementsFournis.length > 3 ? (
@@ -558,7 +580,7 @@ export function AdminActivitesListe({
                 <option value="ALL">Toutes les categories</option>
                 {categories.map((category) => (
                   <option key={category} value={category}>
-                    {category}
+                    {displayText(category)}
                   </option>
                 ))}
               </select>
@@ -587,7 +609,7 @@ export function AdminActivitesListe({
                 <option value="ALL">Toutes les difficultes</option>
                 {difficulties.map((difficulty) => (
                   <option key={difficulty} value={difficulty}>
-                    {difficulty}
+                    {displayText(difficulty)}
                   </option>
                 ))}
               </select>

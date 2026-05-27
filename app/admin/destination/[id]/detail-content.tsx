@@ -76,6 +76,28 @@ const greenPrimaryButtonClass =
 const greenOutlineButtonClass =
   "!border-emerald-200 !bg-emerald-50 !text-emerald-700 hover:!border-emerald-300 hover:!bg-emerald-100 hover:!text-emerald-800";
 
+const legacyEncodingMap: Record<string, string> = {
+  "‚": "é",
+  "ƒ": "â",
+  "…": "à",
+  "‡": "ç",
+  "ˆ": "ê",
+  "‰": "ë",
+  "Š": "è",
+  "‹": "ï",
+  "Œ": "î",
+  "“": "ô",
+  "”": "ö",
+  "–": "û",
+  "—": "ù",
+  "×": "Î",
+};
+
+function displayText(value?: string | null, fallback = "-") {
+  if (!value) return fallback;
+  return value.replace(/[‚ƒ…‡ˆ‰Š‹Œ“”–—×]/g, (char) => legacyEncodingMap[char] ?? char);
+}
+
 function sectionButtonClass(isActive: boolean) {
   return isActive ? greenPrimaryButtonClass : greenOutlineButtonClass;
 }
@@ -461,7 +483,7 @@ export function AdminDestinationDetailContent({
                         <div className="overflow-hidden rounded-lg border border-gray-200">
                           <img
                             src={destination.urlImagePrincipale}
-                            alt={destination.nom}
+                            alt={displayText(destination.nom)}
                             className="h-64 w-full object-cover"
                           />
                         </div>
@@ -481,17 +503,17 @@ export function AdminDestinationDetailContent({
                     <div className="flex-1 space-y-4">
                       <div>
                         <h2 className="text-xl font-semibold text-gray-900">
-                          {destination.nom}
+                          {displayText(destination.nom)}
                         </h2>
                         <p className="mt-2 text-gray-600">
-                          {destination.description || "Aucune description disponible"}
+                          {displayText(destination.description, "Aucune description disponible")}
                         </p>
                       </div>
 
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
                           <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Adresse</p>
-                          <p className="mt-1 text-sm text-gray-900">{destination.adresse || "Non renseignée"}</p>
+                          <p className="mt-1 text-sm text-gray-900">{displayText(destination.adresse, "Non renseignée")}</p>
                         </div>
 
                         <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
@@ -554,9 +576,9 @@ export function AdminDestinationDetailContent({
                               {item.ordreAffichage ?? index + 1}
                             </span>
                             <div className="min-w-0 flex-1">
-                              <h3 className="text-sm font-medium text-gray-900">{item.libelle}</h3>
+                              <h3 className="text-sm font-medium text-gray-900">{displayText(item.libelle)}</h3>
                               {item.description && (
-                                <p className="mt-1 text-sm text-gray-600">{item.description}</p>
+                                <p className="mt-1 text-sm text-gray-600">{displayText(item.description)}</p>
                               )}
                             </div>
                           </div>

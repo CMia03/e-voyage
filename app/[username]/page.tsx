@@ -11,6 +11,28 @@ import { listDestinations } from "@/lib/api/destinations";
 import { destinationsData as fallbackDestinations } from "@/lib/destinations";
 import type { DestinationDetails } from "@/lib/type/destination";
 
+const legacyEncodingMap: Record<string, string> = {
+  "‚": "é",
+  "ƒ": "â",
+  "…": "à",
+  "‡": "ç",
+  "ˆ": "ê",
+  "‰": "ë",
+  "Š": "è",
+  "‹": "ï",
+  "Œ": "î",
+  "“": "ô",
+  "”": "ö",
+  "–": "û",
+  "—": "ù",
+  "×": "Î",
+};
+
+function displayText(value?: string | null, fallback = "-") {
+  if (!value) return fallback;
+  return value.replace(/[‚ƒ…‡ˆ‰Š‹Œ“”–—×]/g, (char) => legacyEncodingMap[char] ?? char);
+}
+
 export default function UserHomePage() {
   const params = useParams<{ username: string }>();
   const username = typeof params?.username === "string" ? params.username : "client";
@@ -107,7 +129,7 @@ export default function UserHomePage() {
             >
               <div className="relative h-52 w-full">
                 {destination.image?.trim() ? (
-                  <Image src={destination.image} alt={destination.title} fill className="object-cover" />
+                  <Image src={destination.image} alt={displayText(destination.title)} fill className="object-cover" />
                 ) : (
                   <div className="absolute inset-0 bg-[linear-gradient(135deg,_rgba(16,185,129,0.22),_rgba(15,23,42,0.08))]" />
                 )}
@@ -117,8 +139,8 @@ export default function UserHomePage() {
               </div>
               <div className="space-y-4 p-5">
                 <div className="space-y-2">
-                  <h3 className="text-xl font-semibold text-slate-900">{destination.title}</h3>
-                  <p className="line-clamp-3 text-sm leading-6 text-slate-600">{destination.description}</p>
+                  <h3 className="text-xl font-semibold text-slate-900">{displayText(destination.title)}</h3>
+                  <p className="line-clamp-3 text-sm leading-6 text-slate-600">{displayText(destination.description)}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Button asChild size="sm" className="rounded-full">

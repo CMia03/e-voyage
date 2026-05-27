@@ -29,6 +29,44 @@ type Props = {
   getLinkedLabel: (element: ElementJourPlanification) => string | null;
 };
 
+const legacyEncodingMap: Record<string, string> = {
+  "‚": "é",
+  "ƒ": "â",
+  "…": "à",
+  "‡": "ç",
+  "ˆ": "ê",
+  "‰": "ë",
+  "Š": "è",
+  "‹": "ï",
+  "Œ": "î",
+  "“": "ô",
+  "”": "ö",
+  "–": "û",
+  "—": "ù",
+};
+
+function displayText(value?: string | null, fallback = "-") {
+  if (!value) return fallback;
+  return value.replace(/[‚ƒ…‡ˆ‰Š‹Œ“”–—]/g, (char) => legacyEncodingMap[char] ?? char);
+}
+
+function getPlanificationDuration(planification: PlanificationVoyage) {
+  if (planification.jours.length > 0) return planification.jours.length;
+  if (!planification.dateHeureDebut || !planification.dateHeureFin) return 0;
+
+  const start = new Date(planification.dateHeureDebut);
+  const end = new Date(planification.dateHeureFin);
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 0;
+
+  const startDay = new Date(start);
+  const endDay = new Date(end);
+  startDay.setHours(0, 0, 0, 0);
+  endDay.setHours(0, 0, 0, 0);
+
+  return Math.max(1, Math.floor((endDay.getTime() - startDay.getTime()) / 86400000) + 1);
+}
+
 export function SectionPlanning({
   selectedPlanification,
   sortedDays,
@@ -85,7 +123,7 @@ export function SectionPlanning({
           <div>
             <CardTitle>Planning</CardTitle>
             <CardDescription>
-              {selectedPlanification.nomPlanification} avec {selectedPlanification.jours.length} jour(s) et{" "}
+              {displayText(selectedPlanification.nomPlanification)} avec {getPlanificationDuration(selectedPlanification)} jour(s) et{" "}
               {selectedPlanification.transports.length} transport(s).
             </CardDescription>
           </div>
@@ -121,8 +159,10 @@ export function SectionPlanning({
                           <Badge variant="secondary">Jour {jour.numeroJour ?? "-"}</Badge>
                           {jour.dateJour ? <span className="text-xs text-muted-foreground">{formatDate(jour.dateJour)}</span> : null}
                         </div>
-                        <h3 className="text-base font-semibold">{jour.titre || `Jour ${jour.numeroJour ?? ""}`}</h3>
-                        {jour.description ? <p className="text-sm text-muted-foreground line-clamp-2">{jour.description}</p> : null}
+                        <h3 className="text-base font-semibold">{displayText(jour.titre, `Jour ${jour.numeroJour ?? ""}`)}</h3>
+                        {jour.description ? (
+                          <p className="text-sm text-muted-foreground line-clamp-2">{displayText(jour.description)}</p>
+                        ) : null}
                       </div>
                       <div className="relative">
                         <Button
@@ -214,7 +254,7 @@ export function SectionPlanning({
                               <div className="flex items-start justify-between gap-2">
                                 <div className="space-y-1.5 flex-1 min-w-0">
                                   <div className="flex flex-wrap items-center gap-1.5">
-                                    <Badge variant="outline" className="text-[10px]">{element.nomTypeElementJour || "Element"}</Badge>
+                                    <Badge variant="outline" className="text-[10px]">{displayText(element.nomTypeElementJour, "Element")}</Badge>
                                     {element.estActif ? (
                                       <Badge variant="secondary" className="text-[10px]">Actif</Badge>
                                     ) : (
@@ -235,9 +275,9 @@ export function SectionPlanning({
                                     />
                                     Bloc obligatoire
                                   </label>
-                                  <h4 className="font-medium text-sm line-clamp-2">{getElementDisplayTitle(element)}</h4>
+                                  <h4 className="font-medium text-sm line-clamp-2">{displayText(getElementDisplayTitle(element))}</h4>
                                   {element.description ? (
-                                    <p className="text-xs text-muted-foreground line-clamp-2">{element.description}</p>
+                                    <p className="text-xs text-muted-foreground line-clamp-2">{displayText(element.description)}</p>
                                   ) : null}
                                   <div className="flex flex-wrap gap-1.5 text-[10px] text-muted-foreground">
                                     {element.heureDebut ? (

@@ -64,6 +64,28 @@ const greenOutlineButtonClass =
 const greenPrimaryButtonClass =
   "border-transparent bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/20 hover:from-emerald-700 hover:to-teal-700 h-10 min-w-[100px]";
 
+const legacyEncodingMap: Record<string, string> = {
+  "‚": "é",
+  "ƒ": "â",
+  "…": "à",
+  "‡": "ç",
+  "ˆ": "ê",
+  "‰": "ë",
+  "Š": "è",
+  "‹": "ï",
+  "Œ": "î",
+  "“": "ô",
+  "”": "ö",
+  "–": "û",
+  "—": "ù",
+  "×": "Î",
+};
+
+function displayText(value?: string | null, fallback = "-") {
+  if (!value) return fallback;
+  return value.replace(/[‚ƒ…‡ˆ‰Š‹Œ“”–—×]/g, (char) => legacyEncodingMap[char] ?? char);
+}
+
 export function AdminDestinationListe({
   destinations,
   isLoading,
@@ -110,7 +132,7 @@ export function AdminDestinationListe({
           <div className="w-full h-48 bg-muted/20 p-2">
             <img
               src={destination.urlImagePrincipale}
-              alt={destination.nom}
+              alt={displayText(destination.nom)}
               className="w-full h-full rounded-md object-cover"
             />
           </div>
@@ -133,22 +155,22 @@ export function AdminDestinationListe({
       <div className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">
-            <h3 className="text-lg font-semibold">{destination.nom}</h3>
+            <h3 className="text-lg font-semibold">{displayText(destination.nom)}</h3>
             <p className="text-sm text-muted-foreground">
-              {destination.adresse || "Adresse non renseignee"}
+              {displayText(destination.adresse, "Adresse non renseignée")}
             </p>
           </div>
         </div>
 
         <p className="mt-3 line-clamp-3 text-sm text-muted-foreground">
-          {destination.description || "Aucune description"}
+          {displayText(destination.description, "Aucune description")}
         </p>
 
         <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
-          <span className="rounded-full bg-muted px-2.5 py-1">{destination.slug}</span>
+          {/* <span className="rounded-full bg-muted px-2.5 py-1">{displayText(destination.slug)}</span> */}
           <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1">
             <MapPin className="size-3.5" />
-            {destination.adresse || "Sans adresse"}
+            {displayText(destination.adresse, "Sans adresse")}
           </span>
         </div>
 
@@ -181,7 +203,7 @@ export function AdminDestinationListe({
     >
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-3">
-          <h3 className="truncate font-semibold">{destination.nom}</h3>
+          <h3 className="truncate font-semibold">{displayText(destination.nom)}</h3>
           <span
             className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
               destination.estActif
@@ -193,12 +215,12 @@ export function AdminDestinationListe({
           </span>
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
-          <span>{destination.adresse || "Adresse non renseignee"}</span>
+          <span>{displayText(destination.adresse, "Adresse non renseignée")}</span>
           <span className="flex items-center gap-1">
             <MapPin className="size-3.5" />
             {destination.latitude}, {destination.longitude}
           </span>
-          <span className="max-w-[200px] truncate">{destination.slug}</span>
+          <span className="max-w-[200px] truncate">{displayText(destination.slug)}</span>
         </div>
       </div>
 
@@ -357,6 +379,7 @@ export function AdminDestinationListe({
           </CardTitle>
           <CardDescription>{getCardDescription()}</CardDescription>
         </CardHeader>
+
         <CardContent>{renderContent()}</CardContent>
       </Card>
     </div>

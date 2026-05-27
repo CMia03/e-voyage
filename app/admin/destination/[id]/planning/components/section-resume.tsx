@@ -22,6 +22,28 @@ type Props = {
   planification: PlanificationVoyage;
 };
 
+const legacyEncodingMap: Record<string, string> = {
+  "‚": "é",
+  "ƒ": "â",
+  "…": "à",
+  "‡": "ç",
+  "ˆ": "ê",
+  "‰": "ë",
+  "Š": "è",
+  "‹": "ï",
+  "Œ": "î",
+  "“": "ô",
+  "”": "ö",
+  "–": "û",
+  "—": "ù",
+  "×": "Î",
+};
+
+function displayText(value?: string | number | null, fallback = "-") {
+  if (value === null || value === undefined || value === "") return fallback;
+  return String(value).replace(/[‚ƒ…‡ˆ‰Š‹Œ“”–—×]/g, (char) => legacyEncodingMap[char] ?? char);
+}
+
 function formatDateTime(value?: string | null) {
   if (!value) return "-";
   const date = new Date(value);
@@ -55,7 +77,7 @@ function calculateDurationInDays(start?: string | null, end?: string | null) {
 
 function getDayLabel(day: PlanificationVoyage["jours"][number] | null) {
   if (!day) return "-";
-  return day.titre || `Jour ${day.numeroJour ?? "-"}`;
+  return displayText(day.titre || `Jour ${day.numeroJour ?? "-"}`);
 }
 
 export function SectionResume({ planification }: Props) {
@@ -132,11 +154,11 @@ export function SectionResume({ planification }: Props) {
                 </p> */}
 
                 <h2 className="mt-1 break-words text-2xl font-bold text-slate-950">
-                  {planification.nomPlanification || "Planification sans titre"}
+                  {displayText(planification.nomPlanification, "Planification sans titre")}
                 </h2>
                 <p className="mt-2 flex items-center gap-2 text-sm text-slate-600">
                   <MapPin className="size-4 text-emerald-600" />
-                  {planification.nomDestination || "Destination non renseignee"}
+                  {displayText(planification.nomDestination, "Destination non renseignee")}
                 </p>
               </div>
             </div>
@@ -223,8 +245,8 @@ export function SectionResume({ planification }: Props) {
               <div className="space-y-5">
                 <Milestone icon={CalendarDays} color="text-emerald-600" label="Premier jour" value={getDayLabel(premierJour)} />
                 <Milestone icon={CheckCircle2} color="text-sky-600" label="Dernier jour" value={getDayLabel(dernierJour)} />
-                <Milestone icon={MapPin} color="text-green-600" label="Depart" value={planification.depart || "-"} />
-                <Milestone icon={MapPin} color="text-red-500" label="Arrivee" value={planification.arriver || "-"} />
+                <Milestone icon={MapPin} color="text-green-600" label="Depart" value={displayText(planification.depart)} />
+                <Milestone icon={MapPin} color="text-red-500" label="Arrivee" value={displayText(planification.arriver)} />
               </div>
 
               {/* <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">

@@ -55,6 +55,28 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
+const legacyEncodingMap: Record<string, string> = {
+  "‚": "é",
+  "ƒ": "â",
+  "…": "à",
+  "‡": "ç",
+  "ˆ": "ê",
+  "‰": "ë",
+  "Š": "è",
+  "‹": "ï",
+  "Œ": "î",
+  "“": "ô",
+  "”": "ö",
+  "–": "û",
+  "—": "ù",
+  "×": "Î",
+};
+
+function displayText(value?: string | number | null, fallback = "-") {
+  if (value === null || value === undefined || value === "") return fallback;
+  return String(value).replace(/[‚ƒ…‡ˆ‰Š‹Œ“”–—×]/g, (char) => legacyEncodingMap[char] ?? char);
+}
+
 type CalendarEvent = {
   id: string;
   title: string;
@@ -364,7 +386,7 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
     () =>
       filteredPlanifications.map((planification) => ({
         id: planification.id,
-        title: `${planification.nomPlanification} - ${planification.nomDestination}`,
+        title: `${displayText(planification.nomPlanification)} - ${displayText(planification.nomDestination)}`,
         start: toDate(planification.dateHeureDebut),
         end: toDate(planification.dateHeureFin ?? planification.dateHeureDebut),
         resource: planification,
@@ -587,7 +609,7 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
       return;
     }
 
-    const confirmed = window.confirm(`Supprimer la planification "${planification.nomPlanification}" ?`);
+    const confirmed = window.confirm(`Supprimer la planification "${displayText(planification.nomPlanification)}" ?`);
     if (!confirmed) {
       return;
     }
@@ -663,7 +685,7 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
                     <SelectItem value="all">Toutes les destinations</SelectItem>
                     {destinations.map((destination) => (
                       <SelectItem key={destination.id} value={destination.id}>
-                        {destination.nom}
+                        {displayText(destination.nom)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -958,7 +980,7 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
                                 aria-hidden="true"
                               />
                               <div>
-                                <p className="font-semibold text-foreground">{planification.nomPlanification}</p>
+                                <p className="font-semibold text-foreground">{displayText(planification.nomPlanification)}</p>
                                 <p className="mt-1 text-xs text-muted-foreground">
                                   {planification.jours?.length ?? 0} jour(s), {planification.transports?.length ?? 0} transport(s)
                                 </p>
@@ -966,12 +988,12 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
                             </div>
                           </td>
                           <td className="px-4 py-4 text-muted-foreground">
-                            {planification.nomDestination || "-"}
+                            {displayText(planification.nomDestination)}
                           </td>
                           <td className="px-4 py-4">
-                            <span className="font-medium text-foreground">{planification.depart || "-"}</span>
+                            <span className="font-medium text-foreground">{displayText(planification.depart)}</span>
                             <span className="mx-2 text-muted-foreground">vers</span>
-                            <span className="font-medium text-foreground">{planification.arriver || "-"}</span>
+                            <span className="font-medium text-foreground">{displayText(planification.arriver)}</span>
                           </td>
                           <td className="px-4 py-4 text-muted-foreground">
                             {formatPlanificationDate(planification.dateHeureDebut)}
@@ -1193,7 +1215,7 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
                     <SelectContent>
                       {destinations.map((destination) => (
                         <SelectItem key={destination.id} value={destination.id}>
-                          {destination.nom}
+                          {displayText(destination.nom)}
                         </SelectItem>
                       ))}
                     </SelectContent>

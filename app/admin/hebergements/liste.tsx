@@ -74,6 +74,28 @@ function normalizeSearch(value: string | number | null | undefined) {
   return String(value ?? "").trim().toLowerCase();
 }
 
+const legacyEncodingMap: Record<string, string> = {
+  "‚": "é",
+  "ƒ": "â",
+  "…": "à",
+  "‡": "ç",
+  "ˆ": "ê",
+  "‰": "ë",
+  "Š": "è",
+  "‹": "ï",
+  "Œ": "î",
+  "“": "ô",
+  "”": "ö",
+  "–": "û",
+  "—": "ù",
+  "×": "Î",
+};
+
+function displayText(value?: string | number | null, fallback = "-") {
+  if (value === null || value === undefined || value === "") return fallback;
+  return String(value).replace(/[‚ƒ…‡ˆ‰Š‹Œ“”–—×]/g, (char) => legacyEncodingMap[char] ?? char);
+}
+
 function getDistanceKm(
   from: { latitude: number; longitude: number },
   to: { latitude: number; longitude: number }
@@ -195,7 +217,7 @@ export function AdminHebergementsListe({
           tarif.estActif ? "tarif actif" : "tarif inactif",
         ]),
       ]
-        .map(normalizeSearch)
+        .map((value) => normalizeSearch(displayText(value, "")))
         .join(" ");
 
       if (normalizedSearch && !searchable.includes(normalizedSearch)) return false;
@@ -259,7 +281,7 @@ export function AdminHebergementsListe({
           <div className="w-full h-48 bg-muted/20 p-2">
             <img
               src={hebergement.urlImagePrincipale}
-              alt={hebergement.nom}
+              alt={displayText(hebergement.nom)}
               className="w-full h-full rounded-md object-cover"
             />
           </div>
@@ -278,32 +300,32 @@ export function AdminHebergementsListe({
           {hebergement.estActif ? "Actif" : "Inactif"}
         </span>
       </div>
-
+                             
       <div className="p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
-          <h3 className="text-lg font-semibold">{hebergement.nom}</h3>
+          <h3 className="text-lg font-semibold">{displayText(hebergement.nom)}</h3>
           <p className="text-sm text-muted-foreground">
-            {hebergement.nomTypeHebergement || "Type non renseigne"}
+            {displayText(hebergement.nomTypeHebergement, "Type non renseigné")}
           </p>
         </div>
       </div>
 
       <p className="mt-3 line-clamp-3 text-sm text-muted-foreground">
-        {hebergement.description || "Aucune description"}
+        {displayText(hebergement.description, "Aucune description")}
       </p>
 
       <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
         <span className="rounded-full bg-muted px-2.5 py-1">
-          {hebergement.slug}
+          {displayText(hebergement.adresse, "Adresse non renseignée")}
         </span>
-        <span className="rounded-full bg-muted px-2.5 py-1">
+        {/* <span className="rounded-full bg-muted px-2.5 py-1">
           {hebergement.latitude}, {hebergement.longitude}
-        </span>
-        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1">
+        </span> */}
+        {/* <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1">
           <Star className="size-3.5 fill-current" />
           {hebergement.nombreEtoiles}
-        </span>
+        </span> */}
       </div>
 
       {hebergement.equipements.length > 0 ? (
@@ -313,7 +335,7 @@ export function AdminHebergementsListe({
               key={`${hebergement.id}-${equipement}`}
               className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs text-emerald-700"
             >
-              {equipement}
+              {displayText(equipement)}
             </span>
           ))}
         </div>
@@ -351,7 +373,7 @@ export function AdminHebergementsListe({
     >
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-3">
-          <h3 className="font-semibold truncate">{hebergement.nom}</h3>
+          <h3 className="font-semibold truncate">{displayText(hebergement.nom)}</h3>
           <span
             className={`rounded-full px-2 py-0.5 text-xs font-medium shrink-0 ${
               hebergement.estActif
@@ -363,12 +385,12 @@ export function AdminHebergementsListe({
           </span>
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
-          <span>{hebergement.nomTypeHebergement || "Type non renseigne"}</span>
+          <span>{displayText(hebergement.nomTypeHebergement, "Type non renseigné")}</span>
           <span className="flex items-center gap-1">
             <Star className="size-3.5" />
             {hebergement.nombreEtoiles}
           </span>
-          <span className="truncate max-w-[200px]">{hebergement.slug}</span>
+          <span className="truncate max-w-[200px]">{displayText(hebergement.slug)}</span>
         </div>
         {hebergement.equipements.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1">
@@ -377,7 +399,7 @@ export function AdminHebergementsListe({
                 key={`${hebergement.id}-${equipement}`}
                 className="rounded-full bg-muted px-2 py-0.5 text-xs"
               >
-                {equipement}
+                {displayText(equipement)}
               </span>
             ))}
             {hebergement.equipements.length > 3 && (
@@ -804,4 +826,3 @@ export function AdminHebergementsListe({
     </div>
   );
 }
-

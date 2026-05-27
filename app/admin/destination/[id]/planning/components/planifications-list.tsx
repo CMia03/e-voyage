@@ -39,6 +39,44 @@ function getDateValue(value?: string | null) {
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 
+const legacyEncodingMap: Record<string, string> = {
+  "‚": "é",
+  "ƒ": "â",
+  "…": "à",
+  "‡": "ç",
+  "ˆ": "ê",
+  "‰": "ë",
+  "Š": "è",
+  "‹": "ï",
+  "Œ": "î",
+  "“": "ô",
+  "”": "ö",
+  "–": "û",
+  "—": "ù",
+};
+
+function displayText(value?: string | null, fallback = "-") {
+  if (!value) return fallback;
+  return value.replace(/[‚ƒ…‡ˆ‰Š‹Œ“”–—]/g, (char) => legacyEncodingMap[char] ?? char);
+}
+
+function getPlanificationDuration(planification: PlanificationVoyage) {
+  if (planification.jours.length > 0) return planification.jours.length;
+  if (!planification.dateHeureDebut || !planification.dateHeureFin) return 0;
+
+  const start = new Date(planification.dateHeureDebut);
+  const end = new Date(planification.dateHeureFin);
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 0;
+
+  const startDay = new Date(start);
+  const endDay = new Date(end);
+  startDay.setHours(0, 0, 0, 0);
+  endDay.setHours(0, 0, 0, 0);
+
+  return Math.max(1, Math.floor((endDay.getTime() - startDay.getTime()) / 86400000) + 1);
+}
+
 export function PlanificationsList({
   isLoading,
   isRefreshingPlanifications,
@@ -70,9 +108,9 @@ onAddPlanification,
         if (!normalizedSearch) return true;
 
         const searchableText = [
-          planification.nomPlanification,
-          planification.depart,
-          planification.arriver,
+          displayText(planification.nomPlanification),
+          displayText(planification.depart),
+          displayText(planification.arriver),
         ]
           .filter(Boolean)
           .join(" ")
@@ -156,7 +194,7 @@ onAddPlanification,
                   setSearchTerm(event.target.value);
                   setPage(1);
                 }}
-                placeholder="Rechercher par nom, depart ou arrivee..."
+                placeholder="Rechercher par nom, départ ou arrivée..."
                 className="pl-9"
               />
             </div>
@@ -208,10 +246,10 @@ onAddPlanification,
                     >
                       <td className="px-4 py-4 align-top">
                         <div className="space-y-2">
-                          <p className="font-semibold leading-6 text-slate-900">{planification.nomPlanification}</p>
+                          <p className="font-semibold leading-6 text-slate-900">{displayText(planification.nomPlanification)}</p>
                           {isSelected ? (
                             <Badge className="rounded-full border-0 bg-emerald-500 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
-                              Selectionnee
+                              Sélectionnée
                             </Badge>
                           ) : null}
                         </div>
@@ -219,11 +257,11 @@ onAddPlanification,
                       <td className="px-4 py-4 align-top text-slate-700">
                         <div className="flex items-start gap-2">
                           <MapPinned className="mt-0.5 size-4 text-emerald-600" />
-                          <span className="break-words">{planification.depart || "Non renseigne"}</span>
+                          <span className="break-words">{displayText(planification.depart, "Non renseigné")}</span>
                         </div>
                       </td>
                       <td className="px-4 py-4 align-top text-slate-700">
-                        <span className="break-words">{planification.arriver || "Non renseignee"}</span>
+                        <span className="break-words">{displayText(planification.arriver, "Non renseignée")}</span>
                       </td>
                       <td className="px-4 py-4 align-top text-slate-700">
                         <div className="flex items-center gap-2">
@@ -238,7 +276,7 @@ onAddPlanification,
                         </div>
                       </td>
                       <td className="px-4 py-4 align-top font-medium text-slate-800">
-                        {planification.jours.length}
+                        {getPlanificationDuration(planification)}
                       </td>
                       <td className="px-4 py-4 align-top">
                         <div className="flex items-center justify-center gap-3">
@@ -252,7 +290,7 @@ onAddPlanification,
                               onToggleActive(planification, event.target.checked);
                             }}
                             className="size-4 cursor-pointer rounded border-slate-300 accent-emerald-600 disabled:cursor-not-allowed"
-                            aria-label={`Activer ${planification.nomPlanification}`}
+                            aria-label={`Activer ${displayText(planification.nomPlanification)}`}
                           />
                           <Button
                             type="button"

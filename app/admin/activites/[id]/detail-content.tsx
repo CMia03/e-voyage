@@ -965,7 +965,6 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
         </DialogContent>
       </Dialog>
 
-      <AdminFooter />
     </div>
   );
 }

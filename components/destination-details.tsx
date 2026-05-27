@@ -58,6 +58,28 @@ function toCoordinate(value?: number | string | null) {
   return Number.isFinite(coordinate) ? coordinate : null;
 }
 
+const legacyEncodingMap: Record<string, string> = {
+  "‚": "é",
+  "ƒ": "â",
+  "…": "à",
+  "‡": "ç",
+  "ˆ": "ê",
+  "‰": "ë",
+  "Š": "è",
+  "‹": "ï",
+  "Œ": "î",
+  "“": "ô",
+  "”": "ö",
+  "–": "û",
+  "—": "ù",
+  "×": "Î",
+};
+
+function displayText(value?: string | null, fallback = "-") {
+  if (!value) return fallback;
+  return value.replace(/[‚ƒ…‡ˆ‰Š‹Œ“”–—×]/g, (char) => legacyEncodingMap[char] ?? char);
+}
+
 function isTodayOrFuture(dateValue?: string | null) {
   if (!dateValue) return false;
 
@@ -196,9 +218,9 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
 
     const params = new URLSearchParams();
     params.set("destinationId", destination.id);
-    params.set("destinationTitle", destination.title);
+    params.set("destinationTitle", displayText(destination.title));
     params.set("planificationId", selectedPlanification.id);
-    params.set("planificationTitle", selectedPlanification.nomPlanification);
+    params.set("planificationTitle", displayText(selectedPlanification.nomPlanification));
 
     if (selectedBudget?.idCategorieClient) {
       params.set("categorieId", selectedBudget.idCategorieClient);
@@ -233,7 +255,7 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
           {destination.image?.trim() ? (
             <Image
               src={destination.image}
-              alt={destination.title}
+              alt={displayText(destination.title)}
               fill
               className="object-cover"
               priority
@@ -244,9 +266,9 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
           <div className="absolute inset-0 bg-black/40"></div>
           <div className="absolute bottom-4 sm:bottom-8 left-4 sm:left-8 right-4 sm:right-8">
             <h1 className="mb-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white">
-              {destination.title}
+              {displayText(destination.title)}
             </h1>
-            <p className="text-sm sm:text-base md:text-xl text-white/90">{destination.description}</p>
+            <p className="text-sm sm:text-base md:text-xl text-white/90">{displayText(destination.description)}</p>
           </div>
           
           {/* Bouton Voir carte */}
@@ -336,7 +358,7 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
                       {isSelected ? <span className="absolute inset-y-4 left-0 w-1 rounded-r-full bg-emerald-600" /> : null}
                       <span className="flex items-start justify-between gap-4">
                         <span className="min-w-0">
-                          <span className="block text-base font-semibold text-slate-950">{planification.nomPlanification}</span>
+                          <span className="block text-base font-semibold text-slate-950">{displayText(planification.nomPlanification)}</span>
                           <span className="mt-2 block text-sm font-medium text-emerald-700">
                             {formatDateRange(planification.dateHeureDebut, planification.dateHeureFin)}
                           </span>
@@ -383,7 +405,7 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
             {selectedPlanification ? (
               <div className="space-y-5">
                 <div>
-                  <h3 className="text-lg font-semibold text-slate-950">{selectedPlanification.nomPlanification}</h3>
+                  <h3 className="text-lg font-semibold text-slate-950">{displayText(selectedPlanification.nomPlanification)}</h3>
                   <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-slate-500">
                     <span>{formatDateRange(selectedPlanification.dateHeureDebut, selectedPlanification.dateHeureFin)}</span>
                     {selectedPlanification.dureeJours ? (
@@ -396,11 +418,11 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
                   <p className="mt-3 text-sm text-slate-600">
                     <span className="font-medium text-slate-900">Départ</span>
                     <span>/</span>
-                    <span className="font-semibold text-emerald-700">{selectedPlanification.depart || "-"}</span>
+                    <span className="font-semibold text-emerald-700">{displayText(selectedPlanification.depart)}</span>
                     <span className="mx-2 text-slate-300">•</span>
                     <span className="font-medium text-slate-900">Arrivée</span>
                     <span>/</span>
-                    <span className="font-semibold text-emerald-700">{selectedPlanification.arriver || "-"}</span>
+                    <span className="font-semibold text-emerald-700">{displayText(selectedPlanification.arriver)}</span>
                   </p>
                 </div>
 
@@ -605,7 +627,7 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
                 >
                   <Image
                     src={img}
-                    alt={`${destination.title} - Image ${index + 1}`}
+                    alt={`${displayText(destination.title)} - Image ${index + 1}`}
                     fill
                     className="object-cover transition-transform duration-300 group-hover:scale-110"
                   />
@@ -623,13 +645,13 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
         currentIndex={selectedImageIndex}
         isOpen={lightboxOpen}
         onClose={() => setLightboxOpen(false)}
-        title={destination.title}
+        title={displayText(destination.title)}
       />
 
           {/* Barre latérale droite */}
           <DestinationSidebar
             destinationId={destination.id}
-            destinationName={destination.title}
+            destinationName={displayText(destination.title)}
             averageRating={destination.rating || 0}
           />
         </div>
@@ -639,8 +661,8 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
       <ModalMap
         isOpen={mapModalOpen}
         onClose={() => setMapModalOpen(false)}
-        destinationName={destination.title}
-        location={destination.departure?.location}
+        destinationName={displayText(destination.title)}
+        location={displayText(destination.departure?.location, "")}
         coordinates={destinationCoordinates}
       />
     </div>

@@ -90,6 +90,27 @@ const greenPrimaryButtonClass =
   "!border-transparent !bg-gradient-to-r !from-emerald-600 !to-teal-600 !text-white !shadow-lg !shadow-emerald-500/20 hover:!from-emerald-700 hover:!to-teal-700";
 const greenOutlineButtonClass =
   "!border-emerald-200 !bg-emerald-50 !text-emerald-700 hover:!border-emerald-300 hover:!bg-emerald-100 hover:!text-emerald-800";
+const legacyEncodingMap: Record<string, string> = {
+  "‚": "é",
+  "ƒ": "â",
+  "…": "à",
+  "‡": "ç",
+  "ˆ": "ê",
+  "‰": "ë",
+  "Š": "è",
+  "‹": "ï",
+  "Œ": "î",
+  "“": "ô",
+  "”": "ö",
+  "–": "û",
+  "—": "ù",
+  "×": "Î",
+};
+
+function displayText(value?: string | number | null, fallback = "-") {
+  if (value === null || value === undefined || value === "") return fallback;
+  return String(value).replace(/[‚ƒ…‡ˆ‰Š‹Œ“”–—×]/g, (char) => legacyEncodingMap[char] ?? char);
+}
 
 type PlanificationFormState = {
   nomPlanification: string;
@@ -384,11 +405,11 @@ function mapElementToForm(element: ElementJourPlanification): ElementFormState {
 }
 
 function getElementDisplayTitle(element: ElementJourPlanification) {
-  return element.titre || element.nomTransport || element.nomActivite || element.nomHebergement || element.nomTypeElementJour || "Element";
+  return displayText(element.titre || element.nomTransport || element.nomActivite || element.nomHebergement || element.nomTypeElementJour || "Element");
 }
 
 function getLinkedLabel(element: ElementJourPlanification) {
-  return element.nomTransport || element.nomActivite || element.nomHebergement || null;
+  return displayText(element.nomTransport || element.nomActivite || element.nomHebergement || null, "");
 }
 
 export function AdminDestinationPlanningContentNext({ destinationId, embedded = false }: Props) {
@@ -1832,7 +1853,7 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
                       <SelectContent>
                         {typeTransports.map((type) => (
                           <SelectItem key={type.id} value={type.id}>
-                            {type.nom}
+                            {displayText(type.nom)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -2060,7 +2081,7 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
                     onValueChange={(value) => updateElementForm("idTypeElementJour", value)}
                   >
                     <SelectTrigger className="w-full"><SelectValue placeholder="Choisir un type de bloc" /></SelectTrigger>
-                    <SelectContent>{visibleTypeElementJours.map((type) => <SelectItem key={type.id} value={type.id}>{type.nom}</SelectItem>)}</SelectContent>
+                    <SelectContent>{visibleTypeElementJours.map((type) => <SelectItem key={type.id} value={type.id}>{displayText(type.nom)}</SelectItem>)}</SelectContent>
                   </Select>
                   <Button
                     type="button"
@@ -2174,7 +2195,7 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
                     <SelectItem value="none">Aucun transport</SelectItem>
                     {selectedPlanification?.transports.map((transport) => (
                       <SelectItem key={transport.id} value={transport.id}>
-                        {transport.depart} {"->"} {transport.arrivee} ({transport.nomTypeTransport}) - Budget: {transport.budgetPrevu ?? "-"} MGA
+                        {displayText(transport.depart)} {"->"} {displayText(transport.arrivee)} ({displayText(transport.nomTypeTransport)}) - Budget: {transport.budgetPrevu ?? "-"} MGA
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -2192,9 +2213,9 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
                       return (
                         <div key={transport.id} className={`rounded-lg border p-3 ${selected ? "border-emerald-300 bg-emerald-50/60" : "border-border/50"}`}>
                           <button type="button" className="w-full text-left" onClick={() => updateElementForm("idTransport", transport.id)}>
-                            <p className="text-sm font-medium">{transport.depart} {"->"} {transport.arrivee}</p>
+                            <p className="text-sm font-medium">{displayText(transport.depart)} {"->"} {displayText(transport.arrivee)}</p>
                             <p className="mt-1 text-xs text-muted-foreground">
-                              {transport.nomTypeTransport}  -  Distance: {transport.distanceKm ?? "-"} km  -  Budget: {transport.budgetPrevu ?? "-"} MGA
+                              {displayText(transport.nomTypeTransport)}  -  Distance: {transport.distanceKm ?? "-"} km  -  Budget: {transport.budgetPrevu ?? "-"} MGA
                             </p>
                           </button>
                           <div className="mt-2 flex flex-wrap gap-2">
@@ -2227,7 +2248,7 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
                   <SelectTrigger className="w-full"><SelectValue placeholder="Choisir une activite" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Aucune activite</SelectItem>
-                    {linkedActivites.map((activite) => <SelectItem key={activite.id} value={activite.id}>{activite.nom}</SelectItem>)}
+                    {linkedActivites.map((activite) => <SelectItem key={activite.id} value={activite.id}>{displayText(activite.nom)}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -2240,7 +2261,7 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
                   <SelectTrigger className="w-full"><SelectValue placeholder="Choisir un hebergement" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Aucun hebergement</SelectItem>
-                    {linkedHebergements.map((hebergement) => <SelectItem key={hebergement.id} value={hebergement.id}>{hebergement.nom}</SelectItem>)}
+                    {linkedHebergements.map((hebergement) => <SelectItem key={hebergement.id} value={hebergement.id}>{displayText(hebergement.nom)}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -2264,16 +2285,16 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
             <div className="space-y-3 text-sm">
               <p><span className="font-medium">Jour:</span> {detailTarget.jour.numeroJour ?? "-"}</p>
               <p><span className="font-medium">Date:</span> {formatDate(detailTarget.jour.dateJour)}</p>
-              <p><span className="font-medium">Titre:</span> {detailTarget.jour.titre || "-"}</p>
-              <p><span className="font-medium">Description:</span> {detailTarget.jour.description || "-"}</p>
+              <p><span className="font-medium">Titre:</span> {displayText(detailTarget.jour.titre)}</p>
+              <p><span className="font-medium">Description:</span> {displayText(detailTarget.jour.description)}</p>
               <p><span className="font-medium">Nombre de blocs:</span> {(detailTarget.jour.elements ?? []).length}</p>
             </div>
           ) : detailTarget?.kind === "element" ? (
             <div className="space-y-3 text-sm">
               <p><span className="font-medium">Jour:</span> {detailTarget.jour.numeroJour ?? "-"}</p>
-              <p><span className="font-medium">Type:</span> {detailTarget.element.nomTypeElementJour || "-"}</p>
+              <p><span className="font-medium">Type:</span> {displayText(detailTarget.element.nomTypeElementJour)}</p>
               <p><span className="font-medium">Titre:</span> {getElementDisplayTitle(detailTarget.element)}</p>
-              <p><span className="font-medium">Description:</span> {detailTarget.element.description || "-"}</p>
+              <p><span className="font-medium">Description:</span> {displayText(detailTarget.element.description)}</p>
               <p><span className="font-medium">Heure début:</span> {formatDateTime(detailTarget.element.heureDebut)}</p>
               <p><span className="font-medium">Heure fin:</span> {formatDateTime(detailTarget.element.heureFin)}</p>
               <p><span className="font-medium">Budget:</span> {detailTarget.element.budgetPrevu ?? "-"} {detailTarget.element.devise || "MGA"}</p>
@@ -2298,7 +2319,7 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
                   {linkedDetailTarget.image ? (
                     <Image
                       src={linkedDetailTarget.image}
-                      alt={linkedDetailTarget.title}
+                      alt={displayText(linkedDetailTarget.title)}
                       width={320}
                       height={160}
                       className="h-40 w-full object-cover"
@@ -2310,30 +2331,30 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
                   )}
                 </div>
                 <div className="space-y-2 text-sm">
-                  <p className="text-base font-semibold">{linkedDetailTarget.title}</p>
+                  <p className="text-base font-semibold">{displayText(linkedDetailTarget.title)}</p>
                   {"place" in linkedDetailTarget ? (
                     <p>
-                      <span className="font-medium">Place/Adresse:</span> {linkedDetailTarget.place || "-"}
+                      <span className="font-medium">Place/Adresse:</span> {displayText(linkedDetailTarget.place)}
                     </p>
                   ) : null}
                   {"region" in linkedDetailTarget ? (
                     <p>
-                      <span className="font-medium">Region:</span> {linkedDetailTarget.region || "-"}
+                      <span className="font-medium">Region:</span> {displayText(linkedDetailTarget.region)}
                     </p>
                   ) : null}
                   {"typeTransport" in linkedDetailTarget ? (
                     <>
-                      <p><span className="font-medium">Type:</span> {linkedDetailTarget.typeTransport || "-"}</p>
-                      <p><span className="font-medium">Depart:</span> {linkedDetailTarget.depart}</p>
-                      <p><span className="font-medium">Arrivee:</span> {linkedDetailTarget.arrivee}</p>
-                      <p><span className="font-medium">Duree:</span> {linkedDetailTarget.duree || "-"}</p>
+                      <p><span className="font-medium">Type:</span> {displayText(linkedDetailTarget.typeTransport)}</p>
+                      <p><span className="font-medium">Départ:</span> {displayText(linkedDetailTarget.depart)}</p>
+                      <p><span className="font-medium">Arrivée:</span> {displayText(linkedDetailTarget.arrivee)}</p>
+                      <p><span className="font-medium">Durée:</span> {displayText(linkedDetailTarget.duree)}</p>
                       <p><span className="font-medium">Distance:</span> {linkedDetailTarget.distanceKm ?? "-"} km</p>
                       <p><span className="font-medium">Budget transport:</span> {linkedDetailTarget.budgetPrevu ?? "-"} MGA</p>
                     </>
                   ) : null}
                   <p>
                     <span className="font-medium">Description:</span>{" "}
-                    {linkedDetailTarget.description || "Aucune description disponible."}
+                    {displayText(linkedDetailTarget.description, "Aucune description disponible.")}
                   </p>
                 </div>
               </div>

@@ -50,6 +50,47 @@ type Props = {
 type ActiveSection = "hebergements" | "activites" | "prestations" | "carte";
 type MapCategoryFilter = "all" | "hebergement" | "activite";
 
+const legacyEncodingMap: Record<string, string> = {
+  "‚": "é",
+  "ƒ": "â",
+  "…": "à",
+  "‡": "ç",
+  "ˆ": "ê",
+  "‰": "ë",
+  "Š": "è",
+  "‹": "ï",
+  "Œ": "î",
+  "“": "ô",
+  "”": "ö",
+  "–": "û",
+  "—": "ù",
+  "×": "Î",
+};
+
+const mojibakeTextMap: Record<string, string> = {
+  "Ã©": "é",
+  "Ã¨": "è",
+  "Ãª": "ê",
+  "Ã ": "à",
+  "Ã¹": "ù",
+  "Ã§": "ç",
+  "Ã®": "î",
+  "Ã´": "ô",
+  "Ã»": "û",
+  "Å“": "œ",
+};
+
+function displayText(value?: string | number | null, fallback = "-") {
+  if (value === null || value === undefined || value === "") {
+    return fallback;
+  }
+
+  return Object.entries(mojibakeTextMap).reduce(
+    (text, [broken, fixed]) => text.replaceAll(broken, fixed),
+    String(value).replace(/[‚ƒ…‡ˆ‰Š‹Œ“”–—×]/g, (char) => legacyEncodingMap[char] ?? char)
+  );
+}
+
 const DestinationAssociationsMap = dynamic(
   () =>
     import("@/components/destination-associations-map").then(
@@ -206,7 +247,7 @@ export function AdminDestinationAssociationsContent({
         const response = await linkDestinationHebergement(destinationId, item.id, accessToken);
         setData(response.data ?? null);
         setFocusedItemId(item.id);
-        setSuccessMessage("Hebergement associe a la destination avec succes.");
+        setSuccessMessage("Hébergement associé à la destination avec succès.");
       } else {
         await unlinkDestinationHebergement(destinationId, item.id, accessToken);
         setData((current) =>
@@ -222,10 +263,10 @@ export function AdminDestinationAssociationsContent({
             : current
         );
         setFocusedItemId(item.id);
-        setSuccessMessage("Hebergement retire de la destination avec succes.");
+        setSuccessMessage("Hébergement retiré de la destination avec succès.");
       }
     } catch (toggleError) {
-      setError(getErrorMessage(toggleError, "Impossible de mettre a jour l'hebergement"));
+      setError(getErrorMessage(toggleError, "Impossible de mettre à jour l'hébergement"));
     } finally {
       setPendingKey(null);
     }
@@ -245,7 +286,7 @@ export function AdminDestinationAssociationsContent({
         const response = await linkDestinationActivite(destinationId, item.id, accessToken);
         setData(response.data ?? null);
         setFocusedItemId(item.id);
-        setSuccessMessage("Activite associee a la destination avec succes.");
+        setSuccessMessage("Activité associée à la destination avec succès.");
       } else {
         await unlinkDestinationActivite(destinationId, item.id, accessToken);
         setData((current) =>
@@ -261,10 +302,10 @@ export function AdminDestinationAssociationsContent({
             : current
         );
         setFocusedItemId(item.id);
-        setSuccessMessage("Activite retiree de la destination avec succes.");
+        setSuccessMessage("Activité retirée de la destination avec succès.");
       }
     } catch (toggleError) {
-      setError(getErrorMessage(toggleError, "Impossible de mettre a jour l'activite"));
+      setError(getErrorMessage(toggleError, "Impossible de mettre à jour l'activité"));
     } finally {
       setPendingKey(null);
     }
@@ -300,7 +341,7 @@ export function AdminDestinationAssociationsContent({
           accessToken
         );
         setData(response.data ?? null);
-        setSuccessMessage("Prestation ajoutee a la destination avec succes.");
+        setSuccessMessage("Prestation ajoutée à la destination avec succès.");
       } else {
         await unlinkDestinationPrestation(destinationId, item.id, accessToken);
         setData((current) =>
@@ -315,10 +356,10 @@ export function AdminDestinationAssociationsContent({
               }
             : current
         );
-        setSuccessMessage("Prestation retiree de la destination avec succes.");
+        setSuccessMessage("Prestation retirée de la destination avec succès.");
       }
     } catch (toggleError) {
-      setError(getErrorMessage(toggleError, "Impossible de mettre a jour la prestation"));
+      setError(getErrorMessage(toggleError, "Impossible de mettre à jour la prestation"));
     } finally {
       setPendingKey(null);
     }
@@ -339,9 +380,9 @@ export function AdminDestinationAssociationsContent({
     try {
       const response = await linkDestinationPrestation(destinationId, item.id, statut, accessToken);
       setData(response.data ?? null);
-      setSuccessMessage("Statut de la prestation mis a jour avec succes.");
+      setSuccessMessage("Statut de la prestation mis à jour avec succès.");
     } catch (updateError) {
-      setError(getErrorMessage(updateError, "Impossible de mettre a jour le statut de la prestation"));
+      setError(getErrorMessage(updateError, "Impossible de mettre à jour le statut de la prestation"));
     } finally {
       setPendingKey(null);
     }
@@ -369,7 +410,7 @@ export function AdminDestinationAssociationsContent({
 
       const response = await getDestinationAssociations(destinationId, accessToken);
       setData(response.data ?? null);
-      setSuccessMessage("Nouvelle prestation ajoutee avec succes.");
+      setSuccessMessage("Nouvelle prestation ajoutée avec succès.");
       setIsCreatePrestationDialogOpen(false);
       resetPrestationForm();
     } catch (createError) {
@@ -409,7 +450,7 @@ export function AdminDestinationAssociationsContent({
       >
         <div className="h-20 w-24 shrink-0 overflow-hidden rounded-xl border border-border/40 bg-muted/20">
           {item.image ? (
-            <img src={item.image} alt={item.nom} className="h-full w-full object-cover" />
+            <img src={item.image} alt={displayText(item.nom)} className="h-full w-full object-cover" />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
               Aucune image
@@ -420,15 +461,15 @@ export function AdminDestinationAssociationsContent({
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
-              <h3 className="truncate text-base font-semibold">{item.nom}</h3>
+              <h3 className="truncate text-base font-semibold">{displayText(item.nom)}</h3>
               <div className="mt-1 flex flex-wrap gap-2 text-xs text-muted-foreground">
                 <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1">
                   <MapPin className="size-3.5" />
-                  {item.place || "Place non renseignee"}
+                  {displayText(item.place, "Place non renseignée")}
                 </span>
                 <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1">
                   <Tag className="size-3.5" />
-                  {item.region || "Region non renseignee"}
+                  {displayText(item.region, "Région non renseignée")}
                 </span>
               </div>
             </div>
@@ -444,10 +485,10 @@ export function AdminDestinationAssociationsContent({
                       ? void handleToggleHebergement(item, checked === true)
                       : void handleToggleActivite(item, checked === true)
                   }
-                  aria-label={`Associer ${item.nom}`}
+                  aria-label={`Associer ${displayText(item.nom)}`}
                 />
                 <span className="text-sm font-medium">
-                  {item.estSelectionne ? "Actif pour la destination" : "Non associe"}
+                  {item.estSelectionne ? "Actif pour la destination" : "Non associé"}
                 </span>
               </div>
             </div>
@@ -479,7 +520,7 @@ export function AdminDestinationAssociationsContent({
         <div className="flex min-w-0 flex-col items-start gap-3">
           <div className="h-12 w-14 shrink-0 overflow-hidden rounded-xl border border-border/40 bg-muted/20 shadow-sm">
             {item.image ? (
-              <img src={item.image} alt={item.nom} className="h-full w-full object-cover" />
+              <img src={item.image} alt={displayText(item.nom)} className="h-full w-full object-cover" />
             ) : (
               <div className="flex h-full w-full items-center justify-center px-1 text-center text-[9px] leading-tight text-muted-foreground">
                 Aucune image
@@ -487,21 +528,21 @@ export function AdminDestinationAssociationsContent({
             )}
           </div>
           <div className="min-w-0 max-w-full">
-            <p className="truncate text-base font-medium text-foreground">{item.nom}</p>
+            <p className="truncate text-base font-medium text-foreground">{displayText(item.nom)}</p>
           </div>
         </div>
 
         <div className="flex items-center text-sm text-muted-foreground">
-          <span className="truncate">{item.place || "Place non renseignée"}</span>
+          <span className="truncate">{displayText(item.place, "Place non renseignée")}</span>
         </div>
 
         <div className="flex items-center text-sm text-muted-foreground">
-          <span className="truncate">{item.region || "Région non renseignée"}</span>
+          <span className="truncate">{displayText(item.region, "Région non renseignée")}</span>
         </div>
 
         <div className="flex items-center text-sm text-muted-foreground">
           <span className="truncate">
-            {item.meta || (type === "hebergement" ? "Non classé" : "Durée non renseignée")}
+            {displayText(item.meta, type === "hebergement" ? "Non classé" : "Durée non renseignée")}
           </span>
         </div>
 
@@ -516,7 +557,7 @@ export function AdminDestinationAssociationsContent({
                   ? void handleToggleHebergement(item, checked === true)
                   : void handleToggleActivite(item, checked === true)
               }
-              aria-label={`Associer ${item.nom}`}
+              aria-label={`Associer ${displayText(item.nom)}`}
               className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
             />
             <span className="whitespace-nowrap text-sm font-medium">
@@ -541,12 +582,12 @@ export function AdminDestinationAssociationsContent({
         className="grid gap-3 px-4 py-4 transition-all duration-200 md:grid-cols-[1.2fr_1.4fr_180px_220px_120px] hover:bg-muted/30 border-l-4 border-l-transparent hover:border-l-border/40"
       >
         <div className="min-w-0">
-          <p className="font-medium text-foreground">{item.libelle}</p>
+          <p className="font-medium text-foreground">{displayText(item.libelle)}</p>
         </div>
 
         <div className="min-w-0">
           <p className="text-sm text-muted-foreground">
-            {item.description || "Aucune description"}
+            {displayText(item.description, "Aucune description")}
           </p>
         </div>
 
@@ -557,7 +598,7 @@ export function AdminDestinationAssociationsContent({
               checked={item.estSelectionne}
               disabled={pending}
               onCheckedChange={(checked) => void handleTogglePrestation(item, checked === true)}
-              aria-label={`Associer ${item.libelle}`}
+              aria-label={`Associer ${displayText(item.libelle)}`}
               className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
             />
             <span className="text-sm font-medium">
@@ -625,11 +666,11 @@ export function AdminDestinationAssociationsContent({
               ) : null}
 
               <div>
-                <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
-                <p className="text-sm text-muted-foreground mt-2">{description}</p>
+                <h1 className="text-3xl font-semibold tracking-tight">{displayText(title)}</h1>
+                <p className="text-sm text-muted-foreground mt-2">{displayText(description)}</p>
                 {data?.nomDestination && (
                   <p className="text-xs text-muted-foreground mt-1">
-                    Destination: <span className="font-medium">{data.nomDestination}</span>
+                    Destination: <span className="font-medium">{displayText(data.nomDestination)}</span>
                   </p>
                 )}
               </div>
@@ -822,7 +863,7 @@ export function AdminDestinationAssociationsContent({
                     <CardDescription className="text-sm mt-1">
                       {isLoading
                         ? "Chargement..."
-                        : `${totalHebergementsSelectionnes} hébergement(s) actif(s) pour ${data?.nomDestination ?? "cette destination"}`}
+                        : `${totalHebergementsSelectionnes} hébergement(s) actif(s) pour ${displayText(data?.nomDestination, "cette destination")}`}
                     </CardDescription>
                   </div>
                   {totalHebergementsSelectionnes > 0 && (
@@ -874,7 +915,7 @@ export function AdminDestinationAssociationsContent({
                     <CardDescription className="text-sm mt-1">
                       {isLoading
                         ? "Chargement..."
-                        : `${totalActivitesSelectionnees} activité(s) active(s) pour ${data?.nomDestination ?? "cette destination"}`}
+                        : `${totalActivitesSelectionnees} activité(s) active(s) pour ${displayText(data?.nomDestination, "cette destination")}`}
                     </CardDescription>
                   </div>
                   {totalActivitesSelectionnees > 0 && (
@@ -924,7 +965,7 @@ export function AdminDestinationAssociationsContent({
                     <CardDescription className="text-sm">
                       {isLoading
                         ? "Chargement..."
-                        : `${totalPrestationsSelectionnees} prestation(s) active(s) pour ${data?.nomDestination ?? "cette destination"}`}
+                        : `${totalPrestationsSelectionnees} prestation(s) active(s) pour ${displayText(data?.nomDestination, "cette destination")}`}
                     </CardDescription>
                   </div>
 
