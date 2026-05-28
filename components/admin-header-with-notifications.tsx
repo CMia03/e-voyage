@@ -360,7 +360,7 @@ export function AdminHeaderWithNotifications() {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Home className="h-4 w-4" />
-                Dashboard
+                Tableau de bord
               </Link>
 
               <button
@@ -391,7 +391,7 @@ export function AdminHeaderWithNotifications() {
                     className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Ajouter destination
+                    Ajouter une destination
                   </Link>
                 </div>
               )}
@@ -403,7 +403,7 @@ export function AdminHeaderWithNotifications() {
               >
                 <div className="flex items-center gap-3">
                   <Building className="h-4 w-4" />
-                  Hebergements
+                  Hébergements
                 </div>
                 <ChevronDown
                   className={`h-4 w-4 transition-transform ${expandedSections.includes("hebergements") ? "rotate-180" : ""}`}
@@ -424,7 +424,7 @@ export function AdminHeaderWithNotifications() {
                     className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Ajouter hébergement
+                    Ajouter un hébergement
                   </Link>
                 </div>
               )}
@@ -436,7 +436,7 @@ export function AdminHeaderWithNotifications() {
               >
                 <div className="flex items-center gap-3">
                   <Play className="h-4 w-4" />
-                  Activites
+                  Activités
                 </div>
                 <ChevronDown
                   className={`h-4 w-4 transition-transform ${expandedSections.includes("activites") ? "rotate-180" : ""}`}
@@ -457,7 +457,7 @@ export function AdminHeaderWithNotifications() {
                     className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Ajouter activité
+                    Ajouter une activité
                   </Link>
                 </div>
               )}
@@ -471,7 +471,7 @@ export function AdminHeaderWithNotifications() {
               >
                 <div className="flex items-center gap-3">
                   <ClipboardList className="h-4 w-4" />
-                  Reservations
+                  Réservations
                 </div>
                 <ChevronDown
                   className={`h-4 w-4 transition-transform ${expandedSections.includes("reservations") ? "rotate-180" : ""}`}
@@ -485,14 +485,14 @@ export function AdminHeaderWithNotifications() {
                     className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Liste réservations
+                    Liste des réservations
                   </Link>
                   <Link
                     href="/admin?section=reservations-ajout"
                     className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Ajout réservation
+                    Ajouter une réservation
                   </Link>
                 </div>
               )}
@@ -564,7 +564,7 @@ export function AdminHeaderWithNotifications() {
               >
                 <div className="flex items-center gap-3">
                   <Settings className="h-4 w-4" />
-                  Parametrage
+                  Paramétrage
                 </div>
                 <ChevronDown
                   className={`h-4 w-4 transition-transform ${expandedSections.includes("parametrage") ? "rotate-180" : ""}`}

@@ -363,7 +363,7 @@ export function AdminHeader() {
                 }`}
               >
                 <Home className="mr-3 h-4 w-4" />
-                Dashboard
+                Tableau de bord
               </button>
 
               <div className="space-y-1">
@@ -413,7 +413,7 @@ export function AdminHeader() {
                       }`}
                     >
                       <span className="mr-2"></span>
-                      Ajouter destination
+                      Ajouter une destination
                     </button>
                   </div>
                 )}
@@ -466,7 +466,7 @@ export function AdminHeader() {
                       }`}
                     >
                       <span className="mr-2"></span>
-                      Ajouter hébergement
+                      Ajouter un hébergement
                     </button>
                   </div>
                 )}
@@ -519,7 +519,7 @@ export function AdminHeader() {
                       }`}
                     >
                       <span className="mr-2"></span>
-                      Ajouter activité
+                      Ajouter une activité
                     </button>
                   </div>
                 )}

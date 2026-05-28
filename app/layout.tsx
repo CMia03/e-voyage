@@ -14,16 +14,38 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://cool-voyage.example.com'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://cool-voyage.example.com"),
   title: "Cool Voyage - Agence de voyage à Madagascar",
-  description: "Découvrez Madagascar avec Cool Voyage. Voyages organisés à prix abordables vers Ambila Lemaintso, Manambato, Sainte-Marie et le Grand Sud.",
-  keywords: ["Madagascar", "voyage", "Cool Voyage", "Ambila Lemaintso", "Manambato", "Sainte-Marie", "Grand Sud", "agence de voyage"],
+  description:
+    "Découvrez Madagascar avec Cool Voyage. Voyages organisés à prix abordables vers Ambila Lemaintso, Manambato, Sainte-Marie et le Grand Sud.",
+  keywords: [
+    "Madagascar",
+    "voyage",
+    "Cool Voyage",
+    "Ambila Lemaintso",
+    "Manambato",
+    "Sainte-Marie",
+    "Grand Sud",
+    "agence de voyage",
+  ],
   authors: [{ name: "Cool Voyage" }],
+  icons: {
+    icon: [{ url: "/logo_cool_voyage.png", type: "image/png" }],
+    apple: [{ url: "/logo_cool_voyage.png", type: "image/png" }],
+  },
   openGraph: {
     title: "Cool Voyage - Agence de voyage à Madagascar",
     description: "Découvrez Madagascar avec Cool Voyage. Voyages organisés à prix abordables.",
     type: "website",
     locale: "fr_FR",
+    images: [
+      {
+        url: "/logo_cool_voyage.png",
+        width: 512,
+        height: 512,
+        alt: "Cool Voyage",
+      },
+    ],
   },
 };
 
@@ -34,12 +56,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr" data-scroll-behavior="smooth">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

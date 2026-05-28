@@ -1,11 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { AdminFooter } from "@/app/admin/components/footer";
-import { AdminHeader } from "@/app/admin/components/header";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -333,9 +330,8 @@ export function AdminHebergementDetailContent({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-muted/30 to-background text-foreground">
-      <AdminHeader />
-      <main className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6 sm:py-8">
+    <div className="text-foreground">
+      <main className="w-full">
         <div className="space-y-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-3">
@@ -743,7 +739,6 @@ export function AdminHebergementDetailContent({
           </Card>
         </div>
       </main>
-      <AdminFooter />
     </div>
   );
 }

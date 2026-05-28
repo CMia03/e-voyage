@@ -102,7 +102,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
       <nav className="space-y-1">
         <button type="button" onClick={() => onSelect("dashboard")} className={itemClassName(active === "dashboard")}>
           <Home className="mr-3 h-4 w-4" />
-          Dashboard
+          Tableau de bord
         </button>
 
         <div className="space-y-1">
@@ -138,7 +138,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
           <button type="button" onClick={() => toggleSection("hebergements")} className={groupButtonClassName}>
             <div className="flex items-center">
               <Building className="mr-3 h-4 w-4" />
-              Hebergements
+              Hébergements
             </div>
             <ChevronDown
               className={`h-4 w-4 transform transition-all duration-300 ease-in-out ${
@@ -150,14 +150,14 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
           {expandedSections.includes("hebergements") ? (
             <div className="ml-4 space-y-1 border-l-2 border-emerald-200 pl-4 dark:border-emerald-800">
               <button type="button" onClick={() => onSelect("hebergements")} className={itemClassName(active === "hebergements")}>
-                Liste des hebergements
+                Liste des hébergements
               </button>
               <button
                 type="button"
                 onClick={() => onSelect("hebergements-create")}
                 className={itemClassName(active === "hebergements-create")}
               >
-                Ajouter hebergement
+                Ajouter un hébergement
               </button>
             </div>
           ) : null}
@@ -167,7 +167,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
           <button type="button" onClick={() => toggleSection("activites")} className={groupButtonClassName}>
             <div className="flex items-center">
               <Play className="mr-3 h-4 w-4" />
-              Activites
+              Activités
             </div>
             <ChevronDown
               className={`h-4 w-4 transform transition-all duration-300 ease-in-out ${
@@ -179,14 +179,14 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
           {expandedSections.includes("activites") ? (
             <div className="ml-4 space-y-1 border-l-2 border-emerald-200 pl-4 dark:border-emerald-800">
               <button type="button" onClick={() => onSelect("activites")} className={itemClassName(active === "activites")}>
-                Liste des activites
+                Liste des activités
               </button>
               <button
                 type="button"
                 onClick={() => onSelect("activites-create")}
                 className={itemClassName(active === "activites-create")}
               >
-                Ajouter activite
+                Ajouter une activité
               </button>
             </div>
           ) : null}
@@ -202,7 +202,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
           <button type="button" onClick={() => toggleSection("reservations")} className={groupButtonClassName}>
             <div className="flex items-center">
               <ClipboardList className="mr-3 h-4 w-4" />
-              Reservations
+              Réservations
             </div>
             <ChevronDown
               className={`h-4 w-4 transform transition-all duration-300 ease-in-out ${
@@ -218,14 +218,14 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
                 onClick={() => onSelect("reservations-liste")}
                 className={itemClassName(active === "reservations-liste")}
               >
-                Liste reservations
+                Liste des réservations
               </button>
               <button
                 type="button"
                 onClick={() => onSelect("reservations-ajout")}
                 className={itemClassName(active === "reservations-ajout")}
               >
-                Ajout reservation
+                Ajouter une réservation
               </button>
             </div>
           ) : null}
@@ -275,7 +275,7 @@ export function AdminSidebar({ active, onSelect }: AdminSidebarProps) {
           <button type="button" onClick={() => toggleSection("parametrage")} className={groupButtonClassName}>
             <div className="flex items-center">
               <Settings className="mr-3 h-4 w-4" />
-              Parametrage
+              Paramétrage
             </div>
             <ChevronDown
               className={`h-4 w-4 transform transition-all duration-300 ease-in-out ${
