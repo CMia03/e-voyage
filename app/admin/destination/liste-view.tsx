@@ -156,9 +156,9 @@ export function AdminDestinationListe({
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">
             <h3 className="text-lg font-semibold">{displayText(destination.nom)}</h3>
-            <p className="text-sm text-muted-foreground">
+            {/* <p className="text-sm text-muted-foreground">
               {displayText(destination.adresse, "Adresse non renseignée")}
-            </p>
+            </p> */}
           </div>
         </div>
 

@@ -149,9 +149,9 @@ export function AdminHeader() {
         <div className="flex items-center gap-4">
           <AdminSearchBar />
         
-          <Button asChild variant="outline" size="sm">
+          {/* <Button asChild variant="outline" size="sm">
             <Link href="/">Voir site</Link>
-          </Button>
+          </Button> */}
 
           {/* Menu profil utilisateur */}
           {auth && (

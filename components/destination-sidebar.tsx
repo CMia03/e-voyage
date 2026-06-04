@@ -202,7 +202,7 @@ export function DestinationSidebar({ destinationId, destinationName, averageRati
               </p>
             ) : (
               <p className="mt-2 text-center text-xs text-muted-foreground">
-                Votre note est affichee directement dans la moyenne.
+                {/* Votre note est affichee directement dans la moyenne. */}
               </p>
             )}
           </div>
@@ -230,7 +230,7 @@ export function DestinationSidebar({ destinationId, destinationName, averageRati
               <Button
                 onClick={handleSubmitComment}
                 disabled={!newComment.trim() || isSubmittingComment}
-                className="w-full"
+                className="w-full border-transparent bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/20 hover:from-emerald-700 hover:to-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
                 size="sm"
               >
                 {isSubmittingComment ? "Envoi..." : "Publier"}

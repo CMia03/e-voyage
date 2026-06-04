@@ -66,7 +66,7 @@ export function DestinationForm({
     <form className="space-y-8" onSubmit={onSubmit}>
       <section className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2 md:col-span-2">
-          <label className="text-sm font-medium">Nom *</label>
+          <label className="text-sm font-medium">Nom</label>
           <Input
             value={form.nom}
             onChange={(event) => {
@@ -82,7 +82,7 @@ export function DestinationForm({
         </div>
 
         <div className="space-y-2 md:col-span-2">
-          <label className="text-sm font-medium">Description *</label>
+          <label className="text-sm font-medium">Description</label>
           <textarea
             value={form.description}
             onChange={(event) => onUpdate("description", event.target.value)}
@@ -93,11 +93,11 @@ export function DestinationForm({
         </div>
 
         <div className="space-y-2 md:col-span-2">
-          <label className="text-sm font-medium">Adresse *</label>
+          <label className="text-sm font-medium">Adresse</label>
           <Input
             value={form.adresse}
             onChange={(event) => onUpdate("adresse", event.target.value)}
-            placeholder="Adresse ou point de depart"
+            placeholder="Adresse de la destination"
           />
         </div>
 
@@ -110,7 +110,7 @@ export function DestinationForm({
                   type="button"
                   variant="secondary"
                   onClick={() => document.getElementById("destination-image-file-input")?.click()}
-                  className="flex-1"
+                  className="flex-1 border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800"
                 >
                   Choisir un fichier
                 </Button>
@@ -129,9 +129,6 @@ export function DestinationForm({
                 onChange={(event) => onUpdate("urlImagePrincipale", event.target.value)}
                 placeholder="https://... (optionnel si fichier choisi)"
               />
-              <p className="text-xs text-muted-foreground">
-                Choisis un fichier pour l&apos;upload Cloudinary, ou colle une URL existante.
-              </p>
             </div>
             <div className="overflow-hidden rounded-xl border border-border/50 bg-muted/20">
               {imagePreview ? (
@@ -156,7 +153,7 @@ export function DestinationForm({
             id="destination-est-actif"
           />
           <label htmlFor="destination-est-actif" className="text-sm font-medium">
-            Destination active
+            Est active
           </label>
         </div>
       </section>
@@ -165,7 +162,7 @@ export function DestinationForm({
         <div className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Latitude *</label>
+              <label className="text-sm font-medium">Latitude</label>
               <Input
                 type="number"
                 step="any"
@@ -175,7 +172,7 @@ export function DestinationForm({
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Longitude *</label>
+              <label className="text-sm font-medium">Longitude</label>
               <Input
                 type="number"
                 step="any"
@@ -205,19 +202,28 @@ export function DestinationForm({
             <p>
               <span className="font-medium text-foreground">Adresse :</span> {form.adresse || "-"}
             </p>
-            <p>
+            {/* <p>
               <span className="font-medium text-foreground">Image :</span>{" "}
               {imagePreview ? "Apercu disponible" : "-"}
-            </p>
+            </p> */}
           </div>
         </div>
       </section>
 
       <div className="flex justify-end gap-3">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          className="border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800"
+        >
           Annuler
         </Button>
-        <Button type="submit" disabled={isSaving}>
+        <Button
+          type="submit"
+          disabled={isSaving}
+          className="border-transparent bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/20 hover:from-emerald-700 hover:to-teal-700"
+        >
           {isSaving ? "Enregistrement..." : submitLabel}
         </Button>
       </div>

@@ -62,7 +62,7 @@ export function ReservationEditModal({ reservation, open, onClose, onSave, initi
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-xl">
+      <DialogContent showCloseButton={false} className="max-w-xl">
         <DialogHeader>
           <div className="flex items-center justify-between gap-3">
             <div>

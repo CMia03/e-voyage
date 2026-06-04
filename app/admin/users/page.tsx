@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { SessionGuard } from "@/components/session-guard";
 import { loadAuth, AuthSession } from "@/lib/auth";
-import { getUsers, getUserById, updateUser } from "@/lib/api/users";
+import { deleteUser, getUsers, getUserById, updateUser } from "@/lib/api/users";
 import { getErrorMessage } from "@/lib/api/client";
 import { 
   Users, 
@@ -17,7 +17,8 @@ import {
   Edit, 
   Save, 
   X, 
-  UserPlus
+  UserPlus,
+  Trash2
 } from "lucide-react";
 import { UserProfile } from "@/lib/type/data";
 import { Label } from "@/components/ui/label";
@@ -31,6 +32,7 @@ export function AdminUsers() {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -177,6 +179,32 @@ export function AdminUsers() {
     setIsEditing(false);
     setError("");
     setSuccess("");
+  };
+
+  const handleDelete = async () => {
+    if (!auth?.accessToken || !selectedUser) return;
+
+    const userName = `${selectedUser.prenom} ${selectedUser.nom}`.trim() || selectedUser.email;
+    if (!window.confirm(`Voulez-vous vraiment supprimer l'utilisateur ${userName} ?`)) {
+      return;
+    }
+
+    setIsDeleting(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      await deleteUser(auth.accessToken, selectedUser.id);
+      setUsers((current) => current.filter((user) => user.id !== selectedUser.id));
+      setSelectedUser(null);
+      setIsEditing(false);
+      setSuccess("Utilisateur supprimé avec succès");
+    } catch (error) {
+      const message = getErrorMessage(error, "Erreur lors de la suppression de l'utilisateur");
+      setError(message);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -339,15 +367,29 @@ export function AdminUsers() {
                         Détails de l utilisateur
                       </CardTitle>
                       {!isEditing ? (
-                        <Button
-                          onClick={() => setIsEditing(true)}
-                          variant="outline"
-                          size="sm"
-                          className="gap-2"
-                        >
-                          <Edit className="h-4 w-4" />
-                          Modifier
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            onClick={() => setIsEditing(true)}
+                            variant="outline"
+                            size="sm"
+                            className="gap-2"
+                          >
+                            <Edit className="h-4 w-4" />
+                            Modifier
+                          </Button>
+                          {selectedUser.role !== "ADMIN" ? (
+                            <Button
+                              onClick={() => void handleDelete()}
+                              disabled={isDeleting}
+                              variant="outline"
+                              size="sm"
+                              className="gap-2 border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              {isDeleting ? "Suppression..." : "Supprimer"}
+                            </Button>
+                          ) : null}
+                        </div>
                       ) : (
                         <div className="flex gap-2">
                           <Button

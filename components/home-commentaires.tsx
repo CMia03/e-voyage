@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
   BadgeCheck,
@@ -35,6 +35,13 @@ export function HomeCommentaires() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const commentSlides = useMemo(() => {
+    const slides: CommentaireWithDestination[][] = [];
+    for (let index = 0; index < commentaires.length; index += COMMENTS_PER_SLIDE) {
+      slides.push(commentaires.slice(index, index + COMMENTS_PER_SLIDE));
+    }
+    return slides;
+  }, [commentaires]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -91,10 +98,10 @@ export function HomeCommentaires() {
   }, []);
 
   useEffect(() => {
-    if (commentaires.length <= 1 || isPaused) return;
+    if (commentSlides.length <= 1 || isPaused) return;
 
     intervalRef.current = setInterval(() => {
-      setCurrentIndex((prevIndex) => (prevIndex + 1) % commentaires.length);
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % commentSlides.length);
     }, 4500);
 
     return () => {
@@ -102,14 +109,20 @@ export function HomeCommentaires() {
         clearInterval(intervalRef.current);
       }
     };
-  }, [commentaires.length, isPaused]);
+  }, [commentSlides.length, isPaused]);
+
+  useEffect(() => {
+    if (currentIndex >= commentSlides.length) {
+      setCurrentIndex(0);
+    }
+  }, [commentSlides.length, currentIndex]);
 
   const goToPrevious = () => {
-    setCurrentIndex((prevIndex) => (prevIndex === 0 ? commentaires.length - 1 : prevIndex - 1));
+    setCurrentIndex((prevIndex) => (prevIndex === 0 ? commentSlides.length - 1 : prevIndex - 1));
   };
 
   const goToNext = () => {
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % commentaires.length);
+    setCurrentIndex((prevIndex) => (prevIndex + 1) % commentSlides.length);
   };
 
   const goToSlide = (index: number) => {
@@ -168,7 +181,7 @@ export function HomeCommentaires() {
         {renderHeader()}
 
         <div className="relative mx-auto max-w-7xl">
-          {commentaires.length > COMMENTS_PER_SLIDE ? (
+          {commentSlides.length > 1 ? (
             <>
               <button
                 type="button"
@@ -198,14 +211,8 @@ export function HomeCommentaires() {
               className="flex transition-transform duration-500 ease-in-out"
               style={{ transform: `translateX(-${currentIndex * 100}%)` }}
             >
-              {commentaires.length > 0 ? (
-                Array.from({ length: commentaires.length }).map((_, slideIndex) => {
-                  const slideCommentaires = [];
-                  for (let i = 0; i < COMMENTS_PER_SLIDE; i++) {
-                    const commentIndex = (slideIndex + i) % commentaires.length;
-                    slideCommentaires.push(commentaires[commentIndex]);
-                  }
-
+              {commentSlides.length > 0 ? (
+                commentSlides.map((slideCommentaires, slideIndex) => {
                   return (
                     <div key={slideIndex} className="w-full flex-shrink-0">
                       <div className="grid grid-cols-1 gap-7 lg:grid-cols-3">
@@ -310,9 +317,9 @@ export function HomeCommentaires() {
             </div>
           </div>
 
-          {commentaires.length > 1 ? (
+          {commentSlides.length > 1 ? (
             <div className="mt-7 flex justify-center gap-3">
-              {Array.from({ length: commentaires.length }).map((_, index) => (
+              {commentSlides.map((_, index) => (
                 <button
                   key={index}
                   type="button"

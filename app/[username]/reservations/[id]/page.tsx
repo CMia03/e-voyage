@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +13,6 @@ import {
   ArrowLeft,
   BadgeCheck,
   CalendarDays,
-  Clock,
   CreditCard,
   Download,
   FileText,
@@ -21,6 +21,7 @@ import {
   Monitor,
   PieChart,
   TrendingUp,
+  Trash2,
   UserRound,
   UserRoundCog,
   Users,
@@ -31,7 +32,11 @@ import { deleteMyReservation, downloadReservationPdf, getReservationById } from 
 import { simulerPlanification } from "@/lib/api/simulationService";
 import { Reservation, ReservationStatus, VoyageurProfile, ElementSelection } from "@/lib/type/reservation";
 import { JourSimulation } from "@/lib/type/simulation.types";
-import { PlanningJournalier } from "@/app/[username]/simulation/components/PlanningJournalier";
+
+const PlanningJournalier = dynamic(
+  () => import("@/app/[username]/simulation/components/PlanningJournalier").then((mod) => mod.PlanningJournalier),
+  { ssr: false }
+);
 
 const statusStyles: Record<ReservationStatus, string> = {
   EN_ATTENTE: "bg-amber-100 text-amber-800 hover:bg-amber-100",
@@ -56,6 +61,29 @@ function formatDate(value: string | null | undefined) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleString("fr-FR");
+}
+
+function formatReservationText(value?: string | number | null) {
+  return String(value ?? "")
+    .replace(/‚/g, "é")
+    .replace(/…/g, "à")
+    .replace(/–/g, "û")
+    .replace(/“/g, "ô")
+    .replace(/Š/g, "è")
+    .replace(/Œ/g, "î")
+    .replace(/×/g, "Î")
+    .replace(/Ã©/g, "é")
+    .replace(/Ã¨/g, "è")
+    .replace(/Ãª/g, "ê")
+    .replace(/Ã«/g, "ë")
+    .replace(/Ã‰/g, "É")
+    .replace(/Ã /g, "à")
+    .replace(/Ã¢/g, "â")
+    .replace(/Ã®/g, "î")
+    .replace(/Ã´/g, "ô")
+    .replace(/Ã»/g, "û")
+    .replace(/Ã¹/g, "ù")
+    .replace(/Ã§/g, "ç");
 }
 
 function extractBudgetClientFromSummary(summary: string | null | undefined): number {
@@ -203,8 +231,8 @@ function parseSummaryLines(summary: string | null | undefined) {
       }
 
       return {
-        label: item.slice(0, separatorIndex).trim(),
-        value: item.slice(separatorIndex + 1).trim(),
+        label: formatReservationText(item.slice(0, separatorIndex).trim()),
+        value: formatReservationText(item.slice(separatorIndex + 1).trim()),
       };
     });
 }
@@ -404,11 +432,11 @@ export default function ReservationDetailPage() {
     params.set("editReservationId", reservation.id);
     params.set("source", reservation.source);
     params.set("destinationId", detail.destinationId);
-    params.set("destinationTitle", detail.nomDestination);
+    params.set("destinationTitle", formatReservationText(detail.nomDestination));
     params.set("planificationId", detail.planificationVoyageId);
-    params.set("planificationTitle", detail.nomPlanification);
+    params.set("planificationTitle", formatReservationText(detail.nomPlanification));
     params.set("categorieId", detail.categorieClientId);
-    params.set("categorieTitle", detail.nomCategorieClient);
+    params.set("categorieTitle", formatReservationText(detail.nomCategorieClient));
     params.set("gamme", detail.gamme);
     params.set("nombrePersonnes", String(totalVoyageurs(reservation)));
     params.set("voyageurProfiles", JSON.stringify(voyageurProfiles));
@@ -474,11 +502,11 @@ export default function ReservationDetailPage() {
     const params = new URLSearchParams();
     params.set("editReservationId", reservation.id);
     params.set("destinationId", detail.destinationId);
-    params.set("destinationTitle", detail.nomDestination);
+    params.set("destinationTitle", formatReservationText(detail.nomDestination));
     params.set("planificationId", detail.planificationVoyageId);
-    params.set("planificationTitle", detail.nomPlanification);
+    params.set("planificationTitle", formatReservationText(detail.nomPlanification));
     params.set("categorieId", detail.categorieClientId);
-    params.set("categorieTitle", detail.nomCategorieClient);
+    params.set("categorieTitle", formatReservationText(detail.nomCategorieClient));
     params.set("gamme", detail.gamme);
     params.set("nombrePersonnes", String(totalVoyageurs(reservation)));
     params.set("voyageurProfiles", JSON.stringify(voyageurProfiles));
@@ -501,62 +529,69 @@ export default function ReservationDetailPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-        <div className="flex items-start gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-900">
-            <FileText className="h-7 w-7" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
-              Detail de reservation
-            </h1>
-            <p className="mt-1 text-sm text-slate-600">
-              Consultez le statut de votre demande et tous les details du voyage reserve.
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          {reservation ? (
-            <Button
-              type="button"
-              variant="outline"
-              className="h-11 gap-2 rounded-lg border-slate-200 px-5 font-semibold"
-              onClick={() => void handleExportPdf()}
-            >
-              <Download className="h-4 w-4" />
-              Exporter PDF
-            </Button>
-          ) : null}
-          {reservation?.status === "EN_ATTENTE" ? (
-            <Button
-              type="button"
-              variant="destructive"
-              className="h-11 rounded-lg"
-              onClick={() => void handleDeleteReservation()}
-            >
-              Supprimer la reservation
-            </Button>
-          ) : null}
-          {reservation?.status === "EN_ATTENTE" && simulationEditHref ? (
-            <Button asChild variant="outline" className="h-11 rounded-lg">
-              <Link href={simulationEditHref}>Modifier via simulation</Link>
-            </Button>
-          ) : null}
-          {reservation?.status === "EN_ATTENTE" && editHref ? (
-            <Button asChild className="h-11 rounded-lg">
-              <Link href={editHref}>Modifier la reservation</Link>
-            </Button>
-          ) : null}
+      <div className="flex flex-col gap-5 border-b border-slate-200 pb-6 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex min-w-0 items-start gap-4">
           <Button
             asChild
             variant="outline"
-            className="h-11 gap-2 rounded-lg border-emerald-200 px-5 font-semibold text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
+            aria-label="Retour à mes réservations"
+            className="mt-2 h-10 w-10 shrink-0 rounded-full border-slate-200 p-0 text-slate-700 shadow-sm hover:bg-slate-50"
           >
             <Link href={`/${username}/reservations`}>
               <ArrowLeft className="h-4 w-4" />
-              Retour a mes reservations
             </Link>
           </Button>
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-900 shadow-sm">
+            <FileText className="h-7 w-7" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="truncate text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
+              Détail de réservation
+            </h1>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">
+              Consultez le statut de votre demande et tous les détails du voyage réservé.
+            </p>
+          </div>
+        </div>
+        <div className="flex w-full flex-col gap-3 lg:w-auto lg:shrink-0 lg:items-end">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:flex-nowrap lg:w-auto lg:justify-end">
+            {reservation ? (
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 w-full justify-center gap-2 rounded-lg border-slate-200 px-5 font-semibold shadow-sm sm:w-[160px]"
+                onClick={() => void handleExportPdf()}
+              >
+                <Download className="h-4 w-4" />
+                Exporter PDF
+              </Button>
+            ) : null}
+            {reservation?.status === "EN_ATTENTE" && reservation.source === "SIMULATION" && simulationEditHref ? (
+              <Button
+                asChild
+                variant="outline"
+                className="h-11 w-full justify-center rounded-lg border-slate-200 px-5 font-semibold shadow-sm sm:w-[205px]"
+              >
+                <Link href={simulationEditHref}>Modifier via simulation</Link>
+              </Button>
+            ) : null}
+            {reservation?.status === "EN_ATTENTE" && reservation.source === "PRIX_DIRECT" && editHref ? (
+              <Button asChild className="h-11 w-full justify-center rounded-lg px-5 font-semibold shadow-sm sm:w-[205px]">
+                <Link href={editHref}>Modifier la réservation</Link>
+              </Button>
+            ) : null}
+            {reservation?.status === "EN_ATTENTE" ? (
+              <Button
+                type="button"
+                variant="destructive"
+                aria-label="Supprimer la réservation"
+                className="h-11 w-11 shrink-0 justify-center rounded-lg p-0 shadow-sm"
+                onClick={() => void handleDeleteReservation()}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            ) : null}
+          </div>
         </div>
       </div>
 
@@ -597,17 +632,17 @@ export default function ReservationDetailPage() {
                         {reservation.reference}
                       </h2>
                       <p className="mt-1 text-sm text-slate-600">
-                        Reservation creee le {formatDate(reservation.dateReservation)}
+                        Reservation créée le {formatDate(reservation.dateReservation)}
                       </p>
                     </div>
                   </div>
-                  <Badge className={`${statusStyles[reservation.status]} w-fit gap-2 rounded-lg px-4 py-2 text-sm font-semibold uppercase`}>
+                  {/* <Badge className={`${statusStyles[reservation.status]} w-fit gap-2 rounded-lg px-4 py-2 text-sm font-semibold uppercase`}>
                     <BadgeCheck className="h-4 w-4" />
                     {formatStatus(reservation.status)}
-                  </Badge>
+                  </Badge> */}
                 </div>
 
-                <div className="mt-7 grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
+                <div className="mt-7 grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
                   <DetailInfoTile
                     icon={Monitor}
                     label="Source"
@@ -619,11 +654,11 @@ export default function ReservationDetailPage() {
                     value={formatCurrency(reservation.montantTotal, reservation.devise)}
                     accent
                   />
-                  <DetailInfoTile
+                  {/* <DetailInfoTile
                     icon={Clock}
                     label="Derniere mise a jour"
                     value={formatDate(reservation.dateModification)}
-                  />
+                  /> */}
                   <DetailInfoTile
                     icon={UserRound}
                     label="Client"
@@ -634,59 +669,97 @@ export default function ReservationDetailPage() {
               </CardContent>
             </Card>
 
-            <Card className="rounded-2xl border-slate-200 bg-white shadow-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-3 text-xl text-slate-950">
-                  <Users className="h-5 w-5 text-indigo-700" />
-                  Profils voyageurs reserves
-                </CardTitle>
-                <CardDescription>
-                  {detail?.nomDestination ?? "-"} - {detail?.nomPlanification ?? "-"}
-                </CardDescription>
+            <Card className="overflow-hidden rounded-2xl border-slate-200 bg-white shadow-sm">
+              <CardHeader className="border-b border-slate-100 bg-white pb-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-3 text-xl text-slate-950">
+                      <Users className="h-5 w-5 text-emerald-700" />
+                      Profils voyageurs réservés
+                    </CardTitle>
+                    <CardDescription className="mt-1">
+                      {formatReservationText(detail?.nomDestination ?? "-")} - {formatReservationText(detail?.nomPlanification ?? "-")}
+                    </CardDescription>
+                  </div>
+                  <Badge variant="outline" className="w-fit border-emerald-200 bg-emerald-50 text-emerald-700">
+                    {totalVoyageurs(reservation)} voyageur{totalVoyageurs(reservation) > 1 ? "s" : ""}
+                  </Badge>
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid gap-3">
+                <div className="overflow-hidden rounded-2xl border border-slate-200">
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[760px] text-sm">
+                      <thead className="bg-slate-50 text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                        <tr>
+                          <th className="px-4 py-3">Cat&eacute;gorie</th>
+                          <th className="px-4 py-3">Gamme</th>
+                          <th className="px-4 py-3 text-center">Personnes</th>
+                          <th className="px-4 py-3 text-right">Total profil</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200 bg-white">
+                        {mergedDetails.map((detail) => (
+                          <tr key={detail.id} className="text-slate-700">
+                            <td className="px-4 py-4 font-medium text-slate-900">
+                              {formatReservationText(detail.nomCategorieClient)}
+                            </td>
+                            <td className="px-4 py-4 font-medium text-slate-900">
+                              {detail.gamme}
+                            </td>
+                            <td className="px-4 py-4 text-center font-medium text-slate-900">
+                              {detail.nombrePersonnes} voyageur{detail.nombrePersonnes > 1 ? "s" : ""}
+                            </td>
+                            <td className="px-4 py-4 text-right font-bold text-emerald-800">
+                              {formatCurrency(detail.prixTotal, reservation.devise)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot className="border-t border-emerald-200 bg-emerald-50/80">
+                        <tr>
+                          <td colSpan={3} className="px-4 py-4 text-right text-sm font-semibold text-emerald-900">
+                            Total
+                          </td>
+                          <td className="px-4 py-4 text-right text-base font-bold text-emerald-900">
+                            {formatCurrency(reservation.montantTotal, reservation.devise)}
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+                <div className="hidden">
                   {mergedDetails.map((detail, index) => (
-                    <div key={detail.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                      <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                        <p className="flex items-center gap-2 text-base font-semibold text-slate-900">
-                          <UserRoundCog className="h-4 w-4 text-emerald-700" />
-                          Profil {index + 1}
-                        </p>
-                        <p className="text-xs text-slate-500">
-                          Cree le {formatDate(detail.dateCreation)}
-                        </p>
-                      </div>
-
-                      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-[minmax(220px,1fr)_180px_180px_170px_170px] 2xl:items-end">
-                        <div className="min-w-0 space-y-2 md:col-span-2 xl:col-span-2 2xl:col-span-1">
-                          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Categorie client</p>
-                          <div className="rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-sm font-medium text-slate-900">
-                            {detail.nomCategorieClient}
+                    <div key={detail.id || index} className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/40 p-4 shadow-sm">
+                      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                        <div className="min-w-0 rounded-xl border border-slate-200 bg-white px-4 py-3">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Catégorie</p>
+                          <div className="mt-2 truncate text-sm font-semibold text-slate-950">
+                            {formatReservationText(detail.nomCategorieClient)}
                           </div>
                         </div>
-                        <div className="space-y-2">
-                          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Gamme</p>
-                          <div className="rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-sm font-medium text-slate-900">
+                        <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Gamme</p>
+                          <div className="mt-2 text-sm font-semibold text-slate-950">
                             {detail.gamme}
                           </div>
                         </div>
-                        <div className="min-w-0 space-y-2">
-                          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Nombre de personnes</p>
-                          <div className="rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-sm font-medium text-slate-900">
-                            {detail.nombrePersonnes}
+                        <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Personnes</p>
+                          <div className="mt-2 text-sm font-semibold text-slate-950">
+                            {detail.nombrePersonnes} voyageur{detail.nombrePersonnes > 1 ? "s" : ""}
                           </div>
                         </div>
-                        <div className="min-w-0 space-y-2">
-                          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">Prix unitaire</p>
-                          <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 px-4 py-3 text-sm font-semibold text-slate-900">
+                        <div className="rounded-xl border border-emerald-100 bg-emerald-50/70 px-4 py-3">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700">Total profil</p>
+                          <div className="mt-2 text-sm font-bold text-emerald-900">
                             {formatCurrency(detail.prixUnitaire, reservation.devise)}
-                          </div>
-                        </div>
-                        <div className="min-w-0 space-y-2">
-                          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">Prix total</p>
-                          <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 px-4 py-3 text-sm font-semibold text-slate-900">
-                            {formatCurrency(detail.prixTotal, reservation.devise)}
+                            {detail.nombrePersonnes > 1 ? (
+                              <span className="mt-1 block text-xs font-medium text-emerald-700">
+                                Total : {formatCurrency(detail.prixTotal, reservation.devise)}
+                              </span>
+                            ) : null}
                           </div>
                         </div>
                       </div>
@@ -694,7 +767,7 @@ export default function ReservationDetailPage() {
                   ))}
                 </div>
 
-                <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-4">
+                <div className="hidden rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 px-5 py-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">
                     Grand total
                   </p>
@@ -742,9 +815,9 @@ export default function ReservationDetailPage() {
                                 {elements.length} prestation{elements.length > 1 ? "s" : ""}
                               </p>
                             </div>
-                            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+                            {/* <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
                               {elements.length}
-                            </span>
+                            </span> */}
                           </div>
                           
                           <div className="grid gap-2 md:grid-cols-2">
@@ -762,7 +835,7 @@ export default function ReservationDetailPage() {
                                      
                                       
                                       <h4 className="line-clamp-2 text-sm font-medium leading-tight text-slate-900">
-                                        {element.nomElement || elementNameMap.get(element.elementId) || element.elementId}
+                                        {formatReservationText(element.nomElement || elementNameMap.get(element.elementId) || element.elementId)}
                                       </h4>
                                       
                                       <div className="mt-2 flex items-center gap-2">
@@ -780,7 +853,6 @@ export default function ReservationDetailPage() {
                         </div>
                       ))}
                   </div>
-                  
                   
                 </CardContent>
               </Card>
@@ -827,7 +899,7 @@ export default function ReservationDetailPage() {
                     <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                       Commentaire client
                     </span>
-                    {reservation.commentaireClient?.trim() || "Aucun commentaire client."}
+                    {formatReservationText(reservation.commentaireClient?.trim() || "Aucun commentaire client.")}
                   </p>
                 </div>
                 <div className="flex gap-4 rounded-xl border border-slate-200 bg-white p-4">
@@ -838,7 +910,7 @@ export default function ReservationDetailPage() {
                     <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                       Commentaire admin
                     </span>
-                    {reservation.commentaireAdmin?.trim() || "Aucun commentaire admin pour le moment."}
+                    {formatReservationText(reservation.commentaireAdmin?.trim() || "Aucun commentaire admin pour le moment.")}
                   </p>
                 </div>
               </CardContent>
@@ -857,8 +929,8 @@ export default function ReservationDetailPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="overflow-hidden rounded-xl border border-slate-200">
-                    <SummaryLine label="Destination" value={getSummaryValue(reservationSummaryItems, "Destination", detail?.nomDestination ?? "-")} />
-                    <SummaryLine label="Planification" value={getSummaryValue(reservationSummaryItems, "Planification", detail?.nomPlanification ?? "-")} />
+                    <SummaryLine label="Destination" value={getSummaryValue(reservationSummaryItems, "Destination", formatReservationText(detail?.nomDestination ?? "-"))} />
+                    <SummaryLine label="Planification" value={getSummaryValue(reservationSummaryItems, "Planification", formatReservationText(detail?.nomPlanification ?? "-"))} />
                     <SummaryLine label="Nombre de personnes" value={getSummaryValue(reservationSummaryItems, "Nombre de personnes", String(totalVoyageurs(reservation)))} />
                     <SummaryLine label="Budget client" value={getSummaryValue(reservationSummaryItems, "Budget client", formatCurrency(reservation.montantTotal, reservation.devise))} />
                     <SummaryLine label="Total selectionne" value={getSummaryValue(reservationSummaryItems, "Total selectionne", formatCurrency(reservation.montantTotal, reservation.devise))} highlight />
@@ -872,8 +944,8 @@ export default function ReservationDetailPage() {
       ) : null}
 
       <Dialog open={isPlanningOpen} onOpenChange={setIsPlanningOpen}>
-        <DialogContent className="!h-[92vh] !w-[94vw] !max-w-[1400px] overflow-hidden rounded-[28px] border border-slate-200 bg-white p-0 sm:!max-w-[1400px]">
-          <DialogHeader className="border-b border-slate-200 bg-slate-50/90 px-6 py-5">
+        <DialogContent className="!max-h-[88vh] !w-[94vw] !max-w-[1400px] overflow-hidden rounded-[24px] border border-slate-200 bg-white p-0 sm:!max-w-[1400px]">
+          <DialogHeader className="border-b border-slate-200 bg-slate-50/90 px-6 py-4">
             <DialogTitle className="text-xl font-semibold text-slate-900">
               Planning journalier de la reservation
             </DialogTitle>
@@ -881,7 +953,7 @@ export default function ReservationDetailPage() {
               Retrouvez le detail jour par jour des blocs retenus dans cette simulation.
             </DialogDescription>
           </DialogHeader>
-          <div className="h-full overflow-auto px-6 py-5">
+          <div className="max-h-[calc(88vh-86px)] overflow-auto px-6 py-4">
             {loadingPlanningPreview ? (
               <p className="text-sm text-muted-foreground">Chargement du planning journalier...</p>
             ) : planningPreviewError ? (

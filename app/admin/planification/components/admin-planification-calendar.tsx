@@ -243,8 +243,7 @@ function formatBudget(amount?: number | null, devise = "MGA") {
   return `${Math.round(amount).toLocaleString("fr-FR")} ${devise || "MGA"}`;
 }
 
-// Generate consistent colors based on destination ID
-function getDestinationColor(destinationId: string): string {
+function getPlanificationColor(planificationId: string): string {
   const colors = [
     "#0f766e", // teal
     "#dc2626", // red
@@ -259,8 +258,8 @@ function getDestinationColor(destinationId: string): string {
   ];
   
   let hash = 0;
-  for (let i = 0; i < destinationId.length; i++) {
-    hash = destinationId.charCodeAt(i) + ((hash << 5) - hash);
+  for (let i = 0; i < planificationId.length; i++) {
+    hash = planificationId.charCodeAt(i) + ((hash << 5) - hash);
   }
   
   return colors[Math.abs(hash) % colors.length];
@@ -639,10 +638,10 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
             <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
               Planification
             </h1>
-            <p className="mt-2 max-w-3xl text-base leading-7 text-slate-500">
+            {/* <p className="mt-2 max-w-3xl text-base leading-7 text-slate-500">
               Toutes les planifications sont disponibles en calendrier ou en liste, avec creation,
               modification et suppression directement depuis cette vue.
-            </p>
+            </p> */}
           </div>
         </div>
 
@@ -772,7 +771,7 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
                 }}
                 eventPropGetter={(event) => ({
                   style: {
-                    background: `linear-gradient(90deg, ${getDestinationColor(event.resource.idDestination)}, #7c3aed)`,
+                    background: getPlanificationColor(event.resource.id),
                     borderRadius: "6px",
                     border: "none",
                     color: "white",
@@ -792,16 +791,25 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="h-3 w-3 rounded-full bg-violet-600" />
+                  {/* <span className="h-3 w-3 rounded-full bg-violet-600" />
                   <div>
                     <p className="text-sm font-semibold text-slate-950">{monthPlanificationCount} planification(s)</p>
                     <p className="text-sm text-slate-500">Total ce mois</p>
-                  </div>
+                  </div> */}
                 </div>
-                <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-blue-700">
+
+                {/* <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-blue-700">
                   <Info className="h-5 w-5 shrink-0" />
                   <p className="text-sm">Cliquez et faites glisser pour selectionner une plage et creer rapidement une planification.</p>
+                </div> */}
+                <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-blue-700">
+                     <span className="h-3 w-3 rounded-full bg-violet-600" />
+                    <div>
+                      <p className="text-sm font-semibold text-slate-950">{monthPlanificationCount} planification(s)</p>
+                      <p className="text-sm text-slate-500">Total ce mois</p>
+                    </div>
                 </div>
+               
               </div>
               <style jsx global>{`
                 .admin-planification-calendar .rbc-calendar {
@@ -976,7 +984,7 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
                             <div className="flex items-start gap-3">
                               <span
                                 className="mt-1 h-3 w-3 shrink-0 rounded-full"
-                                style={{ backgroundColor: getDestinationColor(planification.idDestination) }}
+                                style={{ backgroundColor: getPlanificationColor(planification.id) }}
                                 aria-hidden="true"
                               />
                               <div>

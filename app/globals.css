@@ -234,14 +234,53 @@
 }
 
 .planning-calendar .planning-event {
-  background: color-mix(in oklab, var(--chart-2) 72%, white) !important;
   color: white !important;
+  font-weight: 600;
 }
 
 .planning-calendar .planning-event-selected {
-  background: color-mix(in oklab, var(--primary) 88%, black) !important;
-  color: var(--primary-foreground) !important;
-  box-shadow: 0 0 0 2px color-mix(in oklab, var(--primary) 35%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--primary) 45%, transparent);
+  filter: saturate(1.05) brightness(1.02);
+}
+
+.planning-calendar .planning-event-color-0 {
+  background: #047857 !important;
+}
+
+.planning-calendar .planning-event-color-1 {
+  background: #0f766e !important;
+}
+
+.planning-calendar .planning-event-color-2 {
+  background: #0369a1 !important;
+}
+
+.planning-calendar .planning-event-color-3 {
+  background: #1d4ed8 !important;
+}
+
+.planning-calendar .planning-event-color-4 {
+  background: #6d28d9 !important;
+}
+
+.planning-calendar .planning-event-color-5 {
+  background: #be123c !important;
+}
+
+.planning-calendar .planning-event-color-6 {
+  background: #b45309 !important;
+}
+
+.planning-calendar .planning-event-color-7 {
+  background: #4d7c0f !important;
+}
+
+.planning-calendar .planning-event-color-8 {
+  background: #0e7490 !important;
+}
+
+.planning-calendar .planning-event-color-9 {
+  background: #334155 !important;
 }
 
 .planning-calendar .transport-event {

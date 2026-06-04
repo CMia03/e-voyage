@@ -275,7 +275,6 @@ export function HebergementForm({
                   onChange={(event) => onUpdate("imageFile", event.target.files?.[0] ?? null)}
                 />
                 <Input value={form.urlImagePrincipale} onChange={(event) => onUpdate("urlImagePrincipale", event.target.value)} placeholder="https://... (optionnel si fichier choisi)" />
-                <p className="text-xs text-muted-foreground">Choisis un fichier pour l&apos;upload Cloudinary, ou colle une URL existante.</p>
               </div>
               <div className="overflow-hidden rounded-xl border border-border/50 bg-muted/20">
                 {imagePreview ? (
@@ -399,7 +398,17 @@ export function HebergementForm({
               {showEquipementCreator ? (
                 <div className="flex flex-col gap-2 rounded-xl border border-dashed border-emerald-300 bg-emerald-50/40 p-3 sm:flex-row">
                   <Input value={newEquipementName} onChange={(event) => onEquipementNameChange(event.target.value)} placeholder="Nouvel equipement" />
-                  <Button type="button" className="bg-emerald-600 text-white hover:bg-emerald-700" onClick={onCreateEquipement}>Ajouter</Button>
+                  <Button
+                    type="button"
+                    className="bg-emerald-600 text-white hover:bg-emerald-700"
+                    onClick={() => {
+                      if (!newEquipementName.trim()) return;
+                      onCreateEquipement();
+                      setShowEquipementCreator(false);
+                    }}
+                  >
+                    Ajouter
+                  </Button>
                 </div>
               ) : null}
 

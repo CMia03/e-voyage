@@ -462,7 +462,6 @@ export function AdminDestinationPlanningContentNext({ destinationId, embedded = 
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
   const [togglingVisibilityId, setTogglingVisibilityId] = useState<string | null>(null);
   const [isCalculatingTransportId, setIsCalculatingTransportId] = useState<string | null>(null);
-  const [showExtraElementTypes, setShowExtraElementTypes] = useState(false);
   const [showTypeElementCreator, setShowTypeElementCreator] = useState(false);
   const [newTypeElementName, setNewTypeElementName] = useState("");
   const [isCreatingTypeElement, setIsCreatingTypeElement] = useState(false);
@@ -496,18 +495,8 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
   }, [availableJourDateRange.minDate, availableJourDateRange.maxDate]);
   const selectedTypeElementJour = useMemo(() => typeElementJours.find((item) => item.id === elementForm.idTypeElementJour) ?? null, [typeElementJours, elementForm.idTypeElementJour]);
   const visibleTypeElementJours = useMemo(() => {
-    const defaultCodes = new Set(["HEBERGEMENT", "ACTIVITE", "TRANSPORT"]);
-    const baseTypes = typeElementJours.filter((item) => defaultCodes.has(item.code));
-    if (!showExtraElementTypes) {
-      // Keep selected value visible even if it is not in default types.
-      if (elementForm.idTypeElementJour && !baseTypes.some((item) => item.id === elementForm.idTypeElementJour)) {
-        const selected = typeElementJours.find((item) => item.id === elementForm.idTypeElementJour);
-        if (selected) return [...baseTypes, selected];
-      }
-      return baseTypes.length > 0 ? baseTypes : typeElementJours;
-    }
     return typeElementJours;
-  }, [showExtraElementTypes, typeElementJours, elementForm.idTypeElementJour]);
+  }, [typeElementJours]);
   const linkedActivites = useMemo(() => (associations?.activites ?? []).filter((item) => item.estSelectionne), [associations]);
   const linkedHebergements = useMemo(() => (associations?.hebergements ?? []).filter((item) => item.estSelectionne), [associations]);
   const sortedDays = useMemo(
@@ -886,7 +875,6 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
     setTargetJourIdForElement(jour.id);
     setInsertElementAtIndex(insertIndex);
     setElementForm(initialElementForm);
-    setShowExtraElementTypes(false);
     setShowTypeElementCreator(false);
     setNewTypeElementName("");
     setIsElementDialogOpen(true);
@@ -897,7 +885,6 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
     setTargetJourIdForElement(jourId);
     setInsertElementAtIndex(0);
     setElementForm(mapElementToForm(element));
-    setShowExtraElementTypes(false);
     setShowTypeElementCreator(false);
     setNewTypeElementName("");
     setIsElementDialogOpen(true);
@@ -1020,7 +1007,6 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
       if (created) {
         setTypeElementJours((current) => [...current, created]);
         setElementForm((current) => ({ ...current, idTypeElementJour: created.id }));
-        setShowExtraElementTypes(true);
         setShowTypeElementCreator(false);
         setNewTypeElementName("");
         setSuccessMessage("Type de bloc ajoute avec succes.");
@@ -2089,7 +2075,6 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
                     variant="outline"
                     className="justify-center sm:justify-start"
                     onClick={() => {
-                      setShowExtraElementTypes(true);
                       setShowTypeElementCreator((current) => !current);
                     }}
                   >

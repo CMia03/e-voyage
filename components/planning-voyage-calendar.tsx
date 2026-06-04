@@ -18,6 +18,22 @@ type PlanningVoyageCalendarProps = {
   initialDate?: Date
 }
 
+const PLANNING_COLOR_COUNT = 10
+
+function hashString(value: string) {
+  return value.split("").reduce((hash, character) => {
+    return (hash * 31 + character.charCodeAt(0)) >>> 0
+  }, 0)
+}
+
+function planificationClassName(planificationId: string, selected: boolean) {
+  const colorIndex = hashString(planificationId) % PLANNING_COLOR_COUNT
+  const classes = ["planning-event", `planning-event-color-${colorIndex}`]
+
+  if (selected) classes.push("planning-event-selected")
+  return classes
+}
+
 function transportClassName(typeName: string, selected: boolean) {
   const value = typeName.toLowerCase()
   const classes = ["transport-event"]
@@ -69,7 +85,7 @@ function toCalendarEvents(
     start: planification.dateHeureDebut || undefined,
     end: planification.dateHeureFin || undefined,
     allDay: false,
-    classNames: planification.id === selectedPlanificationId ? ["planning-event-selected"] : ["planning-event"],
+    classNames: planificationClassName(planification.id, planification.id === selectedPlanificationId),
     extendedProps: {
       eventType: "planification",
       planificationId: planification.id,

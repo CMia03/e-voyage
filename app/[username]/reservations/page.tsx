@@ -112,6 +112,38 @@ function formatDate(value: string) {
   return date.toLocaleString("fr-FR");
 }
 
+function formatReservationText(value?: string | number | null) {
+  return String(value ?? "")
+    .replace(/‚/g, "é")
+    .replace(/…/g, "à")
+    .replace(/–/g, "û")
+    .replace(/“/g, "ô")
+    .replace(/Š/g, "è")
+    .replace(/Œ/g, "î")
+    .replace(/×/g, "Î")
+    .replace(/Ã©/g, "é")
+    .replace(/Ã¨/g, "è")
+    .replace(/Ãª/g, "ê")
+    .replace(/Ã«/g, "ë")
+    .replace(/Ã‰/g, "É")
+    .replace(/Ã /g, "à")
+    .replace(/Ã¢/g, "â")
+    .replace(/Ã®/g, "î")
+    .replace(/Ã´/g, "ô")
+    .replace(/Ã»/g, "û")
+    .replace(/Ã¹/g, "ù")
+    .replace(/Ã§/g, "ç")
+    .replace(/âœ“/g, "✓")
+    .replace(/â±/g, "⏱")
+    .replace(/ðŸ’°/g, "💰")
+    .replace(/ðŸ“…/g, "📅")
+    .replace(/ðŸ“‹/g, "📋")
+    .replace(/ðŸ’¬/g, "💬")
+    .replace(/ðŸ“Š/g, "📊")
+    .replace(/ðŸ‘ï¸/g, "👁️")
+    .replace(/ðŸ—‘ï¸/g, "🗑️");
+}
+
 function parsePositiveInteger(value: string | null, fallback: number) {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
@@ -124,9 +156,9 @@ function normalizeGamme(value: string | null | undefined) {
 
 function getSelectLabel(value: string | null | undefined, selectedLabel: string | null | undefined, placeholder: string) {
   if (value && value.trim() !== "") {
-    return selectedLabel || placeholder;
+    return formatReservationText(selectedLabel || placeholder);
   }
-  return placeholder;
+  return formatReservationText(placeholder);
 }
 
 function extractBudgetClientFromSummary(summary: string | null | undefined): number {
@@ -201,8 +233,8 @@ function parseSummaryLines(summary: string) {
       }
 
       return {
-        label: item.slice(0, separatorIndex).trim(),
-        value: item.slice(separatorIndex + 1).trim(),
+        label: formatReservationText(item.slice(0, separatorIndex).trim()),
+        value: formatReservationText(item.slice(separatorIndex + 1).trim()),
       };
     });
 }
@@ -284,7 +316,7 @@ function getReservationProfilesSummary(reservation: Reservation) {
 
   if (reservation.details.length === 1) {
     const detail = reservation.details[0];
-    return `${detail.nomCategorieClient ?? "-"} - ${detail.gamme ?? "-"} - ${detail.nombrePersonnes ?? 0} voyageur(s)`;
+    return `${formatReservationText(detail.nomCategorieClient ?? "-")} - ${detail.gamme ?? "-"} - ${detail.nombrePersonnes ?? 0} voyageur(s)`;
   }
 
   return `${reservation.details.length} profil(s) - ${totalVoyageursFromDetails(reservation)} voyageur(s)`;
@@ -769,17 +801,17 @@ export default function ReservationsPage() {
       const totalElements = countUniqueSelectedElements(reservation);
       const searchableText = [
         reservation.reference,
-        reservation.commentaireClient,
-        reservation.commentaireAdmin,
+        formatReservationText(reservation.commentaireClient),
+        formatReservationText(reservation.commentaireAdmin),
         reservation.montantTotal,
         formatCurrency(reservation.montantTotal, reservation.devise),
         formatDate(reservation.dateReservation),
         formatDate(reservation.dateModification ?? reservation.dateReservation),
         getReservationProfilesSummary(reservation),
         totalElements,
-        detail?.nomDestination,
-        detail?.nomPlanification,
-        detail?.nomCategorieClient,
+        formatReservationText(detail?.nomDestination),
+        formatReservationText(detail?.nomPlanification),
+        formatReservationText(detail?.nomCategorieClient),
         detail?.gamme,
         formatStatus(reservation.status),
         formatSource(reservation.source),
@@ -878,13 +910,13 @@ export default function ReservationsPage() {
       params.set("destinationId", form.destinationId);
     }
     if (selectedDestination?.title) {
-      params.set("destinationTitle", selectedDestination.title);
+      params.set("destinationTitle", formatReservationText(selectedDestination.title));
     }
     if (form.planificationVoyageId) {
       params.set("planificationId", form.planificationVoyageId);
     }
     if (selectedPlanification?.nomPlanification) {
-      params.set("planificationTitle", selectedPlanification.nomPlanification);
+      params.set("planificationTitle", formatReservationText(selectedPlanification.nomPlanification));
     }
     if (form.categorieClientId) {
       params.set("categorieId", form.categorieClientId);
@@ -893,7 +925,7 @@ export default function ReservationsPage() {
       params.set("voyageurProfiles", JSON.stringify(form.voyageurProfiles));
     }
     if (selectedCategorie?.nom) {
-      params.set("categorieTitle", selectedCategorie.nom);
+      params.set("categorieTitle", formatReservationText(selectedCategorie.nom));
     }
     if (form.gamme) {
       params.set("gamme", form.gamme);
@@ -962,21 +994,31 @@ export default function ReservationsPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-        <Button
-          type="button"
-          variant={activeReservationSection === "create" ? "default" : "outline"}
-          onClick={() => setActiveReservationSection("create")}
-        >
-          Creation d&apos;une reservation
-        </Button>
-        <Button
-          type="button"
-          variant={activeReservationSection === "list" ? "default" : "outline"}
-          onClick={() => setActiveReservationSection("list")}
-        >
-          Liste reservation
-        </Button>
-      </div>
+          <Button
+            type="button"
+            variant="outline"
+            className={
+              activeReservationSection === "create"
+                ? "border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700 hover:text-white"
+                : "border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
+            }
+            onClick={() => setActiveReservationSection("create")}
+          >
+            Creation d&apos;une reservation
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className={
+              activeReservationSection === "list"
+                ? "border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700 hover:text-white"
+                : "border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
+            }
+            onClick={() => setActiveReservationSection("list")}
+          >
+            Liste reservation
+          </Button>
+        </div>
       </section>
 
       {error ? (
@@ -1067,7 +1109,7 @@ export default function ReservationsPage() {
                         <SelectContent>
                           {destinationOptions.map((destination) => (
                             <SelectItem key={destination.id} value={destination.id}>
-                              {destination.title}
+                              {formatReservationText(destination.title)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -1090,7 +1132,7 @@ export default function ReservationsPage() {
                         <SelectContent>
                           {planificationOptions.map((planification) => (
                             <SelectItem key={planification.id} value={planification.id}>
-                              {planification.nomPlanification}
+                              {formatReservationText(planification.nomPlanification)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -1161,7 +1203,7 @@ export default function ReservationsPage() {
                               <td className="px-6 py-4">
                                 {!canEditVoyageurProfiles ? (
                                   <div className="rounded-lg border border-border/30 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700">
-                                    {profileCategory?.nom ?? `Catégorie ${index + 1}`}
+                                    {formatReservationText(profileCategory?.nom ?? `Catégorie ${index + 1}`)}
                                   </div>
                                 ) : (
                                   <Select
@@ -1177,13 +1219,13 @@ export default function ReservationsPage() {
                                   >
                                     <SelectTrigger className="w-full border-border/60 bg-white">
                                       <SelectValue placeholder="Sélectionner">
-                                        {profileCategory?.nom ?? "Sélectionner"}
+                                        {formatReservationText(profileCategory?.nom ?? "Sélectionner")}
                                       </SelectValue>
                                     </SelectTrigger>
                                     <SelectContent>
                                       {categoryOptions.map((categorie) => (
                                         <SelectItem key={categorie.id} value={categorie.id}>
-                                          {categorie.nom}
+                                          {formatReservationText(categorie.nom)}
                                         </SelectItem>
                                       ))}
                                     </SelectContent>
@@ -1308,7 +1350,7 @@ export default function ReservationsPage() {
                           <p key={`${profile.categorieClientId || "summary"}-${index}`} className="flex items-center gap-3 text-sm text-slate-700">
                             <span className="h-2.5 w-2.5 rounded-full bg-emerald-600" />
                             <span>
-                              <span className="font-semibold text-slate-950">{profile.nombrePersonnes} {profileCategory?.nom ?? `Voyageur ${index + 1}`}</span>
+                              <span className="font-semibold text-slate-950">{profile.nombrePersonnes} {formatReservationText(profileCategory?.nom ?? `Voyageur ${index + 1}`)}</span>
                               <span className="text-slate-500"> — Gamme {gammeLabel}</span>
                             </span>
                           </p>
@@ -1354,7 +1396,7 @@ export default function ReservationsPage() {
                               >
                                 <div className="mb-3 flex items-center justify-between gap-3">
                                   <div>
-                                    <p className="text-sm font-semibold text-slate-900">{group.label}</p>
+                                    <p className="text-sm font-semibold text-slate-900">{formatReservationText(group.label)}</p>
                                     <p className="text-xs text-muted-foreground">
                                       {group.elements.length} element(s) selectionne(s)
                                     </p>
@@ -1387,9 +1429,9 @@ export default function ReservationsPage() {
                                       key={element.id}
                                       className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4"
                                     >
-                                      <p className="font-medium text-slate-900">{element.titre || element.id}</p>
+                                      <p className="font-medium text-slate-900">{formatReservationText(element.titre || element.id)}</p>
                                       <div className="mt-2 space-y-1 text-sm text-slate-600">
-                                        <p>{element.type ?? "Element de voyage"}</p>
+                                        <p>{formatReservationText(element.type ?? "Element de voyage")}</p>
                                         {typeof element.quantite === "number" ? (
                                           <p>{element.quantite} personne(s)</p>
                                         ) : null}
@@ -1452,7 +1494,7 @@ export default function ReservationsPage() {
                 ) : null}
 
               <div className="space-y-2">
-                <Label>Commentaire</Label>
+                <Label>Commentaire (Optionnel)</Label>
                 <Textarea
                   value={form.commentaireClient}
                   onChange={(event) =>
@@ -1629,7 +1671,7 @@ export default function ReservationsPage() {
                   <span>Reference</span>
                   <span>Destination</span>
                   <span>Statut</span>
-                  <span>Periode</span>
+                  <span>Date de reservation</span>
                   <span className="text-right">Montant</span>
                   <span className="text-right">Actions</span>
                 </div>
@@ -1687,7 +1729,7 @@ export default function ReservationsPage() {
                         
                         <div className="mt-3 space-y-2">
                           <p className="text-lg font-semibold text-slate-800">
-                            {detail?.nomDestination ?? "-"} - {detail?.nomPlanification ?? "-"}
+                            {formatReservationText(detail?.nomDestination ?? "-")} - {formatReservationText(detail?.nomPlanification ?? "-")}
                           </p>
                           <p className="text-sm text-slate-600 font-medium">
                             {getReservationProfilesSummary(reservation)}
@@ -1740,7 +1782,7 @@ export default function ReservationsPage() {
                           <p className="text-xs font-bold text-amber-700 uppercase tracking-wider">Commentaire</p>
                         </div>
                         <p className="text-sm font-medium text-slate-900 line-clamp-2">
-                          {reservation.commentaireClient?.trim() || "Aucun commentaire"}
+                          {formatReservationText(reservation.commentaireClient?.trim() || "Aucun commentaire")}
                         </p>
                       </div>
                     </div>
@@ -1757,7 +1799,7 @@ export default function ReservationsPage() {
                           <p className="text-sm font-bold text-emerald-700 uppercase tracking-wider">Résumé de simulation</p>
                         </div>
                         <p className="text-sm text-emerald-900 font-medium line-clamp-3 whitespace-pre-wrap">
-                          {reservation.resumeSimulation}
+                          {formatReservationText(reservation.resumeSimulation)}
                         </p>
                       </div>
                     </div>
@@ -1868,10 +1910,10 @@ function ReservationListCard({
           <MapPin className="mt-0.5 size-4 shrink-0 text-emerald-600" />
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-slate-950">
-              {detail?.nomDestination ?? "-"}
+              {formatReservationText(detail?.nomDestination ?? "-")}
             </p>
             <p className="truncate text-xs text-slate-500">
-              {detail?.nomPlanification ?? "-"}
+              {formatReservationText(detail?.nomPlanification ?? "-")}
             </p>
           </div>
         </div>

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import { getDashboardData } from "@/lib/api/dashboard";
 import { getUsers, UserSummary } from "@/lib/api/users";
 import { DASHBOARD_TEXTS } from "@/lib/constants/texts";
 import { DashboardResponse } from "@/lib/type/dashboard";
-import { Loader2, UsersRound } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { PlanificationPerformanceChart } from "@/components/ui/planification-performance-chart";
 import { UserStatsChart } from "@/components/ui/user-stats-chart";
 
@@ -50,6 +50,31 @@ function isInSelectedPeriod(periodMonth: string | null | undefined, filter: Peri
   return periodStart.getFullYear() === current.getFullYear();
 }
 
+function formatDashboardText(value?: string | null) {
+  return (value ?? "")
+    .replace(/S\u201Ajour/g, "S\u00E9jour")
+    .replace(/S\u00C3\u00A9jour/g, "S\u00E9jour")
+    .replace(/Ao\u2013t/g, "Ao\u00FBt")
+    .replace(/Ao\u00C3\u00BBt/g, "Ao\u00FBt")
+    .replace(/\u2026/g, "\u00E0")
+    .replace(/\u201A/g, "\u00E9")
+    .replace(/\u2013/g, "\u00FB")
+    .replace(/\u201C/g, "\u00F4")
+    .replace(/\u0160/g, "\u00E8")
+    .replace(/\u0152/g, "\u00EE")
+    .replace(/\u00C3\u00A9/g, "\u00E9")
+    .replace(/\u00C3\u00A8/g, "\u00E8")
+    .replace(/\u00C3\u00AA/g, "\u00EA")
+    .replace(/\u00C3\u00AB/g, "\u00EB")
+    .replace(/\u00C3 /g, "\u00E0")
+    .replace(/\u00C3\u00A2/g, "\u00E2")
+    .replace(/\u00C3\u00AE/g, "\u00EE")
+    .replace(/\u00C3\u00B4/g, "\u00F4")
+    .replace(/\u00C3\u00BB/g, "\u00FB")
+    .replace(/\u00C3\u00B9/g, "\u00F9")
+    .replace(/\u00C3\u00A7/g, "\u00E7");
+}
+
 export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
   const [users, setUsers] = useState<UserSummary[]>([]);
   const [dashboardData, setDashboardData] = useState<DashboardResponse | null>(null);
@@ -61,7 +86,7 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
   const destinationTravelerData = useMemo(
     () =>
       (dashboardData?.data.voyageursParDestination ?? []).map((item, index) => ({
-        name: item.destinationName,
+        name: formatDashboardText(item.destinationName),
         value: item.pourcentage,
         count: item.nombrePersonnes,
         color: destinationTravelerColors[index % destinationTravelerColors.length],
@@ -78,7 +103,7 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
   const destinationOptions = useMemo(() => {
     const destinations = new Map<string, string>();
     performancePlanifications.forEach((item) => {
-      destinations.set(item.destinationId, item.destinationName);
+      destinations.set(item.destinationId, formatDashboardText(item.destinationName));
     });
     return Array.from(destinations.entries()).map(([id, name]) => ({ id, name }));
   }, [performancePlanifications]);
@@ -202,7 +227,7 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
                   <div>
                     <CardTitle>Évolution des réservations</CardTitle>
                     <CardDescription>
-                      Courbe des reservations validees, en attente et annulees par planification.
+                      Courbe des réservations validées, en attente et annulées par planification.
                     </CardDescription>
                   </div>
                   <div className="flex flex-col gap-2 sm:flex-row">
@@ -252,3 +277,4 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
     </div>
   );
 }
+

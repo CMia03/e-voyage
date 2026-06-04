@@ -27,6 +27,7 @@ import {
 import { getErrorMessage } from "@/lib/api/client";
 import type {
   AdminDestination,
+  PhotoDestinationGroup,
   SaveDestinationMarketingPayload,
   SavePhotoDestinationBulkPayload,
 } from "@/lib/type/destination";
@@ -128,13 +129,46 @@ export function AdminDestinationDetailContent({
   const [isSubmittingMarketing, setIsSubmittingMarketing] = useState(false);
   const [activeSection, setActiveSection] = useState<DetailSection>(initialSection);
 
-  const sortedPhotoGroups = useMemo(
-    () =>
-      [...(destination?.photos ?? [])].sort(
-        (a, b) => (a.ordreAffichage ?? 0) - (b.ordreAffichage ?? 0)
-      ),
-    [destination]
-  );
+  const sortedPhotoGroups = useMemo(() => {
+    const groups = new Map<string, PhotoDestinationGroup>();
+
+    (destination?.photos ?? []).forEach((group) => {
+      const groupKey = [
+        group.titre?.trim() ?? "",
+        group.description?.trim() ?? "",
+        group.dateObtenir ?? "",
+        group.ordreAffichage ?? 0,
+      ].join("|");
+      const current = groups.get(groupKey);
+
+      if (!current) {
+        groups.set(groupKey, {
+          ...group,
+          estPrincipale:
+            Boolean(group.estPrincipale) || group.images.some((image) => Boolean(image.estPrincipale)),
+          images: [...group.images].sort(
+            (a, b) => Number(Boolean(a.estPrincipale)) - Number(Boolean(b.estPrincipale))
+          ),
+        });
+        return;
+      }
+
+      const existingImageIds = new Set(current.images.map((image) => image.id));
+      const nextImages = group.images.filter((image) => !existingImageIds.has(image.id));
+      current.images.push(...nextImages);
+      current.estPrincipale =
+        current.estPrincipale ||
+        Boolean(group.estPrincipale) ||
+        group.images.some((image) => Boolean(image.estPrincipale));
+      current.images.sort(
+        (a, b) => Number(Boolean(a.estPrincipale)) - Number(Boolean(b.estPrincipale))
+      );
+    });
+
+    return Array.from(groups.values()).sort(
+      (a, b) => (a.ordreAffichage ?? 0) - (b.ordreAffichage ?? 0)
+    );
+  }, [destination]);
 
   const totalImages = useMemo(
     () =>
@@ -163,12 +197,16 @@ export function AdminDestinationDetailContent({
   }, [setActive]);
 
   useEffect(() => {
+    const destinationLabel = destination?.nom
+      ? displayText(destination.nom, "Détail destination")
+      : "Détail destination";
+
     setBreadcrumbs([
       { label: "Admin", href: "/admin" },
       { label: "Destinations", href: "/admin?section=destinations" },
-      { label: "Détail destination", isActive: true }
+      { label: destinationLabel, isActive: true }
     ]);
-  }, [setBreadcrumbs]);
+  }, [destination?.nom, setBreadcrumbs]);
 
   useEffect(() => {
     const actions = (
@@ -654,6 +692,8 @@ export function AdminDestinationDetailContent({
                   <div className="max-h-[60vh] space-y-6 overflow-y-auto pr-2">
                     {sortedPhotoGroups.map((photoGroup, index) => {
                       const groupKey = `${photoGroup.titre}-${photoGroup.dateObtenir ?? "no-date"}-${photoGroup.ordreAffichage ?? 0}-${index}`;
+                      const secondaryImages = photoGroup.images.filter((image) => !image.estPrincipale);
+                      const primaryImages = photoGroup.images.filter((image) => image.estPrincipale);
                       return (
                       <div
                         key={groupKey}
@@ -743,57 +783,71 @@ export function AdminDestinationDetailContent({
                               groupKey
                             ] = node;
                           }}
-                          className="flex gap-3 overflow-x-hidden overflow-y-visible px-12 py-6"
+                          className="space-y-4 overflow-x-hidden overflow-y-visible px-12 py-6"
                         >
-                          {photoGroup.images.map((image) => (
-                            <div
-                              key={image.id}
-                              className="group relative z-0 w-[180px] min-w-[180px] overflow-visible rounded-xl transition-all hover:z-20"
-                            >
-                              <div className="relative overflow-visible rounded-xl border border-border/50 bg-muted/20 transition-all hover:shadow-lg">
-                              <img
-                                src={image.url}
-                                alt={photoGroup.titre || destination?.nom || "Photo destination"}
-                                className="relative z-0 h-32 w-full rounded-lg object-cover transition-transform duration-700 ease-out group-hover:scale-[1.75] group-hover:shadow-2xl"
-                              />
-                              <div className="relative z-30 border-t border-border/40 bg-background/95 px-2 py-2">
-                                <div className="flex items-center justify-between gap-2">
-                                  <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                                    <input
-                                      type="checkbox"
-                                      checked={Boolean(image.estPrincipale)}
-                                      disabled={updatingPhotoId === image.id}
-                                      onChange={(event) =>
-                                        handleTogglePhotoPrincipale(image.id, event.target.checked)
-                                      }
-                                    />
-                                    <span>
-                                      {updatingPhotoId === image.id ? "Mise a jour..." : "Image principale"}
-                                    </span>
-                                  </label>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-6 w-6 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
-                                    onClick={() => handleDeleteImage(image.id)}
-                                  >
-                                    <Trash className="h-3 w-3" />
-                                  </Button>
-                                </div>
-                              </div>
-                              
-                              {/* {image.description ? (
-                                <div className="border-t border-border/40 bg-background/95 px-3 py-2">
-                                  <p className="line-clamp-2 text-xs text-muted-foreground">
-                                    {image.description}
-                                  </p>
-                                </div>
-                              ) : null} */}
+                          {[
+                            { id: "secondary", images: secondaryImages },
+                            { id: "primary", images: primaryImages },
+                          ]
+                            .filter((row) => row.images.length > 0)
+                            .map((row) => (
+                              <div
+                                key={row.id}
+                                className={row.id === "primary" ? "border-t border-border/40 pt-4" : ""}
+                              >
+                                <div className="flex min-w-max gap-3">
+                                  {row.images.map((image) => (
+                                    <div
+                                      key={image.id}
+                                      className="group relative z-0 w-[180px] min-w-[180px] overflow-visible rounded-xl transition-all hover:z-20"
+                                    >
+                                      <div className="relative overflow-visible rounded-xl border border-border/50 bg-muted/20 transition-all hover:shadow-lg">
+                                      <img
+                                        src={image.url}
+                                        alt={photoGroup.titre || destination?.nom || "Photo destination"}
+                                        className="relative z-0 h-32 w-full rounded-lg object-cover transition-transform duration-700 ease-out group-hover:scale-[1.75] group-hover:shadow-2xl"
+                                      />
+                                      <div className="relative z-30 border-t border-border/40 bg-background/95 px-2 py-2">
+                                        <div className="flex items-center justify-between gap-2">
+                                          <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                                            <input
+                                              type="checkbox"
+                                              checked={Boolean(image.estPrincipale)}
+                                              disabled={updatingPhotoId === image.id}
+                                              onChange={(event) =>
+                                                handleTogglePhotoPrincipale(image.id, event.target.checked)
+                                              }
+                                            />
+                                            <span>
+                                              {updatingPhotoId === image.id ? "Mise a jour..." : "Image principale"}
+                                            </span>
+                                          </label>
+                                          <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-6 w-6 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                                            onClick={() => handleDeleteImage(image.id)}
+                                          >
+                                            <Trash className="h-3 w-3" />
+                                          </Button>
+                                        </div>
+                                      </div>
 
+                                      {/* {image.description ? (
+                                        <div className="border-t border-border/40 bg-background/95 px-3 py-2">
+                                          <p className="line-clamp-2 text-xs text-muted-foreground">
+                                            {image.description}
+                                          </p>
+                                        </div>
+                                      ) : null} */}
+
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            ))}
                         </div>
                         </div>
                       </div>

@@ -123,8 +123,8 @@ export function SectionPlanning({
           <div>
             <CardTitle>Planning</CardTitle>
             <CardDescription>
-              {displayText(selectedPlanification.nomPlanification)} avec {getPlanificationDuration(selectedPlanification)} jour(s) et{" "}
-              {selectedPlanification.transports.length} transport(s).
+              {displayText(selectedPlanification.nomPlanification)} avec {getPlanificationDuration(selectedPlanification)} jours.
+              {/* et{" "} {selectedPlanification.transports.length} transport(s) */}
             </CardDescription>
           </div>
           <Button size="sm" onClick={onAddJour}>

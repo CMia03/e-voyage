@@ -295,9 +295,6 @@ export function ActiviteForm({
                   onChange={(event) => onUpdate("imagePrincipale", event.target.value)}
                   placeholder="https://... (optionnel si fichier choisi)"
                 />
-                <p className="text-xs text-muted-foreground">
-                  Choisis un fichier pour l&apos;upload Cloudinary, ou colle une URL existante.
-                </p>
               </div>
               <div className="overflow-hidden rounded-2xl border border-border/50 bg-muted/20">
                 {imagePreview ? (

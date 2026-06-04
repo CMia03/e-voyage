@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Bell, MessageCircle, Trash2, ExternalLink, X, Eye, ArrowRight } from "lucide-react";
@@ -14,6 +14,39 @@ import {
 import { CommentaireData, getAllCommentairesAdmin } from "@/lib/api/commentaires";
 import { AdminNotification } from "@/lib/type/admin-notification";
 import { loadAuth } from "@/lib/auth";
+
+function formatNotificationText(value?: string | null) {
+  return (value ?? "")
+    .replace(/a laisse/g, "a laissé")
+    .replace(/a effectue/g, "a effectué")
+    .replace(/reservation/g, "réservation")
+    .replace(/Reservation/g, "Réservation")
+    .replace(/Nouvelle reservation/g, "Nouvelle réservation")
+    .replace(/prix direct/g, "prix direct")
+    .replace(/‚/g, "é")
+    .replace(/…/g, "à")
+    .replace(/–/g, "û")
+    .replace(/“/g, "ô")
+    .replace(/Š/g, "è")
+    .replace(/Œ/g, "î")
+    .replace(/Ã©/g, "é")
+    .replace(/Ã¨/g, "è")
+    .replace(/Ãª/g, "ê")
+    .replace(/Ã«/g, "ë")
+    .replace(/Ã /g, "à")
+    .replace(/Ã¢/g, "â")
+    .replace(/Ã®/g, "î")
+    .replace(/Ã´/g, "ô")
+    .replace(/Ã»/g, "û")
+    .replace(/Ã¹/g, "ù")
+    .replace(/Ã§/g, "ç")
+    .replace(/S‚jour/g, "Séjour")
+    .replace(/SÃ©jour/g, "Séjour")
+    .replace(/Ao–t/g, "Août")
+    .replace(/AoÃ»t/g, "Août")
+    .replace(/Séjour …/g, "Séjour à")
+    .replace(/Séjour à/g, "Séjour à");
+}
 
 export function AdminNotifications() {
   const router = useRouter();
@@ -215,14 +248,14 @@ export function AdminNotifications() {
                         <div className="mt-2 rounded-lg border bg-white px-3 py-2">
                           <div className="flex items-center justify-between gap-3">
                             <p className="truncate text-sm font-medium text-foreground">
-                              {pendingCommentaires[0].nomUser || pendingCommentaires[0].idUser}
+                              {formatNotificationText(pendingCommentaires[0].nomUser || pendingCommentaires[0].idUser)}
                             </p>
                             <p className="shrink-0 text-xs text-muted-foreground">
-                              {pendingCommentaires[0].nomDestination || "Destination"}
+                              {formatNotificationText(pendingCommentaires[0].nomDestination || "Destination")}
                             </p>
                           </div>
                           <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
-                            {pendingCommentaires[0].contenu}
+                            {formatNotificationText(pendingCommentaires[0].contenu)}
                           </p>
                         </div>
                         <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-amber-800">
@@ -248,7 +281,9 @@ export function AdminNotifications() {
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
-                          <p className="line-clamp-1 text-sm font-semibold text-foreground">{notification.title}</p>
+                          <p className="line-clamp-1 text-sm font-semibold text-foreground">
+                            {formatNotificationText(notification.title)}
+                          </p>
                           {!notification.read ? (
                             <Badge variant="secondary" className="shrink-0 text-xs">
                               Nouveau
@@ -257,7 +292,7 @@ export function AdminNotifications() {
                         </div>
 
                         <p className="mt-1 line-clamp-3 text-sm text-muted-foreground">
-                          {notification.message}
+                          {formatNotificationText(notification.message)}
                         </p>
 
                         <div className="mt-3 flex items-center justify-between gap-2">

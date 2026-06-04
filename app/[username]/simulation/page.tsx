@@ -1,24 +1,36 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties, PointerEvent as ReactPointerEvent, ReactNode } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { BellRing, Expand } from "lucide-react";
+import dynamic from "next/dynamic";
+import { BellRing, Expand, X } from "lucide-react";
 
 import { useSimulation } from "@/lib/hooks/useSimulation";
 import { ElementSelection, ElementSimulation, JourSimulation, VoyageurProfile } from "@/lib/type/simulation.types";
 import { BudgetInput } from "./components/BudgetInput";
 import { CategoryGammeSelector } from "./components/CategoryGammeSelector";
-import { PlanningJournalier } from "./components/PlanningJournalier";
 import { BudgetSummary } from "./components/BudgetSummary";
 import { ActionButtons } from "./components/ActionButtons";
+import { ImageGalleryDialog, ImageGalleryState } from "./components/ImageGalleryDialog";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+
+const PlanningJournalier = dynamic(
+  () => import("./components/PlanningJournalier").then((mod) => mod.PlanningJournalier),
+  { ssr: false }
+);
 
 type SuggestedElement = {
   id: string;
   titre: string;
   prix: number;
   type: string;
+  jourNumero?: number;
+  jourTitre?: string;
+  heureDebut?: string | null;
+  heureFin?: string | null;
+  images?: string[];
   quantiteSelectionnee: number;
   prixParPersonne: number;
   quantiteSuggeree: number;
@@ -35,6 +47,242 @@ type ReservationElementPreview = {
   jourNumero?: number;
   jourTitre?: string;
 };
+
+type DraggableSuggestionPanelProps = {
+  children: ReactNode;
+  className: string;
+  closeButtonClassName: string;
+  dragToneClassName: string;
+  header: ReactNode;
+  label: string;
+  onClose: () => void;
+};
+
+type ResizeDirection = "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw";
+
+function DraggableSuggestionPanel({
+  children,
+  className,
+  closeButtonClassName,
+  dragToneClassName,
+  header,
+  label,
+  onClose,
+}: DraggableSuggestionPanelProps) {
+  const panelRef = useRef<HTMLElement | null>(null);
+  const dragStartRef = useRef<{
+    pointerX: number;
+    pointerY: number;
+    offsetX: number;
+    offsetY: number;
+    rect: DOMRect;
+  } | null>(null);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const resizeStartRef = useRef<{
+    pointerX: number;
+    pointerY: number;
+    offsetX: number;
+    offsetY: number;
+    rect: DOMRect;
+    direction: ResizeDirection;
+  } | null>(null);
+
+  const panelStyle = {
+    "--suggestion-panel-x": `${offset.x}px`,
+    "--suggestion-panel-y": `${offset.y}px`,
+    "--suggestion-panel-content-height": size
+      ? `${Math.max(size.height - 92, 180)}px`
+      : "calc(100vh - 14rem)",
+    width: size ? `${size.width}px` : undefined,
+    height: size ? `${size.height}px` : undefined,
+    maxWidth: "calc(100vw - 1.5rem)",
+    maxHeight: "calc(100vh - 1.5rem)",
+  } as CSSProperties;
+
+  const handleDragStart = (event: ReactPointerEvent<HTMLElement>) => {
+    const panel = panelRef.current;
+    if (!panel) return;
+
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    dragStartRef.current = {
+      pointerX: event.clientX,
+      pointerY: event.clientY,
+      offsetX: offset.x,
+      offsetY: offset.y,
+      rect: panel.getBoundingClientRect(),
+    };
+    setIsDragging(true);
+  };
+
+  const handleDragMove = (event: ReactPointerEvent<HTMLElement>) => {
+    const dragStart = dragStartRef.current;
+    if (!dragStart) return;
+
+    const rawDeltaX = event.clientX - dragStart.pointerX;
+    const rawDeltaY = event.clientY - dragStart.pointerY;
+    const margin = 12;
+    const minDeltaX = margin - dragStart.rect.left;
+    const maxDeltaX = window.innerWidth - margin - dragStart.rect.right;
+    const minDeltaY = margin - dragStart.rect.top;
+    const maxDeltaY = window.innerHeight - margin - dragStart.rect.bottom;
+    const deltaX = Math.min(maxDeltaX, Math.max(minDeltaX, rawDeltaX));
+    const deltaY = Math.min(maxDeltaY, Math.max(minDeltaY, rawDeltaY));
+
+    setOffset({
+      x: dragStart.offsetX + deltaX,
+      y: dragStart.offsetY + deltaY,
+    });
+  };
+
+  const handleDragEnd = (event: ReactPointerEvent<HTMLElement>) => {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    dragStartRef.current = null;
+    setIsDragging(false);
+  };
+
+  const handleResizeStart = (
+    event: ReactPointerEvent<HTMLButtonElement>,
+    direction: ResizeDirection
+  ) => {
+    const panel = panelRef.current;
+    if (!panel) return;
+
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const rect = panel.getBoundingClientRect();
+    resizeStartRef.current = {
+      pointerX: event.clientX,
+      pointerY: event.clientY,
+      offsetX: offset.x,
+      offsetY: offset.y,
+      rect,
+      direction,
+    };
+    setIsResizing(true);
+  };
+
+  const handleResizeMove = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const resizeStart = resizeStartRef.current;
+    if (!resizeStart) return;
+
+    const margin = 12;
+    const minWidth = 300;
+    const minHeight = 260;
+    const deltaX = event.clientX - resizeStart.pointerX;
+    const deltaY = event.clientY - resizeStart.pointerY;
+    const direction = resizeStart.direction;
+    const startRect = resizeStart.rect;
+    let nextLeft = startRect.left;
+    let nextRight = startRect.right;
+    let nextTop = startRect.top;
+    let nextBottom = startRect.bottom;
+
+    if (direction.includes("w")) {
+      nextLeft = Math.min(
+        startRect.right - minWidth,
+        Math.max(margin, startRect.left + deltaX)
+      );
+    }
+    if (direction.includes("e")) {
+      nextRight = Math.max(
+        startRect.left + minWidth,
+        Math.min(window.innerWidth - margin, startRect.right + deltaX)
+      );
+    }
+    if (direction.includes("n")) {
+      nextTop = Math.min(
+        startRect.bottom - minHeight,
+        Math.max(margin, startRect.top + deltaY)
+      );
+    }
+    if (direction.includes("s")) {
+      nextBottom = Math.max(
+        startRect.top + minHeight,
+        Math.min(window.innerHeight - margin, startRect.bottom + deltaY)
+      );
+    }
+
+    setSize({
+      width: nextRight - nextLeft,
+      height: nextBottom - nextTop,
+    });
+    setOffset({
+      x: resizeStart.offsetX + nextLeft - startRect.left,
+      y: resizeStart.offsetY + nextTop - startRect.top,
+    });
+  };
+
+  const handleResizeEnd = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    resizeStartRef.current = null;
+    setIsResizing(false);
+  };
+
+  return (
+    <section
+      ref={panelRef}
+      style={panelStyle}
+      className={`${className} translate-x-[var(--suggestion-panel-x)] translate-y-[var(--suggestion-panel-y)] ${
+        isDragging || isResizing ? "select-none shadow-[0_30px_90px_-34px_rgba(15,23,42,0.55)]" : ""
+      }`}
+    >
+      <div
+        aria-label={`Deplacer ${label}`}
+        className="mb-4 flex cursor-grab touch-none select-none items-start justify-between gap-3 rounded-2xl px-1 py-1 active:cursor-grabbing"
+        role="button"
+        tabIndex={0}
+        onPointerDown={handleDragStart}
+        onPointerMove={handleDragMove}
+        onPointerUp={handleDragEnd}
+        onPointerCancel={handleDragEnd}
+      >
+        <div className="min-w-0">{header}</div>
+        <button
+          type="button"
+          aria-label="Fermer"
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={onClose}
+          className={`flex size-8 shrink-0 items-center justify-center rounded-full border bg-white/85 transition ${closeButtonClassName}`}
+        >
+          <X className="size-4" />
+        </button>
+      </div>
+      {children}
+      {[
+        { direction: "n", className: "left-10 right-10 top-0 h-2 cursor-ns-resize" },
+        { direction: "s", className: "bottom-0 left-10 right-10 h-2 cursor-ns-resize" },
+        { direction: "e", className: "bottom-10 right-0 top-10 w-2 cursor-ew-resize" },
+        { direction: "w", className: "bottom-10 left-0 top-10 w-2 cursor-ew-resize" },
+        { direction: "ne", className: "right-0 top-0 size-8 cursor-nesw-resize" },
+        { direction: "nw", className: "left-0 top-0 size-8 cursor-nwse-resize" },
+        { direction: "se", className: "bottom-0 right-0 size-8 cursor-nwse-resize" },
+        { direction: "sw", className: "bottom-0 left-0 size-8 cursor-nesw-resize" },
+      ].map((handle) => (
+        <button
+          key={handle.direction}
+          type="button"
+          aria-label={`Redimensionner ${label}`}
+          className={`absolute touch-none rounded-xl opacity-0 transition hover:opacity-100 focus-visible:opacity-100 ${handle.className} ${dragToneClassName}`}
+          onPointerDown={(event) =>
+            handleResizeStart(event, handle.direction as ResizeDirection)
+          }
+          onPointerMove={handleResizeMove}
+          onPointerUp={handleResizeEnd}
+          onPointerCancel={handleResizeEnd}
+        />
+      ))}
+      <span className="pointer-events-none absolute bottom-2 right-2 block size-3 border-b-2 border-r-2 border-slate-400/80" />
+    </section>
+  );
+}
 
 function parsePositiveInteger(value: string | null, fallback: number) {
   const parsed = Number(value);
@@ -141,25 +389,29 @@ function getOptionalSuggestions(
   if (!jours || deficit <= 0) return [];
 
   const optionnels = jours
-    .flatMap((jour) => jour.elements)
+    .flatMap((jour) => jour.elements.map((element) => ({ jour, element })))
     .filter(
-      (element: ElementSimulation) =>
+      ({ element }) =>
         !element.obligatoire &&
         (element.quantiteSelectionnee ?? 0) > 0 &&
         getElementUnitPrice(element) > 0
     )
-    .sort((a, b) => getElementUnitPrice(b) - getElementUnitPrice(a));
+    .sort((a, b) => getElementUnitPrice(b.element) - getElementUnitPrice(a.element));
 
   const suggestions = optionnels
-    .map((element) => {
+    .map(({ jour, element }) => {
       const quantiteSelectionnee = Math.max(element.quantiteSelectionnee ?? 0, 0);
       const prixParPersonne = getElementUnitPrice(element);
+      const schedule = getElementSchedule(element);
 
       return {
         id: element.id,
         titre: element.titre,
         prix: Math.round(prixParPersonne * quantiteSelectionnee),
         type: element.type,
+        jourNumero: jour.numeroJour,
+        jourTitre: jour.titre,
+        ...schedule,
         quantiteSelectionnee,
         prixParPersonne: Math.round(prixParPersonne),
         quantiteSuggeree: quantiteSelectionnee,
@@ -203,6 +455,12 @@ function getElementUnitPrice(element: ElementSimulation): number {
   const quantiteSelectionnee = Math.max(Number(element.quantiteSelectionnee) || 0, 0);
   const prixElement = Number(element.prix) || 0;
 
+  if (prixElement > 0) {
+    return Math.round(
+      quantiteSelectionnee > 1 ? prixElement / quantiteSelectionnee : prixElement
+    );
+  }
+
   return Math.round(
     Number(details?.prixParPersonne) ||
       Number(details?.prixParNuit) ||
@@ -211,9 +469,70 @@ function getElementUnitPrice(element: ElementSimulation): number {
       Number(details?.prixUnitaire) ||
       Number(details?.budgetPrevu) ||
       Number(details?.montant) ||
-      (quantiteSelectionnee > 1 && prixElement > 0 ? prixElement / quantiteSelectionnee : prixElement) ||
       0
   );
+}
+
+function getElementSchedule(element: ElementSimulation) {
+  const details = element.details as ElementSimulation["details"] & {
+    heureDebut?: string | null;
+    heureFin?: string | null;
+    dateHeureDebut?: string | null;
+    dateHeureFin?: string | null;
+    debut?: string | null;
+    fin?: string | null;
+    image?: string | null;
+    images?: Array<string | null | undefined>;
+    urlImage?: string | null;
+    urlImagePrincipale?: string | null;
+    imagePrincipale?: string | null;
+    photos?: Array<{ urlImage?: string | null; image?: string | null } | string | null | undefined>;
+    tarifs?: Array<{
+      urlImage?: string | null;
+      image?: string | null;
+      images?: Array<string | null | undefined>;
+      photos?: Array<{ urlImage?: string | null; image?: string | null } | string | null | undefined>;
+    } | null | undefined>;
+    chambres?: Array<{
+      urlImage?: string | null;
+      image?: string | null;
+      images?: Array<string | null | undefined>;
+      photos?: Array<{ urlImage?: string | null; image?: string | null } | string | null | undefined>;
+    } | null | undefined>;
+  };
+  const collectPhotoUrls = (
+    photos?: Array<{ urlImage?: string | null; image?: string | null } | string | null | undefined>
+  ) =>
+    (photos ?? []).flatMap((photo) => {
+      if (typeof photo === "string") return [photo];
+      if (!photo) return [];
+      return [photo.urlImage, photo.image];
+    });
+  const nestedImageGroups = [...(details?.tarifs ?? []), ...(details?.chambres ?? [])].flatMap((item) =>
+    item
+      ? [
+          item.urlImage,
+          item.image,
+          ...(Array.isArray(item.images) ? item.images : []),
+          ...collectPhotoUrls(item.photos),
+        ]
+      : []
+  );
+  const images = [
+    details?.urlImagePrincipale,
+    details?.imagePrincipale,
+    details?.urlImage,
+    details?.image,
+    ...(Array.isArray(details?.images) ? details.images : []),
+    ...collectPhotoUrls(details?.photos),
+    ...nestedImageGroups,
+  ].filter((image): image is string => typeof image === "string" && image.trim().length > 0);
+
+  return {
+    heureDebut: details?.heureDebut ?? details?.dateHeureDebut ?? details?.debut ?? null,
+    heureFin: details?.heureFin ?? details?.dateHeureFin ?? details?.fin ?? null,
+    images: Array.from(new Set(images)),
+  };
 }
 
 function getAffordableOptionalSuggestions(
@@ -225,14 +544,16 @@ function getAffordableOptionalSuggestions(
 
   const fallbackMax = Math.max(quantiteMaxFallback, 1);
   const candidats = jours
-    .flatMap((jour) => jour.elements)
-    .map((element: ElementSimulation): SuggestedElement | null => {
+    .flatMap((jour) => jour.elements.map((element) => ({ jour, element })))
+    .map(({ jour, element }): SuggestedElement | null => {
       if (element.obligatoire) return null;
 
       const quantiteSelectionnee = Math.max(Number(element.quantiteSelectionnee) || 0, 0);
-      const quantiteMax = Math.max(Number(element.quantiteMax) || fallbackMax, quantiteSelectionnee + 1);
+      const rawQuantiteMax = Number(element.quantiteMax) || fallbackMax;
+      const quantiteMax = Math.max(0, Math.min(rawQuantiteMax, fallbackMax));
       const quantiteRestante = Math.max(quantiteMax - quantiteSelectionnee, 0);
       const prixUnitaire = getElementUnitPrice(element);
+      const schedule = getElementSchedule(element);
 
       if (quantiteRestante <= 0 || prixUnitaire <= 0 || prixUnitaire > resteBudget) {
         return null;
@@ -250,6 +571,9 @@ function getAffordableOptionalSuggestions(
         titre: element.titre,
         prix: prixUnitaire * quantiteAchetable,
         type: element.type,
+        jourNumero: jour.numeroJour,
+        jourTitre: jour.titre,
+        ...schedule,
         quantiteSelectionnee,
         prixParPersonne: prixUnitaire,
         quantiteSuggeree: quantiteAchetable,
@@ -285,8 +609,85 @@ function getAffordableOptionalSuggestions(
   return suggestions;
 }
 
+function willCompleteAllPlanningElementsAfterAddition(
+  jours: JourSimulation[] | undefined,
+  elementId: string,
+  quantityToAdd: number,
+  quantiteMaxFallback: number
+): boolean {
+  if (!jours) return false;
+
+  const fallbackMax = Math.max(quantiteMaxFallback, 1);
+  const elements = jours.flatMap((jour) => jour.elements);
+  if (elements.length === 0) return false;
+
+  return elements.every((element) => {
+    const selectedQuantity = Math.max(Number(element.quantiteSelectionnee) || 0, 0);
+    const rawMaxQuantity = Number(element.quantiteMax) || fallbackMax;
+    const maxQuantity = Math.max(0, Math.min(rawMaxQuantity, fallbackMax));
+    const nextQuantity =
+      element.id === elementId ? selectedQuantity + quantityToAdd : selectedQuantity;
+
+    return nextQuantity >= maxQuantity;
+  });
+}
+
 function formatAr(value?: number | null) {
   return `${(value ?? 0).toLocaleString()} Ar`;
+}
+
+function formatDisplayText(value: string | null | undefined) {
+  return (value ?? "")
+    .replace(/‚/g, "é")
+    .replace(/…/g, "à")
+    .replace(/–/g, "û")
+    .replace(/“/g, "ô")
+    .replace(/Š/g, "è")
+    .replace(/Œ/g, "î")
+    .replace(/×/g, "Î")
+    .replace(/Ã©/g, "é")
+    .replace(/Ã¨/g, "è")
+    .replace(/Ãª/g, "ê")
+    .replace(/Ã /g, "à")
+    .replace(/Ã¢/g, "â")
+    .replace(/Ã®/g, "î")
+    .replace(/Ã´/g, "ô")
+    .replace(/Ã»/g, "û")
+    .replace(/Ã§/g, "ç");
+}
+
+function formatSuggestionType(value: string) {
+  const normalized = formatDisplayText(value).trim().toLowerCase();
+  if (normalized === "hebergement" || normalized === "hébergement") return "hébergement";
+  if (normalized === "activite" || normalized === "activité") return "activité";
+  return normalized;
+}
+
+function formatScheduleTime(value?: string | null) {
+  const rawValue = formatDisplayText(value).trim();
+  if (!rawValue) return "";
+
+  const timeMatch = rawValue.match(/(?:T|\s)(\d{2}:\d{2})(?::\d{2})?/) ?? rawValue.match(/^(\d{2}:\d{2})(?::\d{2})?/);
+  return timeMatch?.[1] ?? rawValue;
+}
+
+function formatSuggestionPlanningContext(element: SuggestedElement) {
+  const dayTitle = formatDisplayText(element.jourTitre).trim();
+  const dayLabel = element.jourNumero
+    ? `Jour ${element.jourNumero}${dayTitle ? ` - ${dayTitle}` : ""}`
+    : dayTitle || "Jour non renseigné";
+  const startTime = formatScheduleTime(element.heureDebut);
+  const endTime = formatScheduleTime(element.heureFin);
+  const timeLabel =
+    startTime && endTime
+      ? `${startTime} - ${endTime}`
+      : startTime
+        ? `Début ${startTime}`
+        : endTime
+          ? `Fin ${endTime}`
+          : "";
+
+  return timeLabel ? `${dayLabel} · ${timeLabel}` : dayLabel;
 }
 
 function buildSimulationSummary(
@@ -315,6 +716,7 @@ export default function SimulationPage() {
   const router = useRouter();
   const query = useSearchParams();
   const [isPlanningExpanded, setIsPlanningExpanded] = useState(false);
+  const [suggestionGallery, setSuggestionGallery] = useState<ImageGalleryState | null>(null);
   const prefillAppliedRef = useRef(false);
   const autoSimulationLaunchedRef = useRef(false);
   const previousAutoBudgetRef = useRef<number | null>(null);
@@ -439,32 +841,99 @@ export default function SimulationPage() {
     ? budgetByPlanification[selectedPlanificationId] ?? null
     : null;
   const seuilMinimum = minimumBudget?.seuilMinimum ?? result?.recap?.seuilMinimum ?? 0;
-  const depassement = Math.max(0, -(result?.resume?.reste ?? 0));
-  const resteDisponible = Math.max(0, result?.resume?.reste ?? 0);
+  const resultJours = result?.jours;
+  const allPlanningElementsSelected = useMemo(() => {
+    if (!resultJours) return false;
+    const totalGroup = Math.max(totalVoyageurs(voyageurProfiles), 1);
+    const elements = resultJours.flatMap((jour) => jour.elements);
+
+    return (
+      elements.length > 0 &&
+      elements.every((element) => {
+        const selectedQuantity = Math.max(Number(element.quantiteSelectionnee) || 0, 0);
+        const maxQuantity = Math.max(0, Math.min(Number(element.quantiteMax) || totalGroup, totalGroup));
+        return selectedQuantity >= maxQuantity;
+      })
+    );
+  }, [resultJours, voyageurProfiles]);
+  const totalSimulationAvecMarge =
+    result?.resume?.totalAvecMarge ?? result?.resume?.totalCoche ?? 0;
+  const totalFactureCorrige =
+    allPlanningElementsSelected && budgetCategorieSelectionnee
+      ? Math.max(totalSimulationAvecMarge, budgetCategorieSelectionnee)
+      : totalSimulationAvecMarge;
+  const resteBudgetCorrige = result ? budgetClient - totalFactureCorrige : 0;
+  const depassement = Math.max(0, -resteBudgetCorrige);
+  const resteDisponible = Math.max(0, resteBudgetCorrige);
 
   const suggestionsOptionnelles = useMemo(
-    () => getOptionalSuggestions(result?.jours, depassement),
-    [result?.jours, depassement]
+    () => getOptionalSuggestions(resultJours, depassement),
+    [resultJours, depassement]
   );
-  const suggestionsDisponibles = useMemo(
-    () =>
-      getAffordableOptionalSuggestions(
-        result?.jours,
-        resteDisponible,
-        Math.max(totalVoyageurs(voyageurProfiles), 1)
-      ),
-    [result?.jours, resteDisponible, voyageurProfiles]
+  const totalGroupeVoyageurs = Math.max(totalVoyageurs(voyageurProfiles), 1);
+  const suggestionsDisponiblesCandidates = useMemo(
+    () => getAffordableOptionalSuggestions(resultJours, resteDisponible, totalGroupeVoyageurs),
+    [resultJours, resteDisponible, totalGroupeVoyageurs]
   );
+  const suggestionsDisponibles = useMemo(() => {
+    return suggestionsDisponiblesCandidates.filter(
+      (element) => {
+        const completesPlanning = willCompleteAllPlanningElementsAfterAddition(
+          resultJours,
+          element.id,
+          element.quantiteSuggeree,
+          totalGroupeVoyageurs
+        );
+        const totalApresAjout = totalSimulationAvecMarge + element.prix;
+        const totalFactureApresAjout =
+          completesPlanning && budgetCategorieSelectionnee
+            ? Math.max(totalApresAjout, budgetCategorieSelectionnee)
+            : totalApresAjout;
+
+        return totalFactureApresAjout <= budgetClient;
+      }
+    );
+  }, [
+    resultJours,
+    suggestionsDisponiblesCandidates,
+    totalGroupeVoyageurs,
+    totalSimulationAvecMarge,
+    budgetCategorieSelectionnee,
+    budgetClient,
+  ]);
+  const manquePourCompleterForfait = useMemo(() => {
+    if (!result?.success || !budgetCategorieSelectionnee) return 0;
+    if (budgetClient >= budgetCategorieSelectionnee) return 0;
+    if (allPlanningElementsSelected || suggestionsDisponibles.length > 0) return 0;
+
+    const hasOnlyFullPackageAdditions = suggestionsDisponiblesCandidates.some((element) =>
+      willCompleteAllPlanningElementsAfterAddition(
+        resultJours,
+        element.id,
+        element.quantiteSuggeree,
+        totalGroupeVoyageurs
+      )
+    );
+
+    return hasOnlyFullPackageAdditions ? budgetCategorieSelectionnee - budgetClient : 0;
+  }, [
+    result?.success,
+    resultJours,
+    budgetCategorieSelectionnee,
+    budgetClient,
+    allPlanningElementsSelected,
+    suggestionsDisponibles,
+    suggestionsDisponiblesCandidates,
+    totalGroupeVoyageurs,
+  ]);
 
   const totalSuggestions = suggestionsOptionnelles.reduce(
     (total, element) => total + element.economieSuggeree,
     0
   );
-  const totalSuggestionsDisponibles = suggestionsDisponibles.reduce(
-    (total, element) => total + element.prix,
-    0
-  );
-  const resteApresSuggestions = Math.max(0, resteDisponible - totalSuggestionsDisponibles);
+  const manqueApresSuggestions = Math.max(0, depassement - totalSuggestions);
+  const suggestionsCouvrentDepassement =
+    depassement > 0 && manqueApresSuggestions === 0;
   const [dismissedBudgetAlertKey, setDismissedBudgetAlertKey] = useState<string | null>(null);
   const [dismissedPositiveBudgetKey, setDismissedPositiveBudgetKey] = useState<string | null>(null);
   const budgetAlertKey = useMemo(
@@ -502,9 +971,11 @@ export default function SimulationPage() {
   const showBudgetAlertIndicator =
       budgetAlertKey !== null && dismissedBudgetAlertKey === budgetAlertKey;
   const showPositiveBudgetModal =
-      positiveBudgetKey !== null && dismissedPositiveBudgetKey !== positiveBudgetKey;
+      positiveBudgetKey !== null &&
+      dismissedPositiveBudgetKey !== positiveBudgetKey;
   const showPositiveBudgetIndicator =
-      positiveBudgetKey !== null && dismissedPositiveBudgetKey === positiveBudgetKey;
+      positiveBudgetKey !== null &&
+      dismissedPositiveBudgetKey === positiveBudgetKey;
   const handlePlanningExpandedChange = (open: boolean) => {
     setIsPlanningExpanded(open);
   };
@@ -530,6 +1001,7 @@ export default function SimulationPage() {
 
   const canReserveSimulation =
     !!result?.success &&
+    resteBudgetCorrige >= 0 &&
     !!selectedDestinationId &&
     !!selectedPlanificationId &&
     voyageurProfiles.length > 0;
@@ -574,17 +1046,16 @@ export default function SimulationPage() {
         selectedPlanification?.nomPlanification,
         totalVoyageurs(voyageurProfiles),
         budgetClient,
-        result?.resume?.totalAvecMarge ?? result?.resume?.totalCoche,
-        result?.resume?.reste
+        totalFactureCorrige,
+        resteBudgetCorrige
       ),
     [
       selectedDestination?.title,
       selectedPlanification?.nomPlanification,
       voyageurProfiles,
       budgetClient,
-      result?.resume?.totalAvecMarge,
-      result?.resume?.totalCoche,
-      result?.resume?.reste,
+      totalFactureCorrige,
+      resteBudgetCorrige,
     ]
   );
 
@@ -659,8 +1130,7 @@ export default function SimulationPage() {
             </span>
 
             <p className="mt-2 text-sm leading-6 text-amber-900/85">
-              Il manque <span className="font-semibold">{formatAr(depassement)}</span>{" "}
-              pour couvrir <br /> toutes les quantités sélectionnées.
+              Votre budget ne couvre pas encore tous les blocs selectionnes.
             </p>
 
           </span>
@@ -683,7 +1153,6 @@ export default function SimulationPage() {
             </span>
 
             <span className="mt-1 block text-sm font-medium text-slate-900">
-              Il vous reste <span className="font-semibold">{formatAr(resteDisponible)}</span>{" "} <br />
               Voir les blocs encore disponibles
             </span>
 
@@ -691,112 +1160,165 @@ export default function SimulationPage() {
         </button>
       ) : null}
 
-      {showBudgetAlertModal ? (
-        <section className="pointer-events-auto fixed right-4 top-44 z-[120] max-h-[calc(100vh-12rem)] w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-[24px] border border-amber-200 bg-[linear-gradient(180deg,_rgba(255,251,235,0.99),_rgba(255,247,214,0.97))] p-4 shadow-[0_24px_80px_-38px_rgba(217,119,6,0.65)] sm:right-6">
-          <div className="absolute -top-2 right-7 h-4 w-4 rotate-45 border-l border-t border-amber-200 bg-amber-50" />
+      {manquePourCompleterForfait > 0 ? (
+        <button
+          type="button"
+          className="pointer-events-auto fixed right-4 top-28 z-[120] inline-flex max-w-[min(360px,calc(100vw-2rem))] items-center gap-3 rounded-full border border-amber-300 bg-white/95 px-4 py-3 text-left shadow-[0_16px_45px_-24px_rgba(217,119,6,0.75)] backdrop-blur sm:right-6"
+        >
+          <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+            <BellRing className="relative z-10 h-5 w-5" />
+          </span>
+          <span>
+            <span className="block text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
+              Forfait complet
+            </span>
+            <span className="mt-1 block text-sm font-medium leading-5 text-slate-900">
+              Votre budget ne permet pas encore d&apos;ajouter les derniers blocs du voyage.
+            </span>
+          </span>
+        </button>
+      ) : null}
 
-          <div className="flex max-h-[calc(100vh-14rem)] flex-col overflow-y-auto pr-1">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
+      {showBudgetAlertModal ? (
+        <DraggableSuggestionPanel
+          label="l'ajustement recommande"
+          closeButtonClassName="border-amber-300 text-amber-900 hover:bg-amber-50"
+          dragToneClassName="border-amber-200 bg-amber-100/80 text-amber-800 hover:bg-amber-100"
+          header={
+            <>
               <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-700">
                 Ajustement recommande
               </p>
               <h3 className="mt-2 text-base font-semibold leading-6 text-amber-950">
-                Votre budget est proche. Quelques options peuvent suffire.
+                {suggestionsCouvrentDepassement
+                  ? "Quelques options peuvent suffire."
+                  : "Les options proposees reduisent le manque, mais ne suffisent pas."}
               </h3>
               <p className="mt-2 text-sm leading-6 text-amber-900/85">
-                Il manque <span className="font-semibold">{formatAr(depassement)}</span>{" "}
-                pour couvrir toutes les quantités sélectionnées.
+                {/* Votre budget ne couvre pas encore toutes les quantites selectionnees.
+                Prix masque cote client :  */}
+                  Il manque <span className="font-semibold">{formatAr(depassement)}</span>{" "}
+                  pour couvrir toutes les quantites selectionnees.
+               
+                {!suggestionsCouvrentDepassement ? (
+                  <>
+                    {" "}Les retraits affiches ameliorent la situation, mais il faudra encore ajuster votre choix.
+                    {/* Prix masque cote client :
+                      {" "}Apres ces retraits, il manquera encore{" "}
+                      <span className="font-semibold">{formatAr(manqueApresSuggestions)}</span>.
+                    */}
+                  </>
+                ) : null}
               </p>
+            </>
+          }
+          onClose={() => {
+            if (budgetAlertKey) {
+              setDismissedBudgetAlertKey(budgetAlertKey);
+            }
+          }}
+          className="pointer-events-auto fixed right-4 top-44 z-[120] max-h-[calc(100vh-12rem)] w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-[24px] border border-amber-200 bg-[linear-gradient(180deg,_rgba(255,251,235,0.99),_rgba(255,247,214,0.97))] p-4 shadow-[0_24px_80px_-38px_rgba(217,119,6,0.65)] sm:right-6"
+        >
+          <div className="flex max-h-[var(--suggestion-panel-content-height)] min-h-0 flex-col overflow-y-auto pr-6">
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-1">
+              <div className="rounded-2xl border border-amber-300 bg-white/75 px-4 py-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-700">
+                  Retraits proposes
+                </p>
+                <p className="mt-1 text-lg font-semibold text-amber-950">
+                  {suggestionsOptionnelles.length} blocs
+                  {/* Prix masque cote client : {formatAr(totalSuggestions)} */}
+                </p>
+                <p className="mt-1 text-xs leading-5 text-amber-900/80">
+                  Blocs optionnels que vous pouvez retirer pour alleger votre simulation.
+                </p>
+              </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                if (budgetAlertKey) {
-                  setDismissedBudgetAlertKey(budgetAlertKey);
-                }
-              }}
-              className="shrink-0 rounded-full border border-amber-300 bg-white/80 px-2.5 py-1 text-xs font-semibold text-amber-900 transition hover:bg-amber-50"
-            >
-              Fermer
-            </button>
-          </div>
-
-          <div className="mt-4 rounded-2xl border border-amber-300 bg-white/75 px-4 py-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-700">
-              Economie proposee
-            </p>
-            <p className="mt-1 text-lg font-semibold text-amber-950">
-              {formatAr(totalSuggestions)}
-            </p>
-            <p className="mt-1 text-xs leading-5 text-amber-900/80">
-              Montant que vous pouvez economiser en appliquant les retraits proposes.
-            </p>
-          </div>
-
-          <div className="mt-4 space-y-2.5">
-            {suggestionsOptionnelles.slice(0, 3).map((element) => (
-              <div
-                key={element.id}
-                className="rounded-2xl border border-amber-200 bg-white/88 px-4 py-3"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="truncate font-medium text-slate-900">{element.titre}</p>
-                    <p className="mt-1 text-xs text-amber-700">
-                      Option {element.type.toLowerCase()}
-                    </p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      Actuellement {element.quantiteSelectionnee} personne(s)
-                    </p>
+            <div className="mt-4 space-y-2.5">
+              {suggestionsOptionnelles.slice(0, 3).map((element) => (
+                <div
+                  key={element.id}
+                  className="rounded-2xl border border-amber-200 bg-white/88 px-4 py-3"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-slate-900">{formatDisplayText(element.titre)}</p>
+                      <p className="mt-1 text-xs text-amber-700">
+                        Option {formatSuggestionType(element.type)}
+                      </p>
+                      <p className="mt-1 text-xs font-medium leading-5 text-slate-600">
+                        {formatSuggestionPlanningContext(element)}
+                      </p>
+                      {element.images?.length ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSuggestionGallery({
+                              title: formatDisplayText(element.titre),
+                              images: element.images ?? [],
+                              activeIndex: 0,
+                            })
+                          }
+                          className="mt-2 text-xs font-semibold text-amber-800 underline-offset-4 hover:underline"
+                        >
+                          Voir image
+                        </button>
+                      ) : null}
+                      <p className="mt-1 text-xs text-slate-500">
+                        Actuellement {element.quantiteSelectionnee} personne
+                      </p>
+                    </div>
+                    {/* Prix masque cote client :
+                      <p className="shrink-0 text-sm font-semibold text-slate-900">
+                        - {formatAr(element.economieSuggeree)}
+                      </p>
+                    */}
                   </div>
-                  <p className="shrink-0 text-sm font-semibold text-slate-900">
-                    - {formatAr(element.economieSuggeree)}
-                  </p>
-                </div>
 
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-100 bg-amber-50/70 px-3 py-2">
-                  <div className="text-xs leading-5 text-amber-900/90">
-                    <p>
-                      Prix par personne : <span className="font-semibold">{formatAr(element.prixParPersonne)}</span>
-                    </p>
-                    <p>
-                      Economie sur ce bloc : <span className="font-semibold">{formatAr(element.economieSuggeree)}</span>
-                    </p>
-                    <p>
-                      Suggestion : passer a <span className="font-semibold">{element.quantiteSuggeree}</span> personne(s)
-                    </p>
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-100 bg-amber-50/70 px-3 py-2">
+                    <div className="text-xs leading-5 text-amber-900/90">
+                      {/* Prix masque cote client :
+                        <p>
+                          Prix par personne : <span className="font-semibold">{formatAr(element.prixParPersonne)}</span>
+                        </p>
+                        <p>
+                          Economie sur ce bloc : <span className="font-semibold">{formatAr(element.economieSuggeree)}</span>
+                        </p>
+                      */}
+                      <p>
+                        Suggestion : passer à <span className="font-semibold">{element.quantiteSuggeree}</span> personne(s)
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void updateElementQuantity(element.id, element.quantiteSuggeree)}
+                      className="rounded-full border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 transition hover:bg-amber-100"
+                    >
+                      {element.quantiteSuggeree > 0
+                        ? `Passer à ${element.quantiteSuggeree} pers`
+                        : "Retirer ce bloc"}
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => void updateElementQuantity(element.id, element.quantiteSuggeree)}
-                    className="rounded-full border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 transition hover:bg-amber-100"
-                  >
-                    {element.quantiteSuggeree > 0
-                      ? `Passer a ${element.quantiteSuggeree} pers`
-                      : "Retirer ce bloc"}
-                  </button>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
 
-          <p className="mt-4 text-xs leading-5 text-amber-900/80">
-            Vous pouvez continuer a modifier le budget, reduire le nombre de personnes
-            sur un bloc optionnel sans fermer ce panneau.
-          </p>
+            <p className="mt-4 text-xs leading-5 text-amber-900/80">
+              Vous pouvez continuer à modifier le budget, reduire le nombre de personnes
+              sur un bloc optionnel.
+            </p>
           </div>
-        </section>
+        </DraggableSuggestionPanel>
       ) : null}
-
         {showPositiveBudgetModal ? (
-        <section className="pointer-events-auto fixed right-4 top-44 z-[120] max-h-[calc(100vh-12rem)] w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-[24px] border border-emerald-200 bg-[linear-gradient(180deg,_rgba(236,253,245,0.99),_rgba(220,252,231,0.97))] p-4 shadow-[0_24px_80px_-38px_rgba(16,185,129,0.55)] sm:right-6">
-          <div className="absolute -top-2 right-7 h-4 w-4 rotate-45 border-l border-t border-emerald-200 bg-emerald-50" />
-
-          <div className="flex max-h-[calc(100vh-14rem)] flex-col overflow-y-auto pr-1">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
+        <DraggableSuggestionPanel
+          label="la suggestion budget"
+          closeButtonClassName="border-emerald-300 text-emerald-900 hover:bg-emerald-50"
+          dragToneClassName="border-emerald-200 bg-emerald-100/80 text-emerald-800 hover:bg-emerald-100"
+          header={
+            <>
               <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-700">
                 Suggestion budget
               </p>
@@ -804,102 +1326,125 @@ export default function SimulationPage() {
                 Votre budget permet encore quelques ajouts.
               </h3>
               <p className="mt-2 text-sm leading-6 text-emerald-900/85">
-                Il vous reste <span className="font-semibold">{formatAr(resteDisponible)}</span>{" "}
-                pour augmenter le nombre de personnes sur certains blocs optionnels.
+                Votre budget permet encore d&apos;ajouter certains blocs optionnels.
               </p>
+            </>
+          }
+          onClose={() => {
+            if (positiveBudgetKey) {
+              setDismissedPositiveBudgetKey(positiveBudgetKey);
+            }
+          }}
+          className="pointer-events-auto fixed right-4 top-44 z-[120] max-h-[calc(100vh-12rem)] w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-[24px] border border-emerald-200 bg-[linear-gradient(180deg,_rgba(236,253,245,0.99),_rgba(220,252,231,0.97))] p-4 shadow-[0_24px_80px_-38px_rgba(16,185,129,0.55)] sm:right-6"
+        >
+          <div className="flex max-h-[var(--suggestion-panel-content-height)] min-h-0 flex-col overflow-y-auto pr-6">
+            <div className="mt-4 rounded-2xl border border-emerald-300 bg-white/75 px-4 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                Options disponibles
+              </p>
+              <p className="mt-1 text-lg font-semibold text-emerald-950">
+                {suggestionsDisponibles.length} blocs
+                {/* Prix masque cote client : {formatAr(totalSuggestionsDisponibles)} */}
+              </p>
+              <p className="mt-1 text-xs leading-5 text-emerald-800/80">
+                Vous pouvez ajouter ces options sans depasser votre budget.
+              </p>
+              {/* Prix masque cote client :
+                <p className="mt-1 text-xs text-emerald-800/80">
+                  Budget restant apres ajout : {formatAr(resteApresSuggestions)}
+                </p>
+              */}
             </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                if (positiveBudgetKey) {
-                  setDismissedPositiveBudgetKey(positiveBudgetKey);
-                }
-              }}
-              className="shrink-0 rounded-full border border-emerald-300 bg-white/80 px-2.5 py-1 text-xs font-semibold text-emerald-900 transition hover:bg-emerald-50"
-            >
-              Fermer
-            </button>
-          </div>
-
-          <div className="mt-4 rounded-2xl border border-emerald-300 bg-white/75 px-4 py-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
-              Option ajoutable
-            </p>
-            <p className="mt-1 text-lg font-semibold text-emerald-950">
-              {formatAr(totalSuggestionsDisponibles)}
-            </p>
-            <p className="mt-1 text-xs leading-5 text-emerald-800/80">
-              Vous pouvez ajouter ces options sans depasser votre budget.
-            </p>
-            <p className="mt-1 text-xs text-emerald-800/80">
-              Budget restant apres ajout : {formatAr(resteApresSuggestions)}
-            </p>
-          </div>
-
-          <div className="mt-4 space-y-2.5">
-            {suggestionsDisponibles.slice(0, 4).map((element) => (
-              <div
-                key={element.id}
-                className="rounded-2xl border border-emerald-200 bg-white/88 px-4 py-3"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="truncate font-medium text-slate-900">{element.titre}</p>
-                  <p className="mt-1 text-xs text-emerald-700">
-                    {element.type}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {element.quantiteSelectionnee > 0
-                      ? `Déjà ${element.quantiteSelectionnee} personne(s), +${element.quantiteSuggeree} possible(s)`
-                      : `${element.quantiteSuggeree} personne(s) possible(s)`}
-                  </p>
-                </div>
-                <p className="shrink-0 text-sm font-semibold text-slate-900">
-                  {formatAr(element.prix)}
-                </p>
-                </div>
-
-                <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50/70 px-3 py-2 text-xs leading-5 text-emerald-900/90">
-                  <p>
-                    Prix par personne : <span className="font-semibold">{formatAr(element.prixParPersonne)}</span>
-                  </p>
-                  <p>
-                    Ajout suggere : <span className="font-semibold">{element.quantiteSuggeree}</span> personne(s)
-                  </p>
-                  <p>
-                    Suggestion : passer a{" "}
-                    <span className="font-semibold">
-                      {element.quantiteSelectionnee + element.quantiteSuggeree}
-                    </span>{" "}
-                    personne(s)
-                  </p>
-                </div>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="mt-3 w-full border-emerald-200 text-emerald-800 hover:bg-emerald-100"
-                  onClick={() =>
-                    void updateElementQuantity(
-                      element.id,
-                      element.quantiteSelectionnee + element.quantiteSuggeree
-                    )
-                  }
+            <div className="mt-4 space-y-2.5">
+              {suggestionsDisponibles.slice(0, 4).map((element) => (
+                <div
+                  key={element.id}
+                  className="rounded-2xl border border-emerald-200 bg-white/88 px-4 py-3"
                 >
-                  Ajouter {element.quantiteSuggeree} personne(s)
-                </Button>
-              </div>
-            ))}
-          </div>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-slate-900">{formatDisplayText(element.titre)}</p>
+                      <p className="mt-1 text-xs text-emerald-700">
+                        {formatSuggestionType(element.type)}
+                      </p>
+                      <p className="mt-1 text-xs font-medium leading-5 text-slate-600">
+                        {formatSuggestionPlanningContext(element)}
+                      </p>
+                      {element.images?.length ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSuggestionGallery({
+                              title: formatDisplayText(element.titre),
+                              images: element.images ?? [],
+                              activeIndex: 0,
+                            })
+                          }
+                          className="mt-2 text-xs font-semibold text-emerald-800 underline-offset-4 hover:underline"
+                        >
+                          Voir image
+                        </button>
+                      ) : null}
+                      <p className="mt-1 text-xs text-slate-500">
+                        {element.quantiteSelectionnee > 0
+                        ? `Déjà ${element.quantiteSelectionnee} personne, +${element.quantiteSuggeree} possible(s)`
+                          : `${element.quantiteSuggeree} personne possible`}
+                      </p>
+                    </div>
+                    {/* Prix masque cote client :
+                      <p className="shrink-0 text-sm font-semibold text-slate-900">
+                        {formatAr(element.prix)}
+                      </p>
+                    */}
+                  </div>
 
-          <p className="mt-4 text-xs leading-5 text-emerald-900/80">
-            Vous pouvez augmenter directement le nombre de personnes sur un bloc propose ou continuer a ajuster votre simulation.
-          </p>
+                  <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50/70 px-3 py-2 text-xs leading-5 text-emerald-900/90">
+                    {/* Prix masque cote client :
+                      <p>
+                        Prix par personne : <span className="font-semibold">{formatAr(element.prixParPersonne)}</span>
+                      </p>
+                    */}
+                    <p>
+                      Ajout suggere : <span className="font-semibold">{element.quantiteSuggeree}</span> personne
+                    </p>
+                    <p>
+                      Suggestion : passer à{" "}
+                      <span className="font-semibold">
+                        {element.quantiteSelectionnee + element.quantiteSuggeree}
+                      </span>{" "}
+                      personne
+                    </p>
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="mt-3 w-full border-emerald-200 text-emerald-800 hover:bg-emerald-100"
+                    onClick={() =>
+                      void updateElementQuantity(
+                        element.id,
+                        element.quantiteSelectionnee + element.quantiteSuggeree
+                      )
+                    }
+                  >
+                    Ajouter {element.quantiteSuggeree} personne
+                  </Button>
+                </div>
+              ))}
+            </div>
+
+            <p className="mt-4 text-xs leading-5 text-emerald-900/80">
+              Vous pouvez augmenter directement le nombre de personnes sur un bloc propose.
+            </p>
           </div>
-        </section>
+        </DraggableSuggestionPanel>
       ) : null}
-
+      <ImageGalleryDialog
+        gallery={suggestionGallery}
+        onChange={setSuggestionGallery}
+        description="Images associees au bloc selectionne."
+      />
       <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
        
 
@@ -982,10 +1527,10 @@ export default function SimulationPage() {
                 <section className="rounded-[28px] border border-slate-200/80 bg-white/90 p-5 shadow-[0_16px_60px_-40px_rgba(15,23,42,0.45)] sm:p-6">
                   <BudgetSummary
                     totalCoche={result.resume?.totalCoche || 0}
-                    totalAvecMarge={result.resume?.totalAvecMarge || result.resume?.totalCoche || 0}
+                    totalAvecMarge={totalFactureCorrige}
                     budgetClient={result.recap?.budgetClient || budgetClient}
                     adminBudget={budgetCategorieSelectionnee}
-                    reste={result.resume?.reste || 0}
+                    reste={resteBudgetCorrige}
                     totalOptionnel={result.resume?.totalOptionnel || 0}
                     seuilMinimum={result.recap?.seuilMinimum || 0}
                   />
@@ -1003,7 +1548,7 @@ export default function SimulationPage() {
                             Ajustez votre planning
                           </h3>
                           <p className="mt-1 text-sm text-slate-600">
-                            Cochez ou decochez les elements optionnels selon vos priorites.
+                            Modifiez le nombre de personnes sur les blocs optionnels selon vos priorites.
                           </p>
                         </div>
                         <div className="flex flex-wrap items-center gap-3">
@@ -1012,7 +1557,11 @@ export default function SimulationPage() {
                               Mode modification de reservation
                             </div>
                           ) : null}
-                          <Button onClick={handleReserveSimulation} disabled={!canReserveSimulation}>
+                          <Button
+                            onClick={handleReserveSimulation}
+                            disabled={!canReserveSimulation}
+                            className="border-transparent bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/20 hover:from-emerald-700 hover:to-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
                             {reservationEditPrefill.editReservationId
                               ? "Mettre a jour depuis cette simulation"
                               : "Reserver cette simulation"}
@@ -1034,7 +1583,7 @@ export default function SimulationPage() {
                               Etape 3
                             </p>
                             <h3 className="mt-2 text-xl font-semibold text-slate-900">
-                              Planning journalier recommande
+                              Planning journalier recommandé
                             </h3>
                               <p className="mt-1 text-sm text-slate-600">
                                 Visualisez votre voyage jour par jour, avec les blocs
@@ -1049,7 +1598,7 @@ export default function SimulationPage() {
                                   </Button>
                                 </DialogTrigger>
                                 <DialogContent
-                                  className="!h-[92vh] !w-[94vw] !max-w-[1400px] overflow-hidden rounded-[28px] border border-slate-200 bg-white p-0 sm:!max-w-[1400px]"
+                                  className="!max-h-[90vh] !w-[94vw] !max-w-[1400px] overflow-hidden rounded-[24px] border border-slate-200 bg-white p-0 sm:!max-w-[1400px]"
                                   onInteractOutside={(event) => {
                                     event.preventDefault();
                                   }}
@@ -1057,15 +1606,15 @@ export default function SimulationPage() {
                                     event.preventDefault();
                                   }}
                                 >
-                                  <DialogHeader className="border-b border-slate-200 bg-slate-50/90 px-6 py-5">
-                                    <DialogTitle className="text-xl font-semibold text-slate-900">
-                                      Planning journalier recommande
+                                  <DialogHeader className="border-b border-slate-200 bg-slate-50/90 px-5 py-3">
+                                    <DialogTitle className="text-lg font-semibold text-slate-900">
+                                      Planning journalier recommandé
                                     </DialogTitle>
-                                    <DialogDescription className="text-sm text-slate-600">
+                                    <DialogDescription className="text-xs text-slate-600">
                                       Visualisez votre voyage en grand format et ajustez les blocs obligatoires et optionnels plus confortablement.
                                     </DialogDescription>
                                   </DialogHeader>
-                                  <div className="h-full overflow-auto px-6 py-5">
+                                  <div className="max-h-[calc(90vh-74px)] overflow-auto px-5 py-3">
                                     <PlanningJournalier
                                       jours={result.jours}
                                       elementsSelectionnes={elementsSelectionnes}
@@ -1097,12 +1646,16 @@ export default function SimulationPage() {
 
                 <section
                   className={`rounded-[28px] border p-5 shadow-sm sm:p-6 ${
-                    result.success
+                    result.success && resteBudgetCorrige >= 0
                       ? "border-emerald-200 bg-emerald-50/90 text-emerald-800"
                       : "border-yellow-200 bg-yellow-50/95 text-yellow-800"
                   }`}
                 >
-                  <p className="text-sm font-semibold">{result.message}</p>
+                  <p className="text-sm font-semibold">
+                    {result.success && resteBudgetCorrige < 0
+                      ? "Votre budget ne couvre pas le prix de vente agence pour tous les blocs sélectionnés."
+                      : result.message}
+                  </p>
                   {!result.success &&
                     result.suggestions?.suggestions.map((suggestion, index) => (
                       <p key={`${suggestion.type}-${index}`} className="mt-2 text-sm leading-6">
@@ -1193,7 +1746,7 @@ export default function SimulationPage() {
                   <div
                     className={`rounded-[20px] border p-3 ${
                       result
-                        ? (result.resume?.reste ?? 0) >= 0
+                        ? resteBudgetCorrige >= 0
                           ? "border-emerald-200 bg-emerald-50/80"
                         : "border-amber-200 bg-amber-50/80"
                       : "border-slate-200 bg-slate-50/80"
@@ -1205,19 +1758,19 @@ export default function SimulationPage() {
                     <p
                       className={`mt-1.5 text-base font-semibold ${
                         result
-                          ? (result.resume?.reste ?? 0) >= 0
+                          ? resteBudgetCorrige >= 0
                             ? "text-emerald-800"
                           : "text-amber-800"
                         : "text-slate-900"
                     }`}
                   >
-                    {result ? formatAr(result.resume?.reste ?? 0) : "A calculer"}
+                    {result ? formatAr(resteBudgetCorrige) : "A calculer"}
                   </p>
                 </div>
               </div>
             </section>
 
-              <section className="rounded-[24px] border border-slate-200/80 bg-slate-950 p-5 text-white shadow-[0_20px_65px_-40px_rgba(15,23,42,0.95)]">
+              {/* <section className="rounded-[24px] border border-slate-200/80 bg-slate-950 p-5 text-white shadow-[0_20px_65px_-40px_rgba(15,23,42,0.95)]">
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-300">
                   Conseil pro
                 </p>
@@ -1229,7 +1782,7 @@ export default function SimulationPage() {
                   ajoutez progressivement les options qui augmentent la valeur de
                   l&apos;experience.
               </p>
-            </section>
+            </section> */}
           </aside>
         </div>
       </div>

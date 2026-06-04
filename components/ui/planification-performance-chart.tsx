@@ -31,6 +31,31 @@ function getShortLabel(value: string) {
   return value.length > 22 ? `${value.slice(0, 22)}...` : value;
 }
 
+function formatDashboardText(value?: string | null) {
+  return (value ?? "")
+    .replace(/S‚jour/g, "Séjour")
+    .replace(/SÃ©jour/g, "Séjour")
+    .replace(/Ao–t/g, "Août")
+    .replace(/AoÃ»t/g, "Août")
+    .replace(/…/g, "à")
+    .replace(/‚/g, "é")
+    .replace(/–/g, "û")
+    .replace(/“/g, "ô")
+    .replace(/Š/g, "è")
+    .replace(/Œ/g, "î")
+    .replace(/Ã©/g, "é")
+    .replace(/Ã¨/g, "è")
+    .replace(/Ãª/g, "ê")
+    .replace(/Ã«/g, "ë")
+    .replace(/Ã /g, "à")
+    .replace(/Ã¢/g, "â")
+    .replace(/Ã®/g, "î")
+    .replace(/Ã´/g, "ô")
+    .replace(/Ã»/g, "û")
+    .replace(/Ã¹/g, "ù")
+    .replace(/Ã§/g, "ç");
+}
+
 function formatMonth(value: string) {
   const date = new Date(`${value}T00:00:00`);
   if (Number.isNaN(date.getTime())) return value;
@@ -61,10 +86,12 @@ export function PlanificationPerformanceChart({ data, groupBy }: PlanificationPe
 
   data.forEach((item) => {
     const key = groupBy === "planification" ? item.planificationId : item.periodMonth;
+    const planificationName = formatDashboardText(item.planificationName);
+    const destinationName = formatDashboardText(item.destinationName);
     const existing = groupedData.get(key) ?? {
-      labelSource: groupBy === "planification" ? item.planificationName : item.periodMonth,
-      planificationName: groupBy === "planification" ? item.planificationName : undefined,
-      destinationName: groupBy === "planification" ? item.destinationName : undefined,
+      labelSource: groupBy === "planification" ? planificationName : item.periodMonth,
+      planificationName: groupBy === "planification" ? planificationName : undefined,
+      destinationName: groupBy === "planification" ? destinationName : undefined,
       validees: 0,
       enAttente: 0,
       annulees: 0,
@@ -101,7 +128,7 @@ export function PlanificationPerformanceChart({ data, groupBy }: PlanificationPe
       <div className="flex flex-wrap items-center justify-center gap-5 text-sm">
         <span className="inline-flex items-center gap-2 text-emerald-600">
           <span className="h-2.5 w-2.5 rounded-full border border-emerald-500" />
-          Validees
+          Validées
         </span>
         <span className="inline-flex items-center gap-2 text-amber-600">
           <span className="h-2.5 w-2.5 rounded-full border border-amber-500" />
@@ -109,7 +136,7 @@ export function PlanificationPerformanceChart({ data, groupBy }: PlanificationPe
         </span>
         <span className="inline-flex items-center gap-2 text-rose-600">
           <span className="h-2.5 w-2.5 rounded-full border border-rose-500" />
-          Annulees
+          Annulées
         </span>
       </div>
 
@@ -128,17 +155,17 @@ export function PlanificationPerformanceChart({ data, groupBy }: PlanificationPe
             <Tooltip
               formatter={(value, name) => {
                 const labels: Record<string, string> = {
-                  validees: "Validees",
+                  validees: "Validées",
                   enAttente: "En attente",
-                  annulees: "Annulees",
+                  annulees: "Annulées",
                 };
-                return [`${value} reservation(s)`, labels[String(name)] ?? String(name)];
+                return [`${value} réservation(s)`, labels[String(name)] ?? String(name)];
               }}
               labelFormatter={(label, payload) => {
                 const item = payload?.[0]?.payload as
                   | { planificationName?: string; destinationName?: string }
                   | undefined;
-                if (groupBy === "month") return `Periode : ${label}`;
+                if (groupBy === "month") return `Période : ${label}`;
                 return item?.destinationName
                   ? `${item.planificationName ?? label} - ${item.destinationName}`
                   : `Planification : ${label}`;

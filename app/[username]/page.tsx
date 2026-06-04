@@ -53,7 +53,7 @@ export default function UserHomePage() {
     void loadDestinations();
   }, []);
 
-  const featuredDestinations = useMemo(() => destinations.slice(0, 3), [destinations]);
+  const featuredDestinations = useMemo(() => destinations, [destinations]);
 
   return (
     <div className="space-y-8">
@@ -121,11 +121,11 @@ export default function UserHomePage() {
           </div>
         </div>
 
-        <div className="grid gap-4 xl:grid-cols-3">
+        <div className="flex gap-4 overflow-x-auto pb-3 [scrollbar-width:thin]">
           {featuredDestinations.map((destination) => (
             <article
               key={destination.id}
-              className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              className="w-[300px] shrink-0 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:w-[340px] lg:w-[360px]"
             >
               <div className="relative h-52 w-full">
                 {destination.image?.trim() ? (

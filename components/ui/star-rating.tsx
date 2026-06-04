@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { getUserRating, saveUserRating } from "@/lib/api/notations";
+import { ApiError } from "@/lib/api/client";
 import { useRouter } from "next/navigation";
 
 interface StarRatingProps {
@@ -58,6 +59,11 @@ export function StarRating({
           console.log("No existing rating found for user");
         }
       } catch (error) {
+        if (error instanceof ApiError && error.status === 404) {
+          setCurrentRating(0);
+          return;
+        }
+
         console.error("Error fetching user rating:", error);
         setCurrentRating(0);
       } finally {

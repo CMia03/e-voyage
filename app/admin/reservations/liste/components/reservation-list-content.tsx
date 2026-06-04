@@ -5,17 +5,18 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   CalendarDays,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   CircleDollarSign,
   Eye,
   Layers,
   MapPin,
-  MoreHorizontal,
   Plus,
   RefreshCw,
   Search,
   UserRound,
+  XCircle,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -45,8 +46,8 @@ const statusStyles: Record<ReservationStatus, string> = {
 
 const statusLabels: Record<ReservationStatus, string> = {
   EN_ATTENTE: "En attente",
-  VALIDEE: "Validee",
-  ANNULEE: "Annulee",
+  VALIDEE: "Validée",
+  ANNULEE: "Annulée",
 };
 
 const sourceLabels: Record<ReservationSource, string> = {
@@ -146,6 +147,7 @@ export function ReservationListContent() {
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editInitialStatus, setEditInitialStatus] = useState<ReservationStatus | undefined>(undefined);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
 
   const loadReservations = useCallback(async () => {
@@ -268,6 +270,7 @@ export function ReservationListContent() {
   const closeReservationModals = useCallback(() => {
     setIsViewModalOpen(false);
     setIsEditModalOpen(false);
+    setEditInitialStatus(undefined);
     setSelectedReservation(null);
 
     if (searchParams.has("reservationId")) {
@@ -310,6 +313,7 @@ export function ReservationListContent() {
         );
 
         setIsEditModalOpen(false);
+        setEditInitialStatus(undefined);
         setSelectedReservation(null);
         setSuccessMessage(`Reservation ${statusLabels[data.status].toLowerCase()} avec succes.`);
         await loadReservations();
@@ -565,15 +569,30 @@ export function ReservationListContent() {
                             <Button
                               variant="outline"
                               size="icon"
-                              className="h-9 w-9"
-                              title="Modifier le suivi"
+                              className="h-9 w-9 border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800"
+                              title="Valider la reservation"
                               disabled={updatingStatus === reservation.id}
                               onClick={() => {
                                 setSelectedReservation(reservation);
+                                setEditInitialStatus("VALIDEE");
                                 setIsEditModalOpen(true);
                               }}
                             >
-                              <MoreHorizontal className="h-4 w-4" />
+                              <CheckCircle2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-9 w-9 border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 hover:text-rose-800"
+                              title="Annuler la reservation"
+                              disabled={updatingStatus === reservation.id}
+                              onClick={() => {
+                                setSelectedReservation(reservation);
+                                setEditInitialStatus("ANNULEE");
+                                setIsEditModalOpen(true);
+                              }}
+                            >
+                              <XCircle className="h-4 w-4" />
                             </Button>
                           </div>
                         </td>
@@ -662,6 +681,7 @@ export function ReservationListContent() {
             open={isEditModalOpen}
             onClose={closeReservationModals}
             onSave={handleSaveReservation}
+            initialStatus={editInitialStatus}
           />
         </>
       ) : null}

@@ -190,7 +190,7 @@ export function AdminCommentaires() {
             Commentaires des clients
           </h1>
           <p className="text-sm text-muted-foreground">
-            Gérez et modérez les commentaires des utilisateurs avec leur destination.
+            Gérez et modérez les commentaires des utilisateurs.
           </p>
         </div>
 
@@ -213,7 +213,7 @@ export function AdminCommentaires() {
       <Card className="border-border/50">
         <CardHeader className="pb-3">
           <CardTitle>Recherche</CardTitle>
-          <CardDescription>Client, destination, contenu, statut ou période.</CardDescription>
+          {/* <CardDescription>Client, destination, contenu, statut ou période.</CardDescription> */}
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-3">

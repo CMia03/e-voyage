@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 
 import { ElementSelection, ElementSimulation, JourSimulation } from "@/lib/type/simulation.types";
+import { ImageGalleryDialog, ImageGalleryState } from "./ImageGalleryDialog";
 
 type PlanningJournalierProps = {
   jours: JourSimulation[];
@@ -23,16 +24,130 @@ function formatAr(value: number) {
   return `${value.toLocaleString("fr-MG")} Ar`;
 }
 
+function fixLegacyEncoding(value: string) {
+  const replacements: Array<[string, string]> = [
+    ["Ã¢â‚¬Å¡", "é"],
+    ["Ã†â€™", "â"],
+    ["Ã¢â‚¬Â¦", "à"],
+    ["Ã¢â‚¬Â¡", "ç"],
+    ["Ã‹â€ ", "ê"],
+    ["Ã¢â‚¬Â°", "ë"],
+    ["Ã…Â ", "è"],
+    ["Ã¢â‚¬Â¹", "ï"],
+    ["Ã…â€™", "î"],
+    ["Ã¢â‚¬Å“", "ô"],
+    ["Ã¢â‚¬Â", "ö"],
+    ["Ã¢â‚¬â€œ", "û"],
+    ["Ã¢â‚¬â€", "ù"],
+    ["Ãƒâ€”", "Î"],
+    ["ÃƒÂ©", "é"],
+    ["ÃƒÂ¨", "è"],
+    ["ÃƒÂª", "ê"],
+    ["ÃƒÂ ", "à"],
+    ["ÃƒÂ®", "î"],
+    ["ÃƒÂ´", "ô"],
+    ["ÃƒÂ»", "û"],
+    ["ÃƒÂ§", "ç"],
+    ["Ã©", "é"],
+    ["Ã¨", "è"],
+    ["Ãª", "ê"],
+    ["Ã«", "ë"],
+    ["Ã ", "à"],
+    ["Ã¢", "â"],
+    ["Ã®", "î"],
+    ["Ã¯", "ï"],
+    ["Ã´", "ô"],
+    ["Ã»", "û"],
+    ["Ã¹", "ù"],
+    ["Ã§", "ç"],
+    ["Ã‰", "É"],
+    ["ÃŽ", "Î"],
+    ["‚", "é"],
+    ["Š", "è"],
+    ["Œ", "î"],
+    ["“", "ô"],
+    ["”", "ö"],
+    ["–", "û"],
+    ["—", "ù"],
+    ["…", "à"],
+    ["×", "Î"],
+  ];
+
+  return replacements.reduce(
+    (text, [broken, fixed]) => text.split(broken).join(fixed),
+    value
+  );
+}
+
+function displayText(value?: string | number | null, fallback = "-") {
+  if (value === null || value === undefined || value === "") return fallback;
+  return fixLegacyEncoding(String(value));
+}
+
+function getElementImages(element: ElementSimulation) {
+  const details = element.details as ElementSimulation["details"] & {
+    image?: string | null;
+    imagePrincipale?: string | null;
+    urlImage?: string | null;
+    urlImagePrincipale?: string | null;
+    photos?: Array<{ urlImage?: string | null; image?: string | null } | string | null | undefined>;
+    tarifs?: Array<{
+      image?: string | null;
+      urlImage?: string | null;
+      images?: Array<string | null | undefined>;
+      photos?: Array<{ urlImage?: string | null; image?: string | null } | string | null | undefined>;
+    } | null | undefined>;
+    chambres?: Array<{
+      image?: string | null;
+      urlImage?: string | null;
+      images?: Array<string | null | undefined>;
+      photos?: Array<{ urlImage?: string | null; image?: string | null } | string | null | undefined>;
+    } | null | undefined>;
+  };
+  const collectPhotoUrls = (
+    photos?: Array<{ urlImage?: string | null; image?: string | null } | string | null | undefined>
+  ) =>
+    (photos ?? []).flatMap((photo) => {
+      if (typeof photo === "string") return [photo];
+      if (!photo) return [];
+      return [photo.urlImage, photo.image];
+    });
+  const nestedImages = [...(details.tarifs ?? []), ...(details.chambres ?? [])].flatMap((item) =>
+    item
+      ? [
+          item.urlImage,
+          item.image,
+          ...(Array.isArray(item.images) ? item.images : []),
+          ...collectPhotoUrls(item.photos),
+        ]
+      : []
+  );
+
+  return Array.from(
+    new Set(
+      [
+        details.urlImagePrincipale,
+        details.imagePrincipale,
+        details.urlImage,
+        details.image,
+        ...(Array.isArray(details.images) ? details.images : []),
+        ...collectPhotoUrls(details.photos),
+        ...nestedImages,
+      ].filter((image): image is string => typeof image === "string" && image.trim().length > 0)
+    )
+  );
+}
+
 function getTypeLabel(type: string) {
   const normalized = type.trim().toUpperCase();
-  if (normalized === "HEBERGEMENT") return "Hebergement";
+  if (normalized === "HEBERGEMENT") return "Hébergement";
   if (normalized === "TRANSPORT") return "Transport";
-  if (normalized === "ACTIVITE") return "Activite";
-  return type;
+  if (normalized === "ACTIVITE") return "Activité";
+  return displayText(type);
 }
 
 function getDayHeading(jour: JourSimulation) {
-  const title = (jour.titre || "").trim();
+  const title = displayText(jour.titre, "").trim();
   const defaultTitle = `Jour ${jour.numeroJour}`;
   return title && title.toLowerCase() !== defaultTitle.toLowerCase() ? title : defaultTitle;
 }
@@ -78,7 +193,8 @@ const hebergementIcon = createMapIcon("#10b981");
 const transportPointIcon = createMapIcon("#3b82f6");
 
 function createPreviewIcon(title: string, image?: string | null, color = "#10b981") {
-  const safeTitle = title.length > 18 ? `${title.slice(0, 18)}…` : title;
+  const normalizedTitle = displayText(title);
+  const safeTitle = normalizedTitle.length > 18 ? `${normalizedTitle.slice(0, 18)}...` : normalizedTitle;
   const imageHtml = image
     ? `<img src="${image}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:9999px;" />`
     : `<div style="width:100%;height:100%;border-radius:9999px;background:${color};"></div>`;
@@ -108,17 +224,39 @@ function FitMapToContent({
   const map = useMap();
 
   useEffect(() => {
-    if (points.length === 0) {
-      map.setView(center, 6);
-      return;
-    }
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      if (cancelled) return;
 
-    if (points.length === 1) {
-      map.setView(points[0], 12);
-      return;
-    }
+      const container = map.getContainer();
+      if (!container || !container.isConnected) return;
 
-    map.fitBounds(points, { padding: [50, 50] });
+      map.invalidateSize();
+      window.requestAnimationFrame(() => {
+        if (cancelled) return;
+
+        try {
+          if (points.length === 0) {
+            map.setView(center, 6);
+            return;
+          }
+
+          if (points.length === 1) {
+            map.setView(points[0], 12);
+            return;
+          }
+
+          map.fitBounds(points, { padding: [50, 50] });
+        } catch {
+          // Leaflet may not have its pane ready while the dialog is opening.
+        }
+      });
+    }, 0);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
   }, [center, map, points]);
 
   return null;
@@ -131,9 +269,12 @@ export function PlanningJournalier({
   totalVoyageurs,
   readOnly = false,
 }: PlanningJournalierProps) {
-  const [gallery, setGallery] = useState<{ title: string; images: string[]; activeIndex: number } | null>(null);
+  const [gallery, setGallery] = useState<ImageGalleryState | null>(null);
   const [isMapOpen, setIsMapOpen] = useState(false);
-  const quantityMap = new Map(elementsSelectionnes.map((item) => [item.elementId, item.quantite]));
+  const quantityMap = useMemo(
+    () => new Map(elementsSelectionnes.map((item) => [item.elementId, item.quantite])),
+    [elementsSelectionnes]
+  );
   const mapData = useMemo(() => {
     const markers: MapMarkerItem[] = [];
     const segments: MapTransportSegment[] = [];
@@ -147,12 +288,12 @@ export function PlanningJournalier({
         if (isFiniteCoordinate(details.latitude) && isFiniteCoordinate(details.longitude)) {
           markers.push({
             id: `${element.id}-point`,
-            title: element.titre,
+            title: displayText(element.titre),
             type: getTypeLabel(element.type),
             dayLabel,
             position: [details.latitude!, details.longitude!],
             subtitle: details.adresse || details.duree,
-            images: details.images ?? [],
+            images: getElementImages(element),
             description: element.obligatoire
               ? "Bloc obligatoire du voyage"
               : `${Math.max(quantityMap.get(element.id) ?? element.quantiteSelectionnee ?? 0, 0)} personne(s) sur ce bloc`,
@@ -168,7 +309,7 @@ export function PlanningJournalier({
         ) {
           segments.push({
             id: `${element.id}-segment`,
-            title: element.titre,
+            title: displayText(element.titre),
             dayLabel,
             points: [
               [details.latitudeDepart!, details.longitudeDepart!],
@@ -181,26 +322,26 @@ export function PlanningJournalier({
           if (details.latitudeDepart != null && details.longitudeDepart != null) {
             markers.push({
               id: `${element.id}-depart`,
-              title: details.depart || `${element.titre} - depart`,
+              title: displayText(details.depart || `${element.titre} - départ`),
               type: "Transport",
               dayLabel,
               position: [details.latitudeDepart, details.longitudeDepart],
-              subtitle: "Point de depart",
+              subtitle: "Point de départ",
               images: [],
-              description: details.distance || element.titre,
+              description: displayText(details.distance || element.titre),
               details,
             });
           }
           if (details.latitudeArrivee != null && details.longitudeArrivee != null) {
             markers.push({
               id: `${element.id}-arrivee`,
-              title: details.arrivee || `${element.titre} - arrivee`,
+              title: displayText(details.arrivee || `${element.titre} - arrivée`),
               type: "Transport",
               dayLabel,
               position: [details.latitudeArrivee, details.longitudeArrivee],
-              subtitle: "Point d'arrivee",
+              subtitle: "Point d'arrivée",
               images: [],
-              description: details.distance || element.titre,
+              description: displayText(details.distance || element.titre),
               details,
             });
           }
@@ -244,26 +385,18 @@ export function PlanningJournalier({
     selectedMarkerQuantity > 0 ? `${selectedMarkerQuantity} personne(s) sur ce bloc` : null;
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-1">
-        
-        {/* <h2 className="text-xl font-semibold text-slate-900">Planning journalier</h2>
-        <p className="text-sm text-slate-600">
-          Visualisez votre voyage jour par jour et ajustez les options selon vos envies.
-        </p> */}
-
-      </div>
+    <div className="space-y-2">
 
       {mapData.markers.length > 0 || mapData.segments.length > 0 ? (
         <div className="flex justify-end">
-          <Button type="button" variant="outline" onClick={() => setIsMapOpen(true)}>
+          <Button type="button" variant="outline" size="sm" onClick={() => setIsMapOpen(true)}>
             <MapPinned className="mr-2 h-4 w-4" />
             Voir sur la carte
           </Button>
         </div>
       ) : null}
 
-      <div className="flex gap-5 overflow-x-auto px-2 pb-4 [scrollbar-width:thin]">
+      <div className="flex gap-4 overflow-x-auto px-1 pb-2 [scrollbar-width:thin]">
         {jours.map((jour) => {
           const totalElements = jour.elements.length;
           const totalSelectionnes = jour.elements.filter(
@@ -273,11 +406,11 @@ export function PlanningJournalier({
           return (
             <section
               key={jour.numeroJour}
-              className="min-w-[900px] max-w-[900px] shrink-0 snap-start rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+              className="min-w-[860px] max-w-[860px] shrink-0 snap-start rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
             >
-              <div className="flex items-start justify-between gap-3 mb-4">
-                <div className="min-w-0 space-y-2">
-                  <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600">
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <div className="min-w-0 space-y-1.5">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600">
                     <CalendarDays className="h-3.5 w-3.5 text-emerald-600" />
                     Jour {jour.numeroJour}
                   </div>
@@ -285,7 +418,7 @@ export function PlanningJournalier({
                     {/* <h3 className="text-xl font-semibold tracking-tight text-slate-900">
                       {getDayHeading(jour)}
                     </h3> */}
-                    <p className="mt-1 text-sm text-slate-600">
+                    <p className="text-sm text-slate-600">
                       {totalSelectionnes} selectionne(s) sur {totalElements} bloc(s)
                     </p>
                   </div>
@@ -301,7 +434,7 @@ export function PlanningJournalier({
                 </div> */}
               </div>
 
-              <div className="max-h-[400px] overflow-y-auto pr-1">
+              <div className="max-h-[360px] overflow-y-auto pr-1">
                   <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                     {jour.elements.map((element: ElementSimulation) => {
                   const quantiteCourante = Math.max(
@@ -310,22 +443,23 @@ export function PlanningJournalier({
                   );
                   const quantiteMax = Math.max(element.quantiteMax ?? totalVoyageurs, 0);
                   const estSelectionne = quantiteCourante > 0;
+                  const elementImages = getElementImages(element);
 
                   return (
                     <article
                       key={element.id}
-                      className={`group relative flex min-h-[230px] flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+                      className={`group relative flex min-h-[205px] flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
                         estSelectionne
                           ? "border-emerald-300"
                           : "border-slate-200 hover:border-slate-300"
                       }`}
                     >
                       {/* Header avec badge de statut et icône */}
-                      <div className="flex flex-1 flex-col p-5 pb-4">
+                      <div className="flex flex-1 flex-col p-4 pb-3">
 
                         <div className="flex flex-1 items-start gap-4">
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-3 mb-3">
+                            <div className="mb-2 flex items-center gap-3">
                               <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${
                                 estSelectionne
                                   ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100"
@@ -338,17 +472,17 @@ export function PlanningJournalier({
                                 )}
                               </span>
                                                           </div>
-                            <h4 className="text-lg font-semibold leading-tight text-slate-900">
-                              {element.titre}
+                            <h4 className="text-base font-semibold leading-tight text-slate-900">
+                              {displayText(element.titre)}
                             </h4>
-                            <p className="mt-2 text-sm font-medium text-slate-500">
+                            <p className="mt-1.5 text-sm font-medium text-slate-500">
                               {getTypeLabel(element.type)}
                             </p>
                           </div>
                         </div>
 
                         {/* Prix et quantité avec meilleur alignement */}
-                        <div className="mt-5">
+                        <div className="mt-4">
                           <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
                             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                               Quantité
@@ -380,12 +514,12 @@ export function PlanningJournalier({
                       </div>
 
                       {/* Détails et actions avec design amélioré */}
-                      <div className="border-t border-slate-100 px-5 pb-5 pt-4">
+                      <div className="border-t border-slate-100 px-4 pb-4 pt-3">
                         <div className="flex flex-wrap items-center gap-2">
                           {element.details?.duree && (
                             <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700">
                               <Clock3 className="h-4 w-4" />
-                              <span>{element.details.duree}</span>
+                              <span>{displayText(element.details.duree)}</span>
                             </div>
                           )}
 
@@ -396,13 +530,13 @@ export function PlanningJournalier({
                             </div>
                           )}
 
-                          {element.details?.images && element.details.images.length > 0 && (
+                          {elementImages.length > 0 && (
                             <button
                               type="button"
                               onClick={() =>
                                 setGallery({
-                                  title: element.titre,
-                                  images: element.details?.images?.filter(Boolean) ?? [],
+                                  title: displayText(element.titre),
+                                  images: elementImages,
                                   activeIndex: 0,
                                 })
                               }
@@ -423,87 +557,15 @@ export function PlanningJournalier({
         })}
       </div>
 
-      <div className="text-xs text-slate-500">
+      <div className="pt-1 text-xs text-slate-500">
         Faites glisser horizontalement pour parcourir tous les jours du voyage.
       </div>
 
-      <Dialog open={Boolean(gallery)} onOpenChange={(open) => !open && setGallery(null)}>
-        <DialogContent className="!h-[92vh] !w-[94vw] !max-w-[1200px] overflow-hidden rounded-[28px] p-0 sm:!max-w-[1200px]">
-          <DialogHeader>
-            <div className="border-b border-slate-200 px-6 py-5">
-              <DialogTitle>{gallery?.title ?? "Images du bloc"}</DialogTitle>
-            </div>
-          </DialogHeader>
-
-          <div className="h-[calc(92vh-88px)] overflow-y-auto bg-[linear-gradient(180deg,_rgba(248,250,252,0.94),_rgba(255,255,255,0.98))] px-6 py-5">
-            <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_220px]">
-              <section className="rounded-[30px] border border-slate-200/90 bg-white/92 p-5 shadow-[0_18px_55px_-36px_rgba(15,23,42,0.45)]">
-                <div className="flex h-[48vh] min-h-[300px] items-center justify-center overflow-hidden rounded-[26px] bg-[linear-gradient(180deg,_rgba(15,23,42,0.94),_rgba(30,41,59,0.96))] p-5 sm:h-[54vh]">
-                  {gallery?.images?.[gallery.activeIndex] ? (
-                    <img
-                      src={gallery.images[gallery.activeIndex]}
-                      alt={`${gallery.title} ${gallery.activeIndex + 1}`}
-                      className="max-h-full w-auto max-w-full rounded-[18px] object-contain shadow-[0_24px_55px_-30px_rgba(15,23,42,0.85)] transition duration-300 hover:scale-[1.03]"
-                    />
-                  ) : null}
-                </div>
-
-                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                  <div>
-                    <p className="text-base font-semibold text-slate-900">{gallery?.title}</p>
-                    <p className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-500">
-                      Image {(gallery?.activeIndex ?? 0) + 1} sur {gallery?.images.length ?? 0}
-                    </p>
-                  </div>
-                  <p className="text-xs text-slate-500">
-                    Survolez l&apos;image pour l&apos;agrandir legerement.
-                  </p>
-                </div>
-              </section>
-
-              {(gallery?.images.length ?? 0) > 1 ? (
-                <aside className="rounded-[28px] border border-slate-200/90 bg-white/88 p-4 shadow-sm">
-                  <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                    Galerie
-                  </p>
-                  <div className="grid max-h-[62vh] gap-3 overflow-y-auto pr-1">
-                    {(gallery?.images ?? []).map((image, index) => {
-                      const isActive = index === gallery?.activeIndex;
-                      return (
-                        <button
-                          key={`${image}-${index}`}
-                          type="button"
-                          onClick={() =>
-                            setGallery((current) =>
-                              current ? { ...current, activeIndex: index } : current
-                            )
-                          }
-                          className={`overflow-hidden rounded-2xl border bg-white text-left transition ${
-                            isActive
-                              ? "border-emerald-400 ring-2 ring-emerald-200"
-                              : "border-slate-200 hover:border-slate-300"
-                          }`}
-                        >
-                          <img
-                            src={image}
-                            alt={`${gallery?.title ?? "Bloc"} miniature ${index + 1}`}
-                            className="h-24 w-full object-cover"
-                          />
-                          <div className="px-3 py-2">
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                              Image {index + 1}
-                            </p>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </aside>
-              ) : null}
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ImageGalleryDialog
+        gallery={gallery}
+        onChange={setGallery}
+        description="Images associees au bloc selectionne."
+      />
 
       <Dialog open={isMapOpen} onOpenChange={setIsMapOpen}>
         <DialogContent className="!h-[92vh] !w-[94vw] !max-w-[1440px] overflow-hidden rounded-[28px] border border-slate-200 bg-white p-0 sm:!max-w-[1440px]">
@@ -539,7 +601,7 @@ export function PlanningJournalier({
                 ))}
                 {mapData.markers.map((marker) => {
                   const icon =
-                    marker.type === "Hebergement"
+                    marker.type === "Hébergement"
                       ? createPreviewIcon(marker.title, marker.images[0], "#10b981")
                       : marker.type === "Transport"
                         ? transportPointIcon
@@ -564,11 +626,11 @@ export function PlanningJournalier({
                 {false && selectedMarker ? (
                   <div className="rounded-[24px] border border-slate-200 bg-slate-50/80 p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                      Detail du bloc
+                      Détail du bloc
                     </p>
                     <h3 className="mt-3 text-lg font-semibold text-slate-900">{selectedMarker.title}</h3>
                     <p className="mt-1 text-sm text-slate-600">
-                      {selectedMarker.type} • {selectedMarker.dayLabel}
+                      {displayText(selectedMarker.type)} - {displayText(selectedMarker.dayLabel)}
                     </p>
                     {selectedMarker.subtitle ? (
                       <p className="mt-2 text-sm text-slate-600">{selectedMarker.subtitle}</p>
@@ -734,15 +796,15 @@ export function PlanningJournalier({
                 ) : null}
 
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Legende</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Légende</p>
                   <div className="mt-3 space-y-2 text-sm text-slate-700">
                     <div className="flex items-center gap-2">
                       <span className="h-3.5 w-3.5 rounded-full bg-emerald-500" />
-                      Hebergement
+                      Hébergement
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="h-3.5 w-3.5 rounded-full bg-amber-500" />
-                      Activite
+                      Activité
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="h-3.5 w-3.5 rounded-full bg-blue-500" />
@@ -752,7 +814,7 @@ export function PlanningJournalier({
                 </div>
 
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Blocs localises</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Blocs localisés</p>
                   <div className="mt-3 space-y-3">
                     {jours.map((jour) => {
                       const localisedElements = jour.elements.filter((element) => {
@@ -781,7 +843,7 @@ export function PlanningJournalier({
                                 onClick={() => handleMarkerSelect(`${element.id}-point`)}
                                 className="block w-full rounded-xl bg-slate-50 px-3 py-2 text-left transition hover:bg-slate-100"
                               >
-                                <p className="text-sm font-medium text-slate-900">{element.titre}</p>
+                                <p className="text-sm font-medium text-slate-900">{displayText(element.titre)}</p>
                                 <p className="mt-0.5 text-xs text-slate-500">{getTypeLabel(element.type)}</p>
                               </button>
                             ))}
@@ -801,7 +863,7 @@ export function PlanningJournalier({
         <DialogContent className="!h-[88vh] !w-[92vw] !max-w-[900px] overflow-hidden rounded-[28px] border border-slate-200 bg-white p-0 sm:!max-w-[900px]">
           <DialogHeader className="border-b border-emerald-100 bg-[linear-gradient(135deg,rgba(236,253,245,0.78),rgba(255,255,255,1))] px-6 py-5">
             <DialogTitle className="text-2xl font-semibold tracking-tight text-slate-900">
-              {selectedMarker?.title ?? "Detail du bloc"}
+              {displayText(selectedMarker?.title, "Détail du bloc")}
             </DialogTitle>
           </DialogHeader>
           <div className="h-[calc(88vh-76px)] overflow-y-auto px-6 py-5">
@@ -810,22 +872,22 @@ export function PlanningJournalier({
                 <div className="rounded-[24px] border border-slate-200 bg-slate-50/70 px-5 py-4">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm">
-                      {selectedMarker.type}
+                      {displayText(selectedMarker.type)}
                     </span>
                     <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                      {selectedMarker.dayLabel}
+                      {displayText(selectedMarker.dayLabel)}
                     </span>
                     {selectedMarker.details.duree ? (
                       <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm">
-                        {selectedMarker.details.duree}
+                        {displayText(selectedMarker.details.duree)}
                       </span>
                     ) : null}
                   </div>
                   {selectedMarker.subtitle ? (
-                    <p className="mt-3 text-sm leading-6 text-slate-600">{selectedMarker.subtitle}</p>
+                    <p className="mt-3 text-sm leading-6 text-slate-600">{displayText(selectedMarker.subtitle)}</p>
                   ) : null}
                   {selectedMarker.description && selectedMarker.description !== selectedMarkerQuantityLabel ? (
-                    <p className="mt-2 text-sm leading-6 text-slate-600">{selectedMarker.description}</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">{displayText(selectedMarker.description)}</p>
                   ) : null}
                   {selectedMarkerQuantityLabel ? (
                     <p className="mt-3 text-sm font-medium text-slate-700">{selectedMarkerQuantityLabel}</p>
@@ -836,31 +898,31 @@ export function PlanningJournalier({
                   {selectedMarker.details.adresse ? (
                     <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Adresse</p>
-                      <p className="mt-1 text-sm text-slate-800">{selectedMarker.details.adresse}</p>
+                      <p className="mt-1 text-sm text-slate-800">{displayText(selectedMarker.details.adresse)}</p>
                     </div>
                   ) : null}
                   {selectedMarker.details.nombreEtoiles ? (
                     <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Etoiles</p>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Étoiles</p>
                       <p className="mt-1 text-sm text-slate-800">{selectedMarker.details.nombreEtoiles}</p>
                     </div>
                   ) : null}
                   {selectedMarker.details.capacite ? (
                     <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Capacite</p>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Capacité</p>
                       <p className="mt-1 text-sm text-slate-800">{selectedMarker.details.capacite} pers</p>
                     </div>
                   ) : null}
                   {selectedMarker.details.duree ? (
                     <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Duree</p>
-                      <p className="mt-1 text-sm text-slate-800">{selectedMarker.details.duree}</p>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Durée</p>
+                      <p className="mt-1 text-sm text-slate-800">{displayText(selectedMarker.details.duree)}</p>
                     </div>
                   ) : null}
                   {selectedMarker.details.difficulte ? (
                     <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Difficulte</p>
-                      <p className="mt-1 text-sm text-slate-800">{selectedMarker.details.difficulte}</p>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Difficulté</p>
+                      <p className="mt-1 text-sm text-slate-800">{displayText(selectedMarker.details.difficulte)}</p>
                     </div>
                   ) : null}
                   {selectedMarker.details.participantMin ? (
@@ -877,25 +939,25 @@ export function PlanningJournalier({
                   ) : null}
                   {selectedMarker.details.depart ? (
                     <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Depart</p>
-                      <p className="mt-1 text-sm text-slate-800">{selectedMarker.details.depart}</p>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Départ</p>
+                      <p className="mt-1 text-sm text-slate-800">{displayText(selectedMarker.details.depart)}</p>
                     </div>
                   ) : null}
                   {selectedMarker.details.arrivee ? (
                     <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Arrivee</p>
-                      <p className="mt-1 text-sm text-slate-800">{selectedMarker.details.arrivee}</p>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Arrivée</p>
+                      <p className="mt-1 text-sm text-slate-800">{displayText(selectedMarker.details.arrivee)}</p>
                     </div>
                   ) : null}
                   {selectedMarker.details.distance ? (
                     <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Distance</p>
-                      <p className="mt-1 text-sm text-slate-800">{selectedMarker.details.distance}</p>
+                      <p className="mt-1 text-sm text-slate-800">{displayText(selectedMarker.details.distance)}</p>
                     </div>
                   ) : null}
                   {selectedMarker.details.telephone ? (
                     <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Telephone</p>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Téléphone</p>
                       <p className="mt-1 text-sm text-slate-800">{selectedMarker.details.telephone}</p>
                     </div>
                   ) : null}
@@ -916,7 +978,7 @@ export function PlanningJournalier({
                 {selectedMarker.details.description ? (
                   <div className="rounded-[24px] border border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,1),rgba(255,255,255,1))] px-5 py-5 shadow-sm">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Description</p>
-                    <p className="mt-3 text-sm leading-7 text-slate-700">{selectedMarker.details.description}</p>
+                    <p className="mt-3 text-sm leading-7 text-slate-700">{displayText(selectedMarker.details.description)}</p>
                   </div>
                 ) : null}
 

@@ -5,7 +5,22 @@
 // + Budgets enregistrÃ©s (CRUD admin / lecture publique)
 
 import { useMemo, useState } from "react";
-import { Bed, Crown, Pencil, Plus, RefreshCw, Route, Trash2, UsersRound, WalletCards } from "lucide-react";
+import {
+  Baby,
+  Bed,
+  Crown,
+  Filter,
+  Gem,
+  LayoutList,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Route,
+  Sparkles,
+  UserRound,
+  UsersRound,
+  WalletCards,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -130,7 +145,42 @@ function getCategoryLabel(category: BudgetCategory): string {
   return CATEGORY_LABELS[category];
 }
 
-// ====== FONCTIONS D'EXTRACTION DES CATÃ‰GORIES UNIQUES ======
+// ====== FONCTIONS D'EXTRACTION DES CATÉGORIES UNIQUES ======
+
+function getClientCategoryIcon(category: string) {
+  const normalized = normalizeText(category);
+  if (normalized.includes("enfant")) return Baby;
+  if (normalized.includes("vahiny") || normalized.includes("etranger") || normalized.includes("Ã©tranger")) return Sparkles;
+  return UserRound;
+}
+
+function getClientCategoryTone(category: string) {
+  const normalized = normalizeText(category);
+  if (normalized.includes("enfant")) return "bg-blue-50 text-blue-700";
+  if (normalized.includes("vahiny") || normalized.includes("etranger") || normalized.includes("Ã©tranger")) {
+    return "bg-purple-50 text-purple-700";
+  }
+  return "bg-emerald-50 text-emerald-700";
+}
+
+function getGammeTone(gamme: string) {
+  const normalized = normalizeGamme(gamme);
+  if (normalized === "luxe") {
+    return {
+      icon: Gem,
+      label: "Gamme Luxe",
+      badge: "bg-amber-50 text-amber-700",
+      border: "border-amber-100",
+    };
+  }
+
+  return {
+    icon: Bed,
+    label: "Gamme Moyenne",
+    badge: "bg-emerald-50 text-emerald-700",
+    border: "border-emerald-100",
+  };
+}
 
 function getUniqueClientCategories(
   sortedDays: JourPlanificationVoyage[],
@@ -168,9 +218,10 @@ function getUniqueGammes(
         const tarifs = tarifsHebergements.filter(
           (t) => t.idHebergement === element.idHebergement && t.estActif
         );
-        tarifs.forEach((tarif) => {
-          gammes.add(normalizeGamme(tarif.gamme));
-        });
+        if (tarifs.length > 0) {
+          gammes.add("moyenne");
+          gammes.add("luxe");
+        }
       }
     }
   }
@@ -318,12 +369,49 @@ function buildHebergementCell(
   }>,
   selectedGamme: string
 ): TarificationCell {
+  const normalizedSelectedGamme = normalizeGamme(selectedGamme);
+  const moyenneTarifs = tarifs.filter((item) => normalizeGamme(item.gamme) === "moyenne");
+  const luxeTarifs = tarifs.filter((item) => normalizeGamme(item.gamme) === "luxe");
+  const mostExpensiveTarif = tarifs.reduce<(typeof tarifs)[number] | null>(
+    (current, item) => (!current || item.montant > current.montant ? item : current),
+    null
+  );
+  const cheapestTarif = tarifs.reduce<(typeof tarifs)[number] | null>(
+    (current, item) => (!current || item.montant < current.montant ? item : current),
+    null
+  );
+  const cheapestMoyenneTarif = moyenneTarifs.reduce<(typeof tarifs)[number] | null>(
+    (current, item) => (!current || item.montant < current.montant ? item : current),
+    null
+  );
+  const mostExpensiveLuxeTarif = luxeTarifs.reduce<(typeof tarifs)[number] | null>(
+    (current, item) => (!current || item.montant > current.montant ? item : current),
+    null
+  );
+  const selectedDefaultTarifs =
+    selectedGamme &&
+    selectedGamme.trim() !== "" &&
+    mostExpensiveTarif &&
+    !tarifs.some((item) => normalizeGamme(item.gamme) === normalizedSelectedGamme)
+      ? [
+          {
+            ...mostExpensiveTarif,
+            gamme: normalizedSelectedGamme,
+          },
+        ]
+      : [];
+
   const filteredTarifs =
     selectedGamme && selectedGamme.trim() !== ""
-      ? tarifs.filter((item) => normalizeGamme(item.gamme) === normalizeGamme(selectedGamme))
+      ? tarifs.filter((item) => normalizeGamme(item.gamme) === normalizedSelectedGamme)
       : tarifs;
 
-  const display = filteredTarifs
+  const displayTarifs =
+    selectedGamme && selectedGamme.trim() !== "" && filteredTarifs.length === 0
+      ? selectedDefaultTarifs
+      : filteredTarifs;
+
+  const display = displayTarifs
     .map((item) => {
       const prixTotal = item.montant * (item.capacite || 1);
       const gammeLabel = normalizeGamme(item.gamme) === "luxe" ? "Luxe" : "Moyenne";
@@ -333,16 +421,15 @@ function buildHebergementCell(
     })
     .join("\n");
 
-  const totalMoyenne = filteredTarifs
-    .filter((item) => normalizeGamme(item.gamme) === "moyenne")
-    .reduce((sum, item) => sum + item.montant, 0);
-  const totalLuxe = filteredTarifs
-    .filter((item) => normalizeGamme(item.gamme) === "luxe")
-    .reduce((sum, item) => sum + item.montant, 0);
+  const resolvedMoyenne = cheapestMoyenneTarif?.montant ?? cheapestTarif?.montant ?? null;
+  const resolvedLuxe =
+    mostExpensiveLuxeTarif?.montant !== undefined
+      ? Math.max(mostExpensiveLuxeTarif.montant, resolvedMoyenne ?? 0)
+      : mostExpensiveTarif?.montant ?? resolvedMoyenne;
 
   return {
-    moyenne: totalMoyenne || null,
-    luxe: totalLuxe || null,
+    moyenne: resolvedMoyenne,
+    luxe: resolvedLuxe,
     display: display.length > 0 ? display : "-",
   };
 }
@@ -432,90 +519,172 @@ function BudgetBadgeList({
   isAdmin = false,
   onAddBudget,
   onEditBudget,
-  onDeleteBudget,
 }: BudgetBadgeListProps) {
+  const budgetsByGamme = budgetsPlanification.reduce<Record<string, BudgetisationPlanificationVoyage[]>>(
+    (groups, budget) => {
+      const key = normalizeGamme(budget.gamme);
+      groups[key] = [...(groups[key] ?? []), budget];
+      return groups;
+    },
+    {}
+  );
+  const gammeEntries = Object.entries(budgetsByGamme).sort(([a], [b]) => a.localeCompare(b));
+  const prices = budgetsPlanification
+    .map((budget) => budget.prixAvecReduction)
+    .filter((value) => Number.isFinite(value));
+  const highestPrice = prices.length > 0 ? Math.max(...prices) : null;
+  const averageReduction =
+    budgetsPlanification.length > 0
+      ? budgetsPlanification.reduce((sum, budget) => sum + (budget.reduction || 0), 0) / budgetsPlanification.length
+      : 0;
+
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h3 className="font-semibold">Budgets enregistrés</h3>
+          <h3 className="text-lg font-semibold text-slate-950">Prix de vente enregistrés</h3>
           <p className="text-sm text-slate-500">
-            Budgets saisis par l&apos;administrateur pour cette planification.
+            Prix publics saisis par Cool Voyage pour cette planification, avec marge et remise éventuelle.
           </p>
         </div>
 
-        {isAdmin ? (
-          <Button size="sm" variant="outline" className="h-10 border-emerald-200 bg-emerald-50 text-emerald-800 shadow-sm hover:bg-emerald-100" onClick={onAddBudget}>
-            <Plus className="size-4" />
-            Ajouter un budget
-          </Button>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          {isAdmin ? (
+            <Button size="sm" className="h-9 bg-emerald-700 text-white shadow-sm hover:bg-emerald-800" onClick={onAddBudget}>
+              <Plus className="size-4" />
+              Ajouter un prix
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       <div className="mt-5">
         {budgetsPlanification.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500">
-            Aucun budget enregistré pour cette planification.
+            Aucun prix de vente enregistré pour cette planification.
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {budgetsPlanification.map((budget) => (
-              <div
-                key={budget.id}
-                className="flex min-h-[150px] flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
-              >
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="secondary" className="bg-slate-100 text-slate-800 hover:bg-slate-100">
-                    {displayText(budget.nomCategorieClient)}
-                  </Badge>
-                  <Badge variant="outline" className="bg-white font-semibold text-slate-800">
-                    {formatGamme(budget.gamme)}
-                  </Badge>
-                </div>
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_220px]">
+            <div className="grid gap-4 lg:grid-cols-2">
+              {gammeEntries.map(([gamme, budgets]) => {
+                const tone = getGammeTone(gamme);
+                const Icon = tone.icon;
+                const groupPrices = budgets
+                  .map((budget) => budget.prixAvecReduction)
+                  .filter((value) => Number.isFinite(value));
+                const groupHighestPrice = groupPrices.length > 0 ? Math.max(...groupPrices) : null;
+                const groupAverageReduction =
+                  budgets.length > 0
+                    ? budgets.reduce((sum, budget) => sum + (budget.reduction || 0), 0) / budgets.length
+                    : 0;
 
-                <p className="mt-3 text-xs text-slate-500">{budget.nombrePersonnes} personne(s)</p>
+                return (
+                  <div key={gamme} className={`overflow-hidden rounded-2xl border bg-white shadow-sm ${tone.border}`}>
+                    <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/60 px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className={`flex size-8 items-center justify-center rounded-lg ${tone.badge}`}>
+                          <Icon className="size-4" />
+                        </span>
+                        <h4 className="font-semibold text-slate-950">{tone.label}</h4>
+                      </div>
+                      <Badge variant="secondary" className="bg-white text-slate-600">
+                        {budgets.length} catégorie(s)
+                      </Badge>
+                    </div>
 
-                <p className="mt-2 break-words text-xl font-semibold leading-tight text-emerald-700">
-                  {formatMoneySafe(budget.prixAvecReduction, devise)}
-                </p>
+                    <div className="overflow-x-auto">
+                      <table className="w-full min-w-[520px] text-sm">
+                        <thead className="bg-white text-[11px] uppercase tracking-wide text-slate-500">
+                          <tr>
+                            <th className="px-4 py-3 text-left font-semibold">Catégorie client</th>
+                            <th className="px-4 py-3 text-left font-semibold">Prix de vente</th>
+                            <th className="px-4 py-3 text-left font-semibold">Remise</th>
+                            <th className="px-4 py-3 text-left font-semibold">Personnes</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {budgets.map((budget) => {
+                            const CategoryIcon = getClientCategoryIcon(displayText(budget.nomCategorieClient));
+                            return (
+                              <tr key={budget.id} className="border-t border-slate-100">
+                                <td className="px-4 py-3">
+                                  <div className="flex items-center gap-2">
+                                    <span
+                                      className={`flex size-7 shrink-0 items-center justify-center rounded-lg ${getClientCategoryTone(
+                                        displayText(budget.nomCategorieClient)
+                                      )}`}
+                                    >
+                                      <CategoryIcon className="size-3.5" />
+                                    </span>
+                                    <span className="font-medium text-slate-800">
+                                      {displayText(budget.nomCategorieClient)}
+                                    </span>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 font-semibold text-emerald-700">
+                                  <span>{formatMoneySafe(budget.prixAvecReduction, devise)}</span>
+                                  {isAdmin ? (
+                                    <button
+                                      type="button"
+                                      className="ml-2 inline-flex text-emerald-700 hover:text-emerald-900"
+                                      onClick={() => onEditBudget?.(budget)}
+                                      aria-label="Modifier le prix"
+                                    >
+                                      <Pencil className="size-3.5" />
+                                    </button>
+                                  ) : null}
+                                </td>
+                                <td className="px-4 py-3 text-slate-600">
+                                  {budget.reduction > 0 ? `${formatAmount(budget.reduction)}%` : "-"}
+                                </td>
+                                <td className="px-4 py-3 text-slate-600">{budget.nombrePersonnes}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
 
-                <div className="mt-1 min-h-5">
-                  {budget.reduction > 0 ? (
-                    <p className="text-xs text-slate-500">
-                      Avant remise: <span className="line-through">{formatMoneySafe(budget.prixNormal, devise)}</span>
-                    </p>
-                  ) : null}
-                </div>
-
-                {isAdmin ? (
-                  <div className="mt-auto flex items-center gap-2 pt-3">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="h-8 border-slate-200 bg-white px-3 text-xs text-slate-700 hover:bg-slate-50"
-                      onClick={() => onEditBudget?.(budget)}
-                      aria-label="Modifier le budget"
-                    >
-                      <Pencil className="size-3.5" />
-                      Modifier
-                    </Button>
-
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="h-8 border-red-200 bg-white px-3 text-xs text-red-700 hover:bg-red-50"
-                      onClick={() => onDeleteBudget?.(budget.id)}
-                      aria-label="Supprimer le budget"
-                    >
-                      <Trash2 className="size-3.5" />
-                      Supprimer
-                    </Button>
+                    <div className="grid border-t border-slate-100 bg-slate-50/70 text-xs sm:grid-cols-3">
+                      <div className="border-b border-slate-100 px-4 py-3 sm:border-b-0 sm:border-r">
+                        <p className="text-slate-500">Prix le plus élevé</p>
+                        <p className="mt-1 font-semibold text-slate-950">
+                          {groupHighestPrice === null ? "-" : formatMoney(groupHighestPrice, devise)}
+                        </p>
+                      </div>
+                      <div className="border-b border-slate-100 px-4 py-3 sm:border-b-0 sm:border-r">
+                        <p className="text-slate-500">Remise moyenne</p>
+                        <p className="mt-1 font-semibold text-emerald-700">{formatAmount(groupAverageReduction)}%</p>
+                      </div>
+                      <div className="px-4 py-3">
+                        <p className="text-slate-500">Prix enregistrés</p>
+                        <p className="mt-1 font-semibold text-slate-950">{budgets.length}</p>
+                      </div>
+                    </div>
                   </div>
-                ) : null}
+                );
+              })}
+            </div>
+
+            <aside className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 shadow-sm">
+              <h4 className="font-semibold text-slate-950">Aperçu global</h4>
+              <div className="mt-4 space-y-3">
+                <div className="rounded-xl border border-emerald-100 bg-white p-3">
+                  <p className="text-xs text-slate-500">Prix enregistrés</p>
+                  <p className="mt-1 text-lg font-bold text-emerald-700">{budgetsPlanification.length}</p>
+                </div>
+                <div className="rounded-xl border border-purple-100 bg-white p-3">
+                  <p className="text-xs text-slate-500">Remise moyenne</p>
+                  <p className="mt-1 text-lg font-bold text-purple-700">{formatAmount(averageReduction)}%</p>
+                </div>
+                <div className="rounded-xl border border-blue-100 bg-white p-3">
+                  <p className="text-xs text-slate-500">Prix le plus élevé</p>
+                  <p className="mt-1 text-base font-bold text-slate-950">
+                    {highestPrice === null ? "-" : formatMoney(highestPrice, devise)}
+                  </p>
+                </div>
               </div>
-            ))}
+            </aside>
           </div>
         )}
       </div>
@@ -573,15 +742,25 @@ function RecapTable({ sortedDays, tarifsActivites, tarifsHebergements, devise, p
       for (const element of day.elements ?? []) {
         if (element.codeTypeElementJour === "HEBERGEMENT" && element.idHebergement) {
           const tarifs = getHebergementTarifsForElement(element.idHebergement, tarifsHebergements);
-          for (const tarif of tarifs) {
-            const gamme = normalizeGamme(tarif.gamme);
-            if (gamme === "moyenne") {
-              hebergementMoyenneParPers += tarif.montant;
-              aDesHebergements = true;
-            } else if (gamme === "luxe") {
-              hebergementLuxeParPers += tarif.montant;
-              aDesHebergements = true;
-            }
+          if (tarifs.length > 0) {
+            const moyenneTarifs = tarifs
+              .filter((tarif) => normalizeGamme(tarif.gamme) === "moyenne")
+              .map((tarif) => tarif.montant);
+            const luxeTarifs = tarifs
+              .filter((tarif) => normalizeGamme(tarif.gamme) === "luxe")
+              .map((tarif) => tarif.montant);
+            const prixTarifs = tarifs.map((tarif) => tarif.montant);
+            const moinsCher = Math.min(...prixTarifs);
+            const plusCher = Math.max(...prixTarifs);
+            const moyenne = moyenneTarifs.length > 0 ? Math.min(...moyenneTarifs) : moinsCher;
+            const luxe =
+              luxeTarifs.length > 0
+                ? Math.max(Math.max(...luxeTarifs), moyenne)
+                : Math.max(plusCher, moyenne);
+
+            hebergementMoyenneParPers += moyenne;
+            hebergementLuxeParPers += luxe;
+            aDesHebergements = true;
           }
         }
       }
@@ -645,13 +824,24 @@ function RecapTable({ sortedDays, tarifsActivites, tarifsHebergements, devise, p
 
         if (element.codeTypeElementJour === "HEBERGEMENT" && element.idHebergement) {
           const tarifs = getHebergementTarifsForElement(element.idHebergement, tarifsHebergements);
-          for (const tarif of tarifs) {
-            const gamme = normalizeGamme(tarif.gamme);
-            if (gamme === "moyenne") {
-              hebergementMoyenneTotal += tarif.montant;
-            } else if (gamme === "luxe") {
-              hebergementLuxeTotal += tarif.montant;
-            }
+          if (tarifs.length > 0) {
+            const moyenneTarifs = tarifs
+              .filter((tarif) => normalizeGamme(tarif.gamme) === "moyenne")
+              .map((tarif) => tarif.montant);
+            const luxeTarifs = tarifs
+              .filter((tarif) => normalizeGamme(tarif.gamme) === "luxe")
+              .map((tarif) => tarif.montant);
+            const prixTarifs = tarifs.map((tarif) => tarif.montant);
+            const moinsCher = Math.min(...prixTarifs);
+            const plusCher = Math.max(...prixTarifs);
+            const moyenne = moyenneTarifs.length > 0 ? Math.min(...moyenneTarifs) : moinsCher;
+            const luxe =
+              luxeTarifs.length > 0
+                ? Math.max(Math.max(...luxeTarifs), moyenne)
+                : Math.max(plusCher, moyenne);
+
+            hebergementMoyenneTotal += moyenne;
+            hebergementLuxeTotal += luxe;
           }
         }
 
@@ -701,21 +891,21 @@ function RecapTable({ sortedDays, tarifsActivites, tarifsHebergements, devise, p
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-blue-200 bg-blue-50/30 shadow-sm">
-      <div className="border-b border-blue-100 bg-white/70 px-4 py-3">
-        <h3 className="font-semibold">Récapitulatif des tarifs</h3>
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="border-b border-slate-100 bg-white px-4 py-4">
+        <h3 className="font-semibold">Coût calculé automatiquement</h3>
         <p className="text-xs text-slate-500">
-          Gammes vs catégories client (prix par personne)
+          Gammes vs catégories client, hors marge commerciale (coût par personne)
         </p>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className={TABLE_HEADER_CLASS}>
+          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
             <tr>
               <th className={`${TABLE_HEADER_CELL_CLASS} text-left`}>Gamme</th>
               {categoryList.map((cat) => (
                 <th key={cat} className={`${TABLE_HEADER_CELL_CLASS} text-left`}>
-                  {cat}
+                  {displayText(cat)}
                 </th>
               ))}
             </tr>
@@ -726,8 +916,9 @@ function RecapTable({ sortedDays, tarifsActivites, tarifsHebergements, devise, p
               {categoryList.map((cat) => {
                 const value = totals.moyenne[cat];
                 return (
-                  <td key={`moyenne-${cat}`} className={`${TABLE_CELL_CLASS} text-muted-foreground`}>
-                    {value && value > 0 ? formatMoney(value, devise) : "-"}
+                  <td key={`moyenne-${cat}`} className={`${TABLE_CELL_CLASS}`}>
+                    <p className="font-semibold text-slate-950">{value && value > 0 ? formatMoney(value, devise) : "-"}</p>
+                    <p className="mt-1 text-xs text-slate-500">Coût par personne</p>
                   </td>
                 );
               })}
@@ -738,8 +929,9 @@ function RecapTable({ sortedDays, tarifsActivites, tarifsHebergements, devise, p
               {categoryList.map((cat) => {
                 const value = totals.luxe[cat];
                 return (
-                  <td key={`luxe-${cat}`} className={`${TABLE_CELL_CLASS} text-muted-foreground`}>
-                    {value && value > 0 ? formatMoney(value, devise) : "-"}
+                  <td key={`luxe-${cat}`} className={`${TABLE_CELL_CLASS}`}>
+                    <p className="font-semibold text-slate-950">{value && value > 0 ? formatMoney(value, devise) : "-"}</p>
+                    <p className="mt-1 text-xs text-slate-500">Coût par personne</p>
                   </td>
                 );
               })}

@@ -170,9 +170,9 @@ export function AdminHeaderWithNotifications() {
           {/* Notifications */}
           <AdminNotifications />
           
-          <Button asChild variant="outline" size="sm">
+          {/* <Button asChild variant="outline" size="sm">
             <Link href="/">Voir site</Link>
-          </Button>
+          </Button> */}
 
           {/* Menu profil utilisateur */}
           {auth && (

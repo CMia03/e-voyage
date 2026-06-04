@@ -39,4 +39,11 @@ export function updateUser(token: string, userId: string, userData: {
   });
 }
 
+export function deleteUser(token: string, userId: string) {
+  return apiRequest<{ data?: unknown }>(`/api/utilisateurs/${userId}`, {
+    token,
+    method: "DELETE",
+  });
+}
+
 

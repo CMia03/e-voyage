@@ -59,6 +59,7 @@ export function BudgetInput({
       <div className="mt-5 space-y-4">
         <input
           type="number"
+          step={500}
           value={value || ""}
           onChange={(event) => onChange(parseInt(event.target.value, 10) || 0)}
           placeholder={budgetPlaceholder}
@@ -77,7 +78,7 @@ export function BudgetInput({
               type="range"
               min={minimumBudget}
               max={maxBudget}
-              step="1000"
+              step="500"
               value={clampedValue}
               onChange={(event) => onChange(parseInt(event.target.value, 10) || 0)}
               disabled={disabled}
