@@ -1497,7 +1497,7 @@ export default function SimulationPage() {
                 <button
                   onClick={handleLancerSimulation}
                   disabled={!canSimulate}
-                  className="inline-flex flex-1 items-center justify-center rounded-2xl bg-slate-950 px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+                  className="inline-flex cursor-pointer flex-1 items-center justify-center rounded-2xl bg-slate-950 px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
                 >
                   {loading
                     ? "Simulation en cours..."
@@ -1508,7 +1508,7 @@ export default function SimulationPage() {
                 <button
                   onClick={resetSimulation}
                   disabled={loading && !result}
-                  className="inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-5 py-3.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex items-center cursor-pointer justify-center rounded-2xl border border-slate-300 bg-white px-5 py-3.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Reinitialiser
                 </button>

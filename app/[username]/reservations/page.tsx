@@ -886,6 +886,11 @@ export default function ReservationsPage() {
         voyageurProfiles: validProfiles,
       }));
       setQuote(null);
+      setReservationPage(1);
+      setActiveReservationSection("list");
+      if (hasNavigationPrefill || prefill.editReservationId) {
+        router.replace(`/${username}/reservations`, { scroll: true });
+      }
     } catch (requestError) {
       setError(getErrorMessage(requestError, "Impossible de creer la reservation."));
     } finally {
