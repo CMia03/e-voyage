@@ -132,10 +132,10 @@ onAddPlanification,
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div className="min-w-0 max-w-[620px] space-y-1">
+        <div className="min-w-0 space-y-1">
           <h2 className="text-lg font-semibold">Planifications</h2>
           <p className="text-sm text-muted-foreground">
-            Choisis la planification sur laquelle travailler, puis organise les jours et les elements du voyage.
+            Choisis la planification sur laquelle travailler, puis organise les jours et les éléments du voyage.
           </p>
         </div>
 
@@ -200,14 +200,14 @@ onAddPlanification,
             </div>
             <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500">
               <span>
-                {filteredPlanifications.length} resultat(s) sur {planifications.length}
+                {filteredPlanifications.length} résultat(s) sur {planifications.length}
               </span>
             </div>
           </div>
 
           {visiblePlanifications.length === 0 ? (
             <div className="px-6 py-14 text-center text-sm text-slate-500">
-              Aucune planification ne correspond a cette recherche.
+              Aucune planification ne correspond à cette recherche.
             </div>
           ) : (
             <table className="w-full table-fixed text-sm">
@@ -216,7 +216,7 @@ onAddPlanification,
                   <th className="w-[24%] px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Nom</th>
                   <th className="w-[14%] px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Depart</th>
                   <th className="w-[14%] px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Arriver</th>
-                  <th className="w-[16%] px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Date debut</th>
+                  <th className="w-[16%] px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Date début</th>
                   <th className="w-[16%] px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Date fin</th>
                   <th className="w-[8%] px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Jour(s)</th>
                   <th className="w-[16%] px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Actions</th>
