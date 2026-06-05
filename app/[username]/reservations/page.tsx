@@ -1680,7 +1680,7 @@ export default function ReservationsPage() {
                   <span className="text-right">Montant</span>
                   <span className="text-right">Actions</span>
                 </div>
-                <div className="divide-y divide-slate-100">
+              <div className="divide-y divide-slate-100">
             {paginatedReservations.map((reservation) => {
               const detail = reservation.details[0];
               const totalElements = countUniqueSelectedElements(reservation);
@@ -1963,9 +1963,11 @@ function ReservationListCard({
             <Trash2 className="size-4" />
           </Button>
         ) : (
-          <Button type="button" variant="outline" size="icon" aria-label="Actions" disabled>
-            <MoreHorizontal className="size-4" />
-          </Button>
+          <div>
+          </div>
+          // <Button type="button" variant="outline" size="icon" aria-label="Actions" disabled>
+          //   <MoreHorizontal className="size-4" />
+          // </Button>
         )}
       </div>
     </article>
