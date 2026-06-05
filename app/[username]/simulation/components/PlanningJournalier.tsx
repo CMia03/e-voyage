@@ -1003,7 +1003,7 @@ export function PlanningJournalier({
                     {selectedMarker.images.length > 1 ? (
                       <div className="space-y-2">
                         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                          Galerie complete
+                          Galérie complete
                         </p>
                         <div className="flex gap-3 overflow-x-auto pb-2">
                           {selectedMarker.images.map((image, index) => (

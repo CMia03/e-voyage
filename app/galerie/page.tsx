@@ -43,7 +43,7 @@ export default async function GaleriePage() {
             </Button>
             <div className="text-center max-w-3xl mx-auto">
               <h1 className="mb-4 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent">
-                Galerie Photos
+                Galérie Photos
               </h1>
               <p className="text-base sm:text-lg md:text-xl text-muted-foreground leading-relaxed">
                 Découvrez toutes les images de nos destinations à Madagascar

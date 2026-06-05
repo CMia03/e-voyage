@@ -148,7 +148,7 @@ export default async function Home() {
             <div className="mx-auto max-w-6xl">
               <div className="mb-12 sm:mb-16 text-center">
                 <h2 className="mb-6 text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent">
-                  Galerie Photos
+                  Galérie Photos
                 </h2>
                 <p className="text-lg sm:text-xl text-muted-foreground px-4 leading-relaxed">
                   Découvrez un aperçu de nos destinations à Madagascar

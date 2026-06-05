@@ -405,8 +405,8 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
             {selectedPlanification ? (
               <div className="space-y-5">
                 <div>
-                  <h3 className="text-lg font-semibold text-slate-950">{displayText(selectedPlanification.nomPlanification)}</h3>
-                  <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-slate-500">
+                  {/* <h3 className="text-lg font-semibold text-slate-950">{displayText(selectedPlanification.nomPlanification)}</h3> */}
+                  {/* <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-slate-500">
                     <span>{formatDateRange(selectedPlanification.dateHeureDebut, selectedPlanification.dateHeureFin)}</span>
                     {selectedPlanification.dureeJours ? (
                       <span className="flex items-center gap-2">
@@ -414,14 +414,14 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
                         {selectedPlanification.dureeJours} jour(s)
                       </span>
                     ) : null}
-                  </div>
+                  </div> */}
                   <p className="mt-3 text-sm text-slate-600">
                     <span className="font-medium text-slate-900">Départ</span>
-                    <span>/</span>
+                    <span> : </span>
                     <span className="font-semibold text-emerald-700">{displayText(selectedPlanification.depart)}</span>
                     <span className="mx-2 text-slate-300">•</span>
                     <span className="font-medium text-slate-900">Arrivée</span>
-                    <span>/</span>
+                    <span> : </span>
                     <span className="font-semibold text-emerald-700">{displayText(selectedPlanification.arriver)}</span>
                   </p>
                 </div>
@@ -614,7 +614,7 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
           {/* Galerie d'images */}
           {galleryAll.length > 1 && (
             <div className="mb-6 sm:mb-8">
-              <h2 className="mb-4 text-xl sm:text-2xl font-bold">Galerie</h2>
+              <h2 className="mb-4 text-xl sm:text-2xl font-bold">Galérie</h2>
               <div className="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-3">
               {galleryAll.filter((img) => !!img?.trim()).map((img, index) => (
                 <button

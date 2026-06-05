@@ -12,7 +12,6 @@ import {
   Mail,
   Phone,
   Plus,
-  Share2,
   Snowflake,
   Star,
   Globe2,
@@ -81,6 +80,40 @@ function formatDate(value: string | null | undefined) {
   return new Date(value).toLocaleDateString("fr-FR");
 }
 
+const legacyEncodingMap: Record<string, string> = {
+  "‚": "é",
+  "ƒ": "è",
+  "…": "à",
+  "‡": "ç",
+  "ˆ": "ê",
+  "‰": "ë",
+  "Š": "è",
+  "‹": "ï",
+  "Œ": "î",
+  "“": "ô",
+  "”": "ù",
+  "–": "û",
+  "—": "ü",
+  "×": "Î",
+};
+
+function displayText(value?: string | number | null, fallback = "-") {
+  if (value === null || value === undefined || value === "") return fallback;
+  return String(value)
+    .replace(/[‚ƒ…‡ˆ‰Š‹Œ“”–—×]/g, (char) => legacyEncodingMap[char] ?? char)
+    .replace(/Ã©/g, "é")
+    .replace(/Ã¨/g, "è")
+    .replace(/Ãª/g, "ê")
+    .replace(/Ã«/g, "ë")
+    .replace(/Ã /g, "à")
+    .replace(/Ã¢/g, "â")
+    .replace(/Ã®/g, "î")
+    .replace(/Ã´/g, "ô")
+    .replace(/Ã»/g, "û")
+    .replace(/Ã¹/g, "ù")
+    .replace(/Ã§/g, "ç");
+}
+
 export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
   const router = useRouter();
   const { setActive } = useAdminNavigation();
@@ -123,7 +156,7 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
       images.push({
         url: hebergement.urlImagePrincipale,
         label: "Image principale",
-        subtitle: hebergement.nom,
+        subtitle: displayText(hebergement.nom),
       });
       seen.add(hebergement.urlImagePrincipale);
     }
@@ -134,8 +167,8 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
 
         images.push({
           url: photo.urlImage,
-          label: photo.nomTypeSalle || "Image",
-          subtitle: tarif.nomTypeChambre,
+          label: displayText(photo.nomTypeSalle, "Image"),
+          subtitle: displayText(tarif.nomTypeChambre),
         });
         seen.add(photo.urlImage);
       });
@@ -523,7 +556,7 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h1 className="text-3xl font-bold tracking-tight text-slate-950">{hebergement.nom}</h1>
+                        <h1 className="text-3xl font-bold tracking-tight text-slate-950">{displayText(hebergement.nom)}</h1>
                         <div className="flex items-center gap-0.5 text-amber-400">
                           {Array.from({ length: Math.max(hebergement.nombreEtoiles || 0, 0) }).map((_, index) => (
                             <Star key={index} className="size-4 fill-current" />
@@ -531,7 +564,7 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
                         </div>
                       </div>
                       <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-slate-500">
-                        <span>{hebergement.adresse || "Adresse non renseignee"}</span>
+                        <span>{displayText(hebergement.adresse, "Adresse non renseignée")}</span>
                         {/* <span className="inline-flex items-center gap-1 text-blue-600">
                           <MapPin className="size-4" />
                           Voir la carte
@@ -539,7 +572,7 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
                       </div>
                       <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
                         <span className="font-semibold text-slate-900">{hebergement.estActif ? "Actif" : "Inactif"}</span>
-                        <span className="text-slate-500">- {hebergement.nomTypeHebergement || "Type non renseigne"}</span>
+                        <span className="text-slate-500">- {displayText(hebergement.nomTypeHebergement, "Type non renseigné")}</span>
                       </div>
                     </div>
                     <Button type="button" onClick={openTarifDialog} className="bg-emerald-600 text-white hover:bg-emerald-700">
@@ -620,7 +653,7 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
                         onChange={() => undefined}
                       />
                     </div>
-                    <p className="mt-2 font-semibold text-emerald-700">{hebergement.adresse || "Emplacement renseigne"}</p>
+                    <p className="mt-2 font-semibold text-emerald-700">{displayText(hebergement.adresse, "Emplacement renseigné")}</p>
                     <p className="mt-1 text-xs text-slate-500">{hebergement.latitude}, {hebergement.longitude}</p>
                   </div>
 
@@ -633,7 +666,7 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
                       {hebergement.equipements.map((equipement) => (
                         <span key={equipement} className="inline-flex items-center gap-2">
                           <CheckCircle2 className="size-4 text-emerald-600" />
-                          {equipement}
+                          {displayText(equipement)}
                         </span>
                       ))}
                     </div>
@@ -682,7 +715,7 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
 
             <section className="space-y-4">
               <div className="flex items-center justify-between gap-4">
-                <h2 className="text-2xl font-bold text-slate-950">Chambres et disponibilites</h2>
+                <h2 className="text-2xl font-bold text-slate-950">Chambres</h2>
                 <span className="text-sm text-slate-500">{tarifs.length} resultat{tarifs.length > 1 ? "s" : ""} affiche{tarifs.length > 1 ? "s" : ""}</span>
               </div>
 
@@ -720,7 +753,7 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
                         <div className="grid gap-0 lg:grid-cols-[360px_minmax(0,1fr)_260px]">
                           <div className="relative h-52 bg-slate-100">
                             {roomImage ? (
-                              <img src={roomImage} alt={tarif.nomTypeChambre} className="h-full w-full object-cover" />
+                              <img src={roomImage} alt={displayText(tarif.nomTypeChambre)} className="h-full w-full object-cover" />
                             ) : (
                               <div className="flex h-full items-center justify-center text-slate-400">
                                 <ImageIcon className="size-8" />
@@ -748,7 +781,7 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
                                 {currentPhotoType}
                               </span>
                             ) : null}
-                            <h3 className="absolute bottom-5 left-5 text-2xl font-bold text-white drop-shadow">{tarif.nomTypeChambre}</h3>
+                            <h3 className="absolute bottom-5 left-5 text-2xl font-bold text-white drop-shadow">{displayText(tarif.nomTypeChambre)}</h3>
                             {roomImages.length > 1 ? (
                               <div className="absolute bottom-4 right-4 flex gap-1.5">
                                 {roomImages.map((image, index) => (
@@ -803,9 +836,9 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
                                       index === currentPhotoIndex ? "border-emerald-500" : "border-slate-200"
                                     }`}
                                   >
-                                    <img src={photo.urlImage} alt={photo.nomTypeSalle} className="h-full w-full object-cover" />
+                                    <img src={photo.urlImage} alt={displayText(photo.nomTypeSalle)} className="h-full w-full object-cover" />
                                     <span className="absolute inset-x-0 bottom-0 truncate bg-slate-950/65 px-1.5 py-0.5 text-[10px] font-medium text-white">
-                                      {photo.nomTypeSalle}
+                                      {displayText(photo.nomTypeSalle)}
                                     </span>
                                     <span
                                       role="button"
@@ -915,7 +948,7 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
               <div className="flex gap-2">
                 <Select value={photoForm.idTypeSalle} onValueChange={(value) => setPhotoForm((current) => ({ ...current, idTypeSalle: value }))}>
                   <SelectTrigger className="w-full"><SelectValue placeholder="Choisir un type de salle" /></SelectTrigger>
-                  <SelectContent>{typeSalles.map((typeSalle) => <SelectItem key={typeSalle.id} value={typeSalle.id}>{typeSalle.nom}</SelectItem>)}</SelectContent>
+                  <SelectContent>{typeSalles.map((typeSalle) => <SelectItem key={typeSalle.id} value={typeSalle.id}>{displayText(typeSalle.nom)}</SelectItem>)}</SelectContent>
                 </Select>
                 <Button
                   type="button"
@@ -995,9 +1028,9 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
       <Dialog open={isGalleryDialogOpen} onOpenChange={setIsGalleryDialogOpen}>
         <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto p-0">
           <DialogHeader className="border-b border-slate-200 px-6 py-4">
-            <DialogTitle>Galerie photos</DialogTitle>
+            <DialogTitle>Galérie photos</DialogTitle>
             <DialogDescription>
-              {galleryImages.length} photo{galleryImages.length > 1 ? "s" : ""} pour {hebergement?.nom ?? "cet hebergement"}.
+              {galleryImages.length} photo{galleryImages.length > 1 ? "s" : ""} pour {displayText(hebergement?.nom, "cet hébergement")}.
             </DialogDescription>
           </DialogHeader>
 

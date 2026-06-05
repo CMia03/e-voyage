@@ -1487,7 +1487,7 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
                 className={greenOutlineButtonClass}
                 onClick={() => router.push(`${detailUrl}?section=gallery`)}
               >
-                Galerie
+                Galérie
               </Button>
               <Button type="button" size="sm" variant="default" className={greenPrimaryButtonClass}>
                 Planning voyage

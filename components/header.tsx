@@ -150,7 +150,7 @@ export function Header() {
             href="/galerie"
             className="text-sm font-medium transition-colors hover:text-primary"
           >
-            Galerie
+            Galérie
           </Link>
           <Link 
             href="/#contact" 
@@ -257,7 +257,7 @@ export function Header() {
                   className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-all hover:bg-primary/10 hover:text-primary group"
                 >
                   <span className="text-xl">📸</span>
-                  <span>Galerie</span>
+                  <span>Galérie</span>
                 </Link>
                 <Link 
                   href="/#contact" 

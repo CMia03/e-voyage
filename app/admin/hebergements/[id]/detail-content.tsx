@@ -86,6 +86,40 @@ function formatDate(value: string | null | undefined) {
   return new Date(value).toLocaleDateString("fr-FR");
 }
 
+const legacyEncodingMap: Record<string, string> = {
+  "‚": "é",
+  "ƒ": "è",
+  "…": "à",
+  "‡": "ç",
+  "ˆ": "ê",
+  "‰": "ë",
+  "Š": "è",
+  "‹": "ï",
+  "Œ": "î",
+  "“": "ô",
+  "”": "ù",
+  "–": "û",
+  "—": "ü",
+  "×": "Î",
+};
+
+function displayText(value?: string | number | null, fallback = "-") {
+  if (value === null || value === undefined || value === "") return fallback;
+  return String(value)
+    .replace(/[‚ƒ…‡ˆ‰Š‹Œ“”–—×]/g, (char) => legacyEncodingMap[char] ?? char)
+    .replace(/Ã©/g, "é")
+    .replace(/Ã¨/g, "è")
+    .replace(/Ãª/g, "ê")
+    .replace(/Ã«/g, "ë")
+    .replace(/Ã /g, "à")
+    .replace(/Ã¢/g, "â")
+    .replace(/Ã®/g, "î")
+    .replace(/Ã´/g, "ô")
+    .replace(/Ã»/g, "û")
+    .replace(/Ã¹/g, "ù")
+    .replace(/Ã§/g, "ç");
+}
+
 export function AdminHebergementDetailContent({
   hebergementId,
 }: AdminHebergementDetailContentProps) {
@@ -337,7 +371,7 @@ export function AdminHebergementDetailContent({
             <div className="space-y-3">
               <div>
                 <h1 className="text-3xl font-semibold tracking-tight">
-                  {hebergement?.nom ?? "Detail hebergement"}
+                  {displayText(hebergement?.nom, "Détail hébergement")}
                 </h1>
                 <p className="text-sm text-muted-foreground">
                   Gestion des tarifs, types de chambre et photos de salles.
@@ -375,13 +409,13 @@ export function AdminHebergementDetailContent({
                       <div className="overflow-hidden rounded-2xl bg-muted/20 p-3">
                         <img
                           src={hebergement.urlImagePrincipale}
-                          alt={hebergement.nom}
+                          alt={displayText(hebergement.nom)}
                           className="max-h-[360px] w-full rounded-xl object-contain"
                         />
                       </div>
                     ) : null}
                     <p className="text-sm text-muted-foreground">
-                      {hebergement.description || "Aucune description"}
+                      {displayText(hebergement.description, "Aucune description")}
                     </p>
                   </div>
 
@@ -389,13 +423,13 @@ export function AdminHebergementDetailContent({
                     <div className="rounded-xl border border-border/50 bg-card/50 p-4">
                       <p className="font-medium">Type</p>
                       <p className="mt-1 text-muted-foreground">
-                        {hebergement.nomTypeHebergement || "Non renseigne"}
+                        {displayText(hebergement.nomTypeHebergement, "Non renseigné")}
                       </p>
                     </div>
                     <div className="rounded-xl border border-border/50 bg-card/50 p-4">
                       <p className="font-medium">Adresse</p>
                       <p className="mt-1 text-muted-foreground">
-                        {hebergement.adresse || "Non renseignee"}
+                        {displayText(hebergement.adresse, "Non renseignée")}
                       </p>
                     </div>
                     <div className="rounded-xl border border-border/50 bg-card/50 p-4">
@@ -434,7 +468,7 @@ export function AdminHebergementDetailContent({
                       <SelectContent>
                         {typeChambres.map((type) => (
                           <SelectItem key={type.id} value={type.id}>
-                            {type.nom}
+                            {displayText(type.nom)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -454,7 +488,7 @@ export function AdminHebergementDetailContent({
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Prix reservation</label>
+                    <label className="text-sm font-medium">Prix réservation</label>
                     <Input
                       type="number"
                       min="0"
@@ -474,7 +508,7 @@ export function AdminHebergementDetailContent({
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Capacite</label>
+                    <label className="text-sm font-medium">Capacité</label>
                     <Input
                       type="number"
                       min="1"
@@ -531,7 +565,7 @@ export function AdminHebergementDetailContent({
                       }
                     />
                     <label htmlFor="petitDejeunerInclus" className="text-sm font-medium">
-                      Petit dejeuner inclus
+                      Petit déjeuner inclus
                     </label>
                   </div>
 
@@ -582,21 +616,21 @@ export function AdminHebergementDetailContent({
                       >
                         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                           <div className="space-y-2">
-                            <h3 className="text-lg font-semibold">{tarif.nomTypeChambre}</h3>
+                            <h3 className="text-lg font-semibold">{displayText(tarif.nomTypeChambre)}</h3>
                             <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                               <span className="rounded-full bg-muted px-2.5 py-1">
                                 {formatMoney(tarif.prixParNuit, tarif.devise)} / nuit
                               </span>
                               <span className="rounded-full bg-muted px-2.5 py-1">
-                                Reservation: {formatMoney(tarif.prixReservation, tarif.devise)}
+                                Réservation: {formatMoney(tarif.prixReservation, tarif.devise)}
                               </span>
                               <span className="rounded-full bg-muted px-2.5 py-1">
-                                Capacite: {tarif.capacite}
+                                Capacité: {tarif.capacite}
                               </span>
                               <span className="rounded-full bg-muted px-2.5 py-1">
                                 {tarif.petitDejeunerInclus
-                                  ? "Petit dejeuner inclus"
-                                  : "Sans petit dejeuner"}
+                                  ? "Petit déjeuner inclus"
+                                  : "Sans petit déjeuner"}
                               </span>
                               <span className="rounded-full bg-muted px-2.5 py-1">
                                 {formatDate(tarif.dateValiditeDebut)} - {formatDate(tarif.dateValiditeFin)}
@@ -636,11 +670,11 @@ export function AdminHebergementDetailContent({
                                   >
                                     <img
                                       src={photo.urlImage}
-                                      alt={photo.nomTypeSalle}
+                                      alt={displayText(photo.nomTypeSalle)}
                                       className="aspect-[4/3] w-full object-cover"
                                     />
                                     <div className="space-y-2 p-3">
-                                      <p className="text-sm font-medium">{photo.nomTypeSalle}</p>
+                                      <p className="text-sm font-medium">{displayText(photo.nomTypeSalle)}</p>
                                       <Button
                                         size="sm"
                                         variant="destructive"
@@ -662,7 +696,7 @@ export function AdminHebergementDetailContent({
                             <CardHeader>
                               <CardTitle className="text-base">Ajouter des photos</CardTitle>
                               <CardDescription>
-                                Associe des images a un type de salle.
+                                Associe des images à un type de salle.
                               </CardDescription>
                             </CardHeader>
                             <CardContent>
@@ -681,7 +715,7 @@ export function AdminHebergementDetailContent({
                                     <SelectContent>
                                       {typeSalles.map((typeSalle) => (
                                         <SelectItem key={typeSalle.id} value={typeSalle.id}>
-                                          {typeSalle.nom}
+                                          {displayText(typeSalle.nom)}
                                         </SelectItem>
                                       ))}
                                     </SelectContent>

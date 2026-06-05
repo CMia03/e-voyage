@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, CalendarDays, Camera, ImageIcon, Star, Trash, Settings, Package } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarDays, ImageIcon, Star, Trash, Settings, Package } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -144,8 +144,7 @@ export function AdminDestinationDetailContent({
       if (!current) {
         groups.set(groupKey, {
           ...group,
-          estPrincipale:
-            Boolean(group.estPrincipale) || group.images.some((image) => Boolean(image.estPrincipale)),
+          estPrincipale: Boolean(group.estPrincipale),
           images: [...group.images].sort(
             (a, b) => Number(Boolean(a.estPrincipale)) - Number(Boolean(b.estPrincipale))
           ),
@@ -158,8 +157,7 @@ export function AdminDestinationDetailContent({
       current.images.push(...nextImages);
       current.estPrincipale =
         current.estPrincipale ||
-        Boolean(group.estPrincipale) ||
-        group.images.some((image) => Boolean(image.estPrincipale));
+        Boolean(group.estPrincipale);
       current.images.sort(
         (a, b) => Number(Boolean(a.estPrincipale)) - Number(Boolean(b.estPrincipale))
       );
@@ -177,6 +175,20 @@ export function AdminDestinationDetailContent({
         0
       ),
     [destination]
+  );
+
+  const primaryPhotoImages = useMemo(
+    () =>
+      sortedPhotoGroups.flatMap((group, groupIndex) =>
+        group.images
+          .filter((image) => image.estPrincipale)
+          .map((image) => ({
+            image,
+            group,
+            groupKey: `primary-${group.titre}-${group.dateObtenir ?? "no-date"}-${group.ordreAffichage ?? 0}-${groupIndex}`,
+          }))
+      ),
+    [sortedPhotoGroups]
   );
 
   const marketingItems = useMemo(
@@ -227,7 +239,7 @@ export function AdminDestinationDetailContent({
           className={sectionButtonClass(activeSection === "gallery")}
           onClick={handleOpenGallery}
         >
-          Galerie
+          Galérie
         </Button>
         <Button
           type="button"
@@ -661,7 +673,7 @@ export function AdminDestinationDetailContent({
               <CardHeader className="border-b border-gray-100">
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="text-lg font-semibold text-gray-900">Galerie multimédia</CardTitle>
+                    <CardTitle className="text-lg font-semibold text-gray-900">Galérie multimédia</CardTitle>
                     <CardDescription className="text-gray-600">
                       {totalImages} image{totalImages > 1 ? "s" : ""} répartie{totalImages > 1 ? "s" : ""} dans {sortedPhotoGroups.length} lot{sortedPhotoGroups.length > 1 ? "s" : ""}
                     </CardDescription>
@@ -693,7 +705,6 @@ export function AdminDestinationDetailContent({
                     {sortedPhotoGroups.map((photoGroup, index) => {
                       const groupKey = `${photoGroup.titre}-${photoGroup.dateObtenir ?? "no-date"}-${photoGroup.ordreAffichage ?? 0}-${index}`;
                       const secondaryImages = photoGroup.images.filter((image) => !image.estPrincipale);
-                      const primaryImages = photoGroup.images.filter((image) => image.estPrincipale);
                       return (
                       <div
                         key={groupKey}
@@ -716,25 +727,6 @@ export function AdminDestinationDetailContent({
                                 </p>
                               )}
                             </div>
-                            <span
-                              className={`w-fit rounded-full px-3 py-1 text-xs font-medium ${
-                                photoGroup.estPrincipale
-                                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                                  : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                              }`}
-                            >
-                              {photoGroup.estPrincipale ? (
-                                <span className="inline-flex items-center gap-1">
-                                  <Star className="h-3.5 w-3.5 fill-current" />
-                                  Principale
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1">
-                                  <Camera className="h-3.5 w-3.5" />
-                                  Secondaire
-                                </span>
-                              )}
-                            </span>
                           </div>
                           {photoGroup.description && (
                             <p className="line-clamp-2 text-sm text-muted-foreground">
@@ -742,7 +734,7 @@ export function AdminDestinationDetailContent({
                             </p>
                           )}
                           <p className="text-xs text-muted-foreground">
-                            {photoGroup.images.length} image{photoGroup.images.length > 1 ? "s" : ""} dans ce lot
+                            {secondaryImages.length} image{secondaryImages.length > 1 ? "s" : ""} secondaire{secondaryImages.length > 1 ? "s" : ""} dans ce lot
                           </p>
                         </div>
 
@@ -787,7 +779,6 @@ export function AdminDestinationDetailContent({
                         >
                           {[
                             { id: "secondary", images: secondaryImages },
-                            { id: "primary", images: primaryImages },
                           ]
                             .filter((row) => row.images.length > 0)
                             .map((row) => (
@@ -848,10 +839,81 @@ export function AdminDestinationDetailContent({
                                 </div>
                               </div>
                             ))}
+                          {secondaryImages.length === 0 ? (
+                            <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground">
+                              Les images de ce lot sont classées dans la liste des images principales.
+                            </div>
+                          ) : null}
                         </div>
                         </div>
                       </div>
                     )})}
+                    {primaryPhotoImages.length > 0 ? (
+                      <div className="rounded-2xl border border-emerald-100 bg-emerald-50/30 p-5">
+                        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                          <div>
+                            <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-950">
+                              <Star className="h-4 w-4 fill-emerald-700 text-emerald-700" />
+                              Images principales
+                            </h3>
+                            <p className="text-sm text-slate-600">
+                              {primaryPhotoImages.length} image{primaryPhotoImages.length > 1 ? "s" : ""} principale{primaryPhotoImages.length > 1 ? "s" : ""} regroupée{primaryPhotoImages.length > 1 ? "s" : ""} dans une seule liste.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                          {primaryPhotoImages.map(({ image, group }) => (
+                            <div key={image.id} className="overflow-hidden rounded-xl border border-emerald-100 bg-white shadow-sm">
+                              <img
+                                src={image.url}
+                                alt={group.titre || destination?.nom || "Photo principale"}
+                                className="h-36 w-full object-cover"
+                              />
+                              <div className="space-y-2 border-t border-border/40 px-3 py-3">
+                                <div>
+                                  <p className="truncate text-sm font-semibold text-slate-950">
+                                    {group.titre || "Sans titre"}
+                                  </p>
+                                  {group.dateObtenir ? (
+                                    <p className="text-xs text-muted-foreground">
+                                      {new Date(group.dateObtenir).toLocaleDateString("fr-FR", {
+                                        day: "numeric",
+                                        month: "long",
+                                        year: "numeric",
+                                      })}
+                                    </p>
+                                  ) : null}
+                                </div>
+                                <div className="flex items-center justify-between gap-2">
+                                  <label className="flex items-center gap-2 text-xs text-emerald-700">
+                                    <input
+                                      type="checkbox"
+                                      checked={Boolean(image.estPrincipale)}
+                                      disabled={updatingPhotoId === image.id}
+                                      onChange={(event) =>
+                                        handleTogglePhotoPrincipale(image.id, event.target.checked)
+                                      }
+                                    />
+                                    <span>
+                                      {updatingPhotoId === image.id ? "Mise a jour..." : "Image principale"}
+                                    </span>
+                                  </label>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 w-7 p-0 text-red-500 hover:bg-red-50 hover:text-red-600"
+                                    onClick={() => handleDeleteImage(image.id)}
+                                  >
+                                    <Trash className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 )}
               </CardContent>

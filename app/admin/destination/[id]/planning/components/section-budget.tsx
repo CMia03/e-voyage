@@ -1354,7 +1354,7 @@ function BudgetDetailsPanel({
                     {day.numeroJour ?? index + 1}
                   </span>
                   <span className="mt-2 block font-semibold text-slate-950">Jour {day.numeroJour ?? index + 1}</span>
-                  <span className="mt-0.5 block truncate text-xs text-slate-500">{displayText(day.titre, "Sans titre")}</span>
+                  {/* <span className="mt-0.5 block truncate text-xs text-slate-500">{displayText(day.titre, "Sans titre")}</span> */}
                 </button>
               );
             })}

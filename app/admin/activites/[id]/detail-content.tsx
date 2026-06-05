@@ -544,7 +544,7 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
                               <span className="absolute inset-0 flex items-center justify-center bg-slate-950/45">
                                 <span className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white shadow-lg">
                                   <Camera className="size-4" />
-                                  Galerie
+                                  Galérie
                                 </span>
                               </span>
                             ) : null}
@@ -759,7 +759,7 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
       <Dialog open={isGalleryDialogOpen} onOpenChange={setIsGalleryDialogOpen}>
         <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] max-w-5xl overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Galerie activite</DialogTitle>
+            <DialogTitle>Galérie activite</DialogTitle>
             <DialogDescription>
               {galleryImages.length} image{galleryImages.length > 1 ? "s" : ""} disponible{galleryImages.length > 1 ? "s" : ""}.
             </DialogDescription>

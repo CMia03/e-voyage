@@ -49,7 +49,7 @@ export function PhotoDestinationForm({
           <Input
             value={form.titre}
             onChange={(event) => onUpdate("titre", event.target.value)}
-            placeholder="Galerie plage"
+            placeholder="Galérie plage"
           />
         </div>
 

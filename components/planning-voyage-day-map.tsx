@@ -2,8 +2,8 @@
 
 import "leaflet/dist/leaflet.css";
 
-import { useMemo, useState } from "react";
-import { GeoJSON, MapContainer, Marker, Polyline, Popup, TileLayer } from "react-leaflet";
+import { useEffect, useMemo, useState } from "react";
+import { GeoJSON, MapContainer, Marker, Polyline, Popup, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import type { GeoJsonObject } from "geojson";
 import { MapPinned, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
@@ -53,6 +53,54 @@ function buildImagePinIcon(imageUrl: string | null, color: string, fallbackLabel
 const transportDepartIcon = buildTransportPointIcon("D", "#dc2626");
 const transportArriveeIcon = buildTransportPointIcon("A", "#16a34a");
 
+function ResizeMapOnChange({ watchKey }: { watchKey: string }) {
+  const map = useMap();
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      map.invalidateSize();
+    }, 80);
+
+    return () => window.clearTimeout(timer);
+  }, [map, watchKey]);
+
+  return null;
+}
+
+function FitMapToSelection({
+  positions,
+  fallbackCenter,
+  watchKey,
+}: {
+  positions: [number, number][];
+  fallbackCenter: [number, number];
+  watchKey: string;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      map.invalidateSize();
+
+      if (positions.length > 1) {
+        map.fitBounds(positions, { padding: [32, 32], maxZoom: 11 });
+        return;
+      }
+
+      if (positions.length === 1) {
+        map.setView(positions[0], Math.max(map.getZoom(), 11));
+        return;
+      }
+
+      map.setView(fallbackCenter, 7);
+    }, 100);
+
+    return () => window.clearTimeout(timer);
+  }, [fallbackCenter, map, positions, watchKey]);
+
+  return null;
+}
+
 function transportColor(typeName: string) {
   const value = typeName.toLowerCase();
   if (value.includes("avion")) return "#2563eb";
@@ -79,8 +127,45 @@ function formatDayDate(dateJour?: string | null) {
   });
 }
 
+const legacyEncodingMap: Record<string, string> = {
+  "‚": "é",
+  "ƒ": "è",
+  "…": "à",
+  "‡": "ç",
+  "ˆ": "ê",
+  "‰": "ë",
+  "Š": "è",
+  "‹": "ï",
+  "Œ": "î",
+  "“": "ô",
+  "”": "ù",
+  "–": "û",
+  "—": "ü",
+  "×": "Î",
+};
+
+function displayText(value?: string | number | null, fallback = "-") {
+  if (value === null || value === undefined || value === "") return fallback;
+  return String(value)
+    .replace(/[‚ƒ…‡ˆ‰Š‹Œ“”–—×]/g, (char) => legacyEncodingMap[char] ?? char)
+    .replace(/Ã©/g, "é")
+    .replace(/Ã¨/g, "è")
+    .replace(/Ãª/g, "ê")
+    .replace(/Ã«/g, "ë")
+    .replace(/Ã /g, "à")
+    .replace(/Ã¢/g, "â")
+    .replace(/Ã®/g, "î")
+    .replace(/Ã´/g, "ô")
+    .replace(/Ã»/g, "û")
+    .replace(/Ã¹/g, "ù")
+    .replace(/Ã§/g, "ç");
+}
+
 function getElementTitle(element: ElementJourPlanification) {
-  return element.titre || element.nomTransport || element.nomActivite || element.nomHebergement || element.nomTypeElementJour || "Bloc";
+  return displayText(
+    element.titre || element.nomTransport || element.nomActivite || element.nomHebergement || element.nomTypeElementJour,
+    "Bloc"
+  );
 }
 
 function getElementMeta(element: ElementJourPlanification) {
@@ -91,7 +176,7 @@ function getElementMeta(element: ElementJourPlanification) {
     element.nomHebergement,
   ].filter((part): part is string => Boolean(part));
 
-  return parts.join(" • ");
+  return parts.map((part) => displayText(part)).join(" • ");
 }
 
 function getElementTone(element: ElementJourPlanification) {
@@ -214,10 +299,10 @@ export function PlanningVoyageDayMap({
           markers.push({
             id: `act-${element.id}`,
             type: "ACTIVITE",
-            name: activite?.nom || element.nomActivite || "Activite",
+            name: displayText(activite?.nom || element.nomActivite, "Activité"),
             position: [latitude, longitude],
             image: activite?.image || null,
-            description: description || null,
+            description: description ? displayText(description) : null,
           });
         }
       }
@@ -233,10 +318,10 @@ export function PlanningVoyageDayMap({
           markers.push({
             id: `heb-${element.id}`,
             type: "HEBERGEMENT",
-            name: hebergement?.nom || element.nomHebergement || "Hebergement",
+            name: displayText(hebergement?.nom || element.nomHebergement, "Hébergement"),
             position: [latitude, longitude],
             image: hebergement?.image || null,
-            description: description || null,
+            description: description ? displayText(description) : null,
           });
         }
       }
@@ -259,27 +344,51 @@ export function PlanningVoyageDayMap({
 
   function openDayDetails(day: JourPlanificationVoyage) {
     setDetailDialogContent({
-      title: day.titre || `Jour ${day.numeroJour ?? "-"}`,
-      description: `Date: ${formatDayDate(day.dateJour)}\nBlocs: ${(day.elements ?? []).length}\nDescription: ${day.description || "-"}`,
+      title: displayText(day.titre, `Jour ${day.numeroJour ?? "-"}`),
+      description: `Date: ${formatDayDate(day.dateJour)}\nBlocs: ${(day.elements ?? []).length}\nDescription: ${displayText(day.description)}`,
     });
   }
 
   function openElementDetails(element: ElementJourPlanification) {
     setDetailDialogContent({
-      title: element.titre || element.nomTypeElementJour || "Bloc",
-      description: `Type: ${element.nomTypeElementJour || "-"}\nDebut: ${element.heureDebut || "-"}\nFin: ${element.heureFin || "-"}\nBudget: ${element.budgetPrevu ?? "-"} ${element.devise || "MGA"}\nDescription: ${element.description || "-"}`,
+      title: displayText(element.titre || element.nomTypeElementJour, "Bloc"),
+      description: `Type: ${displayText(element.nomTypeElementJour)}\nDébut: ${element.heureDebut || "-"}\nFin: ${element.heureFin || "-"}\nBudget: ${element.budgetPrevu ?? "-"} ${element.devise || "MGA"}\nDescription: ${displayText(element.description)}`,
     });
   }
 
+  const mapPositions = useMemo<[number, number][]>(() => {
+    const segmentPoints = validSegments.flatMap((transport) => {
+      if (
+        transport.latitudeDepart === null ||
+        transport.longitudeDepart === null ||
+        transport.latitudeArrivee === null ||
+        transport.longitudeArrivee === null
+      ) {
+        return [];
+      }
+
+      return [
+        [transport.latitudeDepart, transport.longitudeDepart] as [number, number],
+        [transport.latitudeArrivee, transport.longitudeArrivee] as [number, number],
+      ];
+    });
+
+    return [...segmentPoints, ...dayPlaceMarkers.map((marker) => marker.position)];
+  }, [dayPlaceMarkers, validSegments]);
+
+  const mapWatchKey = `${selectedDay?.id ?? "none"}-${validSegments.length}-${dayPlaceMarkers.length}`;
+
   return (
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,1fr)]">
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <div className="grid items-stretch gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,1fr)]">
+      <div className="min-h-[520px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         {validSegments.length === 0 && dayPlaceMarkers.length === 0 ? (
-          <div className="flex h-[380px] items-center justify-center bg-slate-50 px-6 text-center text-sm text-slate-500">
+          <div className="flex h-full min-h-[520px] items-center justify-center bg-slate-50 px-6 text-center text-sm text-slate-500">
             Aucun point geographique lie au jour selectionne. Ajoute un transport, une activite ou un hebergement.
           </div>
         ) : (
-          <MapContainer center={mapCenter} zoom={7} className="h-[380px] w-full" preferCanvas>
+          <MapContainer center={mapCenter} zoom={7} className="h-full min-h-[520px] w-full" preferCanvas>
+            <ResizeMapOnChange watchKey={mapWatchKey} />
+            <FitMapToSelection positions={mapPositions} fallbackCenter={mapCenter} watchKey={mapWatchKey} />
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -300,16 +409,16 @@ export function PlanningVoyageDayMap({
                   )}
                   <Marker position={points[0]} icon={transportDepartIcon}>
                     <Popup>
-                      <strong>{transport.depart}</strong>
+                      <strong>{displayText(transport.depart)}</strong>
                       <br />
-                      Depart (Transport)
+                      Départ (Transport)
                     </Popup>
                   </Marker>
                   <Marker position={points[1]} icon={transportArriveeIcon}>
                     <Popup>
-                      <strong>{transport.arrivee}</strong>
+                      <strong>{displayText(transport.arrivee)}</strong>
                       <br />
-                      Arrivee (Transport)
+                      Arrivée (Transport)
                     </Popup>
                   </Marker>
                 </div>
@@ -329,7 +438,7 @@ export function PlanningVoyageDayMap({
                 <Popup>
                   <strong>{marker.name}</strong>
                   <br />
-                  {marker.type === "ACTIVITE" ? "Activite" : "Hebergement"}
+                  {marker.type === "ACTIVITE" ? "Activité" : "Hébergement"}
                   {marker.image ? (
                     <>
                       <br />
@@ -398,7 +507,7 @@ export function PlanningVoyageDayMap({
                       Jour {day.numeroJour ?? "-"}
                     </Badge>
                     <p className="mt-2 text-sm font-semibold text-slate-950">
-                      {day.titre || `Jour ${day.numeroJour ?? ""}`}
+                      {displayText(day.titre, `Jour ${day.numeroJour ?? ""}`)}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">

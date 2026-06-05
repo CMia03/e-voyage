@@ -485,8 +485,8 @@ export function SectionReservation({ planification }: Props) {
                             <div className="flex items-start gap-2">
                               <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
                               <div>
-                                <p className="font-semibold text-slate-950">{mainDetail?.nomDestination || planification.destinationNom || "Destination"}</p>
-                                <p className="mt-1 text-xs text-slate-500">{categorie}</p>
+                                {/* <p className="font-semibold text-slate-950">{mainDetail?.nomDestination || planification.destinationNom || "Destination"}</p>
+                                <p className="mt-1 text-xs text-slate-500">{categorie}</p> */}
                                 <Badge variant="secondary" className={`mt-2 rounded-md text-xs ${sourceClasses[reservation.source]}`}>
                                   {sourceLabels[reservation.source]}
                                 </Badge>

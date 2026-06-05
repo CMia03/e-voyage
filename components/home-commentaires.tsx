@@ -147,11 +147,11 @@ export function HomeCommentaires() {
       .toUpperCase();
 
   const renderHeader = () => (
-    <div className="mx-auto mb-12 max-w-4xl text-center sm:mb-16">
-      <h2 className="mb-5 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-3xl font-bold tracking-tight text-transparent sm:text-4xl md:text-5xl">
-        Témoignages Clients
+    <div className="mb-12 sm:mb-16 text-center">
+      <h2 className="mb-6 text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent">
+        Ils nous font confiance
       </h2>
-      <p className="px-4 text-lg leading-relaxed text-muted-foreground sm:text-xl">
+      <p className="text-lg sm:text-xl text-muted-foreground px-4 leading-relaxed">
         Découvrez ce que nos clients pensent de leurs voyages avec nous
       </p>
     </div>
@@ -162,9 +162,7 @@ export function HomeCommentaires() {
       <section className="relative overflow-hidden bg-gradient-to-b from-background via-muted/30 to-background py-16 sm:py-24">
         <div className="container mx-auto px-4">
           {renderHeader()}
-          <div className="flex justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
-          </div>
+         
         </div>
       </section>
     );
@@ -172,12 +170,8 @@ export function HomeCommentaires() {
 
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-background via-muted/30 to-background py-16 sm:py-24">
-      <div className="absolute left-6 top-10 hidden text-8xl text-emerald-900/5 lg:block">✦</div>
-      <Plane className="absolute right-24 top-12 hidden h-10 w-10 rotate-45 text-emerald-900/25 lg:block" />
-      <div className="absolute right-28 top-24 hidden h-24 w-44 rounded-full border-t border-dashed border-emerald-900/20 lg:block" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_30%,rgba(16,185,129,0.04),transparent_45%)]" />
 
-      <div className="container relative z-10 mx-auto px-4">
+      <div className="mx-auto max-w-6xl">
         {renderHeader()}
 
         <div className="relative mx-auto max-w-7xl">

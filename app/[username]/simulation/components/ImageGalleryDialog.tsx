@@ -68,7 +68,7 @@ export function ImageGalleryDialog({
             {(gallery?.images.length ?? 0) > 1 ? (
               <aside className="rounded-[28px] border border-slate-200/90 bg-white/88 p-4 shadow-sm">
                 <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                  Galerie
+                  Galérie
                 </p>
                 <div className="grid max-h-[62vh] gap-3 overflow-y-auto pr-1">
                   {(gallery?.images ?? []).map((image, index) => {

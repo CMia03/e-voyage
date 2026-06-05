@@ -151,7 +151,7 @@ export async function FooterDynamic() {
           </div>
           <div className="mt-8 border-t pt-8 text-center text-sm text-muted-foreground">
             <p>
-              &copy; {currentYear} {info!.nomEntreprise}. Tous droits reserves.
+              &copy; {currentYear} {info!.nomEntreprise}. Tous droits reservés.
             </p>
           </div>
         </div>
