@@ -60,6 +60,7 @@ import {
   TarifActivite,
 } from "@/lib/type/activite";
 import { useAdminNavigation } from "../../contexts/admin-navigation-context";
+import { useBreadcrumbs } from "../../contexts/breadcrumbs-context";
 
 type Props = { activiteId: string };
 
@@ -134,6 +135,7 @@ function formatTarifLabel(tarif: TarifActivite) {
 export function AdminActiviteDetailContent({ activiteId }: Props) {
   const router = useRouter();
   const { setActive } = useAdminNavigation();
+  const { setBreadcrumbs } = useBreadcrumbs();
   const [accessToken, setAccessToken] = useState("");
   const [role, setRole] = useState("");
   const [activite, setActivite] = useState<Activite | null>(null);
@@ -214,8 +216,16 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
 
   useEffect(() => {
     // Synchroniser la section active avec la navigation admin
-    setActive("activites-view");
+    setActive("activites");
   }, [setActive]);
+
+  useEffect(() => {
+    setBreadcrumbs([
+      { label: "Admin", href: "/admin" },
+      { label: "Activités", href: "/admin?section=activites" },
+      { label: activite?.nom ?? "Détail activité", isActive: true },
+    ]);
+  }, [activite?.nom, setBreadcrumbs]);
 
   useEffect(() => {
     if (!successMessage) {
@@ -482,17 +492,17 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
     <div className={`min-h-screen bg-gradient-to-b from-background via-muted/30 to-background text-foreground ${greenButtonScopeClass}`}>
       {errorAlert}
       {successAlert}
-      <main className="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 sm:py-8">
+      <main className="mx-auto w-full px-4 py-6 sm:px-6 sm:py-8">
         <div className="space-y-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-3">
               <Button asChild variant="outline" size="sm" className={greenOutlineButtonClass}>
-                <Link href="/admin?section=activites">Retour aux activites</Link>
+                <Link href="/admin?section=activites">Retour aux activités</Link>
               </Button>
               <div>
                 <h1 className="text-3xl font-semibold tracking-tight">{activite?.nom ?? "Detail activite"}</h1>
                 <p className="text-sm text-muted-foreground">
-                  Gere la presentation, les tarifs et les photos de cette activite.
+                  Géré la présentation, les tarifs et les photos de cette activité.
                 </p>
               </div>
             </div>
@@ -572,8 +582,8 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
                     </div>
 
                     <div className="grid gap-4 md:grid-cols-2">
-                      <InfoBlock icon={Clock} label="Duree" value={`${activite.dureeHeures} h`} />
-                      <InfoBlock icon={Gauge} label="Difficulte" value={activite.niveauxDeDifficulte || "-"} />
+                      <InfoBlock icon={Clock} label="Durée" value={`${activite.dureeHeures} h`} />
+                      <InfoBlock icon={Gauge} label="Difficulté" value={activite.niveauxDeDifficulte || "-"} />
                       <InfoBlock
                         icon={Users}
                         label="Nombre maximum de personnes dans le groupe"
@@ -598,7 +608,7 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
                             </span>
                           ))
                         ) : (
-                          <p className="text-sm text-muted-foreground">Aucun equipement renseigne.</p>
+                          <p className="text-sm text-muted-foreground">Aucun équipement renseigné.</p>
                         )}
                       </div>
                     </div>
@@ -641,8 +651,8 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
               <section className="rounded-3xl border border-border/50 bg-white p-5 shadow-sm">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <h2 className="text-xl font-semibold tracking-tight">Tarifs et disponibilites</h2>
-                    <p className="text-sm text-muted-foreground">{tarifs.length} tarif(s) enregistres.</p>
+                    <h2 className="text-xl font-semibold tracking-tight">Tarifs et disponibilités</h2>
+                    <p className="text-sm text-muted-foreground">{tarifs.length} tarif(s) enregistrés.</p>
                   </div>
                   <Button onClick={openCreateTarifDialog} className={greenPrimaryButtonClass}>
                     <Plus className="size-4" />
@@ -652,7 +662,7 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
 
                 {tarifs.length === 0 ? (
                   <p className="mt-5 rounded-2xl border border-dashed border-border/60 bg-muted/20 p-5 text-sm text-muted-foreground">
-                    Aucun tarif ajoute pour cette activite.
+                    Aucun tarif ajouté pour cette activité.
                   </p>
                 ) : (
                   <div className="mt-5 space-y-4">
@@ -672,7 +682,7 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
                             <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
                               <span className="inline-flex items-center gap-1.5">
                                 <Tags className="size-4" />
-                                {tarif.nomCategorieClient || "Categorie client non renseignee"}
+                                {tarif.nomCategorieClient || "Catégorie client non renseignée"}
                               </span>
                               <span className="inline-flex items-center gap-1.5">
                                 <CalendarDays className="size-4" />
@@ -705,7 +715,7 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
               <section className="rounded-3xl border border-border/50 bg-white p-5 shadow-sm">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <h2 className="text-xl font-semibold tracking-tight">Photos de l&apos;activite</h2>
+                    <h2 className="text-xl font-semibold tracking-tight">Photos des l&apos;activités</h2>
                     <p className="text-sm text-muted-foreground">{activite.photos?.length ?? 0} photo(s).</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -743,7 +753,7 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
                   </div>
                 ) : (
                   <p className="mt-5 rounded-2xl border border-dashed border-border/60 bg-muted/20 p-5 text-sm text-muted-foreground">
-                    Aucune photo ajoutee pour cette activite.
+                    Aucune photo ajoutée pour cette activité.
                   </p>
                 )}
               </section>

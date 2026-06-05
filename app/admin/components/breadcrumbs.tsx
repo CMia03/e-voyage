@@ -2,6 +2,7 @@
 
 import { ChevronRight, Home } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useAdminNavigation } from "../contexts/admin-navigation-context";
 import { useBreadcrumbs } from "../contexts/breadcrumbs-context";
 import { type AdminSection } from "./sidebar";
@@ -17,6 +18,7 @@ interface AdminBreadcrumbsProps {
 }
 
 export function AdminBreadcrumbs({ noMargin = false }: AdminBreadcrumbsProps = {}) {
+  const pathname = usePathname();
   const { active, setActive } = useAdminNavigation();
   const { breadcrumbs: customBreadcrumbs, resetBreadcrumbs } = useBreadcrumbs();
 
@@ -34,8 +36,9 @@ export function AdminBreadcrumbs({ noMargin = false }: AdminBreadcrumbsProps = {
       { label: "Admin", href: "/admin" },
     ];
 
-    // If custom breadcrumbs are set, use them
-    if (customBreadcrumbs.length > 1) {
+    // Detail pages can provide their own breadcrumbs. Main admin sections
+    // should always follow the active section to avoid stale breadcrumbs.
+    if (pathname !== "/admin" && customBreadcrumbs.length > 1) {
       return customBreadcrumbs;
     }
 
@@ -149,14 +152,14 @@ export function AdminBreadcrumbs({ noMargin = false }: AdminBreadcrumbsProps = {
       case "reservations-liste":
         return [
           ...baseBreadcrumbs,
-          { label: "Réservations", href: "/admin?section=reservations" },
+          { label: "Réservations", href: "/admin?section=reservations-liste" },
           { label: "Liste des réservations", isActive: true }
         ];
 
       case "reservations-ajout":
         return [
           ...baseBreadcrumbs,
-          { label: "Réservations", href: "/admin?section=reservations" },
+          { label: "Réservations", href: "/admin?section=reservations-liste" },
           { label: "Ajouté une réservation", isActive: true }
         ];
 
@@ -164,6 +167,12 @@ export function AdminBreadcrumbs({ noMargin = false }: AdminBreadcrumbsProps = {
         return [
           ...baseBreadcrumbs,
           { label: "Avis", isActive: true }
+        ];
+
+      case "commentaires":
+        return [
+          ...baseBreadcrumbs,
+          { label: "Commentaires", isActive: true }
         ];
 
       case "notifications":

@@ -1002,13 +1002,13 @@ export function AdminDestinationDetailContent({
           <DialogHeader>
             <DialogTitle>Marketing</DialogTitle>
             <DialogDescription>
-              Ajoutez un argument marketing qui sera affiche dans le detail de la destination.
+              Ajoutez un argument marketing qui sera affiché dans le détail de la destination.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSubmitMarketing} className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Libelle</label>
+              <label className="text-sm font-medium">Libellé</label>
               <input
                 value={marketingForm.libelle}
                 onChange={(event) => updateMarketingForm("libelle", event.target.value)}

@@ -663,7 +663,7 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
               </CardTitle>
               <CardDescription className="mt-2 max-w-xl text-base leading-7">
                 {displayMode === "calendar"
-                  ? "Cliquez sur une plage horaire pour creer une planification, ou sur un element existant pour le modifier."
+                  ? "Cliquez sur une plage horaire pour créer une planification, ou sur un élément existant pour le modifier."
                   : "Consultez, modifiez ou supprimez les planifications dans un tableau clair."}
               </CardDescription>
             </div>

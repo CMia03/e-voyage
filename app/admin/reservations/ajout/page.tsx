@@ -564,7 +564,7 @@ export default function AjoutReservationPage() {
                 <Input
                   value={form.commentaireClient}
                   onChange={(event) => setForm((current) => ({ ...current, commentaireClient: event.target.value }))}
-                  placeholder="Ex: client contacte par telephone"
+                  placeholder="Ex: client contacte par téléphone"
                   className="h-11"
                 />
               </div>

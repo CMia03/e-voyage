@@ -143,7 +143,7 @@ export function AdminEntrepriseInfo({ accessToken }: Props) {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Info d&apos;entreprise</h1>
         <p className="text-sm text-muted-foreground">
-          Configurez la presentation et les contacts affiches sur votre plateforme.
+          Configurez la presentation et les contacts affichés sur votre plateforme.
         </p>
       </div>
 

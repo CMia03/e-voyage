@@ -125,30 +125,7 @@ export function HebergementForm({
 
   return (
     <form className="space-y-6" onSubmit={onSubmit}>
-      {/* <section className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50/90 to-white p-5">
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_280px] xl:items-center">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">
-              {isEditing ? "Modification hebergement" : "Nouvel hebergement"}
-            </p>
-            <h3 className="mt-2 text-2xl font-semibold text-slate-950">
-              {form.nom || "Nom de l'hebergement"}
-            </h3>
-            <p className="mt-1 text-sm leading-6 text-slate-600">
-              Renseigne les informations visibles, les contacts, la localisation et les equipements.
-            </p>
-          </div>
-          <div className="rounded-2xl border border-emerald-200 bg-white/90 p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Apercu</p>
-            <p className="mt-2 text-lg font-semibold text-slate-950">{selectedType?.nom || "Type non defini"}</p>
-            <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-600">
-              <span className="rounded-full bg-slate-100 px-2.5 py-1">{form.nombreEtoiles || 0} etoile(s)</span>
-              <span className="rounded-full bg-slate-100 px-2.5 py-1">{selectedEquipements.length} equipement(s)</span>
-              <span className="rounded-full bg-slate-100 px-2.5 py-1">{form.estActif ? "Actif" : "Inactif"}</span>
-            </div>
-          </div>
-        </div>
-      </section> */}
+     
 
       <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-6">
@@ -159,7 +136,7 @@ export function HebergementForm({
               </span>
               <div>
                 <h3 className="text-base font-semibold">Informations principales</h3>
-                <p className="text-sm text-muted-foreground">Nom, description, adresse et type d&apos;hebergement.</p>
+                <p className="text-sm text-muted-foreground">Nom, description, adresse et type d&apos;hébergement.</p>
               </div>
             </div>
 
@@ -185,7 +162,7 @@ export function HebergementForm({
                 <textarea
                   value={form.description}
                   onChange={(event) => onUpdate("description", event.target.value)}
-                  placeholder="Description de l'hebergement"
+                  placeholder="Description de l'hébergement"
                   className="min-h-28 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                   required
                 />
@@ -196,7 +173,7 @@ export function HebergementForm({
                 <Input
                   value={form.adresse}
                   onChange={(event) => onUpdate("adresse", event.target.value)}
-                  placeholder="Adresse complete"
+                  placeholder="Adresse complète"
                   required
                 />
               </div>
@@ -227,7 +204,7 @@ export function HebergementForm({
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Nombre d&apos;etoiles</label>
+                <label className="text-sm font-medium">Nombre d&apos;étoiles</label>
                 <div className="relative">
                   <Star className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-amber-400" />
                   <Input
@@ -245,7 +222,7 @@ export function HebergementForm({
                 <Checkbox checked={form.estActif} onCheckedChange={(checked) => onUpdate("estActif", checked === true)} id="estActif" />
                 <label htmlFor="estActif" className="inline-flex items-center gap-2 text-sm font-medium">
                   <CheckCircle2 className="size-4 text-emerald-700" />
-                  Hebergement actif
+                  Hébergement actif
                 </label>
               </div>
             </div>
@@ -258,7 +235,7 @@ export function HebergementForm({
               </span>
               <div>
                 <h3 className="text-base font-semibold">Image principale</h3>
-                <p className="text-sm text-muted-foreground">Upload Cloudinary ou URL existante.</p>
+                <p className="text-sm text-muted-foreground">Upload ou ajouter URL existante.</p>
               </div>
             </div>
 
@@ -293,13 +270,13 @@ export function HebergementForm({
               </span>
               <div>
                 <h3 className="text-base font-semibold">Contact</h3>
-                <p className="text-sm text-muted-foreground">Telephone, email et site web de l&apos;hebergement.</p>
+                <p className="text-sm text-muted-foreground">Téléphone, email et site web de l&apos;hébergement.</p>
               </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Telephone</label>
+                <label className="text-sm font-medium">Téléphone</label>
                 <div className="relative">
                   <Phone className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
                   <Input value={form.telephone} onChange={(event) => onUpdate("telephone", event.target.value)} placeholder="+261..." className="pl-9" />
@@ -313,7 +290,7 @@ export function HebergementForm({
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Site web</label>
+                <label className="text-sm font-medium">Site</label>
                 <div className="relative">
                   <Globe2 className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
                   <Input value={form.siteWeb} onChange={(event) => onUpdate("siteWeb", event.target.value)} placeholder="https://..." className="pl-9" />
@@ -329,7 +306,7 @@ export function HebergementForm({
               </span>
               <div>
                 <h3 className="text-base font-semibold">Localisation</h3>
-                <p className="text-sm text-muted-foreground">Clique sur la carte pour ajuster latitude et longitude.</p>
+                <p className="text-sm text-muted-foreground">Clique sur la carte pour ajuster la latitude et la longitude.</p>
               </div>
             </div>
 
@@ -362,7 +339,7 @@ export function HebergementForm({
               </span>
               <div>
                 <h3 className="text-base font-semibold">Equipements</h3>
-                <p className="text-sm text-muted-foreground">Selectionne les caracteristiques qui seront affichees.</p>
+                <p className="text-sm text-muted-foreground">Sélectionné les caracteristiques qui seront affichés.</p>
               </div>
             </div>
 
@@ -397,7 +374,7 @@ export function HebergementForm({
 
               {showEquipementCreator ? (
                 <div className="flex flex-col gap-2 rounded-xl border border-dashed border-emerald-300 bg-emerald-50/40 p-3 sm:flex-row">
-                  <Input value={newEquipementName} onChange={(event) => onEquipementNameChange(event.target.value)} placeholder="Nouvel equipement" />
+                  <Input value={newEquipementName} onChange={(event) => onEquipementNameChange(event.target.value)} placeholder="Nouvel équipement" />
                   <Button
                     type="button"
                     className="bg-emerald-600 text-white hover:bg-emerald-700"
@@ -415,7 +392,7 @@ export function HebergementForm({
               {taxonomyMessage ? <p className="text-sm text-muted-foreground">{taxonomyMessage}</p> : null}
 
               <div className="flex flex-wrap gap-2">
-                {selectedEquipements.length === 0 ? <p className="text-sm text-muted-foreground">Aucun equipement selectionne.</p> : null}
+                {selectedEquipements.length === 0 ? <p className="text-sm text-muted-foreground">Aucun équipement selectionné.</p> : null}
                 {selectedEquipements.map((equipement) => (
                   <span key={equipement.id} className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs text-emerald-700">
                     {equipement.equipement}
@@ -446,12 +423,12 @@ export function HebergementForm({
                 <span className="font-medium text-slate-900 sm:text-right">{form.telephone || form.email || "-"}</span>
               </div>
               <div className="grid gap-1 sm:grid-cols-[110px_minmax(0,1fr)]">
-                <span className="text-slate-500">Coordonnees</span>
+                <span className="text-slate-500">Coordonnées</span>
                 <span className="font-medium text-slate-900 sm:text-right">{form.latitude || "-"}, {form.longitude || "-"}</span>
               </div>
             </div>
             <div className="mt-5 rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-500">
-              Les champs marques d&apos;un asterisque sont obligatoires.
+              Les champs marqués d&apos;un asterisque sont obligatoires.
             </div>
             <div className="mt-5 flex flex-col gap-2">
               <Button type="submit" disabled={isSaving} className="w-full bg-emerald-600 text-white hover:bg-emerald-700">
