@@ -184,7 +184,7 @@ onAddPlanification,
           Aucune planification pour cette destination.
         </div>
       ) : (
-        <div className="mx-auto max-w-[1200px] overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm">
+        <div className="mx-auto overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm">
           <div className="flex flex-col gap-3 border-b border-slate-100 bg-white px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="relative min-w-0 flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />

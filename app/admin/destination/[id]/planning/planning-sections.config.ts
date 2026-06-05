@@ -4,10 +4,10 @@ export type PlanningSection = "planning" | "resume" | "carte" | "budget" | "rese
 
 export const sectionOptions: Array<{ id: PlanningSection; label: string; icon: typeof CalendarDays }> = [
   { id: "planning", label: "Planning", icon: CalendarDays },
-  { id: "resume", label: "Resume", icon: List },
+  { id: "resume", label: "Résumé", icon: List },
   { id: "carte", label: "Carte", icon: Map },
   { id: "budget", label: "Budget", icon: CheckCircle2 },
-  { id: "reservation", label: "Reservation", icon: CheckCircle2 },
+  { id: "reservation", label: "Réservation", icon: CheckCircle2 },
 ];
 
 export function isPlanningSection(value: string | null | undefined): value is PlanningSection {
@@ -16,7 +16,7 @@ export function isPlanningSection(value: string | null | undefined): value is Pl
 
 export function getSectionDescription(section: PlanningSection) {
   if (section === "planning") {
-    return "Organisation jour par jour du voyage avec trajets, activites, hebergements et notes.";
+    return "Organisation jour par jour du voyage avec trajets, activités, hébergements et notes.";
   }
 
   if (section === "resume") {
@@ -24,12 +24,12 @@ export function getSectionDescription(section: PlanningSection) {
   }
 
   if (section === "carte") {
-    return "Visualisation cartographique des trajets, activites et hebergements.";
+    return "Visualisation cartographique des trajets, activités et hébergements.";
   }
 
   if (section === "budget") {
-    return "Suivi du budget prevu et des estimations de couts du voyage.";
+    return "Suivi du budget prévu et des estimations de couts du voyage.";
   }
 
-  return "Informations de reservation pour finaliser le voyage.";
+  return "Informations de réservation pour finaliser le voyage.";
 }

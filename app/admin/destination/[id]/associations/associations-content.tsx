@@ -50,6 +50,15 @@ type Props = {
 type ActiveSection = "hebergements" | "activites" | "prestations" | "carte";
 type MapCategoryFilter = "all" | "hebergement" | "activite";
 
+const greenPrimaryButtonClass =
+  "border-transparent bg-gradient-to-r from-emerald-600 to-teal-600 !text-white shadow-sm shadow-emerald-500/20 hover:from-emerald-700 hover:to-teal-700 hover:!text-white";
+const greenOutlineButtonClass =
+  "border-emerald-200 bg-white text-emerald-700 shadow-sm hover:bg-emerald-50 hover:text-emerald-800";
+
+function sectionButtonClass(isActive: boolean) {
+  return isActive ? greenPrimaryButtonClass : greenOutlineButtonClass;
+}
+
 const legacyEncodingMap: Record<string, string> = {
   "‚": "é",
   "ƒ": "â",
@@ -703,7 +712,7 @@ export function AdminDestinationAssociationsContent({
                 type="button" 
                 variant={activeSection === "hebergements" ? "default" : "outline"}
                 onClick={() => setActiveSection("hebergements")}
-                className="shadow-sm"
+                className={sectionButtonClass(activeSection === "hebergements")}
               >
                 <BedDouble className="size-4 mr-2" />
                 Hébergements
@@ -712,7 +721,7 @@ export function AdminDestinationAssociationsContent({
                 type="button" 
                 variant={activeSection === "activites" ? "default" : "outline"}
                 onClick={() => setActiveSection("activites")}
-                className="shadow-sm"
+                className={sectionButtonClass(activeSection === "activites")}
               >
                 <Compass className="size-4 mr-2" />
                 Activités
@@ -721,7 +730,7 @@ export function AdminDestinationAssociationsContent({
                 type="button" 
                 variant={activeSection === "prestations" ? "default" : "outline"}
                 onClick={() => setActiveSection("prestations")}
-                className="shadow-sm"
+                className={sectionButtonClass(activeSection === "prestations")}
               >
                 <Gift className="size-4 mr-2" />
                 Prestations
@@ -730,7 +739,7 @@ export function AdminDestinationAssociationsContent({
                 type="button"
                 variant={activeSection === "carte" ? "default" : "outline"}
                 onClick={() => setActiveSection("carte")}
-                className="shadow-sm"
+                className={sectionButtonClass(activeSection === "carte")}
               >
                 <MapIcon className="size-4 mr-2" />
                 Vue carte

@@ -8,7 +8,7 @@ export function AdminFooter() {
           <BrandLogo className="h-8 w-20" />
           <span>Admin</span>
         </span>
-        <span>Internal tools</span>
+        <span>COOL Voyage</span>
       </div>
     </footer>
   );

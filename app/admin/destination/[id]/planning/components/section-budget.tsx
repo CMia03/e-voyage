@@ -103,8 +103,8 @@ function displayText(value?: string | number | null, fallback = "-") {
 }
 
 function formatMetricValue(value: string | number) {
-  if (typeof value === "number") return value.toString();
-  return value.replace(" jour(s)", "\njour(s)").replace(" activité(s)", "\nactivité(s)").replace(" hébergement(s)", "\nhébergement(s)");
+  if (typeof value === "number") return formatAmount(value);
+  return value.replace(" jour(s)", " jour(s)").replace(" activité(s)", " activité(s)").replace(" hébergement(s)", " hébergement(s)");
 }
 
 function formatMoneySafe(value: number | null | undefined, devise: string): string {
@@ -133,7 +133,7 @@ function isNamedClientCategory(value: string | null | undefined): value is strin
 }
 
 const CATEGORY_LABELS: Record<BudgetCategory, string> = {
-  activite: "ActivitÃ©",
+  activite: "Activité",
   hebergement: "Hébergements",
   transport: "Transport",
   autre: "Autre",
@@ -622,7 +622,7 @@ function BudgetBadgeList({
                                   </div>
                                 </td>
                                 <td className="px-4 py-3 font-semibold text-emerald-700">
-                                  <span>{formatMoneySafe(budget.prixAvecReduction, devise)}</span>
+                                  <span> {formatMoneySafe(budget.prixAvecReduction, devise)}</span>
                                   {isAdmin ? (
                                     <button
                                       type="button"
@@ -1195,7 +1195,7 @@ function BudgetOverview({
                 <p className="min-w-0 text-sm font-medium leading-5 text-slate-700">{card.label}</p>
               </div>
               <p className="mt-4 whitespace-pre-line text-xl font-semibold leading-tight text-emerald-700">
-                {formatMetricValue(card.value)}
+              {formatMetricValue(card.value)}
               </p>
               <p className="mt-2 text-xs text-slate-500">{card.caption}</p>
             </div>
