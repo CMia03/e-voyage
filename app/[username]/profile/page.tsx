@@ -185,7 +185,7 @@ export default function ClientProfilePage() {
   }
 
   return (
-    <section className="mx-auto max-w-5xl space-y-4">
+    <section className="mx-auto space-y-4">
       {error ? (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
@@ -203,7 +203,7 @@ export default function ClientProfilePage() {
           <div className="min-w-0">
             <div className="flex items-center gap-3">
               <User className="size-5 text-emerald-700" />
-              <h1 className="text-xl font-semibold text-slate-950">Details de l utilisateur</h1>
+              <h1 className="text-xl font-semibold text-slate-950">Détails du profil</h1>
             </div>
             <p className="mt-4 break-words text-sm text-slate-500">
               {fullName} - {profile.email || "-"}
@@ -236,25 +236,25 @@ export default function ClientProfilePage() {
               <ProfileField label="Nom" value={profile.nom} editing={isEditing}>
                 <Input value={form.nom} onChange={(event) => updateField("nom", event.target.value)} />
               </ProfileField>
-              <ProfileField label="Prenom" value={profile.prenom} editing={isEditing}>
+              <ProfileField label="Prénom" value={profile.prenom} editing={isEditing}>
                 <Input value={form.prenom} onChange={(event) => updateField("prenom", event.target.value)} />
               </ProfileField>
               <ProfileField label="Date de naissance" value={profile.dateNaissance} editing={isEditing}>
                 <Input type="date" value={form.dateNaissance} onChange={(event) => updateField("dateNaissance", event.target.value)} />
               </ProfileField>
-              <ProfileField label="Nationalite" value={profile.nationalite} editing={isEditing}>
+              <ProfileField label="Nationalité" value={profile.nationalite} editing={isEditing}>
                 <Input value={form.nationalite} onChange={(event) => updateField("nationalite", event.target.value)} />
               </ProfileField>
             </div>
           </div>
 
           <div>
-            <h2 className="text-lg font-semibold text-slate-950">Contact et systeme</h2>
+            <h2 className="text-lg font-semibold text-slate-950">Contacts</h2>
             <div className="mt-6 grid gap-6">
               <ProfileField label="Email" value={profile.email} editing={isEditing}>
                 <Input type="email" value={form.email} onChange={(event) => updateField("email", event.target.value)} />
               </ProfileField>
-              <ProfileField label="Telephone" value={profile.telephone} editing={isEditing}>
+              <ProfileField label="Téléphone" value={profile.telephone} editing={isEditing}>
                 <Input value={form.telephone} onChange={(event) => updateField("telephone", event.target.value)} />
               </ProfileField>
               <ProfileField label="Adresse" value={profile.adress} editing={isEditing}>
@@ -265,18 +265,18 @@ export default function ClientProfilePage() {
         </div>
 
         <div className="border-t border-slate-100 pt-7">
-          <h2 className="text-lg font-semibold text-slate-950">Informations systeme</h2>
+          <h2 className="text-lg font-semibold text-slate-950">Informations de l'utilisateur</h2>
           <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             <ProfileValue label="Login" value={profile.login} />
-            <ProfileValue label="Role actuel" value={formatRole(profile.role)} />
+            <ProfileValue label="Rôle actuel" value={formatRole(profile.role)} />
             <div>
               <p className="text-sm text-slate-500">Statut</p>
               <Badge className={profile.estActif ? "mt-2 bg-emerald-100 text-emerald-800 hover:bg-emerald-100" : "mt-2 bg-rose-100 text-rose-800 hover:bg-rose-100"}>
                 {profile.estActif ? "Actif" : "Inactif"}
               </Badge>
             </div>
-            <ProfileValue label="Cree le" value={formatDate(profile.dateCreation)} />
-            <ProfileValue label="Derniere connexion" value={formatDate(profile.derniereConnexion)} />
+            <ProfileValue label="Crée le" value={formatDate(profile.dateCreation)} />
+            <ProfileValue label="Dernière connexion" value={formatDate(profile.derniereConnexion)} />
           </div>
         </div>
       </div>

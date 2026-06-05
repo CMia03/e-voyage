@@ -990,8 +990,8 @@ export default function ReservationsPage() {
 
   return (
     <div className="space-y-6">
-      <section className="p-6">
-        <div>
+      <section className="space-y-5">
+        <div className="space-y-2">
           <h1 className="text-2xl font-semibold">Mes reservations</h1>
           <p className="text-sm text-muted-foreground">
             Suivez vos demandes et creez une reservation depuis un prix direct ou votre simulation.
@@ -1671,181 +1671,30 @@ export default function ReservationsPage() {
             </div>
           ) : (
             <>
-              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-                <div className="hidden grid-cols-[1.25fr_1.3fr_0.75fr_0.9fr_0.8fr_auto] gap-4 border-b border-slate-200 bg-slate-50 px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 lg:grid">
-                  <span>Reference</span>
-                  <span>Destination</span>
-                  <span>Statut</span>
-                  <span>Date de reservation</span>
-                  <span className="text-right">Montant</span>
-                  <span className="text-right">Actions</span>
-                </div>
-              <div className="divide-y divide-slate-100">
-            {paginatedReservations.map((reservation) => {
-              const detail = reservation.details[0];
-              const totalElements = countUniqueSelectedElements(reservation);
-              const showElementsCount = reservation.source === "SIMULATION";
-
-              if (reservation.id) {
-                return (
-                  <ReservationListCard
-                    key={reservation.id}
-                    reservation={reservation}
-                    username={username}
-                    detail={detail}
-                    totalElements={totalElements}
-                    showElementsCount={showElementsCount}
-                    onDelete={handleDeleteReservation}
-                  />
-                );
-              }
-
-              return (
-                <article
-                  key={reservation.id}
-                  className="group relative overflow-hidden rounded-3xl border-2 bg-gradient-to-br from-white via-slate-50/20 to-slate-50/40 shadow-xl transition-all duration-500 hover:shadow-2xl hover:scale-[1.02] hover:-translate-y-1"
-                >
-                  {/* Header avec statut visuel */}
-                  <div className="relative p-6 pb-4">
-                    <div className="absolute top-4 right-4">
-                      <div className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold tracking-wide shadow-lg ${
-                        reservation.status === "VALIDEE" 
-                          ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white border-2 border-emerald-400"
-                          : reservation.status === "ANNULEE"
-                          ? "bg-gradient-to-r from-rose-500 to-rose-600 text-white border-2 border-rose-400"
-                          : "bg-gradient-to-r from-amber-500 to-amber-600 text-white border-2 border-amber-400"
-                      }`}>
-                        {reservation.status === "VALIDEE" ? "✓" : "⏱"}
-                        <span>{formatStatus(reservation.status)}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-3 mb-3">
-                          <span className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold bg-gradient-to-r from-slate-400 to-slate-500 text-white shadow-lg border-2 border-slate-400">
-                            {formatSource(reservation.source)}
-                          </span>
-                        </div>
-                        
-                        <h3 className="text-2xl font-bold text-slate-900 leading-tight group-hover:text-emerald-700 transition-colors">
-                          {reservation.reference}
-                        </h3>
-                        
-                        <div className="mt-3 space-y-2">
-                          <p className="text-lg font-semibold text-slate-800">
-                            {formatReservationText(detail?.nomDestination ?? "-")} - {formatReservationText(detail?.nomPlanification ?? "-")}
-                          </p>
-                          <p className="text-sm text-slate-600 font-medium">
-                            {getReservationProfilesSummary(reservation)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Cartes d'informations avec design moderne */}
-                    <div className={`grid gap-4 sm:grid-cols-2 ${showElementsCount ? "xl:grid-cols-4" : "xl:grid-cols-3"} mt-6`}>
-                      <div className="rounded-2xl border-2 bg-gradient-to-br from-emerald-50 via-emerald-100/30 to-emerald-100/60 border-emerald-200 p-4 shadow-lg">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white">
-                            💰
-                          </div>
-                          <p className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Montant</p>
-                        </div>
-                        <p className="text-xl font-black text-slate-900">
-                          {formatCurrency(reservation.montantTotal, reservation.devise)}
-                        </p>
-                      </div>
-
-                      <div className="rounded-2xl border-2 bg-gradient-to-br from-blue-50 via-blue-100/30 to-blue-100/60 border-blue-200 p-4 shadow-lg">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white">
-                            📅
-                          </div>
-                          <p className="text-xs font-bold text-blue-700 uppercase tracking-wider">Créée le</p>
-                        </div>
-                        <p className="text-lg font-bold text-slate-900">{formatDate(reservation.dateReservation)}</p>
-                      </div>
-
-                      {showElementsCount ? (
-                        <div className="rounded-2xl border-2 bg-gradient-to-br from-violet-50 via-violet-100/30 to-violet-100/60 border-violet-200 p-4 shadow-lg">
-                          <div className="flex items-center gap-2 mb-2">
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center text-white">
-                              📋
-                            </div>
-                            <p className="text-xs font-bold text-violet-700 uppercase tracking-wider">Éléments</p>
-                          </div>
-                          <p className="text-xl font-black text-slate-900">{totalElements}</p>
-                        </div>
-                      ) : null}
-
-                      <div className="rounded-2xl border-2 bg-gradient-to-br from-amber-50 via-amber-100/30 to-amber-100/60 border-amber-200 p-4 shadow-lg">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-white">
-                            💬
-                          </div>
-                          <p className="text-xs font-bold text-amber-700 uppercase tracking-wider">Commentaire</p>
-                        </div>
-                        <p className="text-sm font-medium text-slate-900 line-clamp-2">
-                          {formatReservationText(reservation.commentaireClient?.trim() || "Aucun commentaire")}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Section simulation si présente */}
-                  {reservation.resumeSimulation ? (
-                    <div className="px-6 pb-4">
-                      <div className="rounded-2xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 via-emerald-100/30 to-emerald-100/60 p-4 shadow-lg">
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white">
-                            📊
-                          </div>
-                          <p className="text-sm font-bold text-emerald-700 uppercase tracking-wider">Résumé de simulation</p>
-                        </div>
-                        <p className="text-sm text-emerald-900 font-medium line-clamp-3 whitespace-pre-wrap">
-                          {formatReservationText(reservation.resumeSimulation)}
-                        </p>
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {/* Footer avec actions */}
-                  <div className="px-6 pb-6 bg-gradient-to-b from-slate-50/20 to-transparent">
-                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                      <div className="flex flex-col sm:flex-row gap-3">
-                        <Button asChild className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white border-2 border-emerald-400 shadow-lg transition-all duration-300 hover:scale-105">
-                          <Link href={`/${username}/reservations/${reservation.id}`} className="flex items-center gap-2">
-                            <span>👁️</span>
-                            Voir détail
-                          </Link>
-                        </Button>
-                        
-                        {reservation.status === "EN_ATTENTE" ? (
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            className="bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white border-2 border-rose-400 shadow-lg transition-all duration-300 hover:scale-105"
-                            onClick={() => void handleDeleteReservation(reservation.id)}
-                          >
-                            <span>🗑️</span>
-                            Supprimer
-                          </Button>
-                        ) : null}
-                      </div>
-
-                      <div className="rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50/80 px-4 py-3 text-sm text-slate-600">
-                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Dernière mise à jour</p>
-                        <p className="font-medium text-slate-800">
-                          {formatDate(reservation.dateModification ?? reservation.dateReservation)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
-                </div>
+              <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+                <table className="w-full min-w-[980px] border-collapse text-sm">
+                  <thead className="bg-slate-50 text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                    <tr>
+                      <th className="px-4 py-3">Reference</th>
+                      <th className="px-4 py-3">Destination</th>
+                      <th className="px-4 py-3">Statut</th>
+                      <th className="px-4 py-3">Date de reservation</th>
+                      <th className="px-4 py-3 text-right">Montant</th>
+                      <th className="px-4 py-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 bg-white">
+                    {paginatedReservations.map((reservation) => (
+                      <ReservationListCard
+                        key={reservation.id}
+                        reservation={reservation}
+                        username={username}
+                        detail={reservation.details[0]}
+                        onDelete={handleDeleteReservation}
+                      />
+                    ))}
+                  </tbody>
+                </table>
               </div>
             <ReservationPagination
               page={reservationPage}
@@ -1876,12 +1725,9 @@ function ReservationListCard({
   reservation: Reservation;
   username: string;
   detail: Reservation["details"][number] | undefined;
-  totalElements: number;
-  showElementsCount: boolean;
   onDelete: (reservationId: string) => Promise<void>;
 }) {
   const createdAt = formatDate(reservation.dateReservation);
-  const updatedAt = reservation.dateModification ? formatDate(reservation.dateModification) : "-";
   const statusBorder =
     reservation.status === "VALIDEE"
       ? "border-l-emerald-500"
@@ -1890,10 +1736,8 @@ function ReservationListCard({
         : "border-l-amber-400";
 
   return (
-    <article
-      className={`grid gap-4 border-l-4 ${statusBorder} bg-white px-4 py-4 transition hover:bg-slate-50/70 lg:grid-cols-[1.25fr_1.3fr_0.75fr_0.9fr_0.8fr_auto] lg:items-center`}
-    >
-      <div className="space-y-2">
+    <tr className="transition hover:bg-slate-50/70">
+      <td className={`border-l-4 ${statusBorder} px-4 py-4 align-middle`}>
         <div className="flex flex-wrap items-center gap-2">
           <Badge className="bg-cyan-50 text-cyan-700 hover:bg-cyan-50">
             {formatSource(reservation.source)}
@@ -1908,69 +1752,66 @@ function ReservationListCard({
         <span className="inline-flex rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
           {getReservationProfilesSummary(reservation)}
         </span>
-      </div>
+      </td>
 
-      <div className="space-y-2">
-        <div className="flex items-start gap-2">
+      <td className="px-4 py-4 align-middle">
+        <div className="flex w-full items-start gap-2">
           <MapPin className="mt-0.5 size-4 shrink-0 text-emerald-600" />
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-slate-950">
+          <div className="min-w-0 flex-1">
+            <p className="max-w-[18rem] truncate text-sm font-semibold text-slate-950">
               {formatReservationText(detail?.nomDestination ?? "-")}
             </p>
-            <p className="truncate text-xs text-slate-500">
+            <p className="min-w-[12rem] max-w-[18rem] truncate text-xs text-slate-500">
               {formatReservationText(detail?.nomPlanification ?? "-")}
             </p>
           </div>
         </div>
-        
-      </div>
+      </td>
 
-      <div>
+      <td className="px-4 py-4 align-middle">
         <Badge className={statusStyles[reservation.status]}>{formatStatus(reservation.status)}</Badge>
-      </div>
+      </td>
 
-      <div className="flex items-start gap-2 text-sm text-slate-700">
-        <CalendarDays className="mt-0.5 size-4 shrink-0 text-slate-500" />
-        <div>
+      <td className="px-4 py-4 align-middle">
+        <div className="flex items-start gap-2 text-sm text-slate-700">
+          <CalendarDays className="mt-0.5 size-4 shrink-0 text-slate-500" />
           <p>{createdAt}</p>
-          <p className="text-slate-400">-</p>
-          <p>{updatedAt}</p>
         </div>
-      </div>
+      </td>
 
-      <div className="text-left lg:text-right">
+      <td className="px-4 py-4 text-right align-middle">
         <p className="text-base font-semibold text-slate-950">
           {formatCurrency(reservation.montantTotal, reservation.devise)}
         </p>
-      </div>
+      </td>
 
-      <div className="flex items-center gap-2 lg:justify-end">
-        <Button asChild variant="outline" size="icon" title="Voir detail">
-          <Link href={`/${username}/reservations/${reservation.id}`} aria-label="Voir detail">
-            <Eye className="size-4" />
-          </Link>
-        </Button>
-        {reservation.status === "EN_ATTENTE" ? (
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            onClick={() => void onDelete(reservation.id)}
-            title="Supprimer"
-            aria-label="Supprimer"
-            className="text-red-600 hover:bg-red-50 hover:text-red-700"
-          >
-            <Trash2 className="size-4" />
+      <td className="px-4 py-4 align-middle">
+        <div className="flex items-center justify-end gap-2">
+          <Button asChild variant="outline" size="icon" title="Voir detail">
+            <Link href={`/${username}/reservations/${reservation.id}`} aria-label="Voir detail">
+              <Eye className="size-4" />
+            </Link>
           </Button>
-        ) : (
-          <div>
-          </div>
-          // <Button type="button" variant="outline" size="icon" aria-label="Actions" disabled>
-          //   <MoreHorizontal className="size-4" />
-          // </Button>
-        )}
-      </div>
-    </article>
+          {reservation.status === "EN_ATTENTE" ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={() => void onDelete(reservation.id)}
+              title="Supprimer"
+              aria-label="Supprimer"
+              className="text-red-600 hover:bg-red-50 hover:text-red-700"
+            >
+              <Trash2 className="size-4" />
+            </Button>
+          ) : (
+            <Button type="button" variant="outline" size="icon" aria-label="Actions" disabled>
+              <MoreHorizontal className="size-4" />
+            </Button>
+          )}
+        </div>
+      </td>
+    </tr>
   );
 }
 
