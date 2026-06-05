@@ -128,7 +128,7 @@ export function AdminHeader() {
 
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="mx-auto flex h-16 w-full max-w-[1400px] items-center justify-between px-4 sm:px-6">
+      <div className="mx-auto flex h-16 w-full items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-4">
           {/* Menu Hamburger Mobile */}
           <Button
