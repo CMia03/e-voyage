@@ -836,7 +836,7 @@ export default function AjoutReservationPage() {
                 )}
 
                 <div className="space-y-2">
-                  <Label>Resume simulation</Label>
+                  <Label>Résumé simulation</Label>
                   <Textarea
                     value={form.resumeSimulation}
                     onChange={(event) =>

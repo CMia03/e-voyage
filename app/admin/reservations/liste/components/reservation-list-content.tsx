@@ -353,7 +353,7 @@ export function ReservationListContent() {
           </Button>
           <Button onClick={() => router.push("/admin?section=reservations-ajout")} className="gap-2 bg-emerald-600 hover:bg-emerald-700">
             <Plus className="h-4 w-4" />
-            Nouvelle reservation
+            Nouvelle réservation
           </Button>
         </div>
       </div>

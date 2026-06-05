@@ -69,7 +69,7 @@ export default function UserHomePage() {
                 Preparez votre prochain voyage selon votre envie et votre budget.
               </h1>
               <p className="max-w-2xl text-base leading-7 text-slate-600">
-                Explorez les destinations, comparez les forfaits disponibles et choisissez entre une reservation
+                Explorez les destinations, comparez les forfaits disponibles et choisissez entre une réservation
                 directe ou une simulation personnalisee.
               </p>
             </div>
@@ -78,7 +78,7 @@ export default function UserHomePage() {
               <Button asChild size="lg" variant="ghost" className="rounded-full px-6 text-slate-700">
                 <Link href={`/${username}/reservations`}>
                   <CreditCard className="mr-2 size-4" />
-                  Voir mes reservations
+                  Voir mes réservations
                 </Link>
               </Button>
             </div>
@@ -88,7 +88,7 @@ export default function UserHomePage() {
             <div className="rounded-[24px] border border-white/80 bg-white/90 p-4 shadow-sm">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Parcours direct</p>
               <p className="mt-2 text-sm leading-6 text-slate-700">
-                Choisissez une destination puis reservez directement a partir du prix normal.
+                Choisissez une destination puis réservez directement à partir du prix normal.
               </p>
             </div>
             <div className="rounded-[24px] border border-white/80 bg-white/90 p-4 shadow-sm">

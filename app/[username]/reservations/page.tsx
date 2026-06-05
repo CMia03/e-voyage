@@ -992,9 +992,9 @@ export default function ReservationsPage() {
     <div className="space-y-6">
       <section className="space-y-5">
         <div className="space-y-2">
-          <h1 className="text-2xl font-semibold">Mes reservations</h1>
+          <h1 className="text-2xl font-semibold">Mes réservations</h1>
           <p className="text-sm text-muted-foreground">
-            Suivez vos demandes et creez une reservation depuis un prix direct ou votre simulation.
+            Suivez vos demandes et créez une réservation depuis un prix direct ou votre simulation.
           </p>
         </div>
 
@@ -1009,7 +1009,7 @@ export default function ReservationsPage() {
             }
             onClick={() => setActiveReservationSection("create")}
           >
-            Creation d&apos;une reservation
+           Créer une réservation
           </Button>
           <Button
             type="button"
@@ -1021,7 +1021,7 @@ export default function ReservationsPage() {
             }
             onClick={() => setActiveReservationSection("list")}
           >
-            Liste reservation
+            Liste de réservations
           </Button>
         </div>
       </section>
@@ -1041,10 +1041,10 @@ export default function ReservationsPage() {
       ) : null}
 
       {activeReservationSection === "create" ? (
-        <div className="py-8 max-w-4xl mx-auto">
+        <div className="py-8 mx-auto">
           <Card className="border-border/50">
           <CardHeader>
-            <CardTitle>{isEditMode ? "Modifier ma reservation" : "Nouvelle reservation"}</CardTitle>
+            <CardTitle>{isEditMode ? "Modifier ma reservation" : "Nouvelle réservation"}</CardTitle>
             <CardDescription>
               {isEditMode
                 ? "Mettez a jour votre reservation tant qu'elle est encore en attente."
@@ -1065,7 +1065,7 @@ export default function ReservationsPage() {
                 >
                   <p className="font-medium">Depuis un prix</p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Reservation directe a partir d&apos;une planification et d&apos;un tarif.
+                    Réservation directe à partir d&apos;une planification et d&apos;un tarif.
                   </p>
                 </button>
                 <button
@@ -1457,18 +1457,18 @@ export default function ReservationsPage() {
                         </div>
                         <div className="flex items-center justify-between gap-3">
                           <p className="text-xs text-muted-foreground">
-                            Faites glisser horizontalement ou utilisez les fleches.
+                            Faites glisser horizontalement ou utilisez les flêches.
                           </p>
                         </div>
                       </div>
                     ) : (
                       <div className="rounded-xl border border-dashed border-border/70 px-4 py-3 text-sm text-muted-foreground">
-                        Aucun element de simulation n&apos;a ete transmis pour le moment.
+                        Aucun élément de simulation n&apos;a été transmis pour le moment.
                       </div>
                     )}
                     </div>
                     <div className="space-y-2">
-                      <Label>Resume simulation</Label>
+                      <Label>Résumé simulation</Label>
                       <div className="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-4">
                         {displayedSimulationSummaryItems.length > 0 ? (
                           <div className="grid gap-3 sm:grid-cols-2">
@@ -1490,7 +1490,7 @@ export default function ReservationsPage() {
                           </div>
                         ) : (
                           <p className="text-sm text-muted-foreground">
-                            Aucun resume de simulation n&apos;a ete transmis pour le moment.
+                            Aucun résumé de simulation n&apos;a été transmise pour le moment.
                           </p>
                         )}
                       </div>
@@ -1513,7 +1513,7 @@ export default function ReservationsPage() {
               <div className="space-y-2">
                 {loadingQuote ? (
                   <p className="text-sm text-muted-foreground">
-                    Calcul du devis en cours. Vous pouvez tout de meme confirmer la reservation.
+                    Calcul du devis en cours. Vous pouvez tout de même confirmer la réservation.
                   </p>
                 ) : null}
                 <div className="flex justify-end">
@@ -1522,8 +1522,8 @@ export default function ReservationsPage() {
                     disabled={!canSubmitReservation}
                   >
                     {isSubmitting
-                      ? (isEditMode ? "Modification en cours..." : "Reservation en cours...")
-                      : (isEditMode ? "Enregistrer les modifications" : "Confirmer la reservation")}
+                      ? (isEditMode ? "Modification en cours..." : "Réservation en cours...")
+                      : (isEditMode ? "Enregistrer les modifications" : "Confirmer la réservation")}
                   </Button>
                 </div>
               </div>
@@ -1545,9 +1545,9 @@ export default function ReservationsPage() {
       <Card className="border-border/50">
         <CardHeader className="flex flex-row items-start justify-between gap-4">
           <div>
-            <CardTitle>Liste de mes reservations</CardTitle>
+            <CardTitle>Liste de mes réservations</CardTitle>
             <CardDescription>
-              Retrouvez toutes les reservations deja creees dans votre espace client.
+              Retrouvez toutes les réservations déjà créées dans votre espace client.
             </CardDescription>
           </div>
           <Button
@@ -1667,7 +1667,7 @@ export default function ReservationsPage() {
             <p className="text-sm text-muted-foreground">Chargement des reservations...</p>
           ) : filteredReservations.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border/70 p-6 text-sm text-muted-foreground">
-              Aucune reservation n&apos;a encore ete enregistree.
+              Aucune reservation n&apos;a encore été enregistrée.
             </div>
           ) : (
             <>
@@ -1675,10 +1675,10 @@ export default function ReservationsPage() {
                 <table className="w-full min-w-[980px] border-collapse text-sm">
                   <thead className="bg-slate-50 text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                     <tr>
-                      <th className="px-4 py-3">Reference</th>
+                      <th className="px-4 py-3">Référence</th>
                       <th className="px-4 py-3">Destination</th>
                       <th className="px-4 py-3">Statut</th>
-                      <th className="px-4 py-3">Date de reservation</th>
+                      <th className="px-4 py-3">Date de réservation</th>
                       <th className="px-4 py-3 text-right">Montant</th>
                       <th className="px-4 py-3 text-right">Actions</th>
                     </tr>
@@ -1805,9 +1805,10 @@ function ReservationListCard({
               <Trash2 className="size-4" />
             </Button>
           ) : (
-            <Button type="button" variant="outline" size="icon" aria-label="Actions" disabled>
-              <MoreHorizontal className="size-4" />
-            </Button>
+            <></>
+            // <Button type="button" variant="outline" size="icon" aria-label="Actions" disabled>
+            //   <MoreHorizontal className="size-4" />
+            // </Button>
           )}
         </div>
       </td>

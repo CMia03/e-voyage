@@ -96,9 +96,9 @@ export function CategoryGammeSelector({
               </button>
             </div>
 
-            <div className="grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-[minmax(180px,1fr)_minmax(135px,160px)_minmax(135px,160px)] xl:items-end">
-              <div className="min-w-0 max-w-[280px] space-y-2">
-                <label className="whitespace-nowrap text-sm font-medium text-slate-700">Categorie client</label>
+            <div className="grid min-w-0 gap-3 md:grid-cols-3 md:items-end">
+              <div className="min-w-0 w-full space-y-2">
+                <label className="whitespace-nowrap text-sm font-medium text-slate-700">Catégorie client</label>
                 <select
                   value={profile.categorieClientId}
                   onChange={(event) =>
@@ -118,7 +118,7 @@ export function CategoryGammeSelector({
                 </select>
               </div>
 
-              <div className="min-w-0 max-w-[160px] space-y-2">
+              <div className="min-w-0 w-full space-y-2">
                 <label className="whitespace-nowrap text-sm font-medium text-slate-700">Gamme</label>
                 <select
                   value={profile.gamme}
@@ -136,8 +136,8 @@ export function CategoryGammeSelector({
                 </select>
               </div>
 
-              <div className="min-w-0 max-w-[160px] space-y-2 md:col-span-2 xl:col-span-1">
-                <label className="whitespace-nowrap text-sm font-medium text-slate-700">Nombre de personnes</label>
+              <div className="min-w-0 w-full space-y-2">
+                <label className="whitespace-nowrap text-sm font-medium text-slate-700">Nombre de personne(s)</label>
                 <input
                   type="number"
                   min="1"

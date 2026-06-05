@@ -1445,7 +1445,7 @@ export default function SimulationPage() {
         onChange={setSuggestionGallery}
         description="Images associees au bloc selectionne."
       />
-      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto flex flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
        
 
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
@@ -1461,7 +1461,7 @@ export default function SimulationPage() {
                   </h2>
                   <p className="mt-1 text-sm text-slate-600">
                     Renseignez les informations principales pour lancer une estimation
-                    adaptee a votre profil.
+                    adaptée a votre profil.
                   </p>
                 </div>
                 <div className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-medium text-slate-600">
