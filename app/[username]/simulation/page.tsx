@@ -1563,8 +1563,8 @@ export default function SimulationPage() {
                             className="border-transparent bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/20 hover:from-emerald-700 hover:to-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             {reservationEditPrefill.editReservationId
-                              ? "Mettre a jour depuis cette simulation"
-                              : "Reserver cette simulation"}
+                              ? "Mettre à jour depuis cette simulation"
+                              : "Réserver cette simulation"}
                           </Button>
                         </div>
                       </div>

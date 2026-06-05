@@ -397,7 +397,7 @@ export function AdminHebergementDetailContent({
           <Card className="border-border/50">
             <CardHeader>
               <CardTitle>Informations principales</CardTitle>
-              <CardDescription>Resume de l&apos;hebergement selectionne.</CardDescription>
+              <CardDescription>Résumé de l&apos;hébergement selectionné.</CardDescription>
             </CardHeader>
             <CardContent>
               {isLoading ? (
@@ -450,7 +450,7 @@ export function AdminHebergementDetailContent({
             <CardHeader>
               <CardTitle>Ajouter un tarif</CardTitle>
               <CardDescription>
-                Cree une nouvelle offre de chambre pour cet hebergement.
+                Créer une nouvelle offre de chambre pour cet hébergement.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -541,7 +541,7 @@ export function AdminHebergementDetailContent({
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Nouveau type chambre</label>
+                    <label className="text-sm font-medium">Nouveau type de chambre</label>
                     <div className="flex gap-2">
                       <Input
                         value={newTypeChambreName}
@@ -594,15 +594,15 @@ export function AdminHebergementDetailContent({
 
           <Card className="border-border/50">
             <CardHeader>
-              <CardTitle>Tarifs de l&apos;hebergement</CardTitle>
+              <CardTitle>Tarifs de l&apos;hébergement</CardTitle>
               <CardDescription>
-                {tarifs.length} tarif{tarifs.length > 1 ? "s" : ""} enregistres.
+                {tarifs.length} tarif{tarifs.length > 1 ? "s" : ""} Enregistrés.
               </CardDescription>
             </CardHeader>
             <CardContent>
               {tarifs.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  Aucun tarif ajoute pour cet hebergement.
+                  Aucun tarif ajoute pour cet hébergement.
                 </p>
               ) : (
                 <div className="space-y-6">
@@ -696,7 +696,7 @@ export function AdminHebergementDetailContent({
                             <CardHeader>
                               <CardTitle className="text-base">Ajouter des photos</CardTitle>
                               <CardDescription>
-                                Associe des images à un type de salle.
+                                Associée des images à un type de salle.
                               </CardDescription>
                             </CardHeader>
                             <CardContent>
@@ -739,7 +739,7 @@ export function AdminHebergementDetailContent({
                                 </div>
 
                                 <div className="space-y-2">
-                                  <label className="text-sm font-medium">Nouveau type salle</label>
+                                  <label className="text-sm font-medium">Nouveau type de salle</label>
                                   <div className="flex gap-2">
                                     <Input
                                       value={newTypeSalleName}

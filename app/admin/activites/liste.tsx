@@ -142,7 +142,7 @@ export function AdminActivitesListe({
           </Button>
           <Button onClick={onCreate} className={greenPrimaryButtonClass}>
             <Plus className="size-4" />
-            Creer
+            Créer
           </Button>
         </div>
       </div>
@@ -209,7 +209,7 @@ export function AdminActivitesListe({
               </p>
             ) : null}
 
-            <div className="grid gap-4 xl:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {activites.map((activite) => (
                 <div
                   key={activite.id}
@@ -292,7 +292,7 @@ export function AdminActivitesListe({
 
                   <div className="mt-5 flex flex-wrap gap-2">
                     <Button size="sm" asChild className={greenPrimaryButtonClass}>
-                      <Link href={`/admin/activites/${activite.id}`}>Voir details</Link>
+                      <Link href={`/admin/activites/${activite.id}`}>Voir détails</Link>
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => onEdit(activite.id)} className={greenOutlineButtonClass}>
                       <Pencil className="size-4" />

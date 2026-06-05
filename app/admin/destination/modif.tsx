@@ -78,7 +78,7 @@ export function AdminDestinationModif({
     <DestinationForm
       form={form}
       isSaving={isSaving}
-      submitLabel="Mettre a jour"
+      submitLabel="Mettre à jour"
       onSubmit={onSubmit}
       onCancel={() => onOpenChange(false)}
       onUpdate={onUpdate}
@@ -137,10 +137,10 @@ export function AdminDestinationModif({
       <div className="space-y-8">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Modifier une destination
+            Modifié une destination
           </h1>
           <p className="text-sm text-muted-foreground">
-            Mets a jour les informations de la destination et ajuste sa position.
+            Mets à jour les informations de la destination et ajuste sa position.
           </p>
         </div>
         {errorAlert}
@@ -160,9 +160,9 @@ export function AdminDestinationModif({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[92vh] max-w-5xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Modifier une destination</DialogTitle>
+          <DialogTitle>Modifié une destination</DialogTitle>
           <DialogDescription>
-            Modifie les informations de la destination.
+            Modifié les informations de la destination.
           </DialogDescription>
         </DialogHeader>
         {errorAlert}

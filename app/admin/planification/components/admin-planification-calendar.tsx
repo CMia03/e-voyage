@@ -1384,7 +1384,7 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
                       onClick={() => router.push(`/admin/destination/${selectedPlanification.idDestination}/planning`)}
                       disabled={saving}
                     >
-                      Voir detail
+                      Voir détail
                     </Button>
                     <Button
                       variant="destructive"

@@ -317,7 +317,7 @@ export function FormTarifHebergement({
               <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
                 <ClipboardList className="size-4" />
               </span>
-              <h3 className="text-base font-semibold text-slate-950">Resume du tarif</h3>
+              <h3 className="text-base font-semibold text-slate-950">Résumé du tarif</h3>
             </div>
 
             <div className="divide-y divide-slate-200 text-xs">

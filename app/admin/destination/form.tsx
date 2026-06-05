@@ -194,7 +194,7 @@ export function DestinationForm({
         </div>
 
         <div className="rounded-2xl border border-border/50 p-4">
-          <p className="text-sm font-medium">Resume</p>
+          <p className="text-sm font-medium">Résumé</p>
           <div className="mt-3 space-y-2 text-sm text-muted-foreground">
             <p>
               <span className="font-medium text-foreground">Nom :</span> {form.nom || "-"}

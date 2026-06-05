@@ -793,7 +793,7 @@ export function AdminActiviteDetailContent({ activiteId }: Props) {
       >
         <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingTarifId ? "Modifier un tarif" : "Ajouter un tarif"}</DialogTitle>
+            <DialogTitle>{editingTarifId ? "Modifié un tarif" : "Ajouter un tarif"}</DialogTitle>
             <DialogDescription>Renseigne un tarif clair et rapide a gerer pour cette activite.</DialogDescription>
           </DialogHeader>
 

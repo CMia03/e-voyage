@@ -440,7 +440,7 @@ export default function AjoutReservationPage() {
         <div>
           <h1 className="text-3xl font-bold text-slate-950">Ajouter une reservation</h1>
           <p className="mt-1 text-slate-500">
-            Creer une demande depuis un prix direct ou une simulation faite par l&apos;admin.
+            Créer une demande depuis un prix direct ou une simulation faite par l&apos;admin.
           </p>
         </div>
         <Button variant="outline" onClick={() => router.push("/admin?section=reservations-liste")}>
@@ -505,7 +505,7 @@ export default function AjoutReservationPage() {
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-slate-500">
-                    L&apos;email n&apos;est pas obligatoire pour l&apos;affichage admin: si le client a seulement un telephone, son compte reste selectionnable.
+                    L&apos;email n&apos;est pas obligatoire pour l&apos;affichage admin: si le client a seulement un telephone, son compte reste sélectionnable.
                   </p>
                 </div>
               ) : (
@@ -520,11 +520,11 @@ export default function AjoutReservationPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Prenom du client</Label>
+                    <Label>Prénom du client</Label>
                     <Input
                       value={form.clientPrenom}
                       onChange={(event) => setForm((current) => ({ ...current, clientPrenom: event.target.value }))}
-                      placeholder="Prenom"
+                      placeholder="Prénom"
                       className="h-11"
                     />
                   </div>
@@ -533,18 +533,18 @@ export default function AjoutReservationPage() {
                     <Input
                       value={form.clientContact}
                       onChange={(event) => setForm((current) => ({ ...current, clientContact: event.target.value }))}
-                      placeholder="Telephone, email ou note de contact"
+                      placeholder="Téléphone, email ou note de contact"
                       className="h-11"
                     />
                     <p className="text-xs text-slate-500">
-                      Pour un client sans compte, le nom ou le prenom suffit. Le contact reste optionnel.
+                      Pour un client sans compte, le nom ou le prénom suffit. Le contact reste optionnel.
                     </p>
                   </div>
                 </>
               )}
 
               <div className="space-y-2">
-                <Label>Type de reservation</Label>
+                <Label>Type de réservation</Label>
                 <Select
                   value={form.source}
                   onValueChange={(value) => setForm((current) => ({ ...current, source: value as ReservationSource }))}
@@ -664,7 +664,7 @@ export default function AjoutReservationPage() {
                   </div>
                   <div className="grid gap-4 md:grid-cols-3">
                     <div className="space-y-2">
-                      <Label>Categorie client</Label>
+                      <Label>Catégorie client</Label>
                       <Select
                         value={profile.categorieClientId}
                         onValueChange={(value) => updateProfile(index, { categorieClientId: value })}
@@ -721,7 +721,7 @@ export default function AjoutReservationPage() {
                   <div>
                     <CardTitle>Simulation admin</CardTitle>
                     <p className="mt-1 text-sm text-emerald-800">
-                      Selectionnez les blocs du forfait et ajustez le nombre de personnes.
+                      Sélectionnez les blocs du forfait et ajustez le nombre de personnes.
                     </p>
                   </div>
                   <Badge variant="outline" className="w-fit border-emerald-200 bg-white text-emerald-700">
@@ -732,7 +732,7 @@ export default function AjoutReservationPage() {
               <CardContent className="space-y-4">
                 {simulationDays.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-emerald-200 bg-white p-5 text-sm text-slate-500">
-                    Aucun jour disponible pour ce forfait. Verifiez la planification selectionnee.
+                    Aucun jour disponible pour ce forfait. Verifiez la planification selectionnée.
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -855,7 +855,7 @@ export default function AjoutReservationPage() {
         <aside ref={summaryPanelRef} className="space-y-4 xl:relative xl:self-start">
           <Card className="flex flex-col gap-0 overflow-hidden border-slate-200 py-0 shadow-sm">
             <CardHeader className="shrink-0 border-b border-slate-200 px-6 py-5">
-              <CardTitle>Resume</CardTitle>
+              <CardTitle>Résumé</CardTitle>
             </CardHeader>
             <CardContent className="flex min-h-0 flex-1 flex-col p-0">
               <div className="min-h-0 flex-1 space-y-4 px-6 py-4">
@@ -926,7 +926,7 @@ export default function AjoutReservationPage() {
               >
                 {form.source === "SIMULATION" ? (
                 <div className="rounded-2xl border border-emerald-200 bg-white p-3 shadow-sm">
-                  <p className="text-sm font-semibold text-slate-950">Resume marge</p>
+                  <p className="text-sm font-semibold text-slate-950">Résumé marge</p>
                   <div className="mt-2 grid gap-2">
                     <div className="rounded-xl bg-slate-50 px-3 py-2">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
@@ -958,7 +958,7 @@ export default function AjoutReservationPage() {
                     </div>
                   </div>
                   <p className="mt-2 text-[11px] leading-4 text-slate-500">
-                    La marge brute vient du devis final calcule par le backend. Le total brut reste indicatif selon le prix par personne du bloc.
+                   Le total brut reste indicatif.
                   </p>
                 </div>
                 ) : null}

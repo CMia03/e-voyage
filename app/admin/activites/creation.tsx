@@ -154,7 +154,7 @@ export function AdminActivitesCreation({
       newCategoryName={newCategoryName}
       newEquipementName={newEquipementName}
       taxonomyMessage={taxonomyMessage}
-      submitLabel="Creer"
+      submitLabel="Créer"
       onSubmit={onSubmit}
       onCancel={() => onOpenChange(false)}
       onCreateCategory={onCreateCategory}

@@ -257,7 +257,7 @@ export function AdminDestinationListe({
     }
 
     if (viewMode === "cards") {
-      return <div className="grid gap-4 md:grid-cols-2">{destinations.map(renderCard)}</div>;
+      return <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{destinations.map(renderCard)}</div>;
     }
 
     if (viewMode === "list") {
@@ -320,7 +320,7 @@ export function AdminDestinationListe({
           </Button>
           <Button onClick={onCreate} className={greenPrimaryButtonClass}>
             <Plus className="size-4" />
-            Creer
+            Créer
           </Button>
         </div>
       </div>

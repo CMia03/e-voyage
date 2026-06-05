@@ -61,7 +61,7 @@ type AdminHebergementsListeProps = {
 
 type ViewMode = "cards" | "list" | "map";
 type StatusFilter = "ALL" | "ACTIVE" | "INACTIVE";
-const pageSizeOptions = [4, 8, 12] as const;
+const pageSizeOptions = [6, 12, 18] as const;
 
 const viewModeButtonClass =
   "text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 data-[state=on]:bg-gradient-to-r data-[state=on]:from-emerald-600 data-[state=on]:to-teal-600 data-[state=on]:text-white data-[state=on]:shadow-md data-[state=on]:shadow-emerald-500/20";
@@ -142,7 +142,7 @@ export function AdminHebergementsListe({
     longitude: number;
   } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState<(typeof pageSizeOptions)[number]>(4);
+  const [pageSize, setPageSize] = useState<(typeof pageSizeOptions)[number]>(6);
 
   useEffect(() => {
     if (!successMessage) {
@@ -274,7 +274,7 @@ export function AdminHebergementsListe({
   const renderHebergementCard = (hebergement: Hebergement) => (
     <div
       key={hebergement.id}
-      className="overflow-hidden rounded-2xl border border-border/50 bg-card/50 shadow-sm"
+      className="flex h-full flex-col overflow-hidden rounded-2xl border border-border/50 bg-card/50 shadow-sm"
     >
       <div className="relative">
         {hebergement.urlImagePrincipale ? (
@@ -301,7 +301,7 @@ export function AdminHebergementsListe({
         </span>
       </div>
                              
-      <div className="p-4">
+      <div className="flex-1 p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
           <h3 className="text-lg font-semibold">{displayText(hebergement.nom)}</h3>
@@ -341,27 +341,29 @@ export function AdminHebergementsListe({
         </div>
       ) : null}
 
-      <div className="mt-5 flex flex-wrap gap-2">
-        <Button asChild size="sm" variant="outline">
+      </div>
+
+      <div className="flex items-center gap-2 border-t border-border/50 bg-background/70 p-4">
+        <Button asChild size="sm" variant="outline" className="flex-1 whitespace-nowrap">
           <Link href={`/admin/hebergements/${hebergement.id}`}>
             <Eye className="size-4" />
-            Voir details
+            Voir détails
           </Link>
         </Button>
-        <Button size="sm" variant="outline" onClick={() => onEdit(hebergement.id)}>
+        <Button size="sm" variant="outline" className="flex-1 whitespace-nowrap" onClick={() => onEdit(hebergement.id)}>
           <Pencil className="size-4" />
           Modifier
         </Button>
         <Button
           size="sm"
           variant="destructive"
+          className="flex-1 whitespace-nowrap"
           onClick={() => onDelete(hebergement.id)}
           disabled={isDeletingId === hebergement.id}
         >
           <Trash2 className="size-4" />
           {isDeletingId === hebergement.id ? "Suppression..." : "Supprimer"}
         </Button>
-      </div>
       </div>
     </div>
   );
@@ -455,7 +457,7 @@ export function AdminHebergementsListe({
     switch (viewMode) {
       case "cards":
         return (
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {paginatedHebergements.map(renderHebergementCard)}
           </div>
         );

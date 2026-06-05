@@ -572,12 +572,12 @@ export default function ReservationDetailPage() {
                 variant="outline"
                 className="h-11 w-full justify-center rounded-lg border-slate-200 px-5 font-semibold shadow-sm sm:w-[205px]"
               >
-                <Link href={simulationEditHref}>Modifier via simulation</Link>
+                <Link href={simulationEditHref}>Modifié via simulation</Link>
               </Button>
             ) : null}
             {reservation?.status === "EN_ATTENTE" && reservation.source === "PRIX_DIRECT" && editHref ? (
               <Button asChild className="h-11 w-full justify-center rounded-lg px-5 font-semibold shadow-sm sm:w-[205px]">
-                <Link href={editHref}>Modifier la réservation</Link>
+                <Link href={editHref}>Modifié la réservation</Link>
               </Button>
             ) : null}
             {reservation?.status === "EN_ATTENTE" ? (
@@ -921,10 +921,10 @@ export default function ReservationDetailPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-3 text-xl text-slate-950">
                     <PieChart className="h-5 w-5 text-indigo-700" />
-                    Resume de simulation
+                    Résumé de la simulation
                   </CardTitle>
                   <CardDescription>
-                    Resume global conserve pour cette reservation.
+                    Résumé global conservé pour cette réservation.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

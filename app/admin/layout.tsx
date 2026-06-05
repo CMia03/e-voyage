@@ -35,7 +35,7 @@ function AdminLayoutContent({
       <Suspense fallback={<div className="h-16 bg-background border-b" />}>
         <AdminHeaderWithNotifications />
       </Suspense>
-      <div className="mx-auto flex w-full max-w-[1400px] flex-1">
+      <div className="mx-auto flex w-full flex-1">
         <AdminSidebar active={active} onSelect={handleSelectSection} />
         <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8 overflow-auto min-h-0">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">

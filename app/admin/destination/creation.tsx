@@ -88,7 +88,7 @@ export function AdminDestinationCreation({
     <DestinationForm
       form={form}
       isSaving={isSaving}
-      submitLabel="Creer"
+      submitLabel="Créer"
       onSubmit={onSubmit}
       onCancel={() => onOpenChange(false)}
       onUpdate={onUpdate}
@@ -149,7 +149,7 @@ export function AdminDestinationCreation({
             Ajouter une destination
           </h1>
           <p className="text-sm text-muted-foreground">
-            Cree une destination et positionne-la sur la carte.
+            Créer une destination et positionne-la sur la carte.
           </p>
         </div>
         {errorAlert}
@@ -157,7 +157,7 @@ export function AdminDestinationCreation({
         <Card className="border-border/50">
           <CardHeader>
             <CardTitle>Formulaire</CardTitle>
-            <CardDescription>Creation d&apos;une destination</CardDescription>
+            <CardDescription>Création d&apos;une destination</CardDescription>
           </CardHeader>
           <CardContent>{content}</CardContent>
         </Card>

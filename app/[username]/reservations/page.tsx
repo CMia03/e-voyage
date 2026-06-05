@@ -1044,7 +1044,7 @@ export default function ReservationsPage() {
         <div className="py-8 mx-auto">
           <Card className="border-border/50">
           <CardHeader>
-            <CardTitle>{isEditMode ? "Modifier ma reservation" : "Nouvelle réservation"}</CardTitle>
+            <CardTitle>{isEditMode ? "Modifié ma reservation" : "Nouvelle réservation"}</CardTitle>
             <CardDescription>
               {isEditMode
                 ? "Mettez a jour votre reservation tant qu'elle est encore en attente."
@@ -1787,8 +1787,8 @@ function ReservationListCard({
 
       <td className="px-4 py-4 align-middle">
         <div className="flex items-center justify-end gap-2">
-          <Button asChild variant="outline" size="icon" title="Voir detail">
-            <Link href={`/${username}/reservations/${reservation.id}`} aria-label="Voir detail">
+          <Button asChild variant="outline" size="icon" title="Voir détail">
+            <Link href={`/${username}/reservations/${reservation.id}`} aria-label="Voir détail">
               <Eye className="size-4" />
             </Link>
           </Button>

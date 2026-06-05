@@ -56,14 +56,14 @@ export function AdminBreadcrumbs({ noMargin = false }: AdminBreadcrumbsProps = {
         return [
           ...baseBreadcrumbs,
           { label: "Destinations", href: "/admin?section=destinations" },
-          { label: "Ajouter destination", isActive: true }
+          { label: "Ajouté destination", isActive: true }
         ];
 
       case "destinations-edit":
         return [
           ...baseBreadcrumbs,
           { label: "Destinations", href: "/admin?section=destinations" },
-          { label: "Modifier destination", isActive: true }
+          { label: "Modifié destination", isActive: true }
         ];
 
       case "hebergements":
@@ -76,14 +76,14 @@ export function AdminBreadcrumbs({ noMargin = false }: AdminBreadcrumbsProps = {
         return [
           ...baseBreadcrumbs,
           { label: "Hébergements", href: "/admin?section=hebergements" },
-          { label: "Ajouter Hébergements", isActive: true }
+          { label: "Ajouté Hébergements", isActive: true }
         ];
 
       case "hebergements-edit":
         return [
           ...baseBreadcrumbs,
           { label: "Hébergements", href: "/admin?section=hebergements" },
-          { label: "Modifier Hébergements", isActive: true }
+          { label: "Modifié Hébergements", isActive: true }
         ];
 
       case "hebergements-tarifs":
@@ -104,7 +104,7 @@ export function AdminBreadcrumbs({ noMargin = false }: AdminBreadcrumbsProps = {
         return [
           ...baseBreadcrumbs,
           { label: "Hébergements", href: "/admin?section=hebergements" },
-          { label: "Ã‰quipements", isActive: true }
+          { label: "Équipements", isActive: true }
         ];
 
       case "activites":
@@ -117,21 +117,21 @@ export function AdminBreadcrumbs({ noMargin = false }: AdminBreadcrumbsProps = {
         return [
           ...baseBreadcrumbs,
           { label: "Activités", href: "/admin?section=activites" },
-          { label: "Ajouter activitÃ©", isActive: true }
+          { label: "Ajouté activité", isActive: true }
         ];
 
       case "activites-edit":
         return [
           ...baseBreadcrumbs,
           { label: "Activités", href: "/admin?section=activites" },
-          { label: "Modifier activitÃ©", isActive: true }
+          { label: "Modifié activité", isActive: true }
         ];
 
       case "activites-categories":
         return [
           ...baseBreadcrumbs,
           { label: "Activités", href: "/admin?section=activites" },
-          { label: "CatÃ©gories", isActive: true }
+          { label: "Catégories", isActive: true }
         ];
 
       case "utilisateurs":
@@ -143,21 +143,21 @@ export function AdminBreadcrumbs({ noMargin = false }: AdminBreadcrumbsProps = {
       case "reservations":
         return [
           ...baseBreadcrumbs,
-          { label: "RÃ©servations", isActive: true }
+          { label: "Réservations", isActive: true }
         ];
 
       case "reservations-liste":
         return [
           ...baseBreadcrumbs,
-          { label: "RÃ©servations", href: "/admin?section=reservations" },
-          { label: "Liste des rÃ©servations", isActive: true }
+          { label: "Réservations", href: "/admin?section=reservations" },
+          { label: "Liste des réservations", isActive: true }
         ];
 
       case "reservations-ajout":
         return [
           ...baseBreadcrumbs,
-          { label: "RÃ©servations", href: "/admin?section=reservations" },
-          { label: "Ajouter une rÃ©servation", isActive: true }
+          { label: "Réservations", href: "/admin?section=reservations" },
+          { label: "Ajouté une réservation", isActive: true }
         ];
 
       case "avis":

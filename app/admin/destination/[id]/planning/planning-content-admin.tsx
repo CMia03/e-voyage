@@ -1626,7 +1626,7 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
                   </div>
                   <div className="min-w-0">
                     <DialogTitle className="text-2xl font-semibold text-slate-950">
-                      {editingPlanificationId ? "Modifier la planification" : "Ajouter une planification"}
+                      {editingPlanificationId ? "Modifié la planification" : "Ajouter une planification"}
                     </DialogTitle>
                     <DialogDescription className="mt-1 text-sm text-slate-500">
                       Renseignez les informations principales de la planification.

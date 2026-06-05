@@ -145,7 +145,7 @@ export default function UserHomePage() {
                 <div className="flex flex-wrap gap-2">
                   <Button asChild size="sm" className="rounded-full">
                     <Link href={`/destinations/${encodeURIComponent(destination.id)}`}>
-                      Voir details
+                      Voir détails
                     </Link>
                   </Button>
                 </div>

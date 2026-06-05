@@ -150,7 +150,7 @@ export function AdminHebergementsModif({
       newTypeName={newTypeName}
       newEquipementName={newEquipementName}
       taxonomyMessage={taxonomyMessage}
-      submitLabel="Mettre a jour"
+      submitLabel="Mettre à jour"
       onSubmit={onSubmit}
       onCancel={() => onOpenChange(false)}
       onCreateType={onCreateType}

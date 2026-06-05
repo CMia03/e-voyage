@@ -144,7 +144,7 @@ export function AdminActivitesModif({
       newCategoryName={newCategoryName}
       newEquipementName={newEquipementName}
       taxonomyMessage={taxonomyMessage}
-      submitLabel="Mettre a jour"
+      submitLabel="Mettre à jour"
       onSubmit={onSubmit}
       onCancel={() => onOpenChange(false)}
       onCreateCategory={onCreateCategory}
@@ -161,10 +161,10 @@ export function AdminActivitesModif({
       <div className="space-y-8">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Modifier une activite
+            Modifier une activité
           </h1>
           <p className="text-sm text-muted-foreground">
-            Mets a jour les informations de l&apos;activite et ajuste sa position.
+            Mets à jour les informations de l&apos;activité et ajuste sa position.
           </p>
         </div>
         {errorAlert}
@@ -172,7 +172,7 @@ export function AdminActivitesModif({
         <Card className="border-border/50">
           <CardHeader>
             <CardTitle>Formulaire</CardTitle>
-            <CardDescription>Modification d&apos;une activite</CardDescription>
+            <CardDescription>Modification d&apos;une activité</CardDescription>
           </CardHeader>
           <CardContent>{content}</CardContent>
         </Card>
@@ -184,9 +184,9 @@ export function AdminActivitesModif({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[92vh] w-[calc(100vw-2rem)] max-w-6xl overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle>Modifier une activite</DialogTitle>
+          <DialogTitle>Modifié une activite</DialogTitle>
           <DialogDescription>
-            Modifie les informations et la position de l&apos;activite.
+            Modifié les informations et la position de l&apos;activité.
           </DialogDescription>
         </DialogHeader>
         {errorAlert}

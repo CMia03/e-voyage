@@ -143,7 +143,7 @@ export function AdminHebergementsCreation({
       newTypeName={newTypeName}
       newEquipementName={newEquipementName}
       taxonomyMessage={taxonomyMessage}
-      submitLabel="Creer"
+      submitLabel="Créer"
       onSubmit={onSubmit}
       onCancel={() => onOpenChange(false)}
       onCreateType={onCreateType}
@@ -183,7 +183,7 @@ export function AdminHebergementsCreation({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[92vh] max-w-5xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Creation d&apos;un hebergement</DialogTitle>
+          <DialogTitle>Création d&apos;un hebergement</DialogTitle>
           <DialogDescription>
             Clique sur la carte pour choisir la latitude et la longitude.
           </DialogDescription>

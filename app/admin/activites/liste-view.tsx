@@ -61,7 +61,7 @@ type AdminActivitesListeProps = {
 
 type ViewMode = "cards" | "list" | "map";
 type StatusFilter = "ALL" | "ACTIVE" | "INACTIVE";
-const pageSizeOptions = [4, 8, 12] as const;
+const pageSizeOptions = [6, 12, 18] as const;
 
 const viewModeButtonClass =
   "text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 data-[state=on]:bg-gradient-to-r data-[state=on]:from-emerald-600 data-[state=on]:to-teal-600 data-[state=on]:text-white data-[state=on]:shadow-md data-[state=on]:shadow-emerald-500/20";
@@ -118,7 +118,7 @@ export function AdminActivitesListe({
   const [durationMinFilter, setDurationMinFilter] = useState("");
   const [durationMaxFilter, setDurationMaxFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState<(typeof pageSizeOptions)[number]>(4);
+  const [pageSize, setPageSize] = useState<(typeof pageSizeOptions)[number]>(6);
 
   useEffect(() => {
     if (!successMessage) {
@@ -300,7 +300,7 @@ export function AdminActivitesListe({
 
       <div className="mt-5 flex flex-wrap gap-2">
         <Button size="sm" asChild className={greenPrimaryButtonClass}>
-          <Link href={`/admin/activites/${activite.id}`}>Voir details</Link>
+          <Link href={`/admin/activites/${activite.id}`}>Voir détails</Link>
         </Button>
         <Button size="sm" variant="outline" onClick={() => onEdit(activite.id)} className={greenOutlineButtonClass}>
           <Pencil className="size-4" />
@@ -371,7 +371,7 @@ export function AdminActivitesListe({
 
       <div className="ml-4 flex shrink-0 gap-2">
         <Button size="sm" asChild className={greenPrimaryButtonClass}>
-          <Link href={`/admin/activites/${activite.id}`}>Voir details</Link>
+          <Link href={`/admin/activites/${activite.id}`}>Voir détails</Link>
         </Button>
         <Button size="sm" variant="outline" onClick={() => onEdit(activite.id)} className={greenOutlineButtonClass}>
           <Pencil className="size-4" />
@@ -410,7 +410,7 @@ export function AdminActivitesListe({
     }
 
     if (viewMode === "cards") {
-      return <div className="grid gap-4 md:grid-cols-2">{paginatedActivites.map(renderActiviteCard)}</div>;
+      return <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{paginatedActivites.map(renderActiviteCard)}</div>;
     }
 
     if (viewMode === "list") {

@@ -495,7 +495,7 @@ export function AdminDestinationDetailContent({
 
   return (
     <div className={`bg-gradient-to-b from-background via-muted/30 to-background text-foreground ${greenButtonScopeClass}`}>
-      <main className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6 sm:py-8">
+      <main className="mx-auto w-full px-4 py-6 sm:py-8">
         <div className="space-y-8">
 
           {/* Messages d'alerte */}

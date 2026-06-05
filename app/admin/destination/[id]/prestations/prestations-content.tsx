@@ -60,7 +60,7 @@ export function AdminDestinationPrestationsContent({
 
   return (
     <div className="bg-gradient-to-b from-background via-muted/30 to-background text-foreground">
-      <main className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6 sm:py-8">
+      <main className="mx-auto w-full px-4 py-6 sm:py-8">
         <div className="space-y-8">
           {/* Header avec navigation et boutons de section */}
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">

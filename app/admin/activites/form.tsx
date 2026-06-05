@@ -169,7 +169,7 @@ export function ActiviteForm({
           <FormSection
             icon={Tags}
             title="Informations principales"
-            description="Nom, description, categorie et statut de publication."
+            description="Nom, description, catégorie et statut de publication."
           >
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2 md:col-span-2">
@@ -193,14 +193,14 @@ export function ActiviteForm({
                 <textarea
                   value={form.description}
                   onChange={(event) => onUpdate("description", event.target.value)}
-                  placeholder="Description visible dans la fiche detail."
+                  placeholder="Description visible dans la fiche détail."
                   className="min-h-32 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Categorie *</label>
+                <label className="text-sm font-medium">Catégorie *</label>
                 <div className="flex gap-2">
                   <Select
                     value={form.idCategorie}
@@ -223,7 +223,7 @@ export function ActiviteForm({
                     size="icon"
                     onClick={() => setShowCategoryCreator((current) => !current)}
                     className={greenOutlineButtonClass}
-                    aria-label="Ajouter une categorie"
+                    aria-label="Ajouter une catégorie"
                   >
                     <Plus className="size-4" />
                   </Button>
@@ -233,7 +233,7 @@ export function ActiviteForm({
                     <Input
                       value={newCategoryName}
                       onChange={(event) => onCategoryNameChange(event.target.value)}
-                      placeholder="Nouvelle categorie"
+                      placeholder="Nouvelle catégorie"
                     />
                     <Button type="button" variant="outline" onClick={onCreateCategory} className={greenOutlineButtonClass}>
                       Ajouter
@@ -259,7 +259,7 @@ export function ActiviteForm({
                   id="activite-est-actif"
                 />
                 <label htmlFor="activite-est-actif" className="text-sm font-medium text-emerald-900">
-                  Activite active
+                  Activité active
                 </label>
               </div>
             </div>
@@ -268,7 +268,7 @@ export function ActiviteForm({
           <FormSection
             icon={ImageIcon}
             title="Image principale"
-            description="Image d'accroche utilisee dans la fiche et la galerie."
+            description="Image d'accroche utilisée dans la fiche et la galérie."
           >
             <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
               <div className="space-y-3">
@@ -314,12 +314,12 @@ export function ActiviteForm({
 
           <FormSection
             icon={Users}
-            title="Duree et capacite"
-            description="Informations affichees dans le bloc detail de l'activite."
+            title="Durée et capacité"
+            description="Informations affichées dans le bloc détail de l'activite."
           >
             <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Duree (heures) *</label>
+                <label className="text-sm font-medium">Durée (heures) *</label>
                 <Input
                   type="number"
                   min="0"
@@ -356,7 +356,7 @@ export function ActiviteForm({
           <FormSection
             icon={MapPin}
             title="Localisation"
-            description="Coordonnees exactes pour afficher l'activite sur la carte."
+            description="Coordonnées exactes pour afficher l'activité sur la carte."
           >
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
@@ -396,7 +396,7 @@ export function ActiviteForm({
           <FormSection
             icon={CheckCircle2}
             title="Equipements fournis"
-            description="Liste ce qui sera fourni au client pendant l'activite."
+            description="Liste ce qui sera fourni au client pendant l'activité."
           >
             <div className="flex flex-col gap-2 sm:flex-row">
               <Input
@@ -427,7 +427,7 @@ export function ActiviteForm({
             <div className="mt-4 flex flex-wrap gap-2">
               {form.equipementsFournis.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  Aucun equipement renseigne.
+                  Aucun équipement renseigné.
                 </p>
               ) : null}
               {form.equipementsFournis.map((equipement) => (
@@ -472,7 +472,7 @@ export function ActiviteForm({
             />
           </div>
           <p className="mt-5 rounded-2xl bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-800">
-            Les champs marques d&apos;un asterisque sont necessaires pour publier correctement cette activite.
+            Les champs marques d&apos;un asterisque sont necessaires pour publier correctement cette activité.
           </p>
           <div className="mt-5 flex flex-col gap-2">
             <Button type="submit" disabled={isSaving} className={greenPrimaryButtonClass}>

@@ -66,7 +66,7 @@ export function ReservationEditModal({ reservation, open, onClose, onSave, initi
         <DialogHeader>
           <div className="flex items-center justify-between gap-3">
             <div>
-              <DialogTitle>Mettre a jour la reservation</DialogTitle>
+              <DialogTitle>Mettre à jour la reservation</DialogTitle>
               <p className="mt-1 text-sm text-muted-foreground">{reservation.reference}</p>
             </div>
             <Button variant="ghost" size="sm" onClick={onClose}>
@@ -117,7 +117,7 @@ export function ReservationEditModal({ reservation, open, onClose, onSave, initi
               }
               placeholder={
                 formData.status === "VALIDEE"
-                  ? "Message envoye au client avec l'email de validation"
+                  ? "Message envoyé au client avec l'email de validation"
                   : "Ajoutez une note interne si necessaire"
               }
               rows={5}

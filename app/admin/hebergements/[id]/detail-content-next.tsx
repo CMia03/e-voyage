@@ -802,7 +802,7 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
                           <div className="space-y-5 p-5">
                             <button type="button" onClick={() => openEditTarifDialog(tarif)} className="inline-flex items-center gap-2 text-sm text-blue-600">
                               <ImageIcon className="size-4" />
-                              Voir details
+                              Voir détails
                             </button>
                             <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm text-slate-500">
                               <span className="inline-flex items-center gap-2"><Users className="size-4" />{tarif.capacite} Hote{tarif.capacite > 1 ? "s" : ""}</span>
