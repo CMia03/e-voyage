@@ -7,7 +7,6 @@ import {
   Bus,
   CalendarDays,
   CheckCircle2,
-  CircleDollarSign,
   Flag,
   Grid2X2,
   MapPin,
@@ -54,13 +53,6 @@ function formatDateTime(value?: string | null) {
   }).format(date);
 }
 
-function formatMoney(value?: number | null, devise?: string | null) {
-  if (value === null || value === undefined) return "-";
-  return `${new Intl.NumberFormat("fr-FR", {
-    maximumFractionDigits: 3,
-  }).format(value)} ${devise || "MGA"}`;
-}
-
 function calculateDurationInDays(start?: string | null, end?: string | null) {
   if (!start || !end) return null;
 
@@ -104,9 +96,6 @@ export function SectionResume({ planification }: Props) {
 
   const totalAutres = Math.max(0, totalBlocs - totalActivites - totalHebergements);
   const duree = calculateDurationInDays(planification.dateHeureDebut, planification.dateHeureFin);
-  const budgetTotal = planification.budgetTotal ?? null;
-  const devise = planification.deviseBudget || "MGA";
-  const coutMoyenParJour = budgetTotal && duree && duree > 0 ? budgetTotal / duree : null;
   const premierJour = jours.length > 0 ? jours[0] : null;
   const dernierJour = jours.length > 0 ? jours[jours.length - 1] : null;
 
@@ -204,21 +193,10 @@ export function SectionResume({ planification }: Props) {
           })}
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-2">
+        <div className="grid gap-5">
           <SummaryPanel icon={CalendarDays} title="Periode">
             <InfoLine label="Debut" value={formatDateTime(planification.dateHeureDebut)} />
             <InfoLine label="Fin" value={formatDateTime(planification.dateHeureFin)} />
-          </SummaryPanel>
-
-          <SummaryPanel icon={CircleDollarSign} title="Budget">
-            <InfoLine label="Cout moyen / jour" value={coutMoyenParJour ? formatMoney(coutMoyenParJour, devise) : "-"} />
-            <div className="flex items-center gap-3 text-sm text-slate-900">
-              <span className="font-semibold">Statut budget :</span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
-                <CheckCircle2 className="size-3.5" />
-                {budgetTotal ? "Budget renseigne" : "Budget non defini"}
-              </span>
-            </div>
           </SummaryPanel>
         </div>
 
@@ -293,24 +271,6 @@ function InfoLine({ label, value }: { label: string; value: string }) {
       <span className="mr-3 font-semibold">{label} :</span>
       {value}
     </p>
-  );
-}
-
-function AdminStatus({ label, value, muted = false }: { label: string; value: string; muted?: boolean }) {
-  return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-      <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">{label}</p>
-      <p className={`mt-1 truncate text-sm font-semibold ${muted ? "text-slate-500" : "text-slate-950"}`}>{value}</p>
-    </div>
-  );
-}
-
-function ControlLine({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between gap-3 border-b border-slate-200 pb-2 last:border-b-0 last:pb-0">
-      <span className="text-xs text-slate-500">{label}</span>
-      <span className="max-w-[150px] truncate text-right text-xs font-semibold text-slate-800">{value}</span>
-    </div>
   );
 }
 

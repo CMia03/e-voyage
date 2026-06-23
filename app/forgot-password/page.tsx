@@ -67,7 +67,7 @@ export default function ForgotPasswordPage() {
         <Card className="border-none bg-white/10 shadow-2xl backdrop-blur-xl">
           <CardHeader className="space-y-2 text-center">
             <CardTitle className="text-3xl font-bold text-white drop-shadow-md">
-              Mot de passe oublie
+              Mot de passe oublié
             </CardTitle>
             <CardDescription className="text-base text-white/80 drop-shadow-md">
               Entrez l&apos;email de votre compte Cool Voyage.

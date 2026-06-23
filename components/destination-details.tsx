@@ -569,46 +569,49 @@ export function DestinationDetailsComponent({ destination }: DestinationDetailsP
 
         {/* Réservation */}
         {destination.reservation && (
-          <Card className="mb-8 border-primary/20 bg-primary/5">
-            <CardHeader>
-              <CardTitle>📱 Réservation</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="mb-2 font-semibold">Acompte : {destination.reservation.deposit}</p>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-primary" />
-                  <span className="font-medium">Mvola :</span>
-                  <a href={`tel:${reservationContacts.phone}`} className="text-primary hover:underline">
-                    {reservationContacts.phone}
-                  </a>
-                </div>
-                {reservationContacts.orangeMoney && (
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-primary" />
-                    <span className="font-medium">Orange Money :</span>
-                    <a href={`tel:${reservationContacts.orangeMoney}`} className="text-primary hover:underline">
-                      {reservationContacts.orangeMoney}
-                    </a>
-                  </div>
-                )}
-                {reservationContacts.infoPhone && (
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-primary" />
-                    <span className="font-medium">Plus d infos :</span>
-                    <a href={`tel:${reservationContacts.infoPhone}`} className="text-primary hover:underline">
-                      {reservationContacts.infoPhone}
-                    </a>
-                  </div>
-                )}
-              </div>
-              {/* <Button className="w-full mt-4" size="lg">
-                Réserver maintenant
-              </Button> */}
-            </CardContent>
-          </Card>
+          <div>
+            
+          </div>
+          // <Card className="mb-8 border-primary/20 bg-primary/5">
+          //   <CardHeader>
+          //     <CardTitle>📱 Réservation</CardTitle>
+          //   </CardHeader>
+          //   <CardContent className="space-y-4">
+          //     <div>
+          //       <p className="mb-2 font-semibold">Acompte : {destination.reservation.deposit}</p>
+          //     </div>
+          //     <div className="space-y-2">
+          //       <div className="flex items-center gap-2">
+          //         <Phone className="h-4 w-4 text-primary" />
+          //         <span className="font-medium">Mvola :</span>
+          //         <a href={`tel:${reservationContacts.phone}`} className="text-primary hover:underline">
+          //           {reservationContacts.phone}
+          //         </a>
+          //       </div>
+          //       {reservationContacts.orangeMoney && (
+          //         <div className="flex items-center gap-2">
+          //           <Phone className="h-4 w-4 text-primary" />
+          //           <span className="font-medium">Orange Money :</span>
+          //           <a href={`tel:${reservationContacts.orangeMoney}`} className="text-primary hover:underline">
+          //             {reservationContacts.orangeMoney}
+          //           </a>
+          //         </div>
+          //       )}
+          //       {reservationContacts.infoPhone && (
+          //         <div className="flex items-center gap-2">
+          //           <Phone className="h-4 w-4 text-primary" />
+          //           <span className="font-medium">Plus d infos :</span>
+          //           <a href={`tel:${reservationContacts.infoPhone}`} className="text-primary hover:underline">
+          //             {reservationContacts.infoPhone}
+          //           </a>
+          //         </div>
+          //       )}
+          //     </div>
+          //     {/* <Button className="w-full mt-4" size="lg">
+          //       Réserver maintenant
+          //     </Button> */}
+          //   </CardContent>
+          // </Card>
         )}
 
           {/* Galerie d'images */}

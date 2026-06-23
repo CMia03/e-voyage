@@ -4,7 +4,7 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarDays, CheckCircle2, FileText, Info, MapPin, Pencil, Plus, Save, Settings, Trash2, Wallet, X } from "lucide-react";
+import { CalendarDays, CheckCircle2, FileText, Info, MapPin, Pencil, Plus, Save, Settings, Trash2, X } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -494,6 +494,11 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
     return Math.max(1, diff + 1);
   }, [availableJourDateRange.minDate, availableJourDateRange.maxDate]);
   const selectedTypeElementJour = useMemo(() => typeElementJours.find((item) => item.id === elementForm.idTypeElementJour) ?? null, [typeElementJours, elementForm.idTypeElementJour]);
+  const showManualElementBudget =
+    selectedTypeElementJour?.code !== "ACTIVITE" &&
+    selectedTypeElementJour?.code !== "HEBERGEMENT" &&
+    selectedTypeElementJour?.code !== "TRANSPORT" &&
+    selectedTypeElementJour?.code !== "TRANSPORT_PRE_REMPLI";
   const visibleTypeElementJours = useMemo(() => {
     return typeElementJours;
   }, [typeElementJours]);
@@ -1653,7 +1658,7 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
                 </div>
               </div>
 
-              <div className="grid gap-5 lg:grid-cols-2">
+              <div className="grid gap-5">
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-slate-900">
                     Destination <span className="text-red-500">*</span>
@@ -1661,29 +1666,6 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
                   <div className="flex h-12 items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700">
                     <MapPin className="h-5 w-5 text-emerald-600" />
                     <span className="font-medium">{destination?.nom ?? "Destination actuelle"}</span>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-900">
-                    Budget total <span className="text-red-500">*</span>
-                  </label>
-                  <div className="flex h-12 overflow-hidden rounded-md border border-slate-200 bg-white focus-within:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-100">
-                    <div className="flex min-w-24 items-center justify-center border-r bg-emerald-50 px-4 text-sm font-semibold text-slate-800">
-                      {planificationForm.deviseBudget || "MGA"}
-                    </div>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={planificationForm.budgetTotal}
-                      onChange={(event) => updatePlanificationForm("budgetTotal", event.target.value)}
-                      placeholder="0"
-                      className="h-full border-0 text-base shadow-none focus-visible:ring-0"
-                    />
-                    <div className="flex items-center px-3 text-slate-400">
-                      <Wallet className="h-5 w-5" />
-                    </div>
                   </div>
                 </div>
               </div>
@@ -1771,13 +1753,13 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+              {/* <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
                 <Info className="mt-0.5 h-5 w-5 shrink-0" />
                 <p>
                   <span className="font-semibold">Astuce</span>{" "}
                   Vous pourrez ajouter les détails, les activités et les services après l&apos;enregistrement.
                 </p>
-              </div>
+              </div> */}
             </div>
 
             <div className="flex justify-end gap-3 border-t bg-white px-6 py-4">
@@ -1821,10 +1803,6 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
 
 
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Ordre etape</label>
-                <Input type="number" min="1" value={transportForm.ordreEtape} onChange={(event) => updateTransportForm("ordreEtape", event.target.value)} />
-              </div>
               <div className="space-y-2 xl:col-span-1">
                 <label className="text-sm font-medium">Type de transport</label>
                 <div className="inline-flex w-fit items-center gap-1">
@@ -1964,7 +1942,7 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
                   <Input type="number" min="0" step="0.01" value={transportForm.distanceKm} onChange={(event) => updateTransportForm("distanceKm", event.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Budget transport</label>
+                  <label className="text-sm font-medium">Budget par personne</label>
                   <Input type="number" min="0" step="0.01" value={transportForm.budgetPrevu} onChange={(event) => updateTransportForm("budgetPrevu", event.target.value)} />
                 </div>
               </div>
@@ -2144,7 +2122,7 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
                   </div>
                 </div>
               ) : null}
-              {selectedTypeElementJour?.code !== "ACTIVITE" && selectedTypeElementJour?.code !== "HEBERGEMENT" ? (
+              {showManualElementBudget ? (
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Cout previsionnel</label>
                   <Input
@@ -2157,10 +2135,12 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
                   />
                 </div>
               ) : null}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Devise</label>
-                <Input value={elementForm.devise} onChange={(event) => updateElementForm("devise", event.target.value.toUpperCase())} placeholder="MGA" />
-              </div>
+              {showManualElementBudget ? (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Devise</label>
+                  <Input value={elementForm.devise} onChange={(event) => updateElementForm("devise", event.target.value.toUpperCase())} placeholder="MGA" />
+                </div>
+              ) : null}
               <div className="flex items-center gap-3 pt-7">
                 <input id="element-actif" type="checkbox" checked={elementForm.estActif} onChange={(event) => updateElementForm("estActif", event.target.checked)} className="size-4 rounded border-input" />
                 <label htmlFor="element-actif" className="text-sm font-medium">Bloc actif</label>
@@ -2180,7 +2160,7 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
                     <SelectItem value="none">Aucun transport</SelectItem>
                     {selectedPlanification?.transports.map((transport) => (
                       <SelectItem key={transport.id} value={transport.id}>
-                        {displayText(transport.depart)} {"->"} {displayText(transport.arrivee)} ({displayText(transport.nomTypeTransport)}) - Budget: {transport.budgetPrevu ?? "-"} MGA
+                        {displayText(transport.depart)} {"->"} {displayText(transport.arrivee)} ({displayText(transport.nomTypeTransport)}) - Budget par personne: {transport.budgetPrevu ?? "-"} MGA
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -2200,7 +2180,7 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
                           <button type="button" className="w-full text-left" onClick={() => updateElementForm("idTransport", transport.id)}>
                             <p className="text-sm font-medium">{displayText(transport.depart)} {"->"} {displayText(transport.arrivee)}</p>
                             <p className="mt-1 text-xs text-muted-foreground">
-                              {displayText(transport.nomTypeTransport)}  -  Distance: {transport.distanceKm ?? "-"} km  -  Budget: {transport.budgetPrevu ?? "-"} MGA
+                              {displayText(transport.nomTypeTransport)}  -  Distance: {transport.distanceKm ?? "-"} km  -  Budget par personne: {transport.budgetPrevu ?? "-"} MGA
                             </p>
                           </button>
                           <div className="mt-2 flex flex-wrap gap-2">
@@ -2334,7 +2314,7 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
                       <p><span className="font-medium">Arrivée:</span> {displayText(linkedDetailTarget.arrivee)}</p>
                       <p><span className="font-medium">Durée:</span> {displayText(linkedDetailTarget.duree)}</p>
                       <p><span className="font-medium">Distance:</span> {linkedDetailTarget.distanceKm ?? "-"} km</p>
-                      <p><span className="font-medium">Budget transport:</span> {linkedDetailTarget.budgetPrevu ?? "-"} MGA</p>
+                      <p><span className="font-medium">Budget par personne:</span> {linkedDetailTarget.budgetPrevu ?? "-"} MGA</p>
                     </>
                   ) : null}
                   <p>
@@ -2366,27 +2346,29 @@ const [editingBudget, setEditingBudget] = useState<BudgetisationPlanificationVoy
       </Dialog>
 
       <Dialog open={isCoordinatePickerOpen} onOpenChange={setIsCoordinatePickerOpen}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="!w-[min(1280px,calc(100vw-2rem))] !max-w-none sm:!max-w-[min(1280px,calc(100vw-2rem))]">
           <DialogHeader>
             <DialogTitle>Choisir des coordonnees sur la carte</DialogTitle>
             <DialogDescription>Clique sur la carte pour definir les coordonnees {coordinateTarget === "depart" ? "de depart" : "d'arrivee"}.</DialogDescription>
           </DialogHeader>
-          <HebergementMap
-            latitude={
-              coordinateTarget === "depart"
-                ? Number(transportForm.latitudeDepart || -18.8792)
-                : Number(transportForm.latitudeArrivee || -18.8792)
-            }
-            longitude={
-              coordinateTarget === "depart"
-                ? Number(transportForm.longitudeDepart || 47.5079)
-                : Number(transportForm.longitudeArrivee || 47.5079)
-            }
-            onChange={(coords: { latitude: number; longitude: number }) => {
-              handleCoordinatePicked(coords);
-              setIsCoordinatePickerOpen(false);
-            }}
-          />
+          <div className="[&_.leaflet-container]:!h-[min(68vh,640px)] [&_.leaflet-container]:min-h-[440px]">
+            <HebergementMap
+              latitude={
+                coordinateTarget === "depart"
+                  ? Number(transportForm.latitudeDepart || -18.8792)
+                  : Number(transportForm.latitudeArrivee || -18.8792)
+              }
+              longitude={
+                coordinateTarget === "depart"
+                  ? Number(transportForm.longitudeDepart || 47.5079)
+                  : Number(transportForm.longitudeArrivee || 47.5079)
+              }
+              onChange={(coords: { latitude: number; longitude: number }) => {
+                handleCoordinatePicked(coords);
+                setIsCoordinatePickerOpen(false);
+              }}
+            />
+          </div>
         </DialogContent>
       </Dialog>
 

@@ -120,6 +120,26 @@ function StatCard({
 
 const pageSizeOptions = [5, 10, 15] as const;
 
+type AppliedFilters = {
+  search: string;
+  status: ReservationStatus | "ALL";
+  source: ReservationSource | "ALL";
+  dateFrom: string;
+  dateTo: string;
+  amountMin: string;
+  amountMax: string;
+};
+
+const defaultAppliedFilters: AppliedFilters = {
+  search: "",
+  status: "ALL",
+  source: "ALL",
+  dateFrom: "",
+  dateTo: "",
+  amountMin: "",
+  amountMax: "",
+};
+
 export function ReservationListContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -142,8 +162,11 @@ export function ReservationListContent() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<ReservationStatus | "ALL">("ALL");
   const [sourceFilter, setSourceFilter] = useState<ReservationSource | "ALL">("ALL");
+  const [dateFromFilter, setDateFromFilter] = useState("");
+  const [dateToFilter, setDateToFilter] = useState("");
   const [amountMinFilter, setAmountMinFilter] = useState("");
   const [amountMaxFilter, setAmountMaxFilter] = useState("");
+  const [appliedFilters, setAppliedFilters] = useState<AppliedFilters>(defaultAppliedFilters);
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -163,11 +186,13 @@ export function ReservationListContent() {
 
       const response = await listAdminReservationsPage(
         {
-          search: searchTerm.trim(),
-          status: statusFilter,
-          source: sourceFilter,
-          amountMin: amountMinFilter,
-          amountMax: amountMaxFilter,
+          search: appliedFilters.search,
+          status: appliedFilters.status,
+          source: appliedFilters.source,
+          dateFrom: appliedFilters.dateFrom,
+          dateTo: appliedFilters.dateTo,
+          amountMin: appliedFilters.amountMin,
+          amountMax: appliedFilters.amountMax,
           page: currentPage - 1,
           size: pageSize,
         },
@@ -190,14 +215,16 @@ export function ReservationListContent() {
       setIsLoading(false);
     }
   }, [
-    amountMaxFilter,
-    amountMinFilter,
+    appliedFilters.amountMax,
+    appliedFilters.amountMin,
+    appliedFilters.dateFrom,
+    appliedFilters.dateTo,
+    appliedFilters.search,
+    appliedFilters.source,
+    appliedFilters.status,
     currentPage,
     pageSize,
     router,
-    searchTerm,
-    sourceFilter,
-    statusFilter,
   ]);
 
   useEffect(() => {
@@ -254,16 +281,16 @@ export function ReservationListContent() {
     return start + index;
   });
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [amountMaxFilter, amountMinFilter, pageSize, searchTerm, sourceFilter, statusFilter]);
-
-  const resetFilters = () => {
-    setSearchTerm("");
-    setStatusFilter("ALL");
-    setSourceFilter("ALL");
-    setAmountMinFilter("");
-    setAmountMaxFilter("");
+  const applyFilters = () => {
+    setAppliedFilters({
+      search: searchTerm.trim(),
+      status: statusFilter,
+      source: sourceFilter,
+      dateFrom: dateFromFilter,
+      dateTo: dateToFilter,
+      amountMin: amountMinFilter,
+      amountMax: amountMaxFilter,
+    });
     setCurrentPage(1);
   };
 
@@ -380,28 +407,24 @@ export function ReservationListContent() {
 
       <Card className="border-slate-200 shadow-sm">
         <CardHeader>
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <CardTitle>Recherche et tri</CardTitle>
-              <p className="mt-1 text-sm text-slate-500">
-                {totalReservations === 0
-                  ? "0 resultat sur 0"
-                  : `${paginationStart}-${paginationEnd} sur ${totalReservations} resultat(s)`}
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="text-sm text-slate-500">
-                Trie par : <span className="font-semibold text-slate-700">Plus recent</span>
-              </span>
-              <Button variant="outline" onClick={resetFilters}>
-                Reinitialiser
-              </Button>
-            </div>
+          <div>
+            <CardTitle>Recherche et tri</CardTitle>
+            <p className="mt-1 text-sm text-slate-500">
+              {totalReservations === 0
+                ? "0 resultat sur 0"
+                : `${paginationStart}-${paginationEnd} sur ${totalReservations} resultat(s)`}
+            </p>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-3 xl:grid-cols-[minmax(260px,1.4fr)_minmax(170px,0.8fr)_minmax(170px,0.8fr)_minmax(130px,0.55fr)_minmax(130px,0.55fr)]">
-            <div className="relative">
+          <form
+            className="flex flex-wrap items-center gap-3"
+            onSubmit={(event) => {
+              event.preventDefault();
+              applyFilters();
+            }}
+          >
+            <div className="relative min-w-[260px] flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <Input
                 value={searchTerm}
@@ -411,7 +434,7 @@ export function ReservationListContent() {
               />
             </div>
             <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as ReservationStatus | "ALL")}>
-              <SelectTrigger className="h-11">
+              <SelectTrigger className="h-11 w-[170px]">
                 <SelectValue placeholder="Statut" />
               </SelectTrigger>
               <SelectContent position="popper">
@@ -424,7 +447,7 @@ export function ReservationListContent() {
               </SelectContent>
             </Select>
             <Select value={sourceFilter} onValueChange={(value) => setSourceFilter(value as ReservationSource | "ALL")}>
-              <SelectTrigger className="h-11">
+              <SelectTrigger className="h-11 w-[170px]">
                 <SelectValue placeholder="Source" />
               </SelectTrigger>
               <SelectContent position="popper">
@@ -433,13 +456,33 @@ export function ReservationListContent() {
                 <SelectItem value="SIMULATION">Simulation</SelectItem>
               </SelectContent>
             </Select>
+            <div className="flex h-11 items-center gap-2 rounded-md border border-input bg-background px-3 shadow-sm">
+              <span className="text-xs font-medium text-slate-500">Du</span>
+              <Input
+                type="date"
+                value={dateFromFilter}
+                onChange={(event) => setDateFromFilter(event.target.value)}
+                aria-label="Date début"
+                className="h-9 w-[125px] border-0 p-0 shadow-none focus-visible:ring-0"
+              />
+            </div>
+            <div className="flex h-11 items-center gap-2 rounded-md border border-input bg-background px-3 shadow-sm">
+              <span className="text-xs font-medium text-slate-500">Au</span>
+              <Input
+                type="date"
+                value={dateToFilter}
+                onChange={(event) => setDateToFilter(event.target.value)}
+                aria-label="Date fin"
+                className="h-9 w-[125px] border-0 p-0 shadow-none focus-visible:ring-0"
+              />
+            </div>
             <Input
               type="number"
               min={0}
               value={amountMinFilter}
               onChange={(event) => setAmountMinFilter(event.target.value)}
               placeholder="Montant min"
-              className="h-11"
+              className="h-11 w-[150px]"
             />
             <Input
               type="number"
@@ -447,22 +490,21 @@ export function ReservationListContent() {
               value={amountMaxFilter}
               onChange={(event) => setAmountMaxFilter(event.target.value)}
               placeholder="Montant max"
-              className="h-11"
+              className="h-11 w-[150px]"
             />
-          </div>
+            <Button type="submit" className="h-11 gap-2 bg-emerald-600 px-5 hover:bg-emerald-700">
+              <Search className="h-4 w-4" />
+              Rechercher
+            </Button>
+          </form>
         </CardContent>
       </Card>
 
       <Card className="overflow-hidden border-slate-200 shadow-sm">
         <CardHeader className="border-b bg-white px-4 py-3">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm font-semibold text-slate-700">
-              {totalReservations} reservation{totalReservations > 1 ? "s" : ""}
-            </p>
-            <p className="text-xs text-slate-500">
-              Trie par : <span className="font-semibold text-slate-700">Plus recent</span>
-            </p>
-          </div>
+          <p className="text-sm font-semibold text-slate-700">
+            {totalReservations} reservation{totalReservations > 1 ? "s" : ""}
+          </p>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
@@ -476,7 +518,7 @@ export function ReservationListContent() {
                   <th className="px-4 py-3 text-left">Client</th>
                   <th className="px-4 py-3 text-left">Destination</th>
                   <th className="px-4 py-3 text-left">Statut</th>
-                  <th className="px-4 py-3 text-left">Periode</th>
+                  <th className="px-4 py-3 text-left">Date de réservation</th>
                   <th className="px-4 py-3 text-right">Montant</th>
                   <th className="px-4 py-3 text-center">Actions</th>
                 </tr>
@@ -537,13 +579,9 @@ export function ReservationListContent() {
                           </Badge>
                         </td>
                         <td className="px-4 py-4 align-middle">
-                          <div className="flex items-start gap-2 text-slate-700">
+                          <div className="flex items-center gap-2 text-slate-700">
                             <CalendarDays className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
-                            <div className="space-y-1 text-sm">
-                              <p>{formatDateOnly(reservation.dateReservation)}</p>
-                              <p className="text-xs text-slate-400">-</p>
-                              <p>{formatDateOnly(reservation.dateModification)}</p>
-                            </div>
+                            <p className="text-sm">{formatDateOnly(reservation.dateReservation)}</p>
                           </div>
                         </td>
                         <td className="px-4 py-4 text-right align-middle">

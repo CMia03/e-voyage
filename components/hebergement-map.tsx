@@ -57,6 +57,9 @@ export function HebergementMap({
         zoom={hasCoordinates ? 13 : 6}
         scrollWheelZoom
         className="h-[320px] w-full"
+        fadeAnimation={false}
+        markerZoomAnimation={false}
+        zoomAnimation={false}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

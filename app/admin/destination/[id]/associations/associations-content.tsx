@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, BedDouble, CalendarDays, CheckCircle2, Compass, Gift, Info, Loader2, MapPin, Map as MapIcon, SlidersHorizontal, Tag, X } from "lucide-react";
+import { ArrowLeft, BedDouble, CalendarDays, CheckCircle2, Compass, Gift, Info, Loader2, MapPin, Map as MapIcon, Search, SlidersHorizontal, Tag, X } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -100,6 +100,20 @@ function displayText(value?: string | number | null, fallback = "-") {
   );
 }
 
+function normalizeFilterText(value?: string | number | null) {
+  return displayText(value, "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+function matchesSearchTerm(values: Array<string | number | null | undefined>, searchTerm: string) {
+  const normalizedSearch = normalizeFilterText(searchTerm);
+  if (!normalizedSearch) return true;
+  return values.some((value) => normalizeFilterText(value).includes(normalizedSearch));
+}
+
 const DestinationAssociationsMap = dynamic(
   () =>
     import("@/components/destination-associations-map").then(
@@ -136,6 +150,9 @@ export function AdminDestinationAssociationsContent({
   );
   const [focusedItemId, setFocusedItemId] = useState<string | null>(null);
   const [mapCategoryFilter, setMapCategoryFilter] = useState<MapCategoryFilter>("all");
+  const [hebergementSearchTerm, setHebergementSearchTerm] = useState("");
+  const [activiteSearchTerm, setActiviteSearchTerm] = useState("");
+  const [prestationSearchTerm, setPrestationSearchTerm] = useState("");
   const [isCreatePrestationDialogOpen, setIsCreatePrestationDialogOpen] = useState(false);
   const [isCreatingPrestation, setIsCreatingPrestation] = useState(false);
   const [newPrestation, setNewPrestation] = useState({
@@ -208,6 +225,30 @@ export function AdminDestinationAssociationsContent({
   const totalPrestationsSelectionnees = useMemo(
     () => data?.prestations.filter((item) => item.estSelectionne).length ?? 0,
     [data]
+  );
+
+  const filteredHebergements = useMemo(
+    () =>
+      (data?.hebergements ?? []).filter((item) =>
+        matchesSearchTerm([item.nom, item.place, item.region, item.meta], hebergementSearchTerm)
+      ),
+    [data?.hebergements, hebergementSearchTerm]
+  );
+
+  const filteredActivites = useMemo(
+    () =>
+      (data?.activites ?? []).filter((item) =>
+        matchesSearchTerm([item.nom, item.place, item.region, item.meta], activiteSearchTerm)
+      ),
+    [activiteSearchTerm, data?.activites]
+  );
+
+  const filteredPrestations = useMemo(
+    () =>
+      (data?.prestations ?? []).filter((item) =>
+        matchesSearchTerm([item.libelle, item.description], prestationSearchTerm)
+      ),
+    [data?.prestations, prestationSearchTerm]
   );
 
   const mapItems = useMemo(
@@ -892,7 +933,22 @@ export function AdminDestinationAssociationsContent({
                     </div>
                   </div>
                 ) : (
-                  <div className="max-h-[60vh] overflow-y-auto">
+                  <div>
+                    <div className="border-b border-border/30 bg-background p-4">
+                      <div className="relative">
+                        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          value={hebergementSearchTerm}
+                          onChange={(event) => setHebergementSearchTerm(event.target.value)}
+                          placeholder="Rechercher un hebergement par nom, adresse ou type..."
+                          className="h-11 pl-9 shadow-sm"
+                        />
+                      </div>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        {filteredHebergements.length} resultat(s) sur {data?.hebergements.length ?? 0} hebergement(s).
+                      </p>
+                    </div>
+                    <div className="max-h-[60vh] overflow-y-auto">
                     <div className="sticky top-0 bg-gradient-to-b from-background via-background to-transparent z-10">
                       <div className="hidden bg-muted/30 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground md:grid md:grid-cols-[1.9fr_1.2fr_1fr_0.9fr_1.4fr] md:gap-4 border-b border-border/30">
                         <span>Hébergement</span>
@@ -904,7 +960,8 @@ export function AdminDestinationAssociationsContent({
                     </div>
 
                     <div className="divide-y divide-border/30">
-                      {(data?.hebergements ?? []).map((item) => renderListTableItem(item, "hebergement"))}
+                      {filteredHebergements.map((item) => renderListTableItem(item, "hebergement"))}
+                    </div>
                     </div>
                   </div>
                 )}
@@ -943,7 +1000,22 @@ export function AdminDestinationAssociationsContent({
                     </div>
                   </div>
                 ) : (
-                  <div className="max-h-[60vh] overflow-y-auto">
+                  <div>
+                    <div className="border-b border-border/30 bg-background p-4">
+                      <div className="relative">
+                        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          value={activiteSearchTerm}
+                          onChange={(event) => setActiviteSearchTerm(event.target.value)}
+                          placeholder="Rechercher une activite par nom, categorie ou duree..."
+                          className="h-11 pl-9 shadow-sm"
+                        />
+                      </div>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        {filteredActivites.length} resultat(s) sur {data?.activites.length ?? 0} activite(s).
+                      </p>
+                    </div>
+                    <div className="max-h-[60vh] overflow-y-auto">
                     <div className="sticky top-0 bg-gradient-to-b from-background via-background to-transparent z-10">
                       <div className="hidden bg-muted/30 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground md:grid md:grid-cols-[1.9fr_1.2fr_1fr_0.9fr_1.4fr] md:gap-4 border-b border-border/30">
                         <span>Activité</span>
@@ -954,7 +1026,8 @@ export function AdminDestinationAssociationsContent({
                       </div>
                     </div>
                     <div className="divide-y divide-border/30">
-                      {(data?.activites ?? []).map((item) => renderListTableItem(item, "activite"))}
+                      {filteredActivites.map((item) => renderListTableItem(item, "activite"))}
+                    </div>
                     </div>
                   </div>
                 )}
@@ -1006,7 +1079,22 @@ export function AdminDestinationAssociationsContent({
                     </div>
                   </div>
                 ) : (
-                  <div className="max-h-[60vh] overflow-y-auto">
+                  <div>
+                    <div className="border-b border-border/30 bg-background p-4">
+                      <div className="relative">
+                        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          value={prestationSearchTerm}
+                          onChange={(event) => setPrestationSearchTerm(event.target.value)}
+                          placeholder="Rechercher une prestation par nom ou description..."
+                          className="h-11 pl-9 shadow-sm"
+                        />
+                      </div>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        {filteredPrestations.length} resultat(s) sur {data?.prestations.length ?? 0} prestation(s).
+                      </p>
+                    </div>
+                    <div className="max-h-[60vh] overflow-y-auto">
                     <div className="sticky top-0 bg-gradient-to-b from-background via-background to-transparent z-10">
                       <div className="hidden bg-muted/30 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground md:grid md:grid-cols-[1.2fr_1.4fr_180px_220px_120px] md:gap-3 border-b border-border/30">
                         <span>Prestation</span>
@@ -1017,7 +1105,8 @@ export function AdminDestinationAssociationsContent({
                       </div>
                     </div>
                     <div className="divide-y divide-border/30">
-                      {(data?.prestations ?? []).map(renderPrestationItem)}
+                      {filteredPrestations.map(renderPrestationItem)}
+                    </div>
                     </div>
                   </div>
                 )}

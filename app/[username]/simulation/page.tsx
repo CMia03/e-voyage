@@ -21,6 +21,8 @@ const PlanningJournalier = dynamic(
   { ssr: false }
 );
 
+const RESERVATION_SIMULATION_PREFILL_KEY = "cool-voyage:reservation-simulation-prefill";
+
 type SuggestedElement = {
   id: string;
   titre: string;
@@ -1107,6 +1109,23 @@ export default function SimulationPage() {
     }
     if (simulationSummary) {
       params.set("resumeSimulation", simulationSummary);
+    }
+
+    if (typeof window !== "undefined") {
+      const reservationSimulationPrefill = JSON.stringify({
+        destinationId: selectedDestinationId,
+        planificationId: selectedPlanificationId,
+        categorieId: voyageurProfiles[0]?.categorieClientId ?? "",
+        gamme: voyageurProfiles[0]?.gamme ?? "MOYENNE",
+        nombrePersonnes: totalVoyageurs(voyageurProfiles),
+        voyageurProfiles,
+        budgetClient,
+        elementsSelectionnes: simulationElements,
+        elementsDetails: simulationElementDetails,
+        resumeSimulation: simulationSummary,
+      });
+      window.sessionStorage.setItem(RESERVATION_SIMULATION_PREFILL_KEY, reservationSimulationPrefill);
+      window.localStorage.setItem(RESERVATION_SIMULATION_PREFILL_KEY, reservationSimulationPrefill);
     }
 
     router.push(`/${username}/reservations?${params.toString()}`);

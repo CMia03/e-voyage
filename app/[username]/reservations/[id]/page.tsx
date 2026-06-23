@@ -572,12 +572,12 @@ export default function ReservationDetailPage() {
                 variant="outline"
                 className="h-11 w-full justify-center rounded-lg border-slate-200 px-5 font-semibold shadow-sm sm:w-[205px]"
               >
-                <Link href={simulationEditHref}>Modifié via simulation</Link>
+                <Link href={simulationEditHref}>Modifier via simulation</Link>
               </Button>
             ) : null}
             {reservation?.status === "EN_ATTENTE" && reservation.source === "PRIX_DIRECT" && editHref ? (
               <Button asChild className="h-11 w-full justify-center rounded-lg px-5 font-semibold shadow-sm sm:w-[205px]">
-                <Link href={editHref}>Modifié la réservation</Link>
+                <Link href={editHref}>Modifier la réservation</Link>
               </Button>
             ) : null}
             {reservation?.status === "EN_ATTENTE" ? (

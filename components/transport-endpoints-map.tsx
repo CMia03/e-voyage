@@ -29,17 +29,37 @@ function FitRouteBounds({ points }: { points: [number, number][] }) {
   const map = useMap();
 
   useEffect(() => {
-    if (points.length >= 2) {
-      map.fitBounds(points, { padding: [30, 30], maxZoom: 13 });
-      return;
-    }
+    let cancelled = false;
 
-    if (points.length === 1) {
-      map.setView(points[0], 13);
-      return;
-    }
+    const timeout = window.setTimeout(() => {
+      if (cancelled) return;
 
-    map.setView([-18.8792, 47.5079], 6);
+      const container = map.getContainer();
+      if (!container.isConnected) return;
+
+      try {
+        map.invalidateSize();
+
+        if (points.length >= 2) {
+          map.fitBounds(points, { padding: [30, 30], maxZoom: 13, animate: false });
+          return;
+        }
+
+        if (points.length === 1) {
+          map.setView(points[0], 13, { animate: false });
+          return;
+        }
+
+        map.setView([-18.8792, 47.5079], 6, { animate: false });
+      } catch {
+        // Leaflet can throw while a dialog map is being unmounted.
+      }
+    }, 0);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+    };
   }, [map, points]);
 
   return null;
@@ -63,7 +83,15 @@ export function TransportEndpointsMap({
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border/50">
-      <MapContainer center={[-18.8792, 47.5079]} zoom={6} className="h-[280px] w-full" preferCanvas>
+      <MapContainer
+        center={[-18.8792, 47.5079]}
+        zoom={6}
+        className="h-[280px] w-full"
+        preferCanvas
+        fadeAnimation={false}
+        markerZoomAnimation={false}
+        zoomAnimation={false}
+      >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

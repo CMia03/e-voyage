@@ -1,13 +1,14 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { getErrorMessage } from "@/lib/api/client";
 import { getDashboardData } from "@/lib/api/dashboard";
 import { getUsers, UserSummary } from "@/lib/api/users";
 import { DASHBOARD_TEXTS } from "@/lib/constants/texts";
 import { DashboardResponse } from "@/lib/type/dashboard";
-import { Loader2 } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
 import { PlanificationPerformanceChart } from "@/components/ui/planification-performance-chart";
 import { UserStatsChart } from "@/components/ui/user-stats-chart";
 
@@ -80,6 +81,7 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
   const [dashboardData, setDashboardData] = useState<DashboardResponse | null>(null);
   const [dashboardError, setDashboardError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [selectedDestinationId, setSelectedDestinationId] = useState("ALL");
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodFilter>("ALL");
 
@@ -119,59 +121,66 @@ export function AdminDashboard({ role, accessToken }: AdminDashboardProps) {
       );
   }, [performancePlanifications, selectedDestinationId, selectedPeriod]);
 
-  useEffect(() => {
+  const loadUsers = useCallback(async () => {
     if (role !== "ADMIN" || !accessToken) return;
-    let active = true;
-    const loadUsers = async () => {
-      try {
-        const response = await getUsers(accessToken);
-        if (active) {
-          setUsers(response?.data ?? []);
-        }
-      } catch (error) {
-        if (active) {
-          console.error(getErrorMessage(error, "Network error while loading users"));
-        }
-      }
-    };
-    loadUsers();
-    return () => {
-      active = false;
-    };
+    try {
+      const response = await getUsers(accessToken);
+      setUsers(response?.data ?? []);
+    } catch (error) {
+      console.error(getErrorMessage(error, "Network error while loading users"));
+    }
   }, [role, accessToken]);
 
-  useEffect(() => {
-    let active = true;
-    const loadDashboardData = async () => {
-      try {
+  const loadDashboardData = useCallback(async (mode: "initial" | "refresh" = "initial") => {
+    if (!accessToken) return;
+    try {
+      if (mode === "initial") {
         setLoading(true);
-        const data = await getDashboardData(accessToken);
-        if (active) {
-          setDashboardData(data);
-        }
-      } catch (error) {
-        if (active) {
-          setDashboardError(getErrorMessage(error, "Network error while loading dashboard data"));
-        }
-      } finally {
-        if (active) {
-          setLoading(false);
-        }
+      } else {
+        setRefreshing(true);
       }
-    };
-    loadDashboardData();
-    return () => {
-      active = false;
-    };
+      setDashboardError("");
+      const data = await getDashboardData(accessToken);
+      setDashboardData(data);
+    } catch (error) {
+      setDashboardError(getErrorMessage(error, "Network error while loading dashboard data"));
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   }, [accessToken]);
+
+  const refreshDashboard = useCallback(async () => {
+    await Promise.all([loadDashboardData("refresh"), loadUsers()]);
+  }, [loadDashboardData, loadUsers]);
+
+  useEffect(() => {
+    void loadUsers();
+  }, [loadUsers]);
+
+  useEffect(() => {
+    void loadDashboardData();
+  }, [loadDashboardData]);
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          {DASHBOARD_TEXTS.TITLE}
-        </h1>
-        <p className="text-sm text-muted-foreground">{DASHBOARD_TEXTS.DESCRIPTION}</p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            {DASHBOARD_TEXTS.TITLE}
+          </h1>
+          <p className="text-sm text-muted-foreground">{DASHBOARD_TEXTS.DESCRIPTION}</p>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => void refreshDashboard()}
+          disabled={loading || refreshing}
+          className="w-fit gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
+        >
+          <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+          {refreshing ? "Actualisation..." : "Actualiser"}
+        </Button>
       </div>
 
       {loading ? (

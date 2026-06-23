@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -16,7 +16,7 @@ import {
   X,
   LayoutGrid,
   List,
-  Map
+  Map as MapIcon
 } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -57,6 +57,8 @@ type AdminHebergementsListeProps = {
   onCreate: () => void;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
+  onToggleStatus: (hebergement: Hebergement) => void;
+  isTogglingStatusId: string | null;
 };
 
 type ViewMode = "cards" | "list" | "map";
@@ -71,7 +73,11 @@ const greenPrimaryButtonClass =
   "border-transparent bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/20 hover:from-emerald-700 hover:to-teal-700";
 
 function normalizeSearch(value: string | number | null | undefined) {
-  return String(value ?? "").trim().toLowerCase();
+  return displayText(value, "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
 }
 
 const legacyEncodingMap: Record<string, string> = {
@@ -93,7 +99,25 @@ const legacyEncodingMap: Record<string, string> = {
 
 function displayText(value?: string | number | null, fallback = "-") {
   if (value === null || value === undefined || value === "") return fallback;
-  return String(value).replace(/[‚ƒ…‡ˆ‰Š‹Œ“”–—×]/g, (char) => legacyEncodingMap[char] ?? char);
+  return String(value)
+    .replace(/[‚ƒ…‡ˆ‰Š‹Œ“”–—×]/g, (char) => legacyEncodingMap[char] ?? char)
+    .replace(/Ã©/g, "é")
+    .replace(/Ã¨/g, "è")
+    .replace(/Ãª/g, "ê")
+    .replace(/Ã«/g, "ë")
+    .replace(/Ã /g, "à")
+    .replace(/Ã¢/g, "â")
+    .replace(/Ã®/g, "î")
+    .replace(/Ã´/g, "ô")
+    .replace(/Ã»/g, "û")
+    .replace(/Ã¹/g, "ù")
+    .replace(/Ã§/g, "ç");
+}
+
+function toFiniteNumber(value: string | number | null | undefined) {
+  if (value === null || value === undefined || value === "") return null;
+  const parsed = typeof value === "number" ? value : Number(String(value).replace(/\s/g, "").replace(",", "."));
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 function getDistanceKm(
@@ -126,6 +150,8 @@ export function AdminHebergementsListe({
   onCreate,
   onEdit,
   onDelete,
+  onToggleStatus,
+  isTogglingStatusId,
 }: AdminHebergementsListeProps) {
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [showErrorAlert, setShowErrorAlert] = useState(false);
@@ -174,24 +200,31 @@ export function AdminHebergementsListe({
     return () => window.clearTimeout(timeout);
   }, [error]);
 
-  const types = useMemo(() => {
-    return Array.from(
-      new Set(hebergements.map((hebergement) => hebergement.nomTypeHebergement).filter(Boolean))
-    ).sort((a, b) => a.localeCompare(b));
+  const typeOptions = useMemo(() => {
+    const options = new Map<string, string>();
+
+    hebergements.forEach((hebergement) => {
+      const rawType = hebergement.nomTypeHebergement?.trim();
+      if (!rawType) return;
+      options.set(rawType, displayText(rawType));
+    });
+
+    return Array.from(options.entries())
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) => a.label.localeCompare(b.label));
   }, [hebergements]);
 
   const filteredHebergements = useMemo(() => {
     const normalizedSearch = normalizeSearch(searchTerm);
-    const minPrice = priceMinFilter ? Number(priceMinFilter) : null;
-    const maxPrice = priceMaxFilter ? Number(priceMaxFilter) : null;
+    const minPrice = toFiniteNumber(priceMinFilter);
+    const maxPrice = toFiniteNumber(priceMaxFilter);
     const distanceRadius = distanceRadiusFilter ? Number(distanceRadiusFilter) : null;
 
     return hebergements.filter((hebergement) => {
-      const prices = (hebergement.tarifs ?? []).flatMap((tarif) => [
-        tarif.prixParNuit,
-        tarif.prixReservation,
-      ]).filter((price): price is number => typeof price === "number");
-      const minHebergementPrice = prices.length > 0 ? Math.min(...prices) : null;
+      const prices = (hebergement.tarifs ?? [])
+        .map((tarif) => tarif.prixParNuit)
+        .map(toFiniteNumber)
+        .filter((price): price is number => price !== null);
       const searchable = [
         hebergement.nom,
         hebergement.slug,
@@ -224,8 +257,15 @@ export function AdminHebergementsListe({
       if (typeFilter !== "ALL" && hebergement.nomTypeHebergement !== typeFilter) return false;
       if (statusFilter === "ACTIVE" && !hebergement.estActif) return false;
       if (statusFilter === "INACTIVE" && hebergement.estActif) return false;
-      if (minPrice !== null && !Number.isNaN(minPrice) && (minHebergementPrice === null || minHebergementPrice < minPrice)) return false;
-      if (maxPrice !== null && !Number.isNaN(maxPrice) && (minHebergementPrice === null || minHebergementPrice > maxPrice)) return false;
+      if (minPrice !== null || maxPrice !== null) {
+        const hasPriceInRange = prices.some((price) => {
+          if (minPrice !== null && price < minPrice) return false;
+          if (maxPrice !== null && price > maxPrice) return false;
+          return true;
+        });
+
+        if (!hasPriceInRange) return false;
+      }
       if (
         mapReferencePoint &&
         distanceRadius !== null &&
@@ -290,15 +330,18 @@ export function AdminHebergementsListe({
             Aucune image
           </div>
         )}
-        <span
-          className={`absolute right-3 top-3 rounded-full px-2.5 py-1 text-xs font-medium shadow-sm ${
+        <button
+          type="button"
+          onClick={() => onToggleStatus(hebergement)}
+          disabled={isTogglingStatusId === hebergement.id}
+          className={`absolute right-3 top-3 rounded-full px-2.5 py-1 text-xs font-medium shadow-sm transition hover:scale-105 disabled:cursor-wait disabled:opacity-70 ${
             hebergement.estActif
               ? "bg-emerald-100 text-emerald-700"
               : "bg-slate-200 text-slate-700"
           }`}
         >
           {hebergement.estActif ? "Actif" : "Inactif"}
-        </span>
+        </button>
       </div>
                              
       <div className="flex-1 p-4">
@@ -376,15 +419,18 @@ export function AdminHebergementsListe({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-3">
           <h3 className="font-semibold truncate">{displayText(hebergement.nom)}</h3>
-          <span
-            className={`rounded-full px-2 py-0.5 text-xs font-medium shrink-0 ${
+          <button
+            type="button"
+            onClick={() => onToggleStatus(hebergement)}
+            disabled={isTogglingStatusId === hebergement.id}
+            className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium transition hover:scale-105 disabled:cursor-wait disabled:opacity-70 ${
               hebergement.estActif
                 ? "bg-emerald-100 text-emerald-700"
                 : "bg-slate-200 text-slate-700"
             }`}
           >
             {hebergement.estActif ? "Actif" : "Inactif"}
-          </span>
+          </button>
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
           <span>{displayText(hebergement.nomTypeHebergement, "Type non renseigné")}</span>
@@ -554,7 +600,7 @@ export function AdminHebergementsListe({
               <span className="sr-only md:not-sr-only md:ml-2">Liste</span>
             </ToggleGroupItem>
             <ToggleGroupItem value="map" aria-label="Vue carte geographique" className={viewModeButtonClass}>
-              <Map className="size-4" />
+              <MapIcon className="size-4" />
               <span className="sr-only md:not-sr-only md:ml-2">Carte</span>
             </ToggleGroupItem>
           </ToggleGroup>
@@ -654,9 +700,9 @@ export function AdminHebergementsListe({
                 className="h-11 rounded-md border border-input bg-background px-3 text-sm outline-none transition focus:border-emerald-500"
               >
                 <option value="ALL">Tous les types</option>
-                {types.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
+                {typeOptions.map((type) => (
+                  <option key={type.value} value={type.value}>
+                    {type.label}
                   </option>
                 ))}
               </select>
@@ -828,3 +874,4 @@ export function AdminHebergementsListe({
     </div>
   );
 }
+

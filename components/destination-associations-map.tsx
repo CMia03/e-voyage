@@ -77,10 +77,15 @@ function FocusOnItem({ item }: { item: MapItem | null }) {
       return;
     }
 
-    map.flyTo([item.latitude, item.longitude], Math.max(map.getZoom(), 10), {
-      animate: true,
-      duration: 0.9,
-    });
+    try {
+      const container = map.getContainer();
+      if (!container.isConnected) return;
+      map.setView([item.latitude, item.longitude], Math.max(map.getZoom(), 10), {
+        animate: false,
+      });
+    } catch {
+      // Leaflet can throw while this map is being unmounted.
+    }
   }, [item, map]);
 
   return null;
@@ -156,6 +161,9 @@ export function DestinationAssociationsMap({
         zoom={8}
         scrollWheelZoom
         className="h-[520px] w-full"
+        fadeAnimation={false}
+        markerZoomAnimation={false}
+        zoomAnimation={false}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

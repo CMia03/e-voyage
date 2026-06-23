@@ -53,6 +53,8 @@ type AdminDestinationListeProps = {
   onCreate: () => void;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
+  onToggleStatus: (destination: AdminDestination) => void;
+  isTogglingStatusId: string | null;
 };
 
 type ViewMode = "cards" | "list" | "map";
@@ -96,6 +98,8 @@ export function AdminDestinationListe({
   onCreate,
   onEdit,
   onDelete,
+  onToggleStatus,
+  isTogglingStatusId,
 }: AdminDestinationListeProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
   const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
@@ -141,15 +145,18 @@ export function AdminDestinationListe({
             Aucune image
           </div>
         )}
-        <span
-          className={`absolute right-3 top-3 rounded-full px-2.5 py-1 text-xs font-medium shadow-sm ${
+        <button
+          type="button"
+          onClick={() => onToggleStatus(destination)}
+          disabled={isTogglingStatusId === destination.id}
+          className={`absolute right-3 top-3 rounded-full px-2.5 py-1 text-xs font-medium shadow-sm transition hover:scale-105 disabled:cursor-wait disabled:opacity-70 ${
             destination.estActif
               ? "bg-emerald-100 text-emerald-700"
               : "bg-slate-200 text-slate-700"
           }`}
         >
           {destination.estActif ? "Actif" : "Inactif"}
-        </span>
+        </button>
       </div>
 
       <div className="p-4">
@@ -204,15 +211,18 @@ export function AdminDestinationListe({
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-3">
           <h3 className="truncate font-semibold">{displayText(destination.nom)}</h3>
-          <span
-            className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
+          <button
+            type="button"
+            onClick={() => onToggleStatus(destination)}
+            disabled={isTogglingStatusId === destination.id}
+            className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium transition hover:scale-105 disabled:cursor-wait disabled:opacity-70 ${
               destination.estActif
                 ? "bg-emerald-100 text-emerald-700"
                 : "bg-slate-200 text-slate-700"
             }`}
           >
             {destination.estActif ? "Actif" : "Inactif"}
-          </span>
+          </button>
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
           <span>{displayText(destination.adresse, "Adresse non renseignée")}</span>

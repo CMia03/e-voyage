@@ -28,7 +28,6 @@ import {
   Edit3,
   ExternalLink,
   FileText,
-  Info,
   List,
   MapPin,
   Plus,
@@ -36,7 +35,6 @@ import {
   Save,
   Search,
   Trash2,
-  Wallet,
   X,
   ChevronLeft,
   ChevronRight,
@@ -1205,7 +1203,7 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
                 </div>
               </div>
 
-              <div className="grid gap-5 lg:grid-cols-2">
+              <div className="grid gap-5">
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold text-slate-900">
                     Destination <span className="text-red-500">*</span>
@@ -1216,7 +1214,7 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
                       setForm((current) => ({ ...current, idDestination: value }))
                     }
                   >
-                    <SelectTrigger className="h-12 text-base">
+                    <SelectTrigger className="h-12 w-full justify-start border-slate-200 bg-slate-50 text-base text-slate-700">
                       <MapPin className="mr-2 h-5 w-5 text-emerald-600" />
                       <SelectValue placeholder="Selectionner une destination" />
                     </SelectTrigger>
@@ -1228,38 +1226,6 @@ export function AdminPlanificationCalendar({ accessToken }: { accessToken?: stri
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="budget-total" className="text-sm font-semibold text-slate-900">
-                    Budget total <span className="text-red-500">*</span>
-                  </Label>
-                  <div className="flex h-12 overflow-hidden rounded-md border border-slate-200 bg-white focus-within:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-100">
-                    <Input
-                      value={form.deviseBudget}
-                      onChange={(event) =>
-                        setForm((current) => ({ ...current, deviseBudget: event.target.value }))
-                      }
-                      className="h-full w-24 rounded-none border-0 bg-emerald-50 text-center font-semibold shadow-none focus-visible:ring-0"
-                    />
-                    <Input
-                      id="budget-total"
-                      type="number"
-                      min="0"
-                      value={form.budgetTotal}
-                      onChange={(event) =>
-                        setForm((current) => ({
-                          ...current,
-                          budgetTotal: event.target.value,
-                        }))
-                      }
-                      placeholder="0"
-                      className="h-full rounded-none border-0 text-base shadow-none focus-visible:ring-0"
-                    />
-                    <div className="flex items-center px-3 text-slate-400">
-                      <Wallet className="h-5 w-5" />
-                    </div>
-                  </div>
                 </div>
               </div>
 

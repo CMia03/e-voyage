@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarDays, Layers, Minus, Plus, Save, Trash2, UserRound } from "lucide-react";
+import { Minus, Plus, Save, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -143,6 +143,44 @@ function formatUser(user: UserSummary) {
   return name ? `${name} - ${contact}` : contact;
 }
 
+const mojibakeMap: Record<string, string> = {
+  "\u00C3\u00A9": "é",
+  "\u00C3\u00A8": "è",
+  "\u00C3\u00AA": "ê",
+  "\u00C3\u00AB": "ë",
+  "\u00C3\u00A0": "à",
+  "\u00C3\u00A2": "â",
+  "\u00C3\u00AE": "î",
+  "\u00C3\u00B4": "ô",
+  "\u00C3\u00BB": "û",
+  "\u00C3\u00B9": "ù",
+  "\u00C3\u00A7": "ç",
+  "\u00C3\u0089": "É",
+  "\u00C3\u0080": "À",
+  "\u00C3\u0087": "Ç",
+  "\u201A": "é",
+  "\u0192": "è",
+  "\u2026": "à",
+  "\u2021": "ç",
+  "\u02C6": "ê",
+  "\u2030": "ë",
+  "\u0160": "è",
+  "\u2039": "ï",
+  "\u0152": "î",
+  "\u201C": "ô",
+  "\u201D": "ù",
+  "\u2013": "û",
+  "\u2014": "ü",
+};
+
+function displayText(value?: string | number | null, fallback = "-") {
+  if (value === null || value === undefined || value === "") return fallback;
+  return Object.entries(mojibakeMap).reduce(
+    (text, [broken, fixed]) => text.replaceAll(broken, fixed),
+    String(value)
+  );
+}
+
 function getElementTitle(element: ElementJourPlanification) {
   return (
     element.titre ||
@@ -192,7 +230,7 @@ export default function AjoutReservationPage() {
   const clientSummary = form.clientMode === "REGISTERED"
     ? selectedUser
       ? formatUser(selectedUser)
-      : "Aucun client selectionne"
+      : "Aucun client sélectionné"
     : `${form.clientPrenom} ${form.clientNom}`.trim() || "Client libre a renseigner";
   const selectedElementSelections = useMemo(
     () => parseElementSelections(form.elementsSelectionnes),
@@ -223,19 +261,20 @@ export default function AjoutReservationPage() {
     (sum, profile) => sum + (Number(profile.nombrePersonnes) || 0),
     0
   );
+  const quoteLinesByProfile = quote?.lignes ?? [];
 
   useEffect(() => {
     setBreadcrumbs([
       { label: "Admin", href: "/admin" },
-      { label: "Reservations", href: "/admin?section=reservations-liste" },
-      { label: "Ajouter une reservation", isActive: true },
+      { label: "Réservations", href: "/admin?section=reservations-liste" },
+      { label: "Ajouter une réservation", isActive: true },
     ]);
   }, [setBreadcrumbs]);
 
   useEffect(() => {
     const loadInitialData = async () => {
       if (!token) {
-        setError("Connexion requise pour ajouter une reservation.");
+        setError("Connexion requise pour ajouter une réservation.");
         return;
       }
 
@@ -331,10 +370,7 @@ export default function AjoutReservationPage() {
       !!payload.destinationId &&
       !!payload.planificationVoyageId &&
       !!payload.categorieClientId &&
-      payload.nombrePersonnes > 0 &&
-      (form.clientMode === "REGISTERED"
-        ? !!payload.utilisateurId
-        : !!payload.clientNom || !!payload.clientPrenom);
+      payload.nombrePersonnes > 0;
 
     if (!canQuote) {
       setQuote(null);
@@ -428,7 +464,7 @@ export default function AjoutReservationPage() {
       }
       router.push("/admin?section=reservations-liste");
     } catch (requestError) {
-      setError(getErrorMessage(requestError, "Impossible de creer la reservation."));
+      setError(getErrorMessage(requestError, "Impossible de créer la réservation."));
     } finally {
       setIsSubmitting(false);
     }
@@ -438,7 +474,7 @@ export default function AjoutReservationPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-950">Ajouter une reservation</h1>
+          <h1 className="text-3xl font-bold text-slate-950">Ajouter une réservation</h1>
           <p className="mt-1 text-slate-500">
             Créer une demande depuis un prix direct ou une simulation faite par l&apos;admin.
           </p>
@@ -457,15 +493,13 @@ export default function AjoutReservationPage() {
 
       <form onSubmit={handleSubmit} className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-6">
-          <Card className="border-slate-200 shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <UserRound className="h-5 w-5 text-emerald-600" />
-                Client et source
-              </CardTitle>
+          <Card className="rounded-2xl border-slate-200 shadow-sm">
+            <CardHeader className="pb-5">
+              <CardTitle className="text-2xl font-bold text-emerald-700">Client et source</CardTitle>
+              <p className="text-sm text-slate-500">Sélectionnez le client et l&apos;origine de la réservation</p>
             </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2 md:col-span-2">
+            <CardContent className="grid gap-x-4 gap-y-4 lg:grid-cols-12">
+              <div className="space-y-2 lg:col-span-2">
                 <Label>Type de client</Label>
                 <Select
                   value={form.clientMode}
@@ -487,7 +521,7 @@ export default function AjoutReservationPage() {
               </div>
 
               {form.clientMode === "REGISTERED" ? (
-                <div className="space-y-2 md:col-span-2">
+                <div className="space-y-2 lg:col-span-4">
                   <Label>Client</Label>
                   <Select
                     value={form.utilisateurId}
@@ -505,12 +539,12 @@ export default function AjoutReservationPage() {
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-slate-500">
-                    L&apos;email n&apos;est pas obligatoire pour l&apos;affichage admin: si le client a seulement un telephone, son compte reste sélectionnable.
+                    L&apos;email n&apos;est pas obligatoire pour l&apos;affichage admin : si le client a seulement un téléphone, son compte reste sélectionnable.
                   </p>
                 </div>
               ) : (
                 <>
-                  <div className="space-y-2">
+                  <div className="space-y-2 lg:col-span-3">
                     <Label>Nom du client</Label>
                     <Input
                       value={form.clientNom}
@@ -519,7 +553,7 @@ export default function AjoutReservationPage() {
                       className="h-11"
                     />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 lg:col-span-3">
                     <Label>Prénom du client</Label>
                     <Input
                       value={form.clientPrenom}
@@ -528,7 +562,7 @@ export default function AjoutReservationPage() {
                       className="h-11"
                     />
                   </div>
-                  <div className="space-y-2 md:col-span-2">
+                  <div className="space-y-2 lg:col-span-4">
                     <Label>Contact optionnel</Label>
                     <Input
                       value={form.clientContact}
@@ -543,7 +577,7 @@ export default function AjoutReservationPage() {
                 </>
               )}
 
-              <div className="space-y-2">
+              <div className="space-y-2 lg:col-span-2">
                 <Label>Type de réservation</Label>
                 <Select
                   value={form.source}
@@ -559,27 +593,25 @@ export default function AjoutReservationPage() {
                 </Select>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2 lg:col-span-4">
                 <Label>Commentaire client ou appel</Label>
                 <Input
                   value={form.commentaireClient}
                   onChange={(event) => setForm((current) => ({ ...current, commentaireClient: event.target.value }))}
-                  placeholder="Ex: client contacte par téléphone"
+                  placeholder="Ex: client contacté par téléphone"
                   className="h-11"
                 />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-slate-200 shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CalendarDays className="h-5 w-5 text-emerald-600" />
-                Destination et forfait
-              </CardTitle>
+          <Card className="rounded-2xl border-slate-200 shadow-sm">
+            <CardHeader className="pb-5">
+              <CardTitle className="text-2xl font-bold text-emerald-700">Destination et forfait</CardTitle>
+              <p className="text-sm text-slate-500">Choisissez la destination et le forfait associé</p>
             </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
+            <CardContent className="grid max-w-4xl gap-x-4 gap-y-4 md:grid-cols-12">
+              <div className="space-y-2 md:col-span-4">
                 <Label>Destination</Label>
                 <Select
                   value={form.destinationId}
@@ -606,7 +638,7 @@ export default function AjoutReservationPage() {
                 </Select>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2 md:col-span-7">
                 <Label>Forfait / planification</Label>
                 <Select
                   value={form.planificationVoyageId}
@@ -625,7 +657,7 @@ export default function AjoutReservationPage() {
                   <SelectContent position="popper">
                     {planifications.map((planification) => (
                       <SelectItem key={planification.id} value={planification.id}>
-                        {planification.nomPlanification}
+                        {displayText(planification.nomPlanification)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -634,24 +666,27 @@ export default function AjoutReservationPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-slate-200 shadow-sm">
+          <Card className="rounded-2xl border-slate-200 shadow-sm">
             <CardHeader>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Layers className="h-5 w-5 text-emerald-600" />
-                  Profils voyageurs
-                </CardTitle>
-                <Button type="button" variant="outline" onClick={addProfile} className="gap-2">
+                <div>
+                  <CardTitle className="text-2xl font-bold text-emerald-700">Profils voyageurs</CardTitle>
+                  <p className="mt-1 text-sm text-slate-500">Ajoutez les catégories de voyageurs concernées</p>
+                </div>
+                <Button type="button" onClick={addProfile} className="gap-2 bg-emerald-600 text-white hover:bg-emerald-700">
                   <Plus className="h-4 w-4" />
                   Ajouter un profil
                 </Button>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {form.profilsVoyageurs.map((profile, index) => (
-                <div key={index} className="rounded-2xl border border-slate-200 p-4">
+              {form.profilsVoyageurs.map((profile, index) => {
+                const quoteLine = form.source === "PRIX_DIRECT" ? quoteLinesByProfile[index] : null;
+
+                return (
+                <div key={index} className="rounded-2xl border border-slate-200 p-5">
                   <div className="mb-4 flex items-center justify-between gap-3">
-                    <p className="font-semibold text-slate-950">Profil {index + 1}</p>
+                    <p className="text-xl font-bold text-slate-950">Profil {index + 1}</p>
                     <Button
                       type="button"
                       variant="ghost"
@@ -662,26 +697,26 @@ export default function AjoutReservationPage() {
                       <Trash2 className="h-4 w-4 text-rose-600" />
                     </Button>
                   </div>
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <div className="space-y-2">
+                  <div className="grid gap-4 md:grid-cols-4">
+                    <div className="min-w-0 space-y-2">
                       <Label>Catégorie client</Label>
                       <Select
                         value={profile.categorieClientId}
                         onValueChange={(value) => updateProfile(index, { categorieClientId: value })}
                       >
                         <SelectTrigger className="h-11">
-                          <SelectValue placeholder="Categorie" />
+                          <SelectValue placeholder="Catégorie" />
                         </SelectTrigger>
                         <SelectContent position="popper">
                           {categories.map((categorie) => (
                             <SelectItem key={categorie.id} value={categorie.id}>
-                              {categorie.nom}
+                              {displayText(categorie.nom)}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-2">
+                    <div className="min-w-0 space-y-2">
                       <Label>Gamme</Label>
                       <Select value={profile.gamme} onValueChange={(value) => updateProfile(index, { gamme: value })}>
                         <SelectTrigger className="h-11">
@@ -696,7 +731,7 @@ export default function AjoutReservationPage() {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-2">
+                    <div className="min-w-0 space-y-2">
                       <Label>Nombre de personnes</Label>
                       <Input
                         type="number"
@@ -708,9 +743,18 @@ export default function AjoutReservationPage() {
                         className="h-11"
                       />
                     </div>
+                    {form.source === "PRIX_DIRECT" ? (
+                      <div className="min-w-0 space-y-2">
+                        <Label>Prix</Label>
+                        <div className="flex h-11 items-center rounded-md border border-emerald-200 bg-emerald-50 px-3 text-sm font-semibold text-emerald-800">
+                          {quoteLine ? formatCurrency(quoteLine.prixTotal, quote.devise) : "-"}
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </CardContent>
           </Card>
 
@@ -721,7 +765,7 @@ export default function AjoutReservationPage() {
                   <div>
                     <CardTitle>Simulation admin</CardTitle>
                     <p className="mt-1 text-sm text-emerald-800">
-                      Sélectionnez les blocs du forfait et ajustez le nombre de personnes.
+                      SÃ©lectionnez les blocs du forfait et ajustez le nombre de personnes.
                     </p>
                   </div>
                   <Badge variant="outline" className="w-fit border-emerald-200 bg-white text-emerald-700">
@@ -732,7 +776,7 @@ export default function AjoutReservationPage() {
               <CardContent className="space-y-4">
                 {simulationDays.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-emerald-200 bg-white p-5 text-sm text-slate-500">
-                    Aucun jour disponible pour ce forfait. Verifiez la planification selectionnée.
+                    Aucun jour disponible pour ce forfait. VÃ©rifiez la planification sÃ©lectionnÃ©e.
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -836,13 +880,13 @@ export default function AjoutReservationPage() {
                 )}
 
                 <div className="space-y-2">
-                  <Label>Résumé simulation</Label>
+                  <Label>RÃ©sumÃ© simulation</Label>
                   <Textarea
                     value={form.resumeSimulation}
                     onChange={(event) =>
                       setForm((current) => ({ ...current, resumeSimulation: event.target.value }))
                     }
-                    placeholder="Notez les choix proposes au client, les ajustements et le budget retenu."
+                    placeholder="Notez les choix proposés au client, les ajustements et le budget retenu."
                     rows={4}
                     className="bg-white"
                   />
@@ -855,7 +899,7 @@ export default function AjoutReservationPage() {
         <aside ref={summaryPanelRef} className="space-y-4 xl:relative xl:self-start">
           <Card className="flex flex-col gap-0 overflow-hidden border-slate-200 py-0 shadow-sm">
             <CardHeader className="shrink-0 border-b border-slate-200 px-6 py-5">
-              <CardTitle>Résumé</CardTitle>
+              <CardTitle>RÃ©sumÃ©</CardTitle>
             </CardHeader>
             <CardContent className="flex min-h-0 flex-1 flex-col p-0">
               <div className="min-h-0 flex-1 space-y-4 px-6 py-4">
@@ -871,7 +915,7 @@ export default function AjoutReservationPage() {
                 <div className="rounded-2xl bg-slate-50 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Forfait</p>
                   <p className="mt-2 font-semibold text-slate-950">{selectedDestination?.title || "-"}</p>
-                  <p className="text-sm text-slate-500">{selectedPlanification?.nomPlanification || "-"}</p>
+                  <p className="text-sm text-slate-500">{displayText(selectedPlanification?.nomPlanification)}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-2xl bg-slate-50 p-4">
@@ -893,7 +937,7 @@ export default function AjoutReservationPage() {
                       ? "Calcul du prix en cours..."
                       : quote
                         ? `${formatCurrency(quote.prixTotal, quote.devise)} pour ${quote.dureeJours} jour(s)`
-                        : "Completez les champs requis pour obtenir le prix."}
+                        : "Complétez les champs requis pour obtenir le prix."}
                   </p>
                   {quote?.lignes?.length ? (
                     <div className="mt-3 space-y-2">
@@ -926,7 +970,7 @@ export default function AjoutReservationPage() {
               >
                 {form.source === "SIMULATION" ? (
                 <div className="rounded-2xl border border-emerald-200 bg-white p-3 shadow-sm">
-                  <p className="text-sm font-semibold text-slate-950">Résumé marge</p>
+                  <p className="text-sm font-semibold text-slate-950">RÃ©sumÃ© marge</p>
                   <div className="mt-2 grid gap-2">
                     <div className="rounded-xl bg-slate-50 px-3 py-2">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
@@ -966,7 +1010,7 @@ export default function AjoutReservationPage() {
                 <div className="flex flex-col gap-2">
                   <Button type="submit" disabled={isSubmitting || !quote} className="h-10 gap-2 bg-emerald-600 hover:bg-emerald-700">
                     <Save className="h-4 w-4" />
-                    {isSubmitting ? "Reservation..." : "Enregistrer"}
+                    {isSubmitting ? "RÃ©servation..." : "Enregistrer"}
                   </Button>
                   <Button type="button" variant="outline" onClick={() => router.back()} className="h-10">
                     Annuler

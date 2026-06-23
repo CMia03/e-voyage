@@ -88,6 +88,8 @@ const initialForm: ReservationFormState = {
   resumeSimulation: "",
 };
 
+const RESERVATION_SIMULATION_PREFILL_KEY = "cool-voyage:reservation-simulation-prefill";
+
 const statusStyles: Record<ReservationStatus, string> = {
   EN_ATTENTE: "bg-amber-100 text-amber-800 hover:bg-amber-100",
   VALIDEE: "bg-emerald-100 text-emerald-800 hover:bg-emerald-100",
@@ -147,6 +149,50 @@ function formatReservationText(value?: string | number | null) {
 function parsePositiveInteger(value: string | null, fallback: number) {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function parseProfilePersonCount(value: unknown, fallback: number) {
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function getProfileCategoryId(item: unknown) {
+  if (!item || typeof item !== "object") return "";
+  const record = item as Record<string, unknown>;
+  const value = record.categorieClientId ?? record.categorieId ?? record.idCategorieClient;
+  return typeof value === "string" ? value : "";
+}
+
+function getProfileGamme(item: unknown, fallbackGamme: string) {
+  if (!item || typeof item !== "object") return fallbackGamme;
+  const value = (item as Record<string, unknown>).gamme;
+  return typeof value === "string" && value.trim() ? value.trim().toUpperCase() : fallbackGamme;
+}
+
+function getProfileNombrePersonnes(item: unknown, fallbackNombrePersonnes: number) {
+  if (!item || typeof item !== "object") return fallbackNombrePersonnes;
+  const record = item as Record<string, unknown>;
+  return parseProfilePersonCount(record.nombrePersonnes ?? record.quantite ?? record.personnes, fallbackNombrePersonnes);
+}
+
+function parseJsonArray(value: string) {
+  const attempts = [value];
+  try {
+    attempts.push(decodeURIComponent(value));
+  } catch {
+    // Keep the original value only when it is not URI encoded.
+  }
+
+  for (const attempt of attempts) {
+    try {
+      const parsed = JSON.parse(attempt);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      // Try the next representation.
+    }
+  }
+
+  return [];
 }
 
 function normalizeGamme(value: string | null | undefined) {
@@ -246,36 +292,77 @@ function parseVoyageurProfiles(
   fallbackNombrePersonnes: number
 ): VoyageurProfile[] {
   if (value) {
-    try {
-      const parsed = JSON.parse(value);
-      if (Array.isArray(parsed)) {
-        const profiles = parsed
-          .map((item) => ({
-            categorieClientId:
-              typeof item?.categorieClientId === "string" ? item.categorieClientId : "",
-            gamme:
-              typeof item?.gamme === "string" && item.gamme.trim()
-                ? item.gamme.trim().toUpperCase()
-                : fallbackGamme,
-            nombrePersonnes:
-              typeof item?.nombrePersonnes === "number" && item.nombrePersonnes > 0
-                ? item.nombrePersonnes
-                : 1,
-          }))
-          .filter((item) => !!item.categorieClientId);
+    const parsed = parseJsonArray(value);
+    if (parsed.length > 0) {
+      const profiles = parsed
+        .map((item) => ({
+          categorieClientId: getProfileCategoryId(item),
+          gamme: getProfileGamme(item, fallbackGamme),
+          nombrePersonnes: getProfileNombrePersonnes(item, fallbackNombrePersonnes),
+        }))
+        .filter((item) => !!item.categorieClientId);
 
-        if (profiles.length > 0) {
-          return profiles;
-        }
+      if (profiles.length > 0) {
+        return profiles;
       }
-    } catch {
-      return [];
     }
   }
 
   return fallbackCategorieId
     ? [{ categorieClientId: fallbackCategorieId, gamme: fallbackGamme, nombrePersonnes: fallbackNombrePersonnes }]
     : [];
+}
+
+function buildPrefillVoyageurProfiles(
+  profiles: VoyageurProfile[],
+  categories: CategorieClient[],
+  categorieClientId: string | null,
+  gamme: string,
+  nombrePersonnes: number
+) {
+  if (profiles.length > 0) {
+    return profiles;
+  }
+
+  const fallbackCategorieId = categorieClientId || categories[0]?.id || "";
+  return fallbackCategorieId
+    ? [{ categorieClientId: fallbackCategorieId, gamme: normalizeGamme(gamme), nombrePersonnes }]
+    : [];
+}
+
+type StoredSimulationPrefill = {
+  destinationId?: string;
+  planificationId?: string;
+  categorieId?: string;
+  gamme?: string;
+  nombrePersonnes?: number;
+  voyageurProfiles?: unknown;
+  budgetClient?: number;
+  elementsSelectionnes?: unknown;
+  elementsDetails?: unknown;
+  resumeSimulation?: string;
+};
+
+function loadStoredSimulationPrefill(destinationId: string | null, planificationId: string | null) {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw =
+      window.sessionStorage.getItem(RESERVATION_SIMULATION_PREFILL_KEY) ||
+      window.localStorage.getItem(RESERVATION_SIMULATION_PREFILL_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as StoredSimulationPrefill;
+    const sameDestination = !destinationId || parsed.destinationId === destinationId;
+    const samePlanification = !planificationId || parsed.planificationId === planificationId;
+    return sameDestination && samePlanification ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function stringifyStoredArray(value: unknown) {
+  return Array.isArray(value) ? JSON.stringify(value) : null;
 }
 
 function ensureValidProfiles(
@@ -387,7 +474,25 @@ export default function ReservationsPage() {
   const session = useMemo(() => loadAuth(), []);
   const token = session?.accessToken;
 
-  const prefill = useMemo(() => ({
+  const prefill = useMemo(() => {
+    const destinationId = searchParams?.get("destinationId") || null;
+    const planificationVoyageId = searchParams?.get("planificationId") || null;
+    const storedSimulationPrefill =
+      searchParams?.get("source") === "SIMULATION"
+        ? loadStoredSimulationPrefill(destinationId, planificationVoyageId)
+        : null;
+    const storedProfilesValue = stringifyStoredArray(storedSimulationPrefill?.voyageurProfiles);
+    const storedElementsSelectionnes = stringifyStoredArray(storedSimulationPrefill?.elementsSelectionnes);
+    const storedElementsDetails = stringifyStoredArray(storedSimulationPrefill?.elementsDetails);
+    const nombrePersonnes = parsePositiveInteger(
+      searchParams?.get("nombrePersonnes") ?? null,
+      parseProfilePersonCount(storedSimulationPrefill?.nombrePersonnes, initialForm.nombrePersonnes)
+    );
+    const categorieClientId = searchParams?.get("categorieId") || storedSimulationPrefill?.categorieId || null;
+    const gamme = normalizeGamme(searchParams?.get("gamme") ?? storedSimulationPrefill?.gamme);
+    const resumeSimulation = searchParams?.get("resumeSimulation") || storedSimulationPrefill?.resumeSimulation || null;
+
+    return {
     editReservationId: searchParams?.get("editReservationId") || null,
     source: searchParams?.get("source") === "SIMULATION"
       ? "SIMULATION" as ReservationSource
@@ -395,28 +500,29 @@ export default function ReservationsPage() {
         ? "PRIX_DIRECT" as ReservationSource
         : null,
     budgetClient: Math.max(
-      parsePositiveInteger(searchParams?.get("budgetClient") ?? null, 0),
-      extractBudgetClientFromSummary(searchParams?.get("resumeSimulation"))
+      parsePositiveInteger(searchParams?.get("budgetClient") ?? null, parseProfilePersonCount(storedSimulationPrefill?.budgetClient, 0)),
+      extractBudgetClientFromSummary(resumeSimulation)
     ),
-    destinationId: searchParams?.get("destinationId") || null,
+    destinationId,
     destinationTitle: searchParams?.get("destinationTitle") || null,
-    planificationVoyageId: searchParams?.get("planificationId") || null,
+    planificationVoyageId,
     planificationTitle: searchParams?.get("planificationTitle") || null,
-    categorieClientId: searchParams?.get("categorieId") || null,
+    categorieClientId,
     categorieTitle: searchParams?.get("categorieTitle") || null,
-    gamme: normalizeGamme(searchParams?.get("gamme")),
-    nombrePersonnes: parsePositiveInteger(searchParams?.get("nombrePersonnes") ?? null, initialForm.nombrePersonnes),
+    gamme,
+    nombrePersonnes,
     voyageurProfiles: parseVoyageurProfiles(
-      searchParams?.get("voyageurProfiles"),
-      searchParams?.get("categorieId"),
-      normalizeGamme(searchParams?.get("gamme")),
-      parsePositiveInteger(searchParams?.get("nombrePersonnes") ?? null, initialForm.nombrePersonnes)
+      searchParams?.get("voyageurProfiles") || storedProfilesValue,
+      categorieClientId,
+      gamme,
+      nombrePersonnes
     ),
-    elementsSelectionnes: searchParams?.get("elementsSelectionnes") || null,
-    elementsDetails: parseSimulationElementCards(searchParams?.get("elementsDetails")),
-    resumeSimulation: searchParams?.get("resumeSimulation") || null,
+    elementsSelectionnes: searchParams?.get("elementsSelectionnes") || storedElementsSelectionnes,
+    elementsDetails: parseSimulationElementCards(searchParams?.get("elementsDetails") || storedElementsDetails),
+    resumeSimulation,
     commentaireClient: searchParams?.get("commentaireClient") || null,
-  }), [searchParams]);
+  };
+  }, [searchParams]);
   const hasNavigationPrefill = !!(
     prefill.destinationId ||
     prefill.planificationVoyageId ||
@@ -436,6 +542,56 @@ export default function ReservationsPage() {
       setActiveReservationSection("create");
     }
   }, [hasNavigationPrefill]);
+
+  useEffect(() => {
+    if (categories.length === 0) return;
+
+    const storedSimulationPrefill = loadStoredSimulationPrefill(
+      form.destinationId || prefill.destinationId,
+      form.planificationVoyageId || prefill.planificationVoyageId
+    );
+    if (!storedSimulationPrefill?.voyageurProfiles) return;
+
+    const storedProfilesValue = stringifyStoredArray(storedSimulationPrefill.voyageurProfiles);
+    const storedProfiles = parseVoyageurProfiles(
+      storedProfilesValue,
+      storedSimulationPrefill.categorieId || prefill.categorieClientId,
+      normalizeGamme(storedSimulationPrefill.gamme || prefill.gamme),
+      parseProfilePersonCount(storedSimulationPrefill.nombrePersonnes, prefill.nombrePersonnes || form.nombrePersonnes)
+    );
+    const normalizedProfiles = ensureValidProfiles(
+      storedProfiles,
+      categories,
+      storedSimulationPrefill.categorieId || prefill.categorieClientId || undefined
+    );
+    const nextNombrePersonnes = totalVoyageurs(normalizedProfiles);
+    if (normalizedProfiles.length === 0 || nextNombrePersonnes <= 0) return;
+
+    const currentProfilesKey = JSON.stringify(form.voyageurProfiles);
+    const nextProfilesKey = JSON.stringify(normalizedProfiles);
+    if (form.source === "SIMULATION" && currentProfilesKey !== nextProfilesKey) {
+      setForm((current) => ({
+        ...current,
+        categorieClientId: normalizedProfiles[0]?.categorieClientId || current.categorieClientId,
+        gamme: normalizedProfiles[0]?.gamme || current.gamme,
+        nombrePersonnes: nextNombrePersonnes,
+        voyageurProfiles: normalizedProfiles,
+      }));
+    }
+  }, [
+    categories,
+    form.destinationId,
+    form.gamme,
+    form.nombrePersonnes,
+    form.planificationVoyageId,
+    form.source,
+    form.voyageurProfiles,
+    prefill.categorieClientId,
+    prefill.destinationId,
+    prefill.gamme,
+    prefill.nombrePersonnes,
+    prefill.planificationVoyageId,
+  ]);
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -460,8 +616,15 @@ export default function ReservationsPage() {
         setDestinations(loadedDestinations);
         setCategories(loadedCategories);
         setForm((current) => {
+          const prefillProfiles = buildPrefillVoyageurProfiles(
+            prefill.voyageurProfiles,
+            loadedCategories,
+            prefill.categorieClientId,
+            prefill.gamme,
+            prefill.nombrePersonnes
+          );
           const normalizedProfiles = ensureValidProfiles(
-            hasNavigationPrefill ? prefill.voyageurProfiles : current.voyageurProfiles,
+            hasNavigationPrefill ? prefillProfiles : current.voyageurProfiles,
             loadedCategories,
             prefill.categorieClientId ?? undefined
           );
@@ -499,7 +662,15 @@ export default function ReservationsPage() {
     };
 
     void loadInitialData();
-  }, [hasNavigationPrefill, prefill.categorieClientId, prefill.destinationId, prefill.gamme, prefill.nombrePersonnes, token]);
+  }, [
+    hasNavigationPrefill,
+    prefill.categorieClientId,
+    prefill.destinationId,
+    prefill.gamme,
+    prefill.nombrePersonnes,
+    prefill.voyageurProfiles,
+    token,
+  ]);
 
   useEffect(() => {
     if (!searchParams) return;
@@ -525,7 +696,15 @@ export default function ReservationsPage() {
         hasNavigationPrefill
           ? prefill.voyageurProfiles.length > 0
             ? prefill.voyageurProfiles
-            : current.voyageurProfiles
+            : prefill.categorieClientId
+              ? [
+                  {
+                    categorieClientId: prefill.categorieClientId,
+                    gamme: normalizeGamme(prefill.gamme),
+                    nombrePersonnes: prefill.nombrePersonnes,
+                  },
+                ]
+              : current.voyageurProfiles
           : current.voyageurProfiles,
       elementsSelectionnes: prefill.elementsSelectionnes ?? current.elementsSelectionnes,
       resumeSimulation: prefill.resumeSimulation ?? current.resumeSimulation,
@@ -1440,12 +1619,12 @@ export default function ReservationsPage() {
                                         {typeof element.quantite === "number" ? (
                                           <p>{element.quantite} personne(s)</p>
                                         ) : null}
-                                        <p className="text-xs text-slate-500">{element.id}</p>
+                                        {/* <p className="text-xs text-slate-500">{element.id}</p>
                                         {typeof element.prix === "number" ? (
                                           <p className="font-semibold text-emerald-800">
                                             {formatCurrency(element.prix, "Ar")}
                                           </p>
-                                        ) : null}
+                                        ) : null} */}
                                       </div>
                                     </div>
                                   ))}

@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import {
@@ -143,6 +143,9 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
   const [editingTarifId, setEditingTarifId] = useState<string | null>(null);
   const [roomPhotoIndexes, setRoomPhotoIndexes] = useState<Record<string, number>>({});
   const [isGalleryDialogOpen, setIsGalleryDialogOpen] = useState(false);
+  const [activeGalleryIndex, setActiveGalleryIndex] = useState(0);
+  const infoPanelRef = useRef<HTMLElement | null>(null);
+  const [infoPanelHeight, setInfoPanelHeight] = useState<number | null>(null);
 
   const tarifs = useMemo(
     () => [...(hebergement?.tarifs ?? [])].sort((a, b) => new Date(b.dateCreation ?? 0).getTime() - new Date(a.dateCreation ?? 0).getTime()),
@@ -176,6 +179,13 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
 
     return images;
   }, [hebergement?.nom, hebergement?.urlImagePrincipale, tarifs]);
+  const selectedGalleryImage = galleryImages[activeGalleryIndex] ?? galleryImages[0];
+  const getGalleryImageAt = (offset: number) => {
+    if (galleryImages.length === 0) return undefined;
+    return galleryImages[(activeGalleryIndex + offset) % galleryImages.length];
+  };
+  const galleryPreviewCount = Math.min(galleryImages.length, 5);
+  const hiddenGalleryCount = Math.max(galleryImages.length - galleryPreviewCount, 0);
   const minTarif = useMemo(
     () =>
       tarifs.reduce<(typeof tarifs)[number] | null>((lowest, tarif) => {
@@ -184,6 +194,9 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
       }, null),
     [tarifs]
   );
+  const galleryHeightStyle = infoPanelHeight
+    ? ({ "--info-panel-height": `${infoPanelHeight}px` } as CSSProperties)
+    : undefined;
   const photoPreviews = useMemo(
     () =>
       photoForm.imageFiles.map((file) => ({
@@ -268,6 +281,37 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
 
     return () => window.clearInterval(interval);
   }, [tarifs]);
+
+  useEffect(() => {
+    if (activeGalleryIndex < galleryImages.length) return;
+    setActiveGalleryIndex(0);
+  }, [activeGalleryIndex, galleryImages.length]);
+
+  useEffect(() => {
+    const panel = infoPanelRef.current;
+    if (!panel) return;
+
+    const updateHeight = () => {
+      const nextHeight = Math.ceil(panel.getBoundingClientRect().height);
+      setInfoPanelHeight((current) => (current === nextHeight ? current : nextHeight));
+    };
+
+    updateHeight();
+
+    const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(updateHeight) : null;
+    observer?.observe(panel);
+    window.addEventListener("resize", updateHeight);
+
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", updateHeight);
+    };
+  }, [hebergement, minTarif, tarifs.length]);
+
+  const goToGalleryImage = (nextIndex: number) => {
+    if (galleryImages.length <= 1) return;
+    setActiveGalleryIndex((nextIndex + galleryImages.length) % galleryImages.length);
+  };
 
   async function loadPage() {
     setIsLoading(true);
@@ -550,9 +594,11 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
           </div>
         ) : hebergement ? (
           <>
-            <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_360px]">
-                <div className="space-y-5">
+            <section className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+              <div
+                className="flex flex-col gap-5 overflow-hidden rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm xl:h-[var(--info-panel-height)] xl:max-h-[var(--info-panel-height)]"
+                style={galleryHeightStyle}
+              >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
@@ -581,66 +627,105 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
                     </Button>
                   </div>
 
-                  <div className="grid gap-3 lg:grid-cols-[minmax(0,2.4fr)_minmax(260px,1fr)]">
-                    <div className="relative min-h-[280px] overflow-hidden rounded-sm bg-slate-100">
-                      {galleryImages[0]?.url ? (
-                        <img src={galleryImages[0].url} alt={galleryImages[0].label} className="h-full min-h-[280px] w-full object-cover" />
-                      ) : (
-                        <div className="flex h-full min-h-[280px] items-center justify-center text-slate-400">
-                          <ImageIcon className="size-10" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="grid gap-3">
-                      {[galleryImages[1], galleryImages[2]].map((image, index) => (
-                        <div key={`${image?.url ?? "empty"}-${index}`} className="relative min-h-[132px] overflow-hidden rounded-sm bg-slate-100">
-                          {image?.url ? (
-                            <img src={image.url} alt={image.label} className="h-full min-h-[132px] w-full object-cover" />
-                          ) : (
-                            <div className="flex h-full min-h-[132px] items-center justify-center text-slate-400">
-                              <ImageIcon className="size-8" />
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-4">
-                    {[galleryImages[3], galleryImages[4], galleryImages[5], galleryImages[6]].map((image, index) => (
-                      <div key={`${image?.url ?? "thumb"}-${index}`} className="relative h-28 overflow-hidden rounded-sm bg-slate-100">
-                        {image?.url ? (
-                          <img src={image.url} alt={image.label} className="h-full w-full object-cover" />
+                  <div className="flex min-h-[420px] flex-1 flex-col gap-3 md:min-h-[480px] xl:min-h-0">
+                    <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(220px,1fr)]">
+                      <div className="relative min-h-[240px] overflow-hidden rounded-lg bg-slate-100 md:min-h-[280px] lg:h-full xl:min-h-0">
+                        {selectedGalleryImage?.url ? (
+                          <img src={selectedGalleryImage.url} alt={selectedGalleryImage.label} className="h-full w-full object-cover" />
                         ) : (
                           <div className="flex h-full items-center justify-center text-slate-400">
-                            <ImageIcon className="size-6" />
+                            <ImageIcon className="size-10" />
                           </div>
                         )}
-                        {index === 3 ? (
+                        {galleryImages.length > 1 ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => goToGalleryImage(activeGalleryIndex - 1)}
+                              className="absolute left-4 top-1/2 inline-flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-slate-900 shadow-lg ring-1 ring-slate-200 transition hover:bg-white"
+                              aria-label="Photo precedente"
+                            >
+                              <ChevronRight className="size-5 rotate-180" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => goToGalleryImage(activeGalleryIndex + 1)}
+                              className="absolute right-4 top-1/2 inline-flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-slate-900 shadow-lg ring-1 ring-slate-200 transition hover:bg-white"
+                              aria-label="Photo suivante"
+                            >
+                              <ChevronRight className="size-5" />
+                            </button>
+                          </>
+                        ) : null}
+                        {galleryImages.length > 0 ? (
                           <button
                             type="button"
                             onClick={() => setIsGalleryDialogOpen(true)}
-                            className="absolute inset-0 flex items-center justify-center bg-slate-950/55 text-lg font-bold text-white transition hover:bg-slate-950/65"
+                            className="absolute bottom-3 right-3 inline-flex items-center gap-2 rounded-md bg-white/95 px-3 py-2 text-xs font-semibold text-slate-900 shadow-lg ring-1 ring-slate-200 transition hover:bg-white"
                           >
-                            Voir {galleryImages.length} photos
+                            <ImageIcon className="size-4" />
+                            Voir toutes les photos ({galleryImages.length})
                           </button>
                         ) : null}
                       </div>
-                    ))}
-                  </div>
+                      <div className="grid min-h-0 gap-3 lg:grid-rows-2">
+                        {[getGalleryImageAt(1), getGalleryImageAt(2)].map((image, index) => (
+                          <div key={`${image?.url ?? "empty"}-${index}`} className="relative h-[114px] overflow-hidden rounded-lg bg-slate-100 md:h-[134px] lg:h-full xl:min-h-0">
+                            {image?.url ? (
+                              <img src={image.url} alt={image.label} className="h-full w-full object-cover" />
+                            ) : (
+                              <div className="flex h-full items-center justify-center text-slate-400">
+                                <ImageIcon className="size-8" />
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+                      {Array.from({ length: 5 }).map((_, index) => {
+                        const image = getGalleryImageAt(index + 3);
+                        const absoluteIndex = galleryImages.length ? (activeGalleryIndex + index + 3) % galleryImages.length : 0;
+                        const showMoreOverlay = index === 4 && hiddenGalleryCount > 0;
+
+                        return (
+                          <button
+                            key={`${image?.url ?? "thumb"}-${index}`}
+                            type="button"
+                            onClick={() => (showMoreOverlay ? setIsGalleryDialogOpen(true) : setActiveGalleryIndex(absoluteIndex))}
+                            className="group relative h-24 overflow-hidden rounded-lg bg-slate-100 text-left md:h-[104px] xl:h-[108px]"
+                          >
+                            {image?.url ? (
+                              <img src={image.url} alt={image.label} className="h-full w-full object-cover transition group-hover:scale-105" />
+                            ) : (
+                              <div className="flex h-full items-center justify-center text-slate-400">
+                                <ImageIcon className="size-6" />
+                              </div>
+                            )}
+                            {showMoreOverlay ? (
+                              <span className="absolute inset-0 flex items-center justify-center bg-emerald-950/70 text-lg font-bold text-white">
+                                +{hiddenGalleryCount}
+                              </span>
+                            ) : null}
+                          </button>
+                        );
+                      })}
+                    </div>
                 </div>
 
-                <aside className="space-y-6">
-                  <div className="flex items-center justify-between gap-4">
+              </div>
+              <aside ref={infoPanelRef} className="space-y-6 rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="flex items-center justify-between gap-4">
                     
-                    <div className="text-right">
-                      <p className="text-sm text-slate-500">A partir de</p>
-                      <p className="text-3xl font-bold text-slate-950">
-                        {minTarif ? formatMoney(minTarif.prixParNuit, minTarif.devise) : "-"}
-                        <span className="text-base font-normal text-slate-500"> / nuit</span>
-                      </p>
-                    </div>
+                  <div className="text-right">
+                    <p className="text-sm text-slate-500">A partir de</p>
+                    <p className="text-3xl font-bold text-slate-950">
+                      {minTarif ? formatMoney(minTarif.prixParNuit, minTarif.devise) : "-"}
+                      <span className="text-base font-normal text-slate-500"> / nuit</span>
+                    </p>
                   </div>
+                </div>
 
 
 
@@ -710,7 +795,6 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
                     </div>
                   </div>
                 </aside>
-              </div>
             </section>
 
             <section className="space-y-4">
@@ -881,6 +965,7 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
                 </div>
               )}
             </section>
+
           </>
         ) : (
           <div className="rounded-2xl border border-slate-200 bg-white p-8 text-sm text-slate-500 shadow-sm">
@@ -1060,8 +1145,5 @@ export function AdminHebergementDetailContentNext({ hebergementId }: Props) {
     </>
   );
 }
-
-
-
 
 

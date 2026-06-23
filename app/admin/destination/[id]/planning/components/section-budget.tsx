@@ -8,7 +8,6 @@ import { useMemo, useState } from "react";
 import {
   Baby,
   Bed,
-  Crown,
   Filter,
   Gem,
   LayoutList,
@@ -1121,18 +1120,9 @@ function DayBudgetTable({
 
 function BudgetOverview({
   sortedDays,
-  budgetsPlanification,
-  devise,
 }: {
   sortedDays: JourPlanificationVoyage[];
-  budgetsPlanification: BudgetisationPlanificationVoyage[];
-  devise: string;
 }) {
-  const prices = budgetsPlanification
-    .map((budget) => budget.prixAvecReduction)
-    .filter((value) => Number.isFinite(value));
-  const minBudget = prices.length > 0 ? Math.min(...prices) : null;
-  const maxBudget = prices.length > 0 ? Math.max(...prices) : null;
   const totalActivites = sortedDays.reduce(
     (sum, day) => sum + (day.elements?.filter((element) => element.codeTypeElementJour === "ACTIVITE").length ?? 0),
     0
@@ -1143,20 +1133,6 @@ function BudgetOverview({
   );
 
   const cards = [
-    {
-      label: "Budget minimum",
-      value: minBudget === null ? "-" : formatMoney(minBudget, devise),
-      caption: "Estimation la plus basse",
-      icon: WalletCards,
-      className: "bg-emerald-50 text-emerald-700",
-    },
-    {
-      label: "Budget maximum",
-      value: maxBudget === null ? "-" : formatMoney(maxBudget, devise),
-      caption: "Estimation la plus élevée",
-      icon: Crown,
-      className: "bg-purple-50 text-purple-700",
-    },
     {
       label: "Nombre de jours",
       value: `${sortedDays.length} jour(s)`,
@@ -1183,7 +1159,7 @@ function BudgetOverview({
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <h2 className="text-lg font-semibold text-slate-950">Vue d&apos;ensemble du budget</h2>
-      <div className="mt-4 grid overflow-hidden rounded-xl border border-slate-200 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <div className="mt-4 grid overflow-hidden rounded-xl border border-slate-200 sm:grid-cols-3">
         {cards.map((card) => {
           const Icon = card.icon;
           return (
@@ -1510,8 +1486,6 @@ export function SectionBudget({
       <CardContent className="space-y-6 p-6">
         <BudgetOverview
           sortedDays={sortedDays}
-          budgetsPlanification={budgetsPlanification}
-          devise={devise}
         />
 
         <BudgetDetailsPanel

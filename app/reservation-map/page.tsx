@@ -4,8 +4,10 @@ import "leaflet/dist/leaflet.css";
 
 import { Search } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+
+import { API_BASE_URL } from "@/lib/api";
 
 type PointType = "ALL" | "DESTINATION" | "TRANSPORT" | "HEBERGEMENT" | "ACTIVITE" | "AUTRE";
 
@@ -25,9 +27,20 @@ type GeoJsonFeature = {
   };
 };
 
+type GeoJsonItineraryItem = {
+  id?: string;
+  dayNumber?: number | null;
+  title?: string | null;
+  type?: string | null;
+  order?: number | null;
+  startTime?: string | null;
+  endTime?: string | null;
+};
+
 type GeoJsonPayload = {
   type: "FeatureCollection";
   features?: GeoJsonFeature[];
+  itinerary?: GeoJsonItineraryItem[];
 };
 
 type MapPoint = {
@@ -38,6 +51,26 @@ type MapPoint = {
   description: string;
   position: [number, number];
   dayLabel: string;
+  stepNumber?: number | null;
+};
+
+type ItineraryStep = {
+  id: string;
+  dayLabel: string;
+  dayNumber: number | null;
+  title: string;
+  type: Exclude<PointType, "ALL">;
+  order: number | null;
+  startTime: string | null;
+  endTime: string | null;
+  stepNumber: number;
+  pointId: string | null;
+};
+
+type ApiEnvelope<T> = {
+  success?: boolean;
+  message?: string;
+  data?: T;
 };
 
 const LOGO_URL = "https://res.cloudinary.com/de2qmidtl/image/upload/v1780475983/logo_cool_voyage_kkzeoo.png";
@@ -97,12 +130,28 @@ function inferPointType(title: string, explicitType?: string): MapPoint["type"] 
   return "ACTIVITE";
 }
 
-function parseMapData(rawData: string | null): MapPoint[] {
-  if (!rawData) return [];
+function stripDayPrefix(value: string) {
+  return value.replace(/^Jour\s+\d+\s+-\s+/i, "").trim();
+}
+
+function stripTransportEndpoint(value: string) {
+  return value.replace(/\s+-\s+(départ|arrivée|dÃ©part|arrivÃ©e)$/i, "").trim();
+}
+
+function normalizeStepTitle(value: string) {
+  return stripTransportEndpoint(stripDayPrefix(fixLegacyEncoding(value))).toLowerCase();
+}
+
+function stepKey(dayLabel: string, type: MapPoint["type"], title: string) {
+  return `${dayLabel}-${type}-${normalizeStepTitle(title)}`;
+}
+
+function parseMapData(rawData: string | null): { points: MapPoint[]; itinerary: ItineraryStep[] } {
+  if (!rawData) return { points: [], itinerary: [] };
 
   try {
     const parsed = JSON.parse(rawData) as GeoJsonPayload;
-    return (parsed.features ?? [])
+    const rawPoints = (parsed.features ?? [])
       .map((feature, index) => {
         const coordinates = feature.geometry?.coordinates;
         if (!coordinates || coordinates.length < 2) return null;
@@ -125,21 +174,56 @@ function parseMapData(rawData: string | null): MapPoint[] {
         };
       })
       .filter((point): point is MapPoint => Boolean(point));
-  } catch {
-    return [];
-  }
-}
 
-function distanceKm(from: [number, number], to: [number, number]) {
-  const radius = 6371;
-  const dLat = ((to[0] - from[0]) * Math.PI) / 180;
-  const dLng = ((to[1] - from[1]) * Math.PI) / 180;
-  const lat1 = (from[0] * Math.PI) / 180;
-  const lat2 = (to[0] * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
-  return radius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const pointsByStepKey = new Map<string, MapPoint[]>();
+    rawPoints.forEach((point) => {
+      if (point.type === "DESTINATION") return;
+      const key = stepKey(point.dayLabel, point.type, point.title);
+      const current = pointsByStepKey.get(key) ?? [];
+      current.push(point);
+      pointsByStepKey.set(key, current);
+    });
+
+    const itinerary = (parsed.itinerary ?? [])
+      .map((item, index): ItineraryStep | null => {
+        const dayNumber = typeof item.dayNumber === "number" ? item.dayNumber : null;
+        const title = fixLegacyEncoding(item.title ?? "").trim();
+        if (!title) return null;
+
+        const type = normalizePointType(item.type ?? undefined);
+        const dayLabel = dayNumber && dayNumber > 0 ? `Jour ${dayNumber}` : "Destination";
+        const matchingPoints = pointsByStepKey.get(stepKey(dayLabel, type, title)) ?? [];
+
+        return {
+          id: item.id || `${dayLabel}-${type}-${index}`,
+          dayLabel,
+          dayNumber,
+          title,
+          type,
+          order: typeof item.order === "number" ? item.order : null,
+          startTime: item.startTime ?? null,
+          endTime: item.endTime ?? null,
+          stepNumber: index + 1,
+          pointId: matchingPoints[0]?.id ?? null,
+        };
+      })
+      .filter((item): item is ItineraryStep => Boolean(item));
+
+    const stepNumberByPointId = new Map<string, number>();
+    itinerary.forEach((item) => {
+      const matchingPoints = pointsByStepKey.get(stepKey(item.dayLabel, item.type, item.title)) ?? [];
+      matchingPoints.forEach((point) => stepNumberByPointId.set(point.id, item.stepNumber));
+    });
+
+    const points = rawPoints.map((point) => ({
+      ...point,
+      stepNumber: stepNumberByPointId.get(point.id) ?? null,
+    }));
+
+    return { points, itinerary };
+  } catch {
+    return { points: [], itinerary: [] };
+  }
 }
 
 function typeLabel(type: MapPoint["type"]) {
@@ -155,21 +239,90 @@ function displayPointTitle(point: MapPoint) {
   return point.title.replace(/\s+-\s+(départ|arrivée)$/i, "");
 }
 
+function distanceKm(from: [number, number], to: [number, number]) {
+  const radius = 6371;
+  const dLat = ((to[0] - from[0]) * Math.PI) / 180;
+  const dLng = ((to[1] - from[1]) * Math.PI) / 180;
+  const lat1 = (from[0] * Math.PI) / 180;
+  const lat2 = (to[0] * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return radius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function parseStepDate(value: string | null) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatMapDate(value: Date | null) {
+  if (!value) return "-";
+  return new Intl.DateTimeFormat("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(value);
+}
+
 export default function ReservationMapPage() {
   const searchParams = useSearchParams();
-  const points = useMemo(() => parseMapData(searchParams.get("data")), [searchParams]);
+  const rawMapData = searchParams.get("data");
+  const reservationId = searchParams.get("reservationId");
+  const [remoteMapData, setRemoteMapData] = useState<string | null>(null);
+  const mapData = useMemo(() => parseMapData(rawMapData ?? remoteMapData), [rawMapData, remoteMapData]);
+  const points = mapData.points;
+  const itinerary = mapData.itinerary;
   const [selectedId, setSelectedId] = useState("");
   const [typeFilter, setTypeFilter] = useState<PointType>("ALL");
   const [query, setQuery] = useState("");
   const [distanceKmValue, setDistanceKmValue] = useState("");
-  const [referenceId, setReferenceId] = useState("");
+  const [locationId, setLocationId] = useState("");
   const [cursorReference, setCursorReference] = useState<[number, number] | null>(null);
+  const [showRouteLine, setShowRouteLine] = useState(true);
+  const [showRouteArrows, setShowRouteArrows] = useState(true);
 
-  const selectedPoint = points.find((point) => point.id === selectedId) ?? null;
-  const referencePoint = points.find((point) => point.id === referenceId) ?? null;
-  const referencePosition = cursorReference ?? referencePoint?.position ?? null;
+  useEffect(() => {
+    if (!reservationId || rawMapData) {
+      return;
+    }
+
+    let cancelled = false;
+
+    fetch(`${API_BASE_URL}/api/public/reservations/${encodeURIComponent(reservationId)}/map`)
+      .then(async (response) => {
+        const payload = (await response.json()) as ApiEnvelope<string>;
+        if (!response.ok || payload.success === false || !payload.data) {
+          throw new Error(payload.message || "Carte indisponible");
+        }
+        if (!cancelled) {
+          setRemoteMapData(payload.data);
+        }
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          setRemoteMapData(null);
+          console.error(error);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [rawMapData, reservationId]);
+
+  const selectedPoint =
+    points.find((point) => point.id === selectedId) ??
+    points.find((point) => point.type === "DESTINATION") ??
+    null;
+  const effectiveSelectedId = selectedPoint?.id ?? "";
+  const defaultLocation = points.find((point) => point.type === "DESTINATION") ?? points[0] ?? null;
+  const effectiveLocationId = locationId || defaultLocation?.id || "";
+  const locationPoint = points.find((point) => point.id === effectiveLocationId) ?? null;
+  const referencePosition = cursorReference ?? locationPoint?.position ?? null;
   const distanceNumber = Number(distanceKmValue);
-  const hasDistanceFilter = distanceKmValue.trim() !== "" && Number.isFinite(distanceNumber) && distanceNumber >= 0;
+  const hasDistanceFilter = distanceKmValue.trim() !== "" && Number.isFinite(distanceNumber) && distanceNumber >= 0 && Boolean(referencePosition);
 
   const filteredPoints = useMemo(() => {
     const normalizedQuery = fixLegacyEncoding(query).trim().toLowerCase();
@@ -185,8 +338,18 @@ export default function ReservationMapPage() {
     });
   }, [distanceNumber, hasDistanceFilter, points, query, referencePosition, typeFilter]);
 
-  const center = referencePosition ?? selectedPoint?.position ?? points[0]?.position ?? ([-18.8792, 47.5079] as [number, number]);
-  const mapPoints = filteredPoints.length > 0 ? filteredPoints : points;
+  const hasActiveFilter = query.trim() !== "" || typeFilter !== "ALL" || hasDistanceFilter;
+  const center = selectedPoint?.position ?? referencePosition ?? points[0]?.position ?? ([-18.8792, 47.5079] as [number, number]);
+  const mapPoints = hasActiveFilter ? filteredPoints : points;
+  const groupedItinerary = useMemo(() => {
+    const groups = new Map<string, ItineraryStep[]>();
+    itinerary.forEach((step) => {
+      const current = groups.get(step.dayLabel) ?? [];
+      current.push(step);
+      groups.set(step.dayLabel, current);
+    });
+    return Array.from(groups.entries());
+  }, [itinerary]);
   const groupedPoints = useMemo(() => {
     const groups = new Map<string, MapPoint[]>();
     filteredPoints.forEach((point) => {
@@ -200,6 +363,19 @@ export default function ReservationMapPage() {
     });
     return Array.from(groups.entries());
   }, [filteredPoints]);
+
+  const destinationPoint = points.find((point) => point.type === "DESTINATION") ?? null;
+  const destinationName = destinationPoint ? displayPointTitle(destinationPoint) : "-";
+  const itineraryDates = useMemo(
+    () =>
+      itinerary
+        .flatMap((step) => [parseStepDate(step.startTime), parseStepDate(step.endTime)])
+        .filter((date): date is Date => Boolean(date))
+        .sort((first, second) => first.getTime() - second.getTime()),
+    [itinerary]
+  );
+  const dateDebutLabel = formatMapDate(itineraryDates[0] ?? null);
+  const dateFinLabel = formatMapDate(itineraryDates[itineraryDates.length - 1] ?? null);
 
   return (
     <main className="h-screen overflow-hidden bg-slate-50">
@@ -234,29 +410,28 @@ export default function ReservationMapPage() {
           <input
             type="number"
             min="0"
-            step="1"
+            step="0.1"
+            inputMode="decimal"
             value={distanceKmValue}
             onChange={(event) => setDistanceKmValue(event.target.value)}
             placeholder="Distance (km)"
             className="h-11 w-[135px] shrink-0 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:border-emerald-400"
           />
           <select
-            value={referenceId}
+            value={effectiveLocationId}
             onChange={(event) => {
-              setReferenceId(event.target.value);
+              setLocationId(event.target.value);
               setCursorReference(null);
             }}
             className="h-11 w-[220px] shrink-0 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:border-emerald-400"
           >
-            <option value="">Point de référence</option>
+            <option value="">Localisation</option>
             {points.map((point) => (
               <option key={point.id} value={point.id}>
                 {displayPointTitle(point)}
               </option>
             ))}
-          </select>
-
-          {/* <div className="h-11 w-[140px] shrink-0 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800">
+          </select>{/* <div className="h-11 w-[140px] shrink-0 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800">
             {filteredPoints.length} / {points.length}
           </div> */}
           
@@ -295,48 +470,107 @@ export default function ReservationMapPage() {
           )}
         </aside>
 
-        <section className="order-1 min-h-[420px] lg:order-2">
+        <section className="relative order-1 min-h-[420px] lg:order-2">
           <ReservationMapLeaflet
-            points={points}
             mapPoints={mapPoints}
-            filteredPoints={filteredPoints}
-            selectedId={selectedId}
+            selectedId={effectiveSelectedId}
             center={center}
             hasDistanceFilter={hasDistanceFilter}
             referencePosition={referencePosition}
             distanceNumber={distanceNumber}
+            showRouteLine={showRouteLine}
+            showRouteArrows={showRouteArrows}
             onSelectPoint={setSelectedId}
             onReferencePick={(position) => {
               setCursorReference(position);
-              setReferenceId("");
+              setLocationId("");
             }}
           />
+          <div className="absolute right-5 top-5 z-[500] rounded-xl border border-slate-200 bg-white/95 p-3 text-sm shadow-lg backdrop-blur">
+            <div className="space-y-2">
+              <label className="flex cursor-pointer items-center gap-2 font-medium text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={showRouteLine}
+                  onChange={(event) => setShowRouteLine(event.target.checked)}
+                  className="size-4 rounded border-slate-300 accent-emerald-600"
+                />
+                Ligne
+              </label>
+              <label className="flex cursor-pointer items-center gap-2 font-medium text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={showRouteArrows}
+                  onChange={(event) => setShowRouteArrows(event.target.checked)}
+                  className="size-4 rounded border-slate-300 accent-emerald-600"
+                />
+                Flèches
+              </label>
+            </div>
+            <p className="mt-2 max-w-[180px] border-t border-slate-100 pt-2 text-[11px] leading-snug text-slate-500">
+              Cliquez sur la carte pour definir le centre de recherche.
+            </p>
+          </div>
+          <div className="pointer-events-none absolute bottom-5 right-5 z-[500] w-[290px] rounded-xl border border-slate-200 bg-white/95 p-3 shadow-lg backdrop-blur">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">Séjour</p>
+            <p className="mt-1 text-sm font-bold text-slate-950">{destinationName}</p>
+            <p className="mt-1 text-xs font-medium text-slate-600">
+              Du {dateDebutLabel} au {dateFinLabel}
+            </p>
+          </div>
         </section>
         <aside className="order-3 h-full overflow-y-auto border-l border-slate-200 bg-white p-5">
           <h2 className="text-lg font-bold text-slate-950">Étapes journalières</h2>
           <p className="mt-1 text-sm text-slate-500">Cliquez sur une étape pour afficher ses informations.</p>
           <div className="mt-5 space-y-5">
-            {groupedPoints.map(([day, items]) => (
+            {(groupedItinerary.length > 0 ? groupedItinerary : groupedPoints).map(([day, items]) => (
               <section key={day} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <h3 className="font-semibold text-slate-950">{day}</h3>
                 <div className="mt-3 space-y-2">
-                  {items.map((point) => (
-                    <button
-                      key={point.id}
-                      type="button"
-                      onClick={() => setSelectedId(point.id)}
-                      className={`w-full rounded-xl px-3 py-2 text-left text-sm transition ${
-                        point.id === selectedPoint?.id
-                          ? "bg-emerald-600 text-white"
-                          : "bg-white text-slate-700 shadow-sm hover:bg-emerald-50 hover:text-emerald-800"
-                      }`}
-                    >
-                      <span className="block text-[11px] font-semibold uppercase tracking-wide opacity-75">
-                        {typeLabel(point.type)}
-                      </span>
-                      <span className="mt-1 block">{displayPointTitle(point)}</span>
-                    </button>
-                  ))}
+                  {items.map((item) => {
+                    const isItineraryStep = "pointId" in item;
+                    const itemType = item.type;
+                    const itemTitle = isItineraryStep ? item.title : displayPointTitle(item);
+                    const pointId = isItineraryStep ? item.pointId : item.id;
+                    const isSelected = pointId === selectedPoint?.id;
+                    const itemNumber = isItineraryStep ? item.stepNumber : item.stepNumber ?? null;
+                    const content = (
+                      <div className="flex items-start gap-3">
+                        <span
+                          className={`mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                            isSelected ? "bg-white text-emerald-700" : "bg-emerald-600 text-white"
+                          }`}
+                        >
+                          {itemNumber ?? "-"}
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block text-[11px] font-semibold uppercase tracking-wide opacity-75">
+                            {typeLabel(itemType)}
+                          </span>
+                          <span className="mt-1 block">{itemTitle}</span>
+                        </span>
+                      </div>
+                    );
+
+                    return pointId ? (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => setSelectedId(pointId)}
+                        className={`w-full rounded-xl px-3 py-2 text-left text-sm transition ${
+                          isSelected
+                            ? "bg-emerald-600 text-white"
+                            : "bg-white text-slate-700 shadow-sm hover:bg-emerald-50 hover:text-emerald-800"
+                        }`}
+                      >
+                        {content}
+                      </button>
+                    ) : (
+                      <div key={item.id} className="w-full rounded-xl bg-white px-3 py-2 text-left text-sm text-slate-700 shadow-sm">
+                        {content}
+                      </div>
+                    );
+                  })}
                 </div>
               </section>
             ))}

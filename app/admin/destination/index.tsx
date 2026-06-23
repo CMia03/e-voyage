@@ -86,6 +86,7 @@ export function AdminDestination({
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
+  const [isTogglingStatusId, setIsTogglingStatusId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [mode, setMode] = useState<"liste" | "creation" | "modif">(initialView);
@@ -255,6 +256,47 @@ export function AdminDestination({
     }
   }
 
+  async function handleToggleStatus(destination: AdminDestinationItem) {
+    setIsTogglingStatusId(destination.id);
+    setError("");
+    setSuccessMessage("");
+
+    try {
+      const response = await updateAdminDestination(
+        destination.id,
+        {
+          nom: destination.nom ?? "",
+          slug: destination.slug ?? "",
+          description: destination.description ?? "",
+          adresse: destination.adresse ?? "",
+          urlImagePrincipale: destination.urlImagePrincipale ?? "",
+          latitude: Number(destination.latitude),
+          longitude: Number(destination.longitude),
+          estActif: !destination.estActif,
+        },
+        accessToken
+      );
+
+      const updated = response.data;
+      setDestinations((current) =>
+        current.map((item) =>
+          item.id === destination.id
+            ? {
+                ...item,
+                ...(updated ?? {}),
+                estActif: updated?.estActif ?? !destination.estActif,
+              }
+            : item
+        )
+      );
+      setSuccessMessage(!destination.estActif ? "Destination activee avec succes." : "Destination desactivee avec succes.");
+    } catch (toggleError) {
+      setError(getErrorMessage(toggleError, "Impossible de modifier le statut de la destination"));
+    } finally {
+      setIsTogglingStatusId(null);
+    }
+  }
+
   return (
     <>
       {mode === "liste" ? (
@@ -268,6 +310,8 @@ export function AdminDestination({
           onCreate={openCreate}
           onEdit={openEdit}
           onDelete={handleDelete}
+          onToggleStatus={handleToggleStatus}
+          isTogglingStatusId={isTogglingStatusId}
         />
       ) : null}
 

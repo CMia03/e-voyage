@@ -116,14 +116,14 @@ export function DestinationCard({ destination }: DestinationCardProps) {
             <CardTitle className="text-xl sm:text-2xl">{displayText(title)}</CardTitle>
             <CardDescription className="text-sm leading-6 sm:text-base">
               <span className="line-clamp-2">{displayText(description)}</span>
-              {description && description.length > 90 ? (
+              {/* {description && description.length > 90 ? (
                 <Link
                   href={`/destinations/${id}`}
                   className="mt-1 inline-flex text-xs font-medium text-muted-foreground underline-offset-4 transition hover:text-emerald-700 hover:underline"
                 >
                   Lire la suite
                 </Link>
-              ) : null}
+              ) : null} */}
             </CardDescription>
           </div>
         </div>

@@ -107,6 +107,24 @@ function payloadFromForm(form: HebergementFormState): SaveHebergementPayload {
   };
 }
 
+function attachTarifsToHebergements(
+  hebergements: Hebergement[],
+  tarifs: TarifHebergement[]
+) {
+  const tarifsByHebergementId = new Map<string, TarifHebergement[]>();
+
+  tarifs.forEach((tarif) => {
+    const current = tarifsByHebergementId.get(tarif.idHebergement) ?? [];
+    current.push(tarif);
+    tarifsByHebergementId.set(tarif.idHebergement, current);
+  });
+
+  return hebergements.map((hebergement) => ({
+    ...hebergement,
+    tarifs: tarifsByHebergementId.get(hebergement.id) ?? hebergement.tarifs ?? [],
+  }));
+}
+
 export function AdminHebergements({
   accessToken,
   initialView = "liste",
@@ -121,6 +139,7 @@ export function AdminHebergements({
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
+  const [isTogglingStatusId, setIsTogglingStatusId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [mode, setMode] = useState<
@@ -145,10 +164,16 @@ export function AdminHebergements({
     setError("");
 
     try {
-      const hebergementsResponse = await listHebergements(accessToken);
-      setHebergements(hebergementsResponse.data ?? []);
+      const [hebergementsResponse, tarifsResponse] = await Promise.all([
+        listHebergements(accessToken),
+        listTarifsHebergements(accessToken),
+      ]);
+      const loadedTarifs = tarifsResponse.data ?? [];
+
+      setTarifs(loadedTarifs);
+      setHebergements(attachTarifsToHebergements(hebergementsResponse.data ?? [], loadedTarifs));
     } catch (loadError) {
-      setError(getErrorMessage(loadError, "Impossible de charger les hebergements"));
+      setError(getErrorMessage(loadError, "Impossible de charger les hebergements et tarifs"));
     } finally {
       setIsLoading(false);
     }
@@ -350,6 +375,53 @@ export function AdminHebergements({
     }
   }
 
+  async function handleToggleStatus(hebergement: Hebergement) {
+    setIsTogglingStatusId(hebergement.id);
+    setError("");
+    setSuccessMessage("");
+
+    try {
+      const response = await updateHebergement(
+        hebergement.id,
+        {
+          nom: hebergement.nom ?? "",
+          slug: hebergement.slug ?? "",
+          description: hebergement.description ?? "",
+          adresse: hebergement.adresse ?? "",
+          urlImagePrincipale: hebergement.urlImagePrincipale ?? "",
+          latitude: Number(hebergement.latitude),
+          longitude: Number(hebergement.longitude),
+          nombreEtoiles: Number(hebergement.nombreEtoiles),
+          telephone: hebergement.telephone ?? "",
+          email: hebergement.email ?? "",
+          siteWeb: hebergement.siteWeb ?? "",
+          estActif: !hebergement.estActif,
+          idTypeHebergement: hebergement.idTypeHebergement,
+          idsPlus: hebergement.idsPlus ?? [],
+        },
+        accessToken
+      );
+
+      const updated = response.data;
+      setHebergements((current) =>
+        current.map((item) =>
+          item.id === hebergement.id
+            ? {
+                ...item,
+                ...(updated ?? {}),
+                tarifs: updated?.tarifs?.length ? updated.tarifs : item.tarifs,
+              }
+            : item
+        )
+      );
+      setSuccessMessage(!hebergement.estActif ? "Hebergement active avec succes." : "Hebergement desactive avec succes.");
+    } catch (toggleError) {
+      setError(getErrorMessage(toggleError, "Impossible de modifier le statut de l'hebergement"));
+    } finally {
+      setIsTogglingStatusId(null);
+    }
+  }
+
   async function handleDeleteTarif(id: string) {
     const confirmed = window.confirm("Supprimer ce tarif ?");
     if (!confirmed) return;
@@ -437,6 +509,8 @@ export function AdminHebergements({
           onCreate={openCreate}
           onEdit={openEdit}
           onDelete={handleDelete}
+          onToggleStatus={handleToggleStatus}
+          isTogglingStatusId={isTogglingStatusId}
         />
       ) : null}
 

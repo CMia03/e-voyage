@@ -2,7 +2,7 @@
 
 import "leaflet/dist/leaflet.css";
 
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { GeoJSON, MapContainer, Marker, Polyline, Popup, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import type { GeoJsonObject } from "geojson";
@@ -57,11 +57,24 @@ function ResizeMapOnChange({ watchKey }: { watchKey: string }) {
   const map = useMap();
 
   useEffect(() => {
+    let cancelled = false;
+
     const timer = window.setTimeout(() => {
-      map.invalidateSize();
+      if (cancelled) return;
+
+      try {
+        const container = map.getContainer();
+        if (!container.isConnected) return;
+        map.invalidateSize();
+      } catch {
+        // Leaflet can throw while this map is being updated or unmounted.
+      }
     }, 80);
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
   }, [map, watchKey]);
 
   return null;
@@ -79,23 +92,36 @@ function FitMapToSelection({
   const map = useMap();
 
   useEffect(() => {
+    let cancelled = false;
+
     const timer = window.setTimeout(() => {
-      map.invalidateSize();
+      if (cancelled) return;
 
-      if (positions.length > 1) {
-        map.fitBounds(positions, { padding: [32, 32], maxZoom: 11 });
-        return;
+      try {
+        const container = map.getContainer();
+        if (!container.isConnected) return;
+        map.invalidateSize();
+
+        if (positions.length > 1) {
+          map.fitBounds(positions, { padding: [32, 32], maxZoom: 11, animate: false });
+          return;
+        }
+
+        if (positions.length === 1) {
+          map.setView(positions[0], Math.max(map.getZoom(), 11), { animate: false });
+          return;
+        }
+
+        map.setView(fallbackCenter, 7, { animate: false });
+      } catch {
+        // Leaflet can throw while this map is being updated or unmounted.
       }
-
-      if (positions.length === 1) {
-        map.setView(positions[0], Math.max(map.getZoom(), 11));
-        return;
-      }
-
-      map.setView(fallbackCenter, 7);
     }, 100);
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
   }, [fallbackCenter, map, positions, watchKey]);
 
   return null;
@@ -386,7 +412,15 @@ export function PlanningVoyageDayMap({
             Aucun point geographique lie au jour selectionne. Ajoute un transport, une activite ou un hebergement.
           </div>
         ) : (
-          <MapContainer center={mapCenter} zoom={7} className="h-full min-h-[520px] w-full" preferCanvas>
+          <MapContainer
+            center={mapCenter}
+            zoom={7}
+            className="h-full min-h-[520px] w-full"
+            preferCanvas
+            fadeAnimation={false}
+            markerZoomAnimation={false}
+            zoomAnimation={false}
+          >
             <ResizeMapOnChange watchKey={mapWatchKey} />
             <FitMapToSelection positions={mapPositions} fallbackCenter={mapCenter} watchKey={mapWatchKey} />
             <TileLayer
@@ -401,7 +435,7 @@ export function PlanningVoyageDayMap({
               ];
               const color = transportColor(transport.nomTypeTransport);
               return (
-                <div key={transport.id}>
+                <Fragment key={transport.id}>
                   {geojson ? (
                     <GeoJSON data={geojson} style={{ color, weight: 5 }} />
                   ) : (
@@ -421,7 +455,7 @@ export function PlanningVoyageDayMap({
                       Arrivée (Transport)
                     </Popup>
                   </Marker>
-                </div>
+                </Fragment>
               );
             })}
 
