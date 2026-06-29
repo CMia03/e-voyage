@@ -12,7 +12,7 @@ export const destinationsData: DestinationDetails[] = [
       shared2: "500.000 AR/personne (2 par chambre)"
     },
     duration: "5 jours et 4 nuits",
-    dates: "8 au 12 septembre 2025",
+    dates: "-",
     departure: {
       time: "6h",
       location: "Maraina Ampasapito - Gare routière"
@@ -73,7 +73,7 @@ export const destinationsData: DestinationDetails[] = [
       children: "300.000 AR/personne (enfants)"
     },
     duration: "4 jours (3 au 6 août)",
-    dates: "3 au 6 août 2025",
+    dates: "-",
     departure: {
       time: "6h",
       location: "Maraina EO Mahamasina devant Kianja Barea"
@@ -129,7 +129,7 @@ export const destinationsData: DestinationDetails[] = [
       shared2: "1.050.000 AR/personne (à base de 2 par chambre)"
     },
     duration: "8 jours",
-    dates: "9 au 16 septembre 2025 ou 21 au 28 septembre 2025",
+    dates: "-",
     departure: {
       time: "6h",
       location: "Maraina EO Ampasapito - Gare routière"
@@ -188,7 +188,7 @@ export const destinationsData: DestinationDetails[] = [
     image: "/images/sud1.jpg",
     price: "1.700.000 AR/personne",
     duration: "10 jours (1 au 10 septembre)",
-    dates: "1 au 10 septembre 2025",
+    dates: "-",
     departure: {
       time: "6h",
       location: "Tana - Maraina Mahamasina devant Kianja Barea"
